@@ -295,7 +295,6 @@ h2.article-head {
   }
 }
 .open {
-  max-height: 300px;
   transition-delay: 0.1s;
 }
 .menu-list {
