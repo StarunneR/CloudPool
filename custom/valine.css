@@ -19,3 +19,7 @@
 .vwrap {
     overflow: inherit !important;
 }
+
+.vcontent {
+    white-space: pre !important;
+}
