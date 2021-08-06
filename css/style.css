@@ -98,6 +98,7 @@ pre {
 .article-card {
   font-style: normal;
   padding-bottom: 20px;
+  padding-left: 3em;
 }
 .article-card:first-child {
   margin-top: 60px;
@@ -1292,7 +1293,7 @@ h3 {
   }
 }
 .vcontent {
-  white-space: pre;
+  white-space: pre-line;
 }
 @-moz-keyframes shine {
   0%, 100% {
