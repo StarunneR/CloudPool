@@ -56,16 +56,6 @@ pre {
   transform: translateY(-20px);
   transition: all 0.4s;
 }
-@media screen and (max-width: 480px) {
-  .app-body {
-    margin: 0 0.5em;
-  }
-}
-@media screen and (max-width: 960px) and (min-width: 480px) {
-  .app-body {
-    margin: 0 1em;
-  }
-}
 .hljs {
   background: none !important;
 }
@@ -1286,22 +1276,6 @@ h3 {
 .yiyan:after {
   content: "”";
 }
-.vlink {
-  display: none !important;
-}
-.vsys {
-  display: none !important;
-}
-.vnick,
-.vmail {
-  width: 50% !important;
-}
-@media screen and (max-width: 480px) {
-  .vnick,
-  .vmail {
-    width: 100% !important;
-  }
-}
 .busuanzi_page_pv {
   font-size: 0.8em;
   color: #808080;
@@ -1316,6 +1290,9 @@ h3 {
   .busuanzi_page_pv {
     display: none;
   }
+}
+.vcontent {
+  white-space: pre !important;
 }
 @-moz-keyframes shine {
   0%, 100% {
