@@ -47,7 +47,7 @@ pre {
   transform: unset !important;
 }
 .app-body {
-  padding: 1em 0.5em;
+  padding: 1em 1em;
   margin: auto;
   height: 100%;
   max-width: 1200px;
@@ -55,6 +55,11 @@ pre {
   opacity: 0;
   transform: translateY(-20px);
   transition: all 0.4s;
+}
+@media screen and (max-width: 480px) {
+  .app-body {
+    padding: initial;
+  }
 }
 .hljs {
   background: none !important;
@@ -99,6 +104,11 @@ pre {
   font-style: normal;
   padding-bottom: 20px;
   padding-left: 2em;
+}
+@media screen and (max-width: 480px) {
+  .article-card {
+    padding-left: 1em;
+  }
 }
 .article-card:first-child {
   margin-top: 60px;
@@ -201,7 +211,7 @@ h2.article-head {
 }
 @media screen and (max-width: 480px) {
   .header-container {
-    padding: 6px 20px;
+    padding: 0.5em 1em;
     position: relative;
   }
 }
@@ -818,7 +828,7 @@ h2.article-head {
   position: absolute;
   top: 4em;
   bottom: 1em;
-  left: 21.8px;
+  left: 1.875em;
   height: auto;
   content: '';
   background-color: #04b2f1;
