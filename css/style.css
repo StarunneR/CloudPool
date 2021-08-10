@@ -64,112 +64,6 @@ pre {
 .hljs {
   background: none !important;
 }
-.tags {
-  margin: 15px 0;
-}
-.tags span:first-child {
-  margin-right: 10px;
-  font-weight: 600;
-}
-.tag-code {
-  font-family: 'Roboto Mono', Monaco, courier, monospace;
-  font-size: 0.8em;
-  display: inline-block;
-  background-color: #f8f8f8;
-  color: #e96900;
-  padding: 3px 5px;
-  margin: 0 2px 5px 0;
-  border-radius: 2px;
-  white-space: nowrap;
-}
-.categories {
-  margin: 15px 0;
-}
-.categories span:first-child {
-  margin-right: 10px;
-  font-weight: 600;
-}
-.categories-code {
-  font-family: 'Roboto Mono', Monaco, courier, monospace;
-  font-size: 0.8em;
-  display: inline-block;
-  background-color: #f8f8f8;
-  color: #e96900;
-  padding: 3px 5px;
-  margin: 0 2px 5px 0;
-  border-radius: 2px;
-  white-space: nowrap;
-}
-.article-card {
-  font-style: normal;
-  padding-bottom: 20px;
-  padding-left: 2em;
-}
-@media screen and (max-width: 480px) {
-  .article-card {
-    padding-left: 1em;
-  }
-}
-.article-card:first-child {
-  margin-top: 60px;
-}
-h2.article-head {
-  font-style: normal;
-  font-size: 1.6em;
-  margin-bottom: 0;
-}
-.article-head > a {
-  font-style: normal;
-  color: #34495e;
-}
-.article-head > a:hover {
-  border-bottom: 2px solid #04b2f1;
-}
-.article-date {
-  font-style: normal;
-  color: #7f8c8d;
-  margin: 10px 0;
-  font-size: 0.9em;
-}
-.article-summary {
-  font-style: italic;
-  margin: 10px 0;
-  color: #34495e;
-}
-.more {
-  font-weight: 600;
-  display: inline-block;
-  transition: all 0.3s;
-}
-.more:hover {
-  transform: translateX(10px);
-}
-.notice {
-  font-size: 12px;
-  display: block;
-  margin-top: 10px;
-  text-align: center;
-  color: #7f8c8d;
-  font-style: italic;
-}
-.image-view-wrap {
-  position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-  z-index: 1000;
-  transition: all 0.3s ease-in-out;
-}
-.image-view-wrap .image-view-inner {
-  position: relative;
-}
-.image-view-wrap img {
-  display: block;
-  margin: 0 auto;
-  cursor: zoom-out;
-  transition: all 0.3s ease-in-out;
-}
 .wrap-active {
   background-color: rgba(255,255,255,0.9);
 }
@@ -882,6 +776,76 @@ h2.article-head {
   font-size: 0.9em;
   margin: 5px 0;
 }
+.article-card {
+  font-style: normal;
+  padding-bottom: 20px;
+  padding-left: 2em;
+}
+@media screen and (max-width: 480px) {
+  .article-card {
+    padding-left: 1em;
+  }
+}
+.article-card:first-child {
+  margin-top: 60px;
+}
+h2.article-head {
+  font-style: normal;
+  font-size: 1.6em;
+  margin-bottom: 0;
+}
+.article-head > a {
+  font-style: normal;
+  color: #34495e;
+}
+.article-head > a:hover {
+  border-bottom: 2px solid #04b2f1;
+}
+.article-date {
+  font-style: normal;
+  color: #7f8c8d;
+  margin: 10px 0;
+  font-size: 0.9em;
+}
+.article-summary {
+  font-style: italic;
+  margin: 10px 0;
+  color: #34495e;
+}
+.more {
+  font-weight: 600;
+  display: inline-block;
+  transition: all 0.3s;
+}
+.more:hover {
+  transform: translateX(10px);
+}
+.notice {
+  font-size: 12px;
+  display: block;
+  margin-top: 10px;
+  text-align: center;
+  color: #7f8c8d;
+  font-style: italic;
+}
+.image-view-wrap {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  z-index: 1000;
+  transition: all 0.3s ease-in-out;
+}
+.image-view-wrap .image-view-inner {
+  position: relative;
+}
+.image-view-wrap img {
+  display: block;
+  margin: 0 auto;
+  cursor: zoom-out;
+  transition: all 0.3s ease-in-out;
+}
 #about-banner {
   width: 100%;
   position: relative;
@@ -1137,6 +1101,24 @@ h3 {
 #category-cloud .category3 {
   background: #6e8b3d;
 }
+.categories {
+  margin: 15px 0;
+}
+.categories span:first-child {
+  margin-right: 10px;
+  font-weight: 600;
+}
+.categories-code {
+  font-family: 'Roboto Mono', Monaco, courier, monospace;
+  font-size: 0.8em;
+  display: inline-block;
+  background-color: #f8f8f8;
+  color: #e96900;
+  padding: 3px 5px;
+  margin: 0 2px 5px 0;
+  border-radius: 2px;
+  white-space: nowrap;
+}
 .category-list {
   margin-left: 1em;
   margin-right: 1em;
@@ -1189,6 +1171,24 @@ h3 {
 }
 #tag-cloud .tag2 {
   background: #00f;
+}
+.tags {
+  margin: 15px 0;
+}
+.tags span:first-child {
+  margin-right: 10px;
+  font-weight: 600;
+}
+.tag-code {
+  font-family: 'Roboto Mono', Monaco, courier, monospace;
+  font-size: 0.8em;
+  display: inline-block;
+  background-color: #f8f8f8;
+  color: #e96900;
+  padding: 3px 5px;
+  margin: 0 2px 5px 0;
+  border-radius: 2px;
+  white-space: nowrap;
 }
 .tag-list {
   margin-left: 1em;
@@ -1274,6 +1274,8 @@ h3 {
   line-height: 1.5em;
 }
 .yiyan {
+  font-size: 1.2em;
+  font-family: Simsun;
   margin: 10px 0 20px 0;
   color: #fff;
   opacity: 0;
