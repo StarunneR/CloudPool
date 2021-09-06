@@ -1274,7 +1274,7 @@ h3 {
   line-height: 1.5em;
 }
 .yiyan {
-  font-size: 2em;
+  font-size: 1.5em;
   font-family: Simsun;
   margin: 10px 0 20px 0;
   color: #fff;
@@ -1284,7 +1284,7 @@ h3 {
   transition-delay: 0.1s;
 }
 .yiyan:before {
-  content: "“";
+  content: "一言： “";
 }
 .yiyan:after {
   content: "”";
