@@ -161,19 +161,19 @@
 <main class="app-body">
     <!--<div class="card-container"></div>-->
     <div id="vcomments" class=""></div>
-    <!-- <p><strong><a href="/one">“一句”</a></strong> 接口来自: <a href="https://hitokoto.cn/" target="_blank" rel="noopener">一言 hijikoto.cn</a></p>
+    <p><strong><a href="/one">“一句”</a></strong> 接口来自: <a href="https://hitokoto.cn/" target="_blank" rel="noopener">一言 hijikoto.cn</a></p>
 <hr>
 <p><strong>评论头像设定</strong>（需科学上网）：</p>
 <ol>
 <li><a href="https://wordpress.com/start/wpcc/oauth2-user/zh-cn" target="_blank" rel="noopener">注册</a>，邮箱与此处登录邮箱一致</li>
 <li>在设置页上传头像</li>
 </ol>
- -->
+
 </main>
 <script src="https://v1.hitokoto.cn/?encode=js&select=%23hitokoto" defer></script>
 <script>
     (function () {
-        var url = 'https://zhuochi.org/one.html';
+        var url = 'https://zhuochi.org/one/index.html';
         $('#article-banner').geopattern(url);
         $('.header').removeClass('fixed-header')
         $('.card-header').each(function () {
@@ -182,9 +182,6 @@
                 })
     })()
 </script>
-<!--
-<script src="/js/valine.min.js"></script>
--->
 <script src="//cdn.jsdelivr.net/npm/@waline/client/dist/Waline.min.js"></script>
 <script>
     new Waline({
@@ -201,7 +198,6 @@
         appKey: 'arEPHdbMnKwMjQgiWsLgw34N',
         avatar: 'mp',
         IPQPS: 0,
-//      enableQQ: true,
         placeholder: '支持Markdown语法： \n *斜体* , **粗体** , \#/###/###### 1-6级标题 , *** = 水平线 , ~~删除线~~ , > 引用内容 , `代码块` , 1. 序号列表 , * 无序列表',
         requiredFields: [''], 
     })
