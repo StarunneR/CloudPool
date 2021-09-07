@@ -1284,7 +1284,7 @@ h3 {
   transition-delay: 0.1s;
 }
 .yiyan:before {
-  content: "一言： “";
+  content: "“";
 }
 .yiyan:after {
   content: "”";
