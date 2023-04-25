@@ -23,19 +23,6 @@
     
     
     <entry>
-      <title>Hello World</title>
-      <link href="/hello-world/"/>
-      <url>/hello-world/</url>
-      
-        <content type="html"><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p><h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p><h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p><h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p><h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>]]></content>
-      
-      
-      
-    </entry>
-    
-    
-    
-    <entry>
       <title>《兔耳朵魔王》（拟题）(三)</title>
       <link href="/copying/nmbxd51414457-3/"/>
       <url>/copying/nmbxd51414457-3/</url>
@@ -585,11 +572,11 @@
       
         <tags>
             
+            <tag> 安装 </tag>
+            
             <tag> 实用 </tag>
             
             <tag> 软件 </tag>
-            
-            <tag> 安装 </tag>
             
         </tags>
       
@@ -994,6 +981,25 @@
     
     
     <entry>
+      <title>16（突然）</title>
+      <link href="/poem/16/"/>
+      <url>/poem/16/</url>
+      
+        <content type="html"><![CDATA[<p>小舟远去<br>此地空余黄鹤楼<br>“快停下来。”<br>她好像在说<br>在灯红酒绿之间<br>他突然只想<br>上个厕所</p>]]></content>
+      
+      
+      <categories>
+          
+          <category> 浊诗 </category>
+          
+      </categories>
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>阿肆 - 预谋邂逅</title>
       <link href="/listen/asi_yumouxiehou/"/>
       <url>/listen/asi_yumouxiehou/</url>
@@ -1013,25 +1019,6 @@
             <tag> 音乐 </tag>
             
         </tags>
-      
-    </entry>
-    
-    
-    
-    <entry>
-      <title>16（突然）</title>
-      <link href="/poem/16/"/>
-      <url>/poem/16/</url>
-      
-        <content type="html"><![CDATA[<p>小舟远去<br>此地空余黄鹤楼<br>“快停下来。”<br>她好像在说<br>在灯红酒绿之间<br>他突然只想<br>上个厕所</p>]]></content>
-      
-      
-      <categories>
-          
-          <category> 浊诗 </category>
-          
-      </categories>
-      
       
     </entry>
     
@@ -1133,6 +1120,25 @@
     
     
     <entry>
+      <title>14（谎言桥）</title>
+      <link href="/poem/14/"/>
+      <url>/poem/14/</url>
+      
+        <content type="html"><![CDATA[<p>我的家就在河边<br>河上一座谎言桥<br>每年的八月三八<br>鸽子会飞将过来<br>在桥上咕咕咕叫<br>或者也可以闭嘴</p>]]></content>
+      
+      
+      <categories>
+          
+          <category> 浊shi </category>
+          
+      </categories>
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>Vance Joy - Dream Your Life Away</title>
       <link href="/listen/Vance%20Joy%20-%20Dream%20Your%20Life%20Away/"/>
       <url>/listen/Vance%20Joy%20-%20Dream%20Your%20Life%20Away/</url>
@@ -1152,25 +1158,6 @@
             <tag> 音乐 </tag>
             
         </tags>
-      
-    </entry>
-    
-    
-    
-    <entry>
-      <title>14（谎言桥）</title>
-      <link href="/poem/14/"/>
-      <url>/poem/14/</url>
-      
-        <content type="html"><![CDATA[<p>我的家就在河边<br>河上一座谎言桥<br>每年的八月三八<br>鸽子会飞将过来<br>在桥上咕咕咕叫<br>或者也可以闭嘴</p>]]></content>
-      
-      
-      <categories>
-          
-          <category> 浊shi </category>
-          
-      </categories>
-      
       
     </entry>
     
@@ -1284,6 +1271,25 @@
     
     
     <entry>
+      <title>11（咬文嚼字）</title>
+      <link href="/poem/11/"/>
+      <url>/poem/11/</url>
+      
+        <content type="html"><![CDATA[<p>咬文嚼字一下<br>自信是对自己的什么<br>信封信箱信纸信笺<br>信守信念信奉信用<br>信誓旦旦<br>也许是信心<br>也许是信任<br>为什么不能是信号灯<br>啵的一下 亮起来</p>]]></content>
+      
+      
+      <categories>
+          
+          <category> 浊诗 </category>
+          
+      </categories>
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>Avicii - AVĪCI (01)</title>
       <link href="/listen/Avicii-AV%C4%AACI_(01)/"/>
       <url>/listen/Avicii-AV%C4%AACI_(01)/</url>
@@ -1303,25 +1309,6 @@
             <tag> 音乐 </tag>
             
         </tags>
-      
-    </entry>
-    
-    
-    
-    <entry>
-      <title>11（咬文嚼字）</title>
-      <link href="/poem/11/"/>
-      <url>/poem/11/</url>
-      
-        <content type="html"><![CDATA[<p>咬文嚼字一下<br>自信是对自己的什么<br>信封信箱信纸信笺<br>信守信念信奉信用<br>信誓旦旦<br>也许是信心<br>也许是信任<br>为什么不能是信号灯<br>啵的一下 亮起来</p>]]></content>
-      
-      
-      <categories>
-          
-          <category> 浊诗 </category>
-          
-      </categories>
-      
       
     </entry>
     
@@ -2243,9 +2230,9 @@
       
         <tags>
             
-            <tag> 安装 </tag>
-            
             <tag> Windows </tag>
+            
+            <tag> 安装 </tag>
             
             <tag> 激活 </tag>
             
@@ -2470,9 +2457,9 @@
       
         <tags>
             
-            <tag> 安装 </tag>
-            
             <tag> Windows </tag>
+            
+            <tag> 安装 </tag>
             
         </tags>
       
@@ -3220,25 +3207,6 @@
     
     
     <entry>
-      <title>晚自习打蚊子</title>
-      <link href="/shxt/%E6%99%9A%E8%87%AA%E4%B9%A0%E6%89%93%E8%9A%8A%E5%AD%90/"/>
-      <url>/shxt/%E6%99%9A%E8%87%AA%E4%B9%A0%E6%89%93%E8%9A%8A%E5%AD%90/</url>
-      
-        <content type="html"><![CDATA[<p>用笔捅声音短促<br>用纸捏声音嘈杂<br>用书拍声音震耳<br>用手打声音清脆<br>用尺子敲声音干净<br>用橡皮碾声音沙哑<br>用文具盒咣当咣当响<br>用餐巾纸几乎没声音<br>啊——<br>我操我刚看见一颗<br>蚊子比蚕豆还大</p>]]></content>
-      
-      
-      <categories>
-          
-          <category> 浊shi </category>
-          
-      </categories>
-      
-      
-    </entry>
-    
-    
-    
-    <entry>
       <title>5.20创新作文大赛作品</title>
       <link href="/story/5-20%E5%88%9B%E6%96%B0%E4%BD%9C%E6%96%87%E5%A4%A7%E8%B5%9B%E4%BD%9C%E5%93%81/"/>
       <url>/story/5-20%E5%88%9B%E6%96%B0%E4%BD%9C%E6%96%87%E5%A4%A7%E8%B5%9B%E4%BD%9C%E5%93%81/</url>
@@ -3258,6 +3226,25 @@
             <tag> 小说 </tag>
             
         </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>晚自习打蚊子</title>
+      <link href="/shxt/%E6%99%9A%E8%87%AA%E4%B9%A0%E6%89%93%E8%9A%8A%E5%AD%90/"/>
+      <url>/shxt/%E6%99%9A%E8%87%AA%E4%B9%A0%E6%89%93%E8%9A%8A%E5%AD%90/</url>
+      
+        <content type="html"><![CDATA[<p>用笔捅声音短促<br>用纸捏声音嘈杂<br>用书拍声音震耳<br>用手打声音清脆<br>用尺子敲声音干净<br>用橡皮碾声音沙哑<br>用文具盒咣当咣当响<br>用餐巾纸几乎没声音<br>啊——<br>我操我刚看见一颗<br>蚊子比蚕豆还大</p>]]></content>
+      
+      
+      <categories>
+          
+          <category> 浊shi </category>
+          
+      </categories>
+      
       
     </entry>
     
