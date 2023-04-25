@@ -109,7 +109,7 @@
         quit: {
             icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512">\x3c!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --\x3e<path d="M310.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L160 210.7 54.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L114.7 256 9.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L160 301.3 265.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L205.3 256 310.6 150.6z"/></svg>',
             callback: () => {
-                localStorage.setItem("waifu-display", Date.now()), o("愿你有一天能与重要的人重逢。", 2e3, 11), document.getElementById("waifu").style.bottom = "-500px", setTimeout((() => {
+                localStorage.setItem("waifu-display", Date.now()), o("愿有一天你能与挚爱之人重逢。", 2e3, 11), document.getElementById("waifu").style.bottom = "-500px", setTimeout((() => {
                     document.getElementById("waifu").style.display = "none", document.getElementById("waifu-toggle").classList.add("waifu-toggle-active")
                 }), 3e3)
             }
