@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta http-equiv="Access-Control-Allow-Origin" content="*">
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport" />
+  <meta name="description" content="CloudPool浊池是由年轻人管理的博客">
+  <meta name="keyword" content="浊池, CloudPool, CloudPool浊池">
+  
+  <link rel="shortcut icon" type="image/ico" href="/images/cloudpool-favicon.ico">
+  
+  <title>
+    
+    《王小明与王小明》 | CloudPool浊池
+    
+  </title>
+  <!-- CSS -->
+  <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <link href="https://cdn.bootcdn.net/ajax/libs/nprogress/0.2.0/nprogress.min.css" rel="stylesheet"/>
+  
+<link rel="stylesheet" href="/css/style.css">
+
+
+  <!-- JS -->
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/geopattern/1.2.3/js/geopattern.min.js"></script>
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/nprogress/0.2.0/nprogress.min.js"></script>
+  
+    <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+            <span class="search-icon">
+                <i class="fa fa-search"></i>
+            </span>
+            <div class="search-input-container">
+                <input autocomplete="off" autocapitalize="off" maxlength="80"
+                    placeholder="今天想看什么w" spellcheck="false"
+                    type="" class="search-input">
+            </div>
+            <span class="popup-btn-close">
+                <i class="fa fa-times-circle"></i>
+            </span>
+        </div>
+        <div id="search-result" class="search-result-container no-result">
+            <div id="no-result">
+                <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+            </div>
+        </div>
+    </div>
+</div>
+    
+<script src="/js/local-search.js"></script>
+
+
+  
+  <!-- Fonts -->
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+  <body>
+    <header class="header fixed-header">
+  <nav class="header-container">
+    <a class="home-link" href="/">
+      <img class="logo" src="/images/logo.png" alt="logo"/>
+      <span class="eng_mark">CloudPool</span><span class="chn_mark">浊池</span>
+    </a>
+    <ul class="right-list">
+      
+        <li class="list-item">
+          
+            <a href="/" class="item-link">主页</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/category/" class="item-link">分类</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/tag/" class="item-link">标签</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/archive/" class="item-link">归档</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/mag/" class="item-link">网刊</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/one/" class="item-link">一言</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a target="_blank" rel="noopener" href="//pan.zhuochi.org/CloudShare/" class="item-link">网盘</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="//<emoji>" class="item-link">( ^ω^)</a>
+          
+        </li>
+      
+      
+        <li class="list-item">
+    <a role="button" class="item-link popup-trigger">
+        <i class="fa fa-search fa-fw"></i>
+    </a>
+</li>
+      
+    </ul>
+    <div class="menu">
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+    </div>
+    <div class="menu-mask">
+      <ul class="menu-list">
+        
+          <li class="menu-item">
+            
+              <a href="/" class="menu-link">主页</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/category/" class="menu-link">分类</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/tag/" class="menu-link">标签</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/archive/" class="menu-link">归档</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/mag/" class="menu-link">网刊</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/one/" class="menu-link">一言</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a target="_blank" rel="noopener" href="//pan.zhuochi.org/CloudShare/" class="menu-link">网盘</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="//<emoji>" class="menu-link">( ^ω^)</a>
+            
+          </li>
+        
+        
+          <li class="menu-item">
+    <a role="button" class="item-link popup-trigger">
+        <i class="fa fa-search fa-fw"></i>
+    </a>
+</li>
+        
+      </ul>
+    </div>
+  </nav>
+</header>
+
+    <div id="article-banner">
+  <h2 class="post-title">《王小明与王小明》</h2>
+  
+   
+    <p class="post-date">2022-09-01</p>
+  
+  <div class="arrow-down">
+    <a href="javascript:;"></a>
+  </div>
+</div>
+
+  <div class="catalog-container" id="catalog">
+  <div class="toc-main">
+    <div class="toc-title">目录</div>
+    
+  </div>
+</div>
+
+<main class="app-body flex-box">
+  <article class="post-article">
+    
+      <div class="front-parent" id="front-parent">
+  <div class="front-child" id="front-fontsize">
+    <label class="front-label" for="fontsize-range">字体大小</label>
+    <input type="range" min="50" max="200" id="fontsize-slider" step="1" value="100" />
+    <span id="fontsize-value"></span>
+  </div>
+
+  <div class="front-child" id="front-fontselector">
+    <label class="front-label" for="font-select">更换字体</label>
+    <select name="font" id="font">
+      <option value="default">默认</option>
+      <option value="heiti">黑体</option>
+      <option value="light-heiti">黑体（细体）</option>
+      <option value="lighter-heiti">黑体（极细）</option>
+      <option value="songti">宋体</option>
+      <option value="light-songti">宋体（细体）</option>
+      <option value="kaiti">楷体</option>
+      <option value="fangsong">仿宋</option>
+    </select>
+  </div>
+
+  <div class="front-child" id="front-indent">
+    <label class="front-label" for="TextIndent">段首缩进</label>
+    <input type="checkbox" id="indent-checkbox" name="text-indent" value="" />
+  </div>
+</div>
+
+<h1 class="article-author">
+  
+    阿碳的作品集 By @天钢0w0
+      
+</h1>
+
+<script>
+  $(document).ready(
+    function () {
+      let FontChanger = function () {
+        if (this.value == "default") {
+          $(".markdown-content").css({ "font-family": "Arial, Helvetica, sans-serif" });
+          $(".markdown-content").css({ "font-weight": 'initial' });
+        } if (this.value == "heiti") {
+          $(".markdown-content").css({ "font-weight": '400' });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',sans-serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400&display=swap rel=stylesheet>");
+        } else if (this.value == "light-heiti") {
+          $(".markdown-content").css({ "font-weight": '300' });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',sans-serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300&display=swap rel=stylesheet>");
+        } else if (this.value == "lighter-heiti") {
+          $(".markdown-content").css({ "font-weight": '100' });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',sans-serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100&display=swap rel=stylesheet>");
+        } else if (this.value == "songti") {
+          $(".markdown-content").css({ "font-weight": '400' });
+          $(".markdown-content").css({ "font-family": "'Noto Serif SC',serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400&display=swap rel=stylesheet>");
+        } else if (this.value == "light-songti") {
+          $(".markdown-content").css({ "font-weight": '200' });
+          $(".markdown-content").css({ "font-family": "'Noto Serif SC',serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200&display=swap rel=stylesheet>");
+        } else if (this.value == "kaiti") {
+          $(".markdown-content").css({ "font-weight": 'initial' });
+          $(".markdown-content").css({ "font-family": "Arial,'STKaiti','KaiTi','FZKai-Z03S',Serif" });
+          $("head").append("<link href=https://cdn.jsdelivr.net/npm/cn-fontsource-fz-kai-z-03-s/font.css rel=stylesheet>");
+        } else if (this.value == "fangsong") {
+          $(".markdown-content").css({ "font-weight": 'initial' });
+          $(".markdown-content").css({ "font-family": "Arial,'STFangsong','FangSong','FangSong_GB2312','FZFangSong-Z02S',Serif" });
+          $("head").append("<link href=https://cdn.jsdelivr.net/npm/cn-fontsource-fz-fang-song-z-02-s/font.css rel=stylesheet>");
+        }
+      };
+      $("#font").on('change', FontChanger);
+      $("#font").on('click', FontChanger);
+    });
+
+  $("#indent-checkbox").change(function () {
+    if (this.checked) {
+      $(".markdown-content > p").css({ "text-indent": "2em" });
+    } else {
+      $(".markdown-content > p").css({ "text-indent": "0" });
+    }
+  });
+
+  $("#fontsize-value").html("100%");
+  let rangeSwitch = function () {
+    let fontsizePercent = $("#fontsize-slider").val();
+    $(".markdown-content").css("font-size", fontsizePercent + "%")
+    $("#fontsize-value").html(fontsizePercent + "%")
+  }
+  $("#fontsize-slider").on("input", rangeSwitch)
+</script>
+      <section class="markdown-content" id="content">
+        <blockquote>
+<p>来源：<a target="_blank" rel="noopener" href="https://weibo.com/u/3815546014">https://weibo.com/u/3815546014</a></p>
+</blockquote>
+<p>4<br>“感谢大家百忙之中抽出时间，来参加王小明同学的葬礼。”司仪以平静的语调念诵着悼词。悼词平平无奇，就像是王小明的名字一样平平无奇。<br>属于王小明的是地上的一个水泥凹槽，正足够摆得下他现在赖以容身的那个小盒子。王小明，王小明傻笑着的照片，和属于王小明的那个水泥凹槽边，围绕着静默的人群。公墓里只有司仪的声音在回荡。<br>“王小明同学，是一个好同学、好伙伴、好儿子……”<br>铅灰色的晨雾里，司仪的声音左冲右突。</p>
+<hr>
+<p>1<br>王小明今年二十岁，正是迷茫的年纪。他刚刚从高考的牢笼里挣脱出来没多久，泡在大学的自由里，像是一只温水里的青蛙。<br>反正全国的大学都这样，至少有一半是青蛙。他随即又会这么安慰自己。起初这招相当奏效，后来就不那么有用了：除了安慰自己，他还要同时说服自己，自己不是在为自己的懒惰找借口。<br>按课表，今天上午该是两节高数。<br>“……不想上了。”王小明把脑袋闷在被子里。<br>“老师一个月没点名了，你确定不怕？”室友阿龙问他。<br>怕，当然怕，怕平时分不够会挂科。为什么怕挂科呢？怕跟家里不好交代，总之不是怕挂科这件事本身。王小明不情愿地从床上爬起来，哼哼唧唧洗了脸刷了牙。教科书不带了，反正也不会听，只是睡觉；手机则必须要带上，不然万一睡不着可得无聊死。他在口袋里揣了根笔，手机拿在手里。<br>阿龙已经先出门去了，王小明环顾一圈寝室，他的寝室加上他只有三个人住，此时还有一个没起来。王小明于是问他：“老猫，你不怕点名？”<br>老猫并不说话，显然睡得如死猪。王小明也就不再管他，点开手机游戏，随手带上门，上课去了。<br>无聊，无聊。老师背靠着黑板，照着课本念幻灯片。这段时间是如此的无聊，以至于王小明的手机电量消耗得飞快。<br>眼看着要到下课的时间了，老师念完了他的幻灯片。老师看了看表，又抬起头来，目光扫过阶梯教室——王小明熟悉这样的目光，他知道戏肉要来了，赶快坐直身子，按灭手机屏幕。<br>果然，老师顿了顿，说：“同学们，我们现在点一下名。”<br>好！教室里陷入了短暂的骚动。点名，这是名为大学生的生物们之间神圣的仪式，学生们迫不及待地举起手答到，以换取一点点额外的期末考试通过概率——同时还要在心里冒着坏水，快意于未到场的那些人的苦难，庆幸于自己的运气。<br>虽然只要每次课都到场，自然就不会有被点到名的危险……但对于大学生来说，逃课是日常生活。倒不如说，不逃课的才是稀有动物。<br>老师把眼镜推到额头上，看着点名簿开始点名。老猫人还在寝室里躺着，王小明一边替他惋惜，一边暗暗地却有点幸灾乐祸起来。老猫就如他的外号般是夜行动物，早上从来起不了床，他这学期点名中奖已经好几次，平时分怕是危险了。<br>轮到王小明了，他高举起手，字正腔圆、快乐阳光地答了到。王小明后面就是老猫，老师叫了一声老猫的大名——王小明正待在寝室的群里发消息通知老猫，字都打在聊天框里了，却听见一声同样字正腔圆的到。<br>王小明愕然地向一旁看去，教室的角落里，老猫正顶着一副面瘫脸，举起手来。<br>王小明回到宿舍时，老猫已经坐在他的‘宝座’上了。他正在打某款时下流行的MOBA游戏，战况正激烈，老猫在人群中七进七出，整个人抖得跟摸了电门一样。王小明问：“老猫，你今天怎么去上课了？”<br>“我没去。”老猫头都懒得动一下，淡淡地答道。<br>“你没去？那谁给你答的到？”<br>难道是老猫请了人代课？王小明的学校里有人专门提供这种服务，基本上都是缺零花钱的学生，帮人听一次课收十块钱，一天下来能赚四五十块。可是……王小明回忆了一下刚刚看到的画面，他还没瞎，坐在教室角落里的那个人绝对是老猫无疑。<br>但王小明相信老猫是真没去，因为老猫那把游戏已经开局四十分钟，四十分钟前老师的幻灯片还没念完。他好奇地问老猫：“你怎么做到的？难道你还有个双胞胎弟弟？”<br>老猫这时候已经打完了团战，拿到了漂亮的四杀，打爆对面的水晶。他心情颇好地点了支烟，翘起二郎腿。“那不是我，是机器人。”<br>“机器人？你在逗我？”<br>“我没逗你。”老猫吸了口烟，吐出个烟圈。他看了一眼门口，凑过来，密切地低声说：“你别告诉别人啊。帮我去上课的，是最新研究出的仿生人……”<br>老猫扯了一大通有的没的，王小明什么都没听懂，只知道那种仿生人是老猫不小心点进一个神秘的网页，在里面买到的。仿生人能模拟人类绝大部分的行为，并且还能自己适应环境。王小明有点发毛：“现在的人工智能已经这么厉害了吗？”<br>“不厉害，连图灵测试都通不过。”老猫抽着烟，带着看透红尘的沧桑眼神解释：“它就只能帮我答个到而已。要是它旁边的人跟它搭两句话，它百分之百露馅。不过，反正大家去教室都是玩手机，没人会闲得无聊跟旁边不认识的人搭话。”<br>“那你不去上课，期末考试怎么办？”<br>“反正去不去都一样，哪个学期不是最后一个月扎堆复习？”<br>老猫说着，又开了一把游戏。据老猫的说法，等会仿生老猫会从外面回来，正好把他的外卖带给他。<br>王小明觉得老猫说的不无道理，他问老猫要了那个神秘链接，订制了一个仿生人王小明。三天之后，快递到了——仿生王小明装在一个死沉死沉的货柜里，王小明花了好大功夫才把货柜搬回来。<br>他想起来了，半个月前老猫也收过这么个快递，当时王小明和阿龙都不无恶意地揣测老猫是不是因为单身太久，需要购买一位女朋友处理一下生理需求。现在王小明也算体会了一下这种感觉，他搬着那个等身大的货柜回来的路上受到了无数怪异的目光洗礼。<br>妈的，想不到吧，我这货柜里是个男人。王小明苦中作乐地想。<br>趁阿龙出去联谊的时机，王小明锁上寝室门，和老猫一起拆开货柜。仿生王小明果然做得真实无比，尤其是脸，简直跟真王小明别无二致。王小明按照说明书启动了他，仿生王小明眨了眨眼睛，说：“到。”<br>字正腔圆。<br>仿生人就只有一点简单的功能，据说是因为技术有限。老猫教王小明把仿生小明的设置调成自动去上课答到，又给它输入了这学期的课表。第二天的早上也有课，王小明打开仿生小明的电源，忐忑不安地睡了个懒觉，等他醒来，仿生小明果然回来了。<br>它真的帮小明去上了一次课。回来之后，它就老实地把自己藏进了床板底下，跟仿生老猫并排躺在一起。<br>老猫说的没错，仿生人真的管用。王小明松了一口气，并且决定以后早上不去上课了。</p>
+<hr>
+<p>2<br>一个人同时存在于两个地方，这种明显的破绽当然是瞒不久的。首先发现的就是阿龙，一星期后，阿龙也购入了一台仿生人。三个人每天昏天暗地打游戏聊天，仿生人们躺在床底下，到了点自己爬起来去上课，以及去拿外卖。<br>再过了一个月，隔壁寝室常来串门的胖子也被拉下了水。胖子的仿生人格外贵一点，不知道是不是因为用料比较多的缘故。然后是隔壁的隔壁，再然后是隔壁的隔壁的隔壁……<br>渐渐地宿舍楼热闹起来。从前上课的时候大部分人慑于点名的威力，哪怕再不情愿，也只好去教室坐着充当背景板。现在有仿生人了，大家都默契地闭门不出，寝室里倒是战况火热。<br>王小明也就是在这时候察觉到仿生人已经泛滥了。每周他都能见到有人扛着等身大的货柜上楼，而到了午餐时间，宿舍门口总有一大群人排着笔直到能用尺子量的长队，表情冰冷地等外卖。<br>王小明开始不安起来。这样下去总有一天老师会发现下面坐的学生都是仿生人。<br>他跟阿龙说了自己的担忧，阿龙却不以为意地摆摆手。<br>“人是集体性的，所谓法不责众。所有人都在做的事哪怕是错的，最后也会变成对的。”<br>王小明知道他说得对。但他还是放不下心——<br>于是他花了一晚上下定决心，关掉了仿生小明的电源，把它收进货柜。他恢复了正常作息时间，每天早上爬起来去上课，去教室里听老师念幻灯片、玩手机。<br>教室里一多半都是仿生人了，这点很容易看出来。真人坐在那里是不会听课的，要么睡觉、要么玩手机；仿生人没那么智能，它们只会笔直地坐着，面前摆着教材。王小明每天都去上课，老师也每天都念幻灯片；只是点名的时候再也没有人中过奖，每点到一个名字，就会传来字正腔圆积极向上的答到声，而且每个仿生人的声线都不一样。<br>王小明反倒是成了最没劲的那一个。<br>他一直觉得，总有一天老师会发现下面都是仿生人。那时候，老师说不定会大发雷霆，然后挑出所有的仿生人，把那些没来的家伙平时分统统扣光。他抱着这种多少有点阴暗的想法等待，等啊等，等了半个学期，教室里的仿生人越来越多，老师依旧像是没看到一样。<br>直到某一天，下课铃打响之后，只有王小明一个人站了起来。<br>整个教室的仿生人都保持着一致的动作，它们动作僵硬地整理教材，然后缓缓起身走出教室。有时候算法出了问题，它们还会在门口卡一会。王小明没有教材，他只需要把手机往口袋里一塞就能出门。<br>所以他意识到，他已经是这个教室里唯一的真人学生了。<br>他终于忍受不了了。<br>仿生人们整齐划一地站了起来，把路堵死了。小明跳上桌子，跨过一个又一个仿生人的头顶，英勇如跨栏的田径运动员。<br>老师是个戴眼镜的中年男人，他仔细打量了一下小明，问：“这位同学，你有什么事？”<br>小明大声质询道：“老师，你就没有发现整个班只有我一个真人了吗？”<br>他随手拉过一个仿生人，那是个女生。仿生人机械地动作着，小明不管不顾地拉开它的衣领，给老师看它后颈上的开关。<br>老师推了推眼镜：“这位同学，这是什么？”<br>小明把仿生人的事详细地跟老师说了。起初他的内心还抱有某种自我怀疑，他觉得自己似乎背叛了那些同学，不过很快他就说服了自己，来上课才是正确的行为，自己是对的。<br>没错。他们都不来上课，根本不对！大学生的任务是学习，不是打游戏！<br>老师点了点头，他向小明要了那个网址，并且严肃地向小明保证，这件事他一定会彻查。<br>王小明没敢把这件事跟老猫和阿龙说。回到寝室，他只告诉两个室友，老师好像发现了点什么端倪，劝他们这几天自己去上课。但当然了，没人听他的话，老猫和阿龙都只当他是太寂寞想要个伴儿。<br>王小明连续好几天没睡好，背叛般的刺激感折磨着他，被他自己伪装成歪曲的正义感。每天上课的时候他都去追问老师，调查进度如何了？<br>老师每一次都耐心并且严肃地跟他保证，还在取证，事情马上就会有个结果。<br>直到三天后，王小明再一次去上课。<br>这一次和以往似乎没什么两样，一样是他在一群仿生人中间孤零零地玩手机，老师则在上面念幻灯片。下课时小明又去询问老师仿生人事件的调查进展，但这次老师不理他了。<br>老师僵硬地收起课本，关掉投影仪，夹着资料夹，和门口那群又一次算法出了bug的仿生人挤成一团。<br>只留下王小明呆呆地站在讲台前。</p>
+<hr>
+<p>3<br>学校里的仿生人越来越多，王小明也变得越来越古怪——这是其他人的说法。在大家眼中，只有王小明像个傻子一样每天去只有仿生人的教室里上课。甚至有人觉得王小明已经疯了。<br>诸如此类的流言愈演愈烈，不过有一天，王小明突然又正常了。他重新启动了仿生人，也不再去上课，每天和其他人一样睡到中午，然后仿生人把他的外卖带回寝室。有人猜测王小明可能是经过了心理干预之类的，总之关于他的流言渐渐消弭了。<br>现在整个年级都是正常人了，可喜可贺。<br>王小明没疯，他仍旧每天早上起床去上课。只有他知道，他是教室里的皇帝。<br>教室里全都是智能不足的仿生人，他是唯一的真人。他可以在课桌上跳舞，在讲台旁边架篝火烧烤，用教室的投影仪玩游戏，甚至可以把仿生人老师的课本换成言情小说，全班一起听冰璃殇泪梦·樱雪祭苏和霸道总裁沈䋴奰的凄美爱情故事，或者用教学楼的广播系统放深海少女，不会有人说他二刺螈。<br>但其他人向他投来的那种看异类的指摘目光实在是非常烦人。为了解决这个问题，小明想出了一个天才的主意——他改掉了仿生小明的程序，让它扮演自己。仿生小明每天中午起床、吃自己带回去的外卖、和老猫阿龙一起打游戏，小明则每天早上起床，在教室里当无上的统治者。<br>其实他也不能确定自己是不是疯了。或者他只是恐惧，恐惧那群动作整齐划一宛如一支军队的仿生人。这种事谁说得清楚呢？<br>没课的时候，小明还是会回到宿舍。为了不让室友发现自己和仿生人互换了身份，他只能睡在床底下的货柜里，而仿生小明则睡在床上。货柜空间狭小又压抑，但小明却毫不感到难受，他只觉得欣喜。<br>他确定自己还活着，他要干正常人本应该干的那些事。<br>这样的日子没过多久，仿生人迎来了一次固件更新。现在仿生人的程序算法更加智能了，它们能适应更多情况，扮演更多角色。这一点小明有了最直观的体会，现在他在教室里高歌的时候，那些仿生人不再彻底视他为空气，而是会向他投来不带任何感情的注视了。下课的时候，它们也不再会卡在门口了。<br>小明调整了仿生小明的程序设定。他要让小明扮演自己，要更像、更不容易被发现破绽——他还为此自学了已经丢掉好久的编程。<br>他成功了，花了一个月的深夜时间，他为仿生小明编写了数万行的繁杂程序。对于自己能想到的一切事态，他都编写好了固定的应对措施。如果小明哪天累了，他随时可以关掉仿生小明的开关，自己做回小明。他满意地躺回货柜里，觉得万无一失。<br>寒假到了，小明把仿生小明留在学校，自己回了家。等到小明回到学校，已经是两个月之后。<br>他继续去当他的教室皇帝，生活照旧。但是这一次，当小明出去上厕所，他才发现教学楼的厕所已经改建了。<br>厕所里老旧开裂的瓷砖被换掉，没有了小便池和洗手台，取而代之的是洁净光滑的白色墙壁。一台台机械设备整齐地摆在厕所里，顶替了原来蹲坑的位置。<br>这是什么？最新锐的马桶？<br>小明虽然有点尿急，但还是走向其中一台设备。这些设备除了看起来相当精密的机械臂之外，还配有一个座椅，小明实在想不通这是干什么用的。他小心翼翼地摸了摸，没想到那台设备忽然动了起来。<br>它的机械臂抓住了小明的肩膀，将他放在那个座椅上。机械臂的力道奇大，小明的肩膀生疼——他正待抱怨，忽然听见机械臂嗡嗡的运转声。<br>机械臂的零件如花朵般舒展开来，带着冰冷精密的美感。它们飞快地运作着，高效而精准地将坐在椅子上的小明拆成了六块，以最节约空间的方式折叠起来，放入仿生人专用的收纳间。<br>——小明不知道的是，由于仿生人实在太多，趁着寒假，人们把已经不会有人使用的厕所改建成了收纳设施。现在仿生人不用待在床底下了，它们待机时将自动前往最近的收纳设施，由专用的机械折叠起来存放。<br>他不用睡床底了，再也不用了。<br>收纳程序的运作状况非常良好，整个过程没有损伤任何一条数据线缆或是电容器，只损坏了几处关节、切断了几处肌肉和韧带，伴有较严重的漏液。由于没有检测到唤醒任务，仿生人收纳系统将在默认的六小时后再一次唤醒休眠中的仿生人。<br>六小时后，收纳系统按照程序输入了唤醒信号，被收纳起来的仿生人却没有开始行动。收纳系统又等待了十八小时以便故障仿生人自检，但始终没有任何信号传来。收纳系统按照处理规程向上级报错，等待检修人员到场，将故障仿生人从收纳间内取出维修。<br>警方将小明从狭小的收纳间里取出来时，他的血已经流干净了。</p>
+<hr>
+<p>5<br>“王小明同学由于事故不幸去世，对此，大家都感到万分悲痛。王小明同学永远地离开了我们，定格在了风华正茂的二十岁。”<br>司仪平静而沉痛的声音在公墓里回荡，但他的脸上却是麻木的。<br>“生为徭役，死为休息……愿他得到永恒的安宁。”<br>司仪念完了悼词，退后一步，示意可以把骨灰盒放进公墓了。捧着骨灰盒的人走上前来，仿生王小明弯下腰，将骨灰盒放进那个小小的位置。<br>仿生小明沉默着为公墓上填进水泥，抹平顶上的泥浆，盖上大理石盖板。一切的最后，他从旁边接过早已准备好的白菊花，俯下身，放在小明的墓上。<br>葬礼就此结束，所有人一同开始鼓掌。时间是精确的五秒，五秒过后，他们鼓掌完毕，整齐划一地转过身去，穿过铁幕般厚重沉郁的晨雾，走向墓园的出口。<br>仿生小明也转过身，将小明的墓碑抛在身后。仿生小明的任务还没有结束，按照小明设定的程序，它将一直运作至小明关闭它的电源为止。<br>也许小明还活着呢。这种事情谁说得清楚呢？</p>
+
+      </section>
+       
+    
+    
+  <div class="nav-container">
+    <!-- reverse left and right to put prev and next in a more logic postition -->
+    
+      <a class="nav-left" href="/copy/atan-bgr/" target="_blank">
+        <span class="nav-arrow">← </span>
+        
+          《捕光人》
+        
+      </a>
+    
+    
+      <a class="nav-right" href="/copy/atan-rgjnb/" target="_blank">
+        
+          《人工纪念碑》
+        
+        <span class="nav-arrow"> →</span>
+      </a>
+    
+  </div>
+
+    
+      <div class="advertisement">
+        <p> 广告：快速学习 Crash Course十分钟速成课 <a target="_blank" rel="noopener" href="https://crashcourse.club/">字幕组网站</a></p>
+      </div>
+    
+    
+      <div id="waline"></div>
+
+<link href="https://cdn.bootcdn.net/ajax/libs/waline/2.15.1/waline.min.css" rel="stylesheet">
+<script src="//cdn.bootcdn.net/ajax/libs/waline/2.15.1/waline.min.js"></script>
+<script defer src="/js/waline-qqavatar.js"></script>
+<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/waline/2.14.9/waline.min.js"></script>-->
+<!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/waline/2.14.9/waline.min.css">-->
+
+<script>
+  // 中文默认
+  const locale = {
+    nick: '昵称',
+    nickError: '昵称不能少于3个英文字符或2个中文汉字',
+    mail: '邮箱(可用QQ邮箱)',
+    mailError: '请填写正确的邮件地址',
+    link: '网址',
+    optional: '可选',
+    placeholder: '' || '说、什么8 \n\n可使用QQ邮箱获取QQ头像，或在gravatar.com注册后使用邮箱绑定头像 \n支持Markdown语法：*斜体*, **粗体**, \# - ###### 1-6级标题, *** 或 --- = 水平分割线, ~~删除线~~, > 引用内容, `代码块`, 1. 序号列表, * 无序列表, ^上角标^, ~下角标~, <br> = 空行, [链接文字](链接地址), ![图片名称](图片地址.png), ',
+    sofa: '来发评论吧~',
+    submit: '提交',
+    like: '喜欢',
+    cancelLike: '取消喜欢',
+    reply: '回复',
+    cancelReply: '取消回复',
+    comment: '评论',
+    refresh: '刷新',
+    more: '加载更多...',
+    preview: '预览',
+    emoji: '表情',
+    uploadImage: '上传图片',
+    seconds: '秒前',
+    minutes: '分钟前',
+    hours: '小时前',
+    days: '天前',
+    now: '刚刚',
+    uploading: '正在上传',
+    login: '登录',
+    logout: '退出',
+    admin: '博主',
+    sticky: '置顶',
+    word: '字',
+    wordHint: '评论字数应在 $0 到 $1 字之间！\n当前字数：$2',
+    anonymous: '匿名',
+    level0: '潜水',
+    level1: '冒泡',
+    level2: '吐槽',
+    level3: '活跃',
+    level4: '话痨',
+    level5: '传说',
+    gif: '表情包',
+    gifSearchPlaceholder: '搜索表情包',
+    profile: '个人资料',
+    approved: '通过',
+    waiting: '待审核',
+    spam: '垃圾',
+    unsticky: '取消置顶',
+    oldest: '按倒序',
+    latest: '按正序',
+    hottest: '按热度',
+    reactionTitle: '你认为这篇文章怎么样？',
+  };
+
+  Waline.init({
+    el: "#waline",
+    serverURL: "waline.voiiu.com",
+    appId: "" || "M2JD6yGQhefhH2O0aSjFfclc-MdYXbMMI",
+    appKey: "" || "arEPHdbMnKwMjQgiWsLgw34N",
+    login: "disable",
+    avatarCDN: "https://gravatar.loli.top/avatar/",
+    //avatar: '',
+    placeholder: "",
+    meta: ["nick", "mail"],
+    requiredMeta: [""],
+    pageview: "true" && "",
+    emoji: [
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/tieba",
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/weibo",
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/qq",
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/alus",
+      "https://testingcf.jsdelivr.net/gh/Saidosi/azuki-emoji-for-waline@1.0/azukisan",
+      "https://testingcf.jsdelivr.net/gh/norevi/blob-emoji-for-waline@2.0/blobs-gif",
+    ],
+    locale,
+  });
+</script>
+<script>
+  // emoji
+  $('.wl-actions').append("<a href=https://emoji.zhuochi.org target=_blank id=wl-emoji-wrapper><img src=/images/emoji.png class=wl-action id=wl-emoji></a>")
+
+  // Clean TEXTAREA 
+  //$(".wl-cards").change(function () {
+  //  alert('changed')
+    //('#wl-edit').html("")
+  //})
+
+  //$(".primary .wl-btn").click(function () {
+    //document.getElementsByClassName('wl-num')[0].innerHTML ++
+  //})
+</script>
+    
+    
+    
+      <div class="qrcode">
+    <img id="share-qrcode" class="qrcode-image"/>
+    <div class="qrcode-notice">保存二维码，分享此文章</div>
+</div>
+
+<!--<script type="text/javascript" src="/js/qrious.min.js"></script>-->
+<script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/qrious/4.0.2/qrious.min.js" ></script>
+<script>
+    // qrcode
+    let qr = new QRious({
+        element: document.getElementById('share-qrcode'),
+        value: document.location.href
+    })
+
+    $("#share-qrcode").click(function () {
+        let img = document.getElementById('share-qrcode')
+        let url = img.src
+        let a = document.createElement('a')
+        let down_event = new MouseEvent('click')
+        a.download = 'CloudPool浊池-《王小明与王小明》'
+        a.href = url
+        a.dispatchEvent(down_event)
+    })
+</script>
+    
+  </article>
+</main>
+
+<script>
+    (function () {
+      var url = "https://zhuochi.org/copy/atan-wxmywxm/";
+      var banner = "";
+      if (banner !== "" && banner !== "undefined" && banner !== "null") {
+        $("#article-banner").css({
+          "background-image": "url(" + banner + ")",
+        });
+      } else {
+        $("#article-banner").geopattern(url);
+      }
+      $(".header").removeClass("fixed-header");
+    })();
+  </script>
+<script>
+  !function () {
+    var OriginTitile = document.title;
+    var titleTime;
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) {
+        document.title = "(つェ⊂)看不见我看不见我~ " + OriginTitile;
+        clearTimeout(titleTime);
+      } else {
+        document.title = "(*´∇｀*) 被你发现啦~ " + OriginTitile;
+        titleTime = setTimeout(function () {
+          document.title = OriginTitile;
+        }, 1500);
+      }
+    });
+  }
+</script>
+
+<script>
+  // error image
+  $(".markdown-content img").on("error", function () {
+    $(this).attr("src", "/images/error.png");
+    $(this).css({cursor: "default",});
+  });
+</script>
+
+    <aside class="sidebar">
+  <span class="scroll-top fa fa-arrow-up"></span>
+  <span class="fa fa-share-alt share-icon">
+    <span class="list-icon">
+      
+        <a href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=https://zhuochi.org/copy/atan-wxmywxm/index.html&title=《王小明与王小明》&pics=https://zhuochi.org/images/logo.svg&desc=&summary=CloudPool浊池是由年轻人管理的博客" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659969569042" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1231"><path d="M1023.210667 395.690667c-2.005333-6.08-7.381333-10.410667-13.781333-10.944l-347.114667-29.802667L526.634667 33.984C524.117333 28.096 518.4 24.256 512 24.256s-12.181333 3.861333-14.677333 9.749333l-135.616 320.938667L14.570667 384.746667c-6.357333 0.533333-11.797333 4.864-13.781333 10.944-1.941333 6.101333-0.106667 12.778667 4.714667 16.96l263.338667 228.138667L189.888 980.16c-1.429333 6.208 1.002667 12.757333 6.122667 16.512 5.205333 3.733333 12.117333 4.010667 17.642667 0.682667L512 817.450667l298.282667 179.946667c2.581333 1.557333 5.418667 2.346667 8.32 2.346667 3.221333 0 6.528-1.002667 9.344-3.008 5.162667-3.84 7.594667-10.368 6.122667-16.576l-62.442667-268.352c26.730667-13.482667 56.277333-36.245333 56.277333-36.245333s-116.864 57.066667-536.341333 29.205333L595.626667 484.437333c0 0-11.968-18.581333-392.981333-31.872-25.408-0.917333 310.677333-63.722667 558.933333-10.645333L456.298667 660.906667c0 0 122.453333 18.197333 307.328 16.085333l-8.448-36.181333 263.36-228.16C1023.381333 408.469333 1025.216 401.792 1023.210667 395.690667z" p-id="1232" fill="#04b2f1"></path></svg>
+        </a> 
+      
+      
+        <a href="https://service.weibo.com/share/share.php?url=https://zhuochi.org/copy/atan-wxmywxm/index.html&title=《王小明与王小明》&pic=https://zhuochi.org/images/logo.svg&summary=CloudPool浊池是由年轻人管理的博客" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659970330786" class="icon" viewBox="0 0 1138 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="3639" fill="#04b2f1"><path d="M914.432 518.144q27.648 21.504 38.912 51.712t9.216 62.976-14.336 65.536-31.744 59.392q-34.816 48.128-78.848 81.92t-91.136 56.32-94.72 35.328-89.6 18.944-75.264 7.68-51.712 1.536-49.152-2.56-68.096-10.24-78.336-21.504-79.872-36.352-74.24-55.296-59.904-78.848q-16.384-29.696-22.016-63.488t-5.632-86.016q0-22.528 7.68-51.2t27.136-63.488 53.248-75.776 86.016-90.112q51.2-48.128 105.984-85.504t117.248-57.856q28.672-10.24 63.488-11.264t57.344 11.264q10.24 11.264 19.456 23.04t12.288 29.184q3.072 14.336 0.512 27.648t-5.632 26.624-5.12 25.6 2.048 22.528q17.408 2.048 33.792-1.536t31.744-9.216 31.232-11.776 33.28-9.216q27.648-5.12 54.784-4.608t49.152 7.68 36.352 22.016 17.408 38.4q2.048 14.336-2.048 26.624t-8.704 23.04-7.168 22.016 1.536 23.552q3.072 7.168 14.848 13.312t27.136 12.288 32.256 13.312 29.184 16.384zM656.384 836.608q26.624-16.384 53.76-45.056t44.032-64 18.944-75.776-20.48-81.408q-19.456-33.792-47.616-57.344t-62.976-37.376-74.24-19.968-80.384-6.144q-78.848 0-139.776 16.384t-105.472 43.008-72.192 60.416-38.912 68.608q-11.264 33.792-6.656 67.072t20.992 62.976 42.496 53.248 57.856 37.888q58.368 25.6 119.296 32.256t116.224 0.512 100.864-21.504 74.24-33.792zM522.24 513.024q20.48 8.192 38.912 18.432t32.768 27.648q10.24 12.288 17.92 30.72t10.752 39.424 1.536 42.496-9.728 38.912q-8.192 18.432-19.968 37.376t-28.672 35.328-40.448 29.184-57.344 18.944q-61.44 11.264-117.76-11.264t-88.064-74.752q-12.288-39.936-13.312-70.656t16.384-66.56q13.312-27.648 40.448-51.712t62.464-38.912 75.264-17.408 78.848 12.8zM359.424 764.928q37.888 3.072 57.856-18.432t21.504-48.128-15.36-47.616-52.736-16.896q-27.648 3.072-43.008 23.552t-17.408 43.52 9.728 42.496 39.424 21.504zM778.24 6.144q74.752 0 139.776 19.968t113.664 57.856 76.288 92.16 27.648 122.88q0 33.792-16.384 50.688t-35.328 17.408-35.328-14.336-16.384-45.568q0-40.96-22.528-77.824t-59.392-64.512-84.48-43.52-96.768-15.872q-31.744 0-47.104-15.36t-14.336-34.304 18.944-34.304 51.712-15.36zM778.24 169.984q95.232 0 144.384 48.64t49.152 146.944q0 30.72-10.24 43.52t-22.528 11.264-22.528-14.848-10.24-35.84q0-60.416-34.816-96.256t-93.184-35.84q-19.456 0-28.672-10.752t-9.216-23.04 9.728-23.04 28.16-10.752z" p-id="3640"></path></svg>
+        </a>
+      
+      
+        <a href="https://www.douban.com/recommend/?url=https://zhuochi.org/copy/atan-wxmywxm/index.html&title=《王小明与王小明》&pic=https://zhuochi.org/images/logo.svg&summary=CloudPool浊池是由年轻人管理的博客" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659970941550" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1055"><path d="M88 72.9h848v95.5H88z" p-id="1056" fill="#04b2f1"></path><path d="M88 72.9h848v95.5H88zM862.3 641.5V268H161.7v373.5h700.6zM263.4 363.4h498.4v182.5H263.4V363.4z" p-id="1057" fill="#04b2f1"></path><path d="M862.3 641.5V268H161.7v373.5h700.6zM263.4 363.4h498.4v182.5H263.4V363.4zM710.8 856.7c30.5-46.7 59.3-100.8 85.9-162.2l-102-37.2c-26.5 72.8-57.4 139.4-92.5 199.4H424.9c-29.4-77.8-62.6-144.3-99.8-199.4l-93.8 37.2c38.6 58 69.9 111.9 93.8 162.2H64v94.5h896v-94.5H710.8z" p-id="1058" fill="#04b2f1"></path><path d="M710.8 856.7c30.5-46.7 59.3-100.8 85.9-162.2l-102-37.2c-26.5 72.8-57.4 139.4-92.5 199.4H424.9c-29.4-77.8-62.6-144.3-99.8-199.4l-93.8 37.2c38.6 58 69.9 111.9 93.8 162.2H64v94.5h896v-94.5H710.8z" p-id="1059" fill="#04b2f1"></path></svg>
+        </a>
+      
+      
+        <a href="http://tieba.baidu.com/f/commit/share/openShareApi?url=https://zhuochi.org/copy/atan-wxmywxm/index.html&title=《王小明与王小明》&pic=https://zhuochi.org/images/logo.svg&desc=CloudPool浊池是由年轻人管理的博客" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659968685554" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1659"><path d="M1024 862.826667a161.152 161.152 0 0 1-161.173333 161.173333h-701.632a161.152 161.152 0 0 1-161.173334-161.173333v-701.632a161.194667 161.194667 0 0 1 161.173334-161.173334h701.632a161.194667 161.194667 0 0 1 161.173333 161.173334v701.632z" fill="#04b2f1" p-id="1660"></path><path d="M828.842667 250.261333h-173.461334v-36.522666a17.066667 17.066667 0 0 0-17.066666-17.066667h-41.941334a17.045333 17.045333 0 0 0-17.045333 17.066667v263.296h-24.896a17.066667 17.066667 0 0 0-17.045333 17.066666V810.218667a17.066667 17.066667 0 0 0 17.045333 17.088h257.365333a17.066667 17.066667 0 0 0 17.066667-17.088v-58.986667h-0.256v-198.144h0.256v-58.986667a17.066667 17.066667 0 0 0-17.066667-17.066666H655.381333v-150.72h173.461334a17.066667 17.066667 0 0 0 17.066666-17.066667v-41.941333a17.066667 17.066667 0 0 0-17.066666-17.045334z m-93.376 302.848c9.429333 0 17.045333 7.637333 17.045333 17.066667v164.010667a17.066667 17.066667 0 0 1-17.045333 17.066666h-104.981334a17.045333 17.045333 0 0 1-17.045333-17.066666v-164.010667a17.066667 17.066667 0 0 1 17.045333-17.066667h104.981334zM197.909333 657.408h41.941334a17.088 17.088 0 0 0 17.088-17.088v-358.741333h174.528v358.741333a17.066667 17.066667 0 0 0 17.045333 17.088h41.941333a17.088 17.088 0 0 0 17.088-17.088v-417.749333c0-9.408-7.658667-17.066667-17.088-17.066667h-292.522666a17.066667 17.066667 0 0 0-17.045334 17.066667v417.749333a17.024 17.024 0 0 0 17.024 17.088z" fill="#FFFFFF" p-id="1661"></path><path d="M492.970667 739.2v-0.170667a110.656 110.656 0 0 1-110.656-110.656h-0.106667v-296.042666a17.066667 17.066667 0 0 0-17.066667-17.045334h-41.941333a17.045333 17.045333 0 0 0-17.045333 17.045334v296.042666h-0.362667a110.677333 110.677333 0 0 1-110.677333 110.656v0.170667a17.045333 17.045333 0 0 0-17.045334 17.066667v42.112a17.066667 17.066667 0 0 0 17.045334 17.066666 186.602667 186.602667 0 0 0 148.928-74.176 186.624 186.624 0 0 0 148.928 74.176 17.045333 17.045333 0 0 0 17.045333-17.066666v-42.112a17.024 17.024 0 0 0-17.045333-17.066667z" fill="#FFFFFF" p-id="1662"></path><path d="M865.450667 873.685333c17.664-3.797333 15.253333-24.896 14.741333-29.504-0.874667-7.125333-9.237333-19.541333-20.586667-18.581333-14.293333 1.28-16.362667 21.930667-16.362666 21.930667-1.962667 9.557333 4.608 29.952 22.208 26.154666z m18.752 36.693334c-0.533333 1.493333-1.664 5.290667-0.682667 8.597333 1.962667 7.402667 8.405333 7.744 8.405333 7.744h9.258667v-22.613333h-9.898667a10.837333 10.837333 0 0 0-7.082666 6.272z m14.037333-72.085334c9.749333 0 17.621333-11.221333 17.621333-25.109333 0-13.866667-7.872-25.088-17.621333-25.088-9.728 0-17.642667 11.221333-17.642667 25.088 0 13.888 7.893333 25.109333 17.642667 25.109333z m41.984 1.664c13.034667 1.706667 21.418667-12.202667 23.082667-22.762666 1.706667-10.538667-6.698667-22.762667-15.936-24.853334-9.258667-2.112-20.778667 12.672-21.845334 22.357334-1.258667 11.797333 1.685333 23.573333 14.698667 25.258666z m31.936 61.973334s-20.16-15.594667-31.936-32.448c-15.957333-24.874667-38.634667-14.762667-46.208-2.112-7.552 12.650667-19.328 20.629333-20.992 22.741333-1.685333 2.090667-24.362667 14.336-19.328 36.672 5.034667 22.336 22.72 21.909333 22.72 21.909333s13.013333 1.28 28.138667-2.112c15.104-3.349333 28.117333 0.832 28.117333 0.832s35.306667 11.818667 44.970667-10.944c9.621333-22.72-5.482667-34.538667-5.482667-34.538666z m-60.394667 33.877333h-22.954666c-9.92-1.984-13.866667-8.746667-14.357334-9.898667-0.490667-1.173333-3.306667-6.613333-1.813333-15.850666 4.288-13.866667 16.490667-14.848 16.490667-14.848h12.224v-15.04l10.410666 0.149333v55.488z m42.752-0.170667h-26.410666c-10.24-2.624-10.709333-9.92-10.709334-9.92v-29.205333l10.709334-0.170667v26.261334c0.64 2.794667 4.117333 3.306667 4.117333 3.306666h10.88v-29.397333h11.413333v39.125333z m37.376-77.994666c0-5.034667-4.181333-20.224-19.733333-20.224-15.552 0-17.642667 14.336-17.642667 24.469333 0 9.685333 0.810667 23.189333 20.16 22.741333 19.328-0.426667 17.216-21.909333 17.216-26.986666z" fill="#FFFFFF" p-id="1663"></path></svg>
+        </a>
+      
+      
+        <a href="https://connect.qq.com/widget/shareqq/index.html?url=https://zhuochi.org/copy/atan-wxmywxm/index.html&title=《王小明与王小明》&pic=https://zhuochi.org/images/logo.svg&desc=&summary=CloudPool浊池是由年轻人管理的博客" aria-hidden="true" target="_blank">
+        <svg t="1659969969936" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2714"><path d="M866.991 707.772c0 0-25.341 69.55-71.877 132.071 0 0 83.050 28.439 76.137 102.196 0 0 2.709 82.331-177.613 76.685 0 0-126.817-9.898-164.88-63.85h-33.53c-38.018 54.006-164.834 63.85-164.834 63.85-180.431 5.7-177.556-76.685-177.556-76.685-7.025-73.756 76.081-102.196 76.081-102.196-46.475-62.519-71.875-132.071-71.875-132.071-112.759 183.141-101.477-25.567-101.477-25.567 21.141-123.495 109.949-204.384 109.949-204.384-12.677-112.157 33.805-132.078 33.805-132.078 9.68-346.979 306.473-340.887 312.675-340.722 6.249-0.163 302.931-6.256 312.72 340.723 0 0 46.538 19.866 33.812 132.078 0 0 88.751 80.89 109.886 204.384 0.055-0.001 11.285 208.707-101.421 25.566v0 0z" p-id="2715" fill="#04b2f1"></path></svg>
+        </a>
+      
+    </span>
+  </span>
+</aside>
+    <footer class="app-footer">
+  <p class="copyright">
+    Copyright &copy; 2017 - 2023, CloudPool浊池, All Rights Reserved <br/>
+    本站为基于<a href="https://hexo.io" target="_blank">Hexo</a>的静态博客， <span id="busuanzi_container_site_pv">总访问量 <span id="busuanzi_value_site_pv"></span> 次</span><!--，来自 <span id="busuanzi_value_site_uv"></span> 个 IP--><br/>
+    主题源自 <a target="_blank" rel="noopener" href="https://github.com/yanm1ng/hexo-theme-vexo">Vexo</a> by <a target="_blank" rel="noopener" href="https://github.com/yanm1ng">yanm1ng</a>，感谢 <a target="_blank" rel="noopener" href="https://github.com/MoePlayer/APlayer">APlayer</a> by <a target="_blank" rel="noopener" href="https://github.com/DIYgod">DIYgod</a> 
+</footer>
+
+<script>
+  function async(u, c) {
+    var d = document, t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0];
+    o.src = u;
+    if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+    s.parentNode.insertBefore(o, s);
+  }
+</script>
+
+<script src="/js/script.js"></script>
+ <!--无法移至head.js中，原因不明-->
+<script type="text/javascript" src="/js/busuanzi.min.js" async></script>
+
+
+  </body>
+</html>

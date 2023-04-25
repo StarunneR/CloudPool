@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta http-equiv="Access-Control-Allow-Origin" content="*">
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport" />
+  <meta name="description" content="CloudPool浊池是由年轻人管理的博客">
+  <meta name="keyword" content="浊池, CloudPool, CloudPool浊池">
+  
+  <link rel="shortcut icon" type="image/ico" href="/images/cloudpool-favicon.ico">
+  
+  <title>
+    
+    《故事新编》（拟题） | CloudPool浊池
+    
+  </title>
+  <!-- CSS -->
+  <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <link href="https://cdn.bootcdn.net/ajax/libs/nprogress/0.2.0/nprogress.min.css" rel="stylesheet"/>
+  
+<link rel="stylesheet" href="/css/style.css">
+
+
+  <!-- JS -->
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/geopattern/1.2.3/js/geopattern.min.js"></script>
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/nprogress/0.2.0/nprogress.min.js"></script>
+  
+    <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+            <span class="search-icon">
+                <i class="fa fa-search"></i>
+            </span>
+            <div class="search-input-container">
+                <input autocomplete="off" autocapitalize="off" maxlength="80"
+                    placeholder="今天想看什么w" spellcheck="false"
+                    type="" class="search-input">
+            </div>
+            <span class="popup-btn-close">
+                <i class="fa fa-times-circle"></i>
+            </span>
+        </div>
+        <div id="search-result" class="search-result-container no-result">
+            <div id="no-result">
+                <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+            </div>
+        </div>
+    </div>
+</div>
+    
+<script src="/js/local-search.js"></script>
+
+
+  
+  <!-- Fonts -->
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+  <body>
+    <header class="header fixed-header">
+  <nav class="header-container">
+    <a class="home-link" href="/">
+      <img class="logo" src="/images/logo.png" alt="logo"/>
+      <span class="eng_mark">CloudPool</span><span class="chn_mark">浊池</span>
+    </a>
+    <ul class="right-list">
+      
+        <li class="list-item">
+          
+            <a href="/" class="item-link">主页</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/category/" class="item-link">分类</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/tag/" class="item-link">标签</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/archive/" class="item-link">归档</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/mag/" class="item-link">网刊</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/one/" class="item-link">一言</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a target="_blank" rel="noopener" href="//pan.zhuochi.org/CloudShare/" class="item-link">网盘</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="//<emoji>" class="item-link">( ^ω^)</a>
+          
+        </li>
+      
+      
+        <li class="list-item">
+    <a role="button" class="item-link popup-trigger">
+        <i class="fa fa-search fa-fw"></i>
+    </a>
+</li>
+      
+    </ul>
+    <div class="menu">
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+    </div>
+    <div class="menu-mask">
+      <ul class="menu-list">
+        
+          <li class="menu-item">
+            
+              <a href="/" class="menu-link">主页</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/category/" class="menu-link">分类</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/tag/" class="menu-link">标签</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/archive/" class="menu-link">归档</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/mag/" class="menu-link">网刊</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/one/" class="menu-link">一言</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a target="_blank" rel="noopener" href="//pan.zhuochi.org/CloudShare/" class="menu-link">网盘</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="//<emoji>" class="menu-link">( ^ω^)</a>
+            
+          </li>
+        
+        
+          <li class="menu-item">
+    <a role="button" class="item-link popup-trigger">
+        <i class="fa fa-search fa-fw"></i>
+    </a>
+</li>
+        
+      </ul>
+    </div>
+  </nav>
+</header>
+
+    <div id="article-banner">
+  <h2 class="post-title">《故事新编》（拟题）</h2>
+  
+   
+    <p class="post-date">2023-03-16</p>
+  
+  <div class="arrow-down">
+    <a href="javascript:;"></a>
+  </div>
+</div>
+
+  <div class="catalog-container" id="catalog">
+  <div class="toc-main">
+    <div class="toc-title">目录</div>
+    
+      <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#1"><span class="toc-nav-text">1</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#2"><span class="toc-nav-text">2</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#3"><span class="toc-nav-text">3</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#4"><span class="toc-nav-text">4</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#5"><span class="toc-nav-text">5</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#6"><span class="toc-nav-text">6</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#7"><span class="toc-nav-text">7</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#8"><span class="toc-nav-text">8</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#9"><span class="toc-nav-text">9</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#10"><span class="toc-nav-text">10</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#11"><span class="toc-nav-text">11</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#12"><span class="toc-nav-text">12</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#13"><span class="toc-nav-text">13</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#14"><span class="toc-nav-text">14</span></a></li></ol>
+    
+  </div>
+</div>
+
+<main class="app-body flex-box">
+  <article class="post-article">
+    
+      <div class="front-parent" id="front-parent">
+  <div class="front-child" id="front-fontsize">
+    <label class="front-label" for="fontsize-range">字体大小</label>
+    <input type="range" min="50" max="200" id="fontsize-slider" step="1" value="100" />
+    <span id="fontsize-value"></span>
+  </div>
+
+  <div class="front-child" id="front-fontselector">
+    <label class="front-label" for="font-select">更换字体</label>
+    <select name="font" id="font">
+      <option value="default">默认</option>
+      <option value="heiti">黑体</option>
+      <option value="light-heiti">黑体（细体）</option>
+      <option value="lighter-heiti">黑体（极细）</option>
+      <option value="songti">宋体</option>
+      <option value="light-songti">宋体（细体）</option>
+      <option value="kaiti">楷体</option>
+      <option value="fangsong">仿宋</option>
+    </select>
+  </div>
+
+  <div class="front-child" id="front-indent">
+    <label class="front-label" for="TextIndent">段首缩进</label>
+    <input type="checkbox" id="indent-checkbox" name="text-indent" value="" />
+  </div>
+</div>
+
+<h1 class="article-author">
+  
+    4tCmpYCf @bog.ac
+      
+</h1>
+
+<script>
+  $(document).ready(
+    function () {
+      let FontChanger = function () {
+        if (this.value == "default") {
+          $(".markdown-content").css({ "font-family": "Arial, Helvetica, sans-serif" });
+          $(".markdown-content").css({ "font-weight": 'initial' });
+        } if (this.value == "heiti") {
+          $(".markdown-content").css({ "font-weight": '400' });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',sans-serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400&display=swap rel=stylesheet>");
+        } else if (this.value == "light-heiti") {
+          $(".markdown-content").css({ "font-weight": '300' });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',sans-serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300&display=swap rel=stylesheet>");
+        } else if (this.value == "lighter-heiti") {
+          $(".markdown-content").css({ "font-weight": '100' });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',sans-serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100&display=swap rel=stylesheet>");
+        } else if (this.value == "songti") {
+          $(".markdown-content").css({ "font-weight": '400' });
+          $(".markdown-content").css({ "font-family": "'Noto Serif SC',serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400&display=swap rel=stylesheet>");
+        } else if (this.value == "light-songti") {
+          $(".markdown-content").css({ "font-weight": '200' });
+          $(".markdown-content").css({ "font-family": "'Noto Serif SC',serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200&display=swap rel=stylesheet>");
+        } else if (this.value == "kaiti") {
+          $(".markdown-content").css({ "font-weight": 'initial' });
+          $(".markdown-content").css({ "font-family": "Arial,'STKaiti','KaiTi','FZKai-Z03S',Serif" });
+          $("head").append("<link href=https://cdn.jsdelivr.net/npm/cn-fontsource-fz-kai-z-03-s/font.css rel=stylesheet>");
+        } else if (this.value == "fangsong") {
+          $(".markdown-content").css({ "font-weight": 'initial' });
+          $(".markdown-content").css({ "font-family": "Arial,'STFangsong','FangSong','FangSong_GB2312','FZFangSong-Z02S',Serif" });
+          $("head").append("<link href=https://cdn.jsdelivr.net/npm/cn-fontsource-fz-fang-song-z-02-s/font.css rel=stylesheet>");
+        }
+      };
+      $("#font").on('change', FontChanger);
+      $("#font").on('click', FontChanger);
+    });
+
+  $("#indent-checkbox").change(function () {
+    if (this.checked) {
+      $(".markdown-content > p").css({ "text-indent": "2em" });
+    } else {
+      $(".markdown-content > p").css({ "text-indent": "0" });
+    }
+  });
+
+  $("#fontsize-value").html("100%");
+  let rangeSwitch = function () {
+    let fontsizePercent = $("#fontsize-slider").val();
+    $(".markdown-content").css("font-size", fontsizePercent + "%")
+    $("#fontsize-value").html(fontsizePercent + "%")
+  }
+  $("#fontsize-slider").on("input", rangeSwitch)
+</script>
+      <section class="markdown-content" id="content">
+        <pre><code>来源：http://bog.ac/t/932802/1
+</code></pre>
+<h3 id="1"><a href="#1" class="headerlink" title="1"></a>1</h3><p>精卫发现面前的海怎么也填不满。</p>
+<p>她几百年前游泳的时候被海水淹死，从此发誓化身为一只小鸟，从最西边的山上衔走树枝，送到最东边的海里。她要把海洋填满，从此再也不让别人淹死，不管这需要多久，多久。</p>
+<p>她照例飞回来丢下一颗石子，却没有注意到，石子在落入海面的那一刹那，消失不见。</p>
+<h3 id="2"><a href="#2" class="headerlink" title="2"></a>2</h3><p>愚公发现面前的山怎么也移不完。</p>
+<p>他的爷爷，或者爷爷的爷爷，就早已发下宏愿，要他们这一支的子孙后代永永远远的把山上的石头搬去远方。每过一代，愚公就会懒上一些。到了这一代，愚公每年只拿起一颗石子，就往远方跑去。爷爷说过，一点点移，山也总会移完，那么每次移走多少，倒不重要了。但愚公也仍旧发现了异常：移了这么久，山却没什么变化。</p>
+<p>愚公的妻子埋怨的看着自己的丈夫再度找借口出门远游，手里只拎着一枚鹅卵石那么大的石子。她没有注意到，愚公刚走，天上就掉下来一块石头，落在山顶。</p>
+<h3 id="3"><a href="#3" class="headerlink" title="3"></a>3</h3><p>身披战甲的吴刚正拿着一把大大的斧头，在月亮上砍伐桂树。他砍下去多少，下一次，桂树就要长回去多少。到最后，月桂树的疤都结了厚厚一圈，树却无损分毫。</p>
+<p>月亮上本来就有兔子。或者说，地面上的兔子就是从月亮上来的。一只小兔子问吴刚，你要砍树砍到什么时候？你为什么要在这棵树上纠结？</p>
+<p>吴刚说，斧子是用我的心做成的，只要有一天，斧头足够锋利，我就能一斧子砍断桂树。而只有我等来一个人，浇灭我心里最后一点希望，我的斧子才能变得冷酷锐利。</p>
+<p>小兔子跑开了。</p>
+<h3 id="4"><a href="#4" class="headerlink" title="4"></a>4</h3><p>嫦娥的老家就在太行和王屋山中间。这么看，嫦娥也许会说河北方言。</p>
+<p>“你说你哩真是个省俭人。”嫦娥和后羿坐在两座山中间看星星，苦等着等不来的快递。愣头青后羿当年一箭射下九个太阳，天庭奖励了两颗不死仙丹，结果后羿舍不得快递费，让人用牛车拉来。还说什么，我们白头偕老，仙丹送来刚好。</p>
+<p>那辆牛车至今卡在愚公没搬完的王屋山边，进退不得。</p>
+<h3 id="5"><a href="#5" class="headerlink" title="5"></a>5</h3><p>给他们送仙丹的人正是当年的玉兔。玉兔心疼吴刚，偷听来了吴刚的命运：天庭说他注定碰见一个被贬广寒的仙子，之后才能领教爱情的冷彻。再然后，他才能从这无尽的徒劳中解脱。</p>
+<p>于是玉兔自告奋勇，领命去给嫦娥送药。给嫦娥送了药，她就要因为吃下仙丹奔向月亮，再然后无情的拒绝吴刚的求爱，再再然后让他砍下桂树。</p>
+<p>为了确保让嫦娥能够奔月，玉兔藏起了一颗仙丹。嫦娥不知道，自己给后羿喂的那粒仙丹，只是糯米团子。她也不知道，天庭的人一直默许这这些，他们永远看不得人终成眷属。</p>
+<h3 id="6"><a href="#6" class="headerlink" title="6"></a>6</h3><p>玉兔的路被庞大的王屋山挡的死死的。她问愚公，到底什么时候才能搬完，愚公说，早八辈子就听见玉帝被他们的模范事迹感动，决定派一个大力士下来帮他们搬山。玉兔问大力士呢？愚公说，也不知道他怎么来的这么慢，只知道他名叫吴刚。</p>
+<p>玉兔差点听吐血。吴刚下不来，山移不走。山移不走，嫦娥上不去月亮，嫦娥上不去月亮，吴刚就下不来。</p>
+<p>她说，大不了我也在这住下来陪你一块搬砖。她刚搬起一块石头，就听见远方的精卫打了个大大的喷嚏。</p>
+<p>“不行，填海的进度太慢，我得叫个帮手。”</p>
+<h3 id="7"><a href="#7" class="headerlink" title="7"></a>7</h3><p>老鹰正啄食着普罗米修斯那甘美的胰脏。普罗米修斯因为僭越神火而被关押在悬崖之上，他是不死的神人，宙斯就派来一只老鹰，日夜啄食他新长出的肉。</p>
+<p>宙斯说，这一天的尽头是人们忘记用火为止。直到某一天，连营火和炊烟都消失不见，连野兽偶然衔走的，燃着星火的枝条也不见，鹰才会离去，他才可以被放走。</p>
+<p>普罗米修斯只有等待。但是今天，他看见老鹰没来。半道上，老鹰被一只长得很五颜六色的鸟拐走了。</p>
+<h3 id="8"><a href="#8" class="headerlink" title="8"></a>8</h3><p>普罗米修斯认识一个好兄弟叫西西弗斯。西西弗斯受到的刑罚更惨，上帝逼迫他扛一块大石头上到众山之颠，再任由它滚下来。西西弗斯就再走下山去，步行万里，找到那块巨石，再次往山上推。</p>
+<p>有一回西西弗斯路过了绑住他的十字架。他说，如果我获救了就去山上帮你稳住石头。西西弗斯说，如果我稳住了石头，就来救你。</p>
+<p>普罗米修斯意识到，那个听起来像讽刺一样的诺言，如今到了实践的时候。</p>
+<h3 id="9"><a href="#9" class="headerlink" title="9"></a>9</h3><p>玉兔多少还是比愚公聪明。没过多久，她就发现了事情的本质：有东西往山上丢石子。</p>
+<p>“我见过这种石子。”愚公拿起一粒。“那是昆仑之西，岁月无法触及之地的石子。传说，只有精卫可以飞得那么远，那么远，衔来这种石子。”</p>
+<p>“可是精卫填的不应该是海吗？”<br>“也许是时光干扰了地磁偏转让她误会。地质学的角度上看，所有陆地，都曾经是海。”<br>月兔坐了下来，叹了一口气。精卫在等待大海填满，愚公在等待吴刚下凡。嫦娥在等待她的仙丹，吴刚在等待嫦娥。她是唯一的变量，但似乎没有用，又会有存在补上她带来的些许改变，然后一切回归一种动态的永恒。</p>
+<p>直到一块很大很大的石头带着两个古希腊壮汉一口气撞在了山上。</p>
+<h3 id="10"><a href="#10" class="headerlink" title="10"></a>10</h3><p>阿特拉斯注定永恒撑起天穹直到有人拿来金苹果，喀戎注定往返于冥界直到有人拿起他的浆只，阿基里斯永远追逐着一只自己追不上的缓慢乌龟，徐福注定永远迷航在蓬莱仙岛，带不回玉兔藏起来的长生不死药。世界上有太多求之不得，以至于求的过程已经成为一种习惯，不曾想到过得到之后的结果。</p>
+<p>两个希腊大力士本想稳住石头，却不小心被它卷下了山。他们惯常搬山运河，听说了玉兔和愚公的请求，吭哧吭哧的把太行和王屋山搬到了别人家门前。看起来新位置附近没有愚公，因为这两座山再也没移动过。</p>
+<p>玉兔驾着牛车，送来了不死仙丹和糯米团子。她再三嘱咐嫦娥先吃，生怕最后是后羿飞了天和吴刚大眼瞪小眼。吃了以后，嫦娥的“真dei吃”还没说完，就呲溜一下朝天突破了第二宇宙速度直达月球。</p>
+<p>玉兔揪着嫦娥的腿飞了三十万千米，兔毛都被冻掉一圈。她也不知道预言里吴刚如何一见嫦娥就心灰意冷的，但仍希望他能磨利手中的斧子，把桂树斩草除根。</p>
+<h3 id="11"><a href="#11" class="headerlink" title="11"></a>11</h3><p>吴刚也记不清自己在这里砍了多久的树了。他一直在等待那个女人，那个传说中像月亮一样冷的女人。传说中她背叛了丈夫心灵冷若冰霜，只有她能够让自己的心也冷作一块寒铁。</p>
+<p>她上来了。带着一只炸毛的兔子。</p>
+<p>“求求你，只要说一句，‘我不爱你’，我就可以如愿以偿，一斧子砍倒桂树，离开这里……”他心里想着。不管他爱没爱过嫦娥，不管嫦娥爱没爱过他，只要这句话出来，他就得救了。</p>
+<p>“你是谁啊？”嫦娥挠着头。“你也吃糯米团子了？”</p>
+<h3 id="12"><a href="#12" class="headerlink" title="12"></a>12</h3><p>由于在地面等了太久太久，嫦娥早就老成没牙老奶奶了。嫦娥奶奶听力不好，把吴刚的“我不爱你”听成了“莱阳大梨”，说了半天的大梨，可还是没让吴刚满意。</p>
+<p>吴刚被命运的捉弄气得毫无办法。这一天是到来了，但来的太不巧。命定之人的确到了，但天庭曾经预言过的命运并没有写明，他需要多久才能把心冷下来。</p>
+<p>等到嫦娥奶奶回宫打盹的时候，玉兔一个人跑到了吴刚的脚边，悄悄问他，真的只用说那几个字就行吗？</p>
+<p>吴刚点点头。“玉帝当年就是那么说的。在遇见命定之人以后，你就能冷下心灵，砍断桂树。”</p>
+<p>“那么，”玉兔犹豫着清了清嗓子。“吴刚，我不爱你。”</p>
+<p>吴刚那柄斧子不知为何，突然锋利异常，一下，就砍断了桂树。</p>
+<h3 id="13"><a href="#13" class="headerlink" title="13"></a>13</h3><p>玉兔大概不会不爱吴刚，要不然也不会陪着他那么久。他砍树干，她就帮他磨树皮。他砍树枝，她就帮他倒树叶。就像后羿爱着嫦娥，像愚公的妻子爱着愚公，像那只兴奋的老鹰对精卫暗生情愫，她也早已在漫长的陪伴里对吴刚有了感情。</p>
+<p>而很久以后她才清楚，吴刚手里的斧子，其实是拿自己的心脏做的。</p>
+<p>桂树从月球倒塌，跨越刚体洛希极限落入地球轨道，燃烧的枝条仿若客星灿灿，随巨木一同落入深海。多年以后，那里便是海中龙王的家园。</p>
+<h3 id="14"><a href="#14" class="headerlink" title="14"></a>14</h3><p>已经无法再爱上谁的玉兔不知为何整天只顾遥望着月亮。她化为一节枯朽的桂树枝干，在无边的大海上漂浮。<br>而吴刚化为了一只盲眼的巨龟，居住在深海之底，海底有残留的月桂，那东西的温度让它熟悉。</p>
+<p>巨龟每一百年浮起一次，每一百次可以碰见一根浮木，每百根木头里有一根是玉兔变成的那一根。它已不再记得遥远的过去，只记得在那难得的重逢里，从浮木里叼起，这根桂树所接到的，精卫鸟丢下的石子，再缓缓爬上岸去，一路爬到王屋，太行，把石子丢在山顶上。</p>
+<p>从此，他唯一的，幸福的片刻，就是在换气的间隙，趴在浮木的边上，看着月亮，等待精卫鸟飞来投下一颗石子。</p>
+
+      </section>
+       
+    
+    
+  <div class="nav-container">
+    <!-- reverse left and right to put prev and next in a more logic postition -->
+    
+      <a class="nav-left" href="/listen/Oliver_Tree-Ugly_is_Beautiful_Shorter,_Thicker_&_Uglier/" target="_blank">
+        <span class="nav-arrow">← </span>
+        
+          Oliver Tree - Ugly is Beautiful Shorter, Thicker &amp; Uglier (Deluxe Edition)
+        
+      </a>
+    
+    
+      <a class="nav-right" href="/todo/learning/" target="_blank">
+        
+          To Learn
+        
+        <span class="nav-arrow"> →</span>
+      </a>
+    
+  </div>
+
+    
+      <div class="advertisement">
+        <p> 广告：快速学习 Crash Course十分钟速成课 <a target="_blank" rel="noopener" href="https://crashcourse.club/">字幕组网站</a></p>
+      </div>
+    
+    
+      <div id="waline"></div>
+
+<link href="https://cdn.bootcdn.net/ajax/libs/waline/2.15.1/waline.min.css" rel="stylesheet">
+<script src="//cdn.bootcdn.net/ajax/libs/waline/2.15.1/waline.min.js"></script>
+<script defer src="/js/waline-qqavatar.js"></script>
+<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/waline/2.14.9/waline.min.js"></script>-->
+<!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/waline/2.14.9/waline.min.css">-->
+
+<script>
+  // 中文默认
+  const locale = {
+    nick: '昵称',
+    nickError: '昵称不能少于3个英文字符或2个中文汉字',
+    mail: '邮箱(可用QQ邮箱)',
+    mailError: '请填写正确的邮件地址',
+    link: '网址',
+    optional: '可选',
+    placeholder: '' || '说、什么8 \n\n可使用QQ邮箱获取QQ头像，或在gravatar.com注册后使用邮箱绑定头像 \n支持Markdown语法：*斜体*, **粗体**, \# - ###### 1-6级标题, *** 或 --- = 水平分割线, ~~删除线~~, > 引用内容, `代码块`, 1. 序号列表, * 无序列表, ^上角标^, ~下角标~, <br> = 空行, [链接文字](链接地址), ![图片名称](图片地址.png), ',
+    sofa: '来发评论吧~',
+    submit: '提交',
+    like: '喜欢',
+    cancelLike: '取消喜欢',
+    reply: '回复',
+    cancelReply: '取消回复',
+    comment: '评论',
+    refresh: '刷新',
+    more: '加载更多...',
+    preview: '预览',
+    emoji: '表情',
+    uploadImage: '上传图片',
+    seconds: '秒前',
+    minutes: '分钟前',
+    hours: '小时前',
+    days: '天前',
+    now: '刚刚',
+    uploading: '正在上传',
+    login: '登录',
+    logout: '退出',
+    admin: '博主',
+    sticky: '置顶',
+    word: '字',
+    wordHint: '评论字数应在 $0 到 $1 字之间！\n当前字数：$2',
+    anonymous: '匿名',
+    level0: '潜水',
+    level1: '冒泡',
+    level2: '吐槽',
+    level3: '活跃',
+    level4: '话痨',
+    level5: '传说',
+    gif: '表情包',
+    gifSearchPlaceholder: '搜索表情包',
+    profile: '个人资料',
+    approved: '通过',
+    waiting: '待审核',
+    spam: '垃圾',
+    unsticky: '取消置顶',
+    oldest: '按倒序',
+    latest: '按正序',
+    hottest: '按热度',
+    reactionTitle: '你认为这篇文章怎么样？',
+  };
+
+  Waline.init({
+    el: "#waline",
+    serverURL: "waline.voiiu.com",
+    appId: "" || "M2JD6yGQhefhH2O0aSjFfclc-MdYXbMMI",
+    appKey: "" || "arEPHdbMnKwMjQgiWsLgw34N",
+    login: "disable",
+    avatarCDN: "https://gravatar.loli.top/avatar/",
+    //avatar: '',
+    placeholder: "",
+    meta: ["nick", "mail"],
+    requiredMeta: [""],
+    pageview: "true" && "",
+    emoji: [
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/tieba",
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/weibo",
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/qq",
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/alus",
+      "https://testingcf.jsdelivr.net/gh/Saidosi/azuki-emoji-for-waline@1.0/azukisan",
+      "https://testingcf.jsdelivr.net/gh/norevi/blob-emoji-for-waline@2.0/blobs-gif",
+    ],
+    locale,
+  });
+</script>
+<script>
+  // emoji
+  $('.wl-actions').append("<a href=https://emoji.zhuochi.org target=_blank id=wl-emoji-wrapper><img src=/images/emoji.png class=wl-action id=wl-emoji></a>")
+
+  // Clean TEXTAREA 
+  //$(".wl-cards").change(function () {
+  //  alert('changed')
+    //('#wl-edit').html("")
+  //})
+
+  //$(".primary .wl-btn").click(function () {
+    //document.getElementsByClassName('wl-num')[0].innerHTML ++
+  //})
+</script>
+    
+    
+    
+      <div class="qrcode">
+    <img id="share-qrcode" class="qrcode-image"/>
+    <div class="qrcode-notice">保存二维码，分享此文章</div>
+</div>
+
+<!--<script type="text/javascript" src="/js/qrious.min.js"></script>-->
+<script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/qrious/4.0.2/qrious.min.js" ></script>
+<script>
+    // qrcode
+    let qr = new QRious({
+        element: document.getElementById('share-qrcode'),
+        value: document.location.href
+    })
+
+    $("#share-qrcode").click(function () {
+        let img = document.getElementById('share-qrcode')
+        let url = img.src
+        let a = document.createElement('a')
+        let down_event = new MouseEvent('click')
+        a.download = 'CloudPool浊池-《故事新编》（拟题）'
+        a.href = url
+        a.dispatchEvent(down_event)
+    })
+</script>
+    
+  </article>
+</main>
+
+<script>
+    (function () {
+      var url = "https://zhuochi.org/copy/bog-ac-932802/";
+      var banner = "";
+      if (banner !== "" && banner !== "undefined" && banner !== "null") {
+        $("#article-banner").css({
+          "background-image": "url(" + banner + ")",
+        });
+      } else {
+        $("#article-banner").geopattern(url);
+      }
+      $(".header").removeClass("fixed-header");
+    })();
+  </script>
+<script>
+  !function () {
+    var OriginTitile = document.title;
+    var titleTime;
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) {
+        document.title = "(つェ⊂)看不见我看不见我~ " + OriginTitile;
+        clearTimeout(titleTime);
+      } else {
+        document.title = "(*´∇｀*) 被你发现啦~ " + OriginTitile;
+        titleTime = setTimeout(function () {
+          document.title = OriginTitile;
+        }, 1500);
+      }
+    });
+  }
+</script>
+
+<script>
+  // error image
+  $(".markdown-content img").on("error", function () {
+    $(this).attr("src", "/images/error.png");
+    $(this).css({cursor: "default",});
+  });
+</script>
+
+    <aside class="sidebar">
+  <span class="scroll-top fa fa-arrow-up"></span>
+  <span class="fa fa-share-alt share-icon">
+    <span class="list-icon">
+      
+        <a href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=https://zhuochi.org/copy/bog-ac-932802/index.html&title=《故事新编》（拟题）&pics=https://zhuochi.org/images/logo.svg&desc=作者： Bog匿名版 - 4tCmpYCf&summary=CloudPool浊池是由年轻人管理的博客" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659969569042" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1231"><path d="M1023.210667 395.690667c-2.005333-6.08-7.381333-10.410667-13.781333-10.944l-347.114667-29.802667L526.634667 33.984C524.117333 28.096 518.4 24.256 512 24.256s-12.181333 3.861333-14.677333 9.749333l-135.616 320.938667L14.570667 384.746667c-6.357333 0.533333-11.797333 4.864-13.781333 10.944-1.941333 6.101333-0.106667 12.778667 4.714667 16.96l263.338667 228.138667L189.888 980.16c-1.429333 6.208 1.002667 12.757333 6.122667 16.512 5.205333 3.733333 12.117333 4.010667 17.642667 0.682667L512 817.450667l298.282667 179.946667c2.581333 1.557333 5.418667 2.346667 8.32 2.346667 3.221333 0 6.528-1.002667 9.344-3.008 5.162667-3.84 7.594667-10.368 6.122667-16.576l-62.442667-268.352c26.730667-13.482667 56.277333-36.245333 56.277333-36.245333s-116.864 57.066667-536.341333 29.205333L595.626667 484.437333c0 0-11.968-18.581333-392.981333-31.872-25.408-0.917333 310.677333-63.722667 558.933333-10.645333L456.298667 660.906667c0 0 122.453333 18.197333 307.328 16.085333l-8.448-36.181333 263.36-228.16C1023.381333 408.469333 1025.216 401.792 1023.210667 395.690667z" p-id="1232" fill="#04b2f1"></path></svg>
+        </a> 
+      
+      
+        <a href="https://service.weibo.com/share/share.php?url=https://zhuochi.org/copy/bog-ac-932802/index.html&title=《故事新编》（拟题）&pic=https://zhuochi.org/images/logo.svg&summary=作者： Bog匿名版 - 4tCmpYCf" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659970330786" class="icon" viewBox="0 0 1138 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="3639" fill="#04b2f1"><path d="M914.432 518.144q27.648 21.504 38.912 51.712t9.216 62.976-14.336 65.536-31.744 59.392q-34.816 48.128-78.848 81.92t-91.136 56.32-94.72 35.328-89.6 18.944-75.264 7.68-51.712 1.536-49.152-2.56-68.096-10.24-78.336-21.504-79.872-36.352-74.24-55.296-59.904-78.848q-16.384-29.696-22.016-63.488t-5.632-86.016q0-22.528 7.68-51.2t27.136-63.488 53.248-75.776 86.016-90.112q51.2-48.128 105.984-85.504t117.248-57.856q28.672-10.24 63.488-11.264t57.344 11.264q10.24 11.264 19.456 23.04t12.288 29.184q3.072 14.336 0.512 27.648t-5.632 26.624-5.12 25.6 2.048 22.528q17.408 2.048 33.792-1.536t31.744-9.216 31.232-11.776 33.28-9.216q27.648-5.12 54.784-4.608t49.152 7.68 36.352 22.016 17.408 38.4q2.048 14.336-2.048 26.624t-8.704 23.04-7.168 22.016 1.536 23.552q3.072 7.168 14.848 13.312t27.136 12.288 32.256 13.312 29.184 16.384zM656.384 836.608q26.624-16.384 53.76-45.056t44.032-64 18.944-75.776-20.48-81.408q-19.456-33.792-47.616-57.344t-62.976-37.376-74.24-19.968-80.384-6.144q-78.848 0-139.776 16.384t-105.472 43.008-72.192 60.416-38.912 68.608q-11.264 33.792-6.656 67.072t20.992 62.976 42.496 53.248 57.856 37.888q58.368 25.6 119.296 32.256t116.224 0.512 100.864-21.504 74.24-33.792zM522.24 513.024q20.48 8.192 38.912 18.432t32.768 27.648q10.24 12.288 17.92 30.72t10.752 39.424 1.536 42.496-9.728 38.912q-8.192 18.432-19.968 37.376t-28.672 35.328-40.448 29.184-57.344 18.944q-61.44 11.264-117.76-11.264t-88.064-74.752q-12.288-39.936-13.312-70.656t16.384-66.56q13.312-27.648 40.448-51.712t62.464-38.912 75.264-17.408 78.848 12.8zM359.424 764.928q37.888 3.072 57.856-18.432t21.504-48.128-15.36-47.616-52.736-16.896q-27.648 3.072-43.008 23.552t-17.408 43.52 9.728 42.496 39.424 21.504zM778.24 6.144q74.752 0 139.776 19.968t113.664 57.856 76.288 92.16 27.648 122.88q0 33.792-16.384 50.688t-35.328 17.408-35.328-14.336-16.384-45.568q0-40.96-22.528-77.824t-59.392-64.512-84.48-43.52-96.768-15.872q-31.744 0-47.104-15.36t-14.336-34.304 18.944-34.304 51.712-15.36zM778.24 169.984q95.232 0 144.384 48.64t49.152 146.944q0 30.72-10.24 43.52t-22.528 11.264-22.528-14.848-10.24-35.84q0-60.416-34.816-96.256t-93.184-35.84q-19.456 0-28.672-10.752t-9.216-23.04 9.728-23.04 28.16-10.752z" p-id="3640"></path></svg>
+        </a>
+      
+      
+        <a href="https://www.douban.com/recommend/?url=https://zhuochi.org/copy/bog-ac-932802/index.html&title=《故事新编》（拟题）&pic=https://zhuochi.org/images/logo.svg&summary=作者： Bog匿名版 - 4tCmpYCf" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659970941550" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1055"><path d="M88 72.9h848v95.5H88z" p-id="1056" fill="#04b2f1"></path><path d="M88 72.9h848v95.5H88zM862.3 641.5V268H161.7v373.5h700.6zM263.4 363.4h498.4v182.5H263.4V363.4z" p-id="1057" fill="#04b2f1"></path><path d="M862.3 641.5V268H161.7v373.5h700.6zM263.4 363.4h498.4v182.5H263.4V363.4zM710.8 856.7c30.5-46.7 59.3-100.8 85.9-162.2l-102-37.2c-26.5 72.8-57.4 139.4-92.5 199.4H424.9c-29.4-77.8-62.6-144.3-99.8-199.4l-93.8 37.2c38.6 58 69.9 111.9 93.8 162.2H64v94.5h896v-94.5H710.8z" p-id="1058" fill="#04b2f1"></path><path d="M710.8 856.7c30.5-46.7 59.3-100.8 85.9-162.2l-102-37.2c-26.5 72.8-57.4 139.4-92.5 199.4H424.9c-29.4-77.8-62.6-144.3-99.8-199.4l-93.8 37.2c38.6 58 69.9 111.9 93.8 162.2H64v94.5h896v-94.5H710.8z" p-id="1059" fill="#04b2f1"></path></svg>
+        </a>
+      
+      
+        <a href="http://tieba.baidu.com/f/commit/share/openShareApi?url=https://zhuochi.org/copy/bog-ac-932802/index.html&title=《故事新编》（拟题）&pic=https://zhuochi.org/images/logo.svg&desc=作者： Bog匿名版 - 4tCmpYCf" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659968685554" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1659"><path d="M1024 862.826667a161.152 161.152 0 0 1-161.173333 161.173333h-701.632a161.152 161.152 0 0 1-161.173334-161.173333v-701.632a161.194667 161.194667 0 0 1 161.173334-161.173334h701.632a161.194667 161.194667 0 0 1 161.173333 161.173334v701.632z" fill="#04b2f1" p-id="1660"></path><path d="M828.842667 250.261333h-173.461334v-36.522666a17.066667 17.066667 0 0 0-17.066666-17.066667h-41.941334a17.045333 17.045333 0 0 0-17.045333 17.066667v263.296h-24.896a17.066667 17.066667 0 0 0-17.045333 17.066666V810.218667a17.066667 17.066667 0 0 0 17.045333 17.088h257.365333a17.066667 17.066667 0 0 0 17.066667-17.088v-58.986667h-0.256v-198.144h0.256v-58.986667a17.066667 17.066667 0 0 0-17.066667-17.066666H655.381333v-150.72h173.461334a17.066667 17.066667 0 0 0 17.066666-17.066667v-41.941333a17.066667 17.066667 0 0 0-17.066666-17.045334z m-93.376 302.848c9.429333 0 17.045333 7.637333 17.045333 17.066667v164.010667a17.066667 17.066667 0 0 1-17.045333 17.066666h-104.981334a17.045333 17.045333 0 0 1-17.045333-17.066666v-164.010667a17.066667 17.066667 0 0 1 17.045333-17.066667h104.981334zM197.909333 657.408h41.941334a17.088 17.088 0 0 0 17.088-17.088v-358.741333h174.528v358.741333a17.066667 17.066667 0 0 0 17.045333 17.088h41.941333a17.088 17.088 0 0 0 17.088-17.088v-417.749333c0-9.408-7.658667-17.066667-17.088-17.066667h-292.522666a17.066667 17.066667 0 0 0-17.045334 17.066667v417.749333a17.024 17.024 0 0 0 17.024 17.088z" fill="#FFFFFF" p-id="1661"></path><path d="M492.970667 739.2v-0.170667a110.656 110.656 0 0 1-110.656-110.656h-0.106667v-296.042666a17.066667 17.066667 0 0 0-17.066667-17.045334h-41.941333a17.045333 17.045333 0 0 0-17.045333 17.045334v296.042666h-0.362667a110.677333 110.677333 0 0 1-110.677333 110.656v0.170667a17.045333 17.045333 0 0 0-17.045334 17.066667v42.112a17.066667 17.066667 0 0 0 17.045334 17.066666 186.602667 186.602667 0 0 0 148.928-74.176 186.624 186.624 0 0 0 148.928 74.176 17.045333 17.045333 0 0 0 17.045333-17.066666v-42.112a17.024 17.024 0 0 0-17.045333-17.066667z" fill="#FFFFFF" p-id="1662"></path><path d="M865.450667 873.685333c17.664-3.797333 15.253333-24.896 14.741333-29.504-0.874667-7.125333-9.237333-19.541333-20.586667-18.581333-14.293333 1.28-16.362667 21.930667-16.362666 21.930667-1.962667 9.557333 4.608 29.952 22.208 26.154666z m18.752 36.693334c-0.533333 1.493333-1.664 5.290667-0.682667 8.597333 1.962667 7.402667 8.405333 7.744 8.405333 7.744h9.258667v-22.613333h-9.898667a10.837333 10.837333 0 0 0-7.082666 6.272z m14.037333-72.085334c9.749333 0 17.621333-11.221333 17.621333-25.109333 0-13.866667-7.872-25.088-17.621333-25.088-9.728 0-17.642667 11.221333-17.642667 25.088 0 13.888 7.893333 25.109333 17.642667 25.109333z m41.984 1.664c13.034667 1.706667 21.418667-12.202667 23.082667-22.762666 1.706667-10.538667-6.698667-22.762667-15.936-24.853334-9.258667-2.112-20.778667 12.672-21.845334 22.357334-1.258667 11.797333 1.685333 23.573333 14.698667 25.258666z m31.936 61.973334s-20.16-15.594667-31.936-32.448c-15.957333-24.874667-38.634667-14.762667-46.208-2.112-7.552 12.650667-19.328 20.629333-20.992 22.741333-1.685333 2.090667-24.362667 14.336-19.328 36.672 5.034667 22.336 22.72 21.909333 22.72 21.909333s13.013333 1.28 28.138667-2.112c15.104-3.349333 28.117333 0.832 28.117333 0.832s35.306667 11.818667 44.970667-10.944c9.621333-22.72-5.482667-34.538667-5.482667-34.538666z m-60.394667 33.877333h-22.954666c-9.92-1.984-13.866667-8.746667-14.357334-9.898667-0.490667-1.173333-3.306667-6.613333-1.813333-15.850666 4.288-13.866667 16.490667-14.848 16.490667-14.848h12.224v-15.04l10.410666 0.149333v55.488z m42.752-0.170667h-26.410666c-10.24-2.624-10.709333-9.92-10.709334-9.92v-29.205333l10.709334-0.170667v26.261334c0.64 2.794667 4.117333 3.306667 4.117333 3.306666h10.88v-29.397333h11.413333v39.125333z m37.376-77.994666c0-5.034667-4.181333-20.224-19.733333-20.224-15.552 0-17.642667 14.336-17.642667 24.469333 0 9.685333 0.810667 23.189333 20.16 22.741333 19.328-0.426667 17.216-21.909333 17.216-26.986666z" fill="#FFFFFF" p-id="1663"></path></svg>
+        </a>
+      
+      
+        <a href="https://connect.qq.com/widget/shareqq/index.html?url=https://zhuochi.org/copy/bog-ac-932802/index.html&title=《故事新编》（拟题）&pic=https://zhuochi.org/images/logo.svg&desc=作者： Bog匿名版 - 4tCmpYCf&summary=CloudPool浊池是由年轻人管理的博客" aria-hidden="true" target="_blank">
+        <svg t="1659969969936" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2714"><path d="M866.991 707.772c0 0-25.341 69.55-71.877 132.071 0 0 83.050 28.439 76.137 102.196 0 0 2.709 82.331-177.613 76.685 0 0-126.817-9.898-164.88-63.85h-33.53c-38.018 54.006-164.834 63.85-164.834 63.85-180.431 5.7-177.556-76.685-177.556-76.685-7.025-73.756 76.081-102.196 76.081-102.196-46.475-62.519-71.875-132.071-71.875-132.071-112.759 183.141-101.477-25.567-101.477-25.567 21.141-123.495 109.949-204.384 109.949-204.384-12.677-112.157 33.805-132.078 33.805-132.078 9.68-346.979 306.473-340.887 312.675-340.722 6.249-0.163 302.931-6.256 312.72 340.723 0 0 46.538 19.866 33.812 132.078 0 0 88.751 80.89 109.886 204.384 0.055-0.001 11.285 208.707-101.421 25.566v0 0z" p-id="2715" fill="#04b2f1"></path></svg>
+        </a>
+      
+    </span>
+  </span>
+</aside>
+    <footer class="app-footer">
+  <p class="copyright">
+    Copyright &copy; 2017 - 2023, CloudPool浊池, All Rights Reserved <br/>
+    本站为基于<a href="https://hexo.io" target="_blank">Hexo</a>的静态博客， <span id="busuanzi_container_site_pv">总访问量 <span id="busuanzi_value_site_pv"></span> 次</span><!--，来自 <span id="busuanzi_value_site_uv"></span> 个 IP--><br/>
+    主题源自 <a target="_blank" rel="noopener" href="https://github.com/yanm1ng/hexo-theme-vexo">Vexo</a> by <a target="_blank" rel="noopener" href="https://github.com/yanm1ng">yanm1ng</a>，感谢 <a target="_blank" rel="noopener" href="https://github.com/MoePlayer/APlayer">APlayer</a> by <a target="_blank" rel="noopener" href="https://github.com/DIYgod">DIYgod</a> 
+</footer>
+
+<script>
+  function async(u, c) {
+    var d = document, t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0];
+    o.src = u;
+    if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+    s.parentNode.insertBefore(o, s);
+  }
+</script>
+
+<script src="/js/script.js"></script>
+ <!--无法移至head.js中，原因不明-->
+<script type="text/javascript" src="/js/busuanzi.min.js" async></script>
+
+
+  </body>
+</html>

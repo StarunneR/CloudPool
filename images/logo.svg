@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- 由 Microsoft Visio, SVG Export 生成 cloudpool.svg Page-1 -->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events"
+		width="11.6929in" height="8.26772in" viewBox="0 0 841.89 595.276" xml:space="preserve" color-interpolation-filters="sRGB"
+		class="st10">
+	<style type="text/css">
+	<![CDATA[
+		.st1 {visibility:visible}
+		.st2 {fill:#5b9bd5;fill-opacity:0.22;filter:url(#filter_2)}
+		.st3 {fill:none;filter:url(#filter_2);stroke:#5b9bd5;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:0.22}
+		.st4 {fill:#5a9ad7}
+		.st5 {stroke:#bdd7ee;stroke-linecap:round;stroke-linejoin:round;stroke-width:10}
+		.st6 {fill:#87ceeb;stroke:#bdd7ee;stroke-width:0.1875}
+		.st7 {fill:#04b2f1;stroke:none;stroke-width:0.1125}
+		.st8 {fill:#3c3d3f;stroke:none;stroke-width:0.75}
+		.st9 {fill:#04b2f1;fill-opacity:0.4;stroke:none;stroke-width:0.1125}
+		.st10 {fill:none;fill-rule:evenodd;font-size:12px;overflow:visible;stroke-linecap:square;stroke-miterlimit:3}
+	]]>
+	</style>
+
+	<defs id="Filters">
+		<filter id="filter_2">
+			<feGaussianBlur stdDeviation="2"/>
+		</filter>
+	</defs>
+	<g>
+		<title>页-1</title>
+		<g id="shape1-1" transform="translate(271.916,-277.165)">
+			<title>云朵</title>
+			<g id="shadow1-2" transform="matrix(1,0,0,1,0.345598,1.97279)" class="st1">
+				<path d="M13.54 510.81 A21.7306 27.4201 0 0 1 23.97 458.14 A44.0672 55.6049 0 0 1 87.92 413.68 A50.6014 63.8498 0
+							 0 1 142.7 403.8 A31.7316 40.0395 0 0 1 189.68 400.5 A36.127 45.5858 0 0 1 247.1 416.97 A25.8318 32.594
+							 0 0 1 267.96 463.07 A31.996 40.3718 0 0 1 241.87 528.93 A40.3656 50.9323 0 0 1 184.47 561.84 A47.5945
+							 60.0536 0 0 1 106.19 575.03 A60.3321 76.1257 0 0 1 38.33 561.84 A23.8023 30.0342 0 0 1 13.54 510.81
+							 Z" class="st2"/>
+				<path d="M13.54 510.81 A21.7306 27.4201 0 0 1 23.97 458.14 A44.0672 55.6049 0 0 1 87.92 413.68 A50.6014 63.8498 0
+							 0 1 142.7 403.8 A31.7316 40.0395 0 0 1 189.68 400.5 A36.127 45.5858 0 0 1 247.1 416.97 A25.8318 32.594
+							 0 0 1 267.96 463.07 A31.996 40.3718 0 0 1 241.87 528.93 A40.3656 50.9323 0 0 1 184.47 561.84 A47.5945
+							 60.0536 0 0 1 106.19 575.03 A60.3321 76.1257 0 0 1 38.33 561.84 A23.8023 30.0342 0 0 1 13.54 510.81"
+						class="st3"/>
+				<path d="M27.87 512.46 A21.6706 27.3443 0 0 1 13.54 510.81" class="st3"/>
+				<path d="M102.25 566.8 A21.7649 27.4634 -180 0 0 106.19 575.03" class="st3"/>
+				<path d="M186.43 551.98 A17.5696 22.1696 0 0 1 184.47 561.84" class="st3"/>
+				<path d="M226.22 502.57 A18.4362 23.2631 0 0 1 241.87 528.93" class="st3"/>
+				<path d="M260.15 472.96 A16.8314 21.2382 -180 0 0 267.96 463.07" class="st3"/>
+				<path d="M95.73 420.27 A25.9556 32.7501 -180 0 0 87.92 413.68" class="st3"/>
+			</g>
+			<path d="M13.54 510.81 A21.7306 27.4201 0 0 1 23.97 458.14 A44.0672 55.6049 0 0 1 87.92 413.68 A50.6014 63.8498 0 0 1
+						 142.7 403.8 A31.7316 40.0395 0 0 1 189.68 400.5 A36.127 45.5858 0 0 1 247.1 416.97 A25.8318 32.594 0 0 1
+						 267.96 463.07 A31.996 40.3718 0 0 1 241.87 528.93 A40.3656 50.9323 0 0 1 184.47 561.84 A47.5945 60.0536
+						 0 0 1 106.19 575.03 A60.3321 76.1257 0 0 1 38.33 561.84 A23.8023 30.0342 0 0 1 13.54 510.81 Z" class="st4"/>
+			<path d="M13.54 510.81 A21.7306 27.4201 0 0 1 23.97 458.14 A44.0672 55.6049 0 0 1 87.92 413.68 A50.6014 63.8498 0 0 1
+						 142.7 403.8 A31.7316 40.0395 0 0 1 189.68 400.5 A36.127 45.5858 0 0 1 247.1 416.97 A25.8318 32.594 0 0 1
+						 267.96 463.07 A31.996 40.3718 0 0 1 241.87 528.93 A40.3656 50.9323 0 0 1 184.47 561.84 A47.5945 60.0536
+						 0 0 1 106.19 575.03 A60.3321 76.1257 0 0 1 38.33 561.84 A23.8023 30.0342 0 0 1 13.54 510.81" class="st5"/>
+			<path d="M27.87 512.46 A21.6706 27.3443 0 0 1 13.54 510.81" class="st5"/>
+			<path d="M102.25 566.8 A21.7649 27.4634 -180 0 0 106.19 575.03" class="st5"/>
+			<path d="M186.43 551.98 A17.5696 22.1696 0 0 1 184.47 561.84" class="st5"/>
+			<path d="M226.22 502.57 A18.4362 23.2631 0 0 1 241.87 528.93" class="st5"/>
+			<path d="M260.15 472.96 A16.8314 21.2382 -180 0 0 267.96 463.07" class="st5"/>
+			<path d="M95.73 420.27 A25.9556 32.7501 -180 0 0 87.92 413.68" class="st5"/>
+		</g>
+		<g id="group89-21" transform="translate(992.126,194.173) rotate(90)">
+			<title>椭圆泳池</title>
+			<g id="shape90-22" transform="translate(-8.50394,11.3386)">
+				<title>工作表.90</title>
+				<g id="shadow90-23" transform="matrix(1,0,0,1,2.84217E-14,0)" class="st1"/>
+				<path d="M141.73 527.95 L141.73 393.31 C141.73 356.12 110 325.98 70.87 325.98 C31.73 325.98 0 356.12 0 393.31 L0
+							 527.95 C0 565.13 31.73 595.28 70.87 595.28 C110 595.28 141.73 565.13 141.73 527.95 Z" class="st6"/>
+			</g>
+			<g id="shape91-25" transform="translate(0,-0.000430336)">
+				<title>工作表.91</title>
+				<g id="shadow91-26" transform="matrix(1,0,0,1,0,0)" class="st1"/>
+				<path d="M123.94 533.31 L123.94 409.37 C123.94 375.15 96.19 347.4 61.97 347.4 C27.74 347.4 0 375.15 0 409.37 L0 533.31
+							 C0 567.53 27.74 595.28 61.97 595.28 C96.19 595.28 123.94 567.53 123.94 533.31 Z" class="st7"/>
+			</g>
+			<g id="shape92-28" transform="translate(0,-0.000430336)">
+				<title>工作表.92</title>
+				<g id="shadow92-29" transform="matrix(1,0,0,1,0,0)" class="st1"/>
+				<path d="M119.33 531.45 L119.94 411.82 C120.11 378.78 94.43 351.87 62.58 351.71 C30.73 351.54 4.78 378.19 4.61 411.23
+							 L4 530.86 C3.83 563.9 29.51 590.81 61.36 590.97 C93.21 591.13 119.16 564.49 119.33 531.45 ZM61.97 347.4
+							 C96.19 347.4 123.94 375.15 123.94 409.37 L123.94 533.31 C123.94 567.53 96.19 595.28 61.97 595.28 C27.74
+							 595.28 0 567.53 0 533.31 L0 409.37 C0 375.15 27.74 347.4 61.97 347.4 Z" class="st8"/>
+			</g>
+			<g id="shape93-31" transform="translate(12.3119,-0.000430336)">
+				<title>工作表.93</title>
+				<g id="shadow93-32" transform="matrix(1,0,0,1,0,-1.13687E-13)" class="st1"/>
+			</g>
+			<g id="shape94-34" transform="translate(14.5738,-0.000430336)">
+				<title>工作表.94</title>
+				<g id="shadow94-35" transform="matrix(1,0,0,1,2.84217E-14,0)" class="st1"/>
+			</g>
+			<g id="shape95-37" transform="translate(20.1794,-0.000430336)">
+				<title>工作表.95</title>
+				<g id="shadow95-38" transform="matrix(1,0,0,1,5.68434E-14,0)" class="st1"/>
+			</g>
+			<g id="shape96-40" transform="translate(22.3155,-0.000430336)">
+				<title>工作表.96</title>
+				<g id="shadow96-41" transform="matrix(1,0,0,1,5.68434E-14,0)" class="st1"/>
+			</g>
+			<g id="shape97-43" transform="translate(31.6384,-0.000430336)">
+				<title>工作表.97</title>
+				<g id="shadow97-44" transform="matrix(1,0,0,1,5.68434E-14,0)" class="st1"/>
+			</g>
+			<g id="shape98-46" transform="translate(33.3304,-0.000430336)">
+				<title>工作表.98</title>
+				<g id="shadow98-47" transform="matrix(1,0,0,1,5.68434E-14,0)" class="st1"/>
+			</g>
+			<g id="shape99-49" transform="translate(117.227,-211.672)">
+				<title>工作表.99</title>
+				<g id="shadow99-50" transform="matrix(1,0,0,1,5.68434E-14,0)" class="st1"/>
+			</g>
+			<g id="shape100-52" transform="translate(117.466,-211.916)">
+				<title>工作表.100</title>
+				<g id="shadow100-53" transform="matrix(1,0,0,1,0,-2.27374E-13)" class="st1"/>
+			</g>
+			<g id="shape101-55" transform="translate(112.149,-209.561)">
+				<title>工作表.101</title>
+				<g id="shadow101-56" transform="matrix(1,0,0,1,5.68434E-14,0)" class="st1"/>
+			</g>
+			<g id="shape102-58" transform="translate(0,-0.000430336)">
+				<title>工作表.102</title>
+				<g id="shadow102-59" transform="matrix(1,0,0,1,0,0)" class="st1"/>
+				<path d="M123.94 533.31 L123.94 409.37 C123.94 375.15 96.19 347.4 61.97 347.4 C27.74 347.4 0 375.15 0 409.37 L0 533.31
+							 C0 567.53 27.74 595.28 61.97 595.28 C96.19 595.28 123.94 567.53 123.94 533.31 Z" class="st9"/>
+			</g>
+		</g>
+	</g>
+</svg>

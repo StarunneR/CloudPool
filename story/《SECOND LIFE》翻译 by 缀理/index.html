@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta http-equiv="Access-Control-Allow-Origin" content="*">
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport" />
+  <meta name="description" content="CloudPool浊池是由年轻人管理的博客">
+  <meta name="keyword" content="浊池, CloudPool, CloudPool浊池">
+  
+  <link rel="shortcut icon" type="image/ico" href="/images/cloudpool-favicon.ico">
+  
+  <title>
+    
+    《SECOND LIFE》翻译 | CloudPool浊池
+    
+  </title>
+  <!-- CSS -->
+  <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <link href="https://cdn.bootcdn.net/ajax/libs/nprogress/0.2.0/nprogress.min.css" rel="stylesheet"/>
+  
+<link rel="stylesheet" href="/css/style.css">
+
+
+  <!-- JS -->
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/geopattern/1.2.3/js/geopattern.min.js"></script>
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/nprogress/0.2.0/nprogress.min.js"></script>
+  
+    <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+            <span class="search-icon">
+                <i class="fa fa-search"></i>
+            </span>
+            <div class="search-input-container">
+                <input autocomplete="off" autocapitalize="off" maxlength="80"
+                    placeholder="今天想看什么w" spellcheck="false"
+                    type="" class="search-input">
+            </div>
+            <span class="popup-btn-close">
+                <i class="fa fa-times-circle"></i>
+            </span>
+        </div>
+        <div id="search-result" class="search-result-container no-result">
+            <div id="no-result">
+                <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+            </div>
+        </div>
+    </div>
+</div>
+    
+<script src="/js/local-search.js"></script>
+
+
+  
+  <!-- Fonts -->
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+  <body>
+    <header class="header fixed-header">
+  <nav class="header-container">
+    <a class="home-link" href="/">
+      <img class="logo" src="/images/logo.png" alt="logo"/>
+      <span class="eng_mark">CloudPool</span><span class="chn_mark">浊池</span>
+    </a>
+    <ul class="right-list">
+      
+        <li class="list-item">
+          
+            <a href="/" class="item-link">主页</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/category/" class="item-link">分类</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/tag/" class="item-link">标签</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/archive/" class="item-link">归档</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/mag/" class="item-link">网刊</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/one/" class="item-link">一言</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a target="_blank" rel="noopener" href="//pan.zhuochi.org/CloudShare/" class="item-link">网盘</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="//<emoji>" class="item-link">( ^ω^)</a>
+          
+        </li>
+      
+      
+        <li class="list-item">
+    <a role="button" class="item-link popup-trigger">
+        <i class="fa fa-search fa-fw"></i>
+    </a>
+</li>
+      
+    </ul>
+    <div class="menu">
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+    </div>
+    <div class="menu-mask">
+      <ul class="menu-list">
+        
+          <li class="menu-item">
+            
+              <a href="/" class="menu-link">主页</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/category/" class="menu-link">分类</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/tag/" class="menu-link">标签</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/archive/" class="menu-link">归档</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/mag/" class="menu-link">网刊</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/one/" class="menu-link">一言</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a target="_blank" rel="noopener" href="//pan.zhuochi.org/CloudShare/" class="menu-link">网盘</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="//<emoji>" class="menu-link">( ^ω^)</a>
+            
+          </li>
+        
+        
+          <li class="menu-item">
+    <a role="button" class="item-link popup-trigger">
+        <i class="fa fa-search fa-fw"></i>
+    </a>
+</li>
+        
+      </ul>
+    </div>
+  </nav>
+</header>
+
+    <div id="article-banner">
+  <h2 class="post-title">《SECOND LIFE》翻译</h2>
+  
+   
+    <p class="post-date">2018-07-21</p>
+  
+  <div class="arrow-down">
+    <a href="javascript:;"></a>
+  </div>
+</div>
+
+  <div class="catalog-container" id="catalog">
+  <div class="toc-main">
+    <div class="toc-title">目录</div>
+    
+      <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-5"><a class="toc-nav-link" href="#%E2%96%BC-1-%E4%B8%8A"><span class="toc-nav-text">▼ 1 上</span></a></li><li class="toc-nav-item toc-nav-level-5"><a class="toc-nav-link" href="#%E2%96%BC-1-%E4%B8%8B"><span class="toc-nav-text">▼ 1 下</span></a></li><li class="toc-nav-item toc-nav-level-5"><a class="toc-nav-link" href="#%E2%96%BC-2-%E4%B8%8A"><span class="toc-nav-text">▼ 2 上</span></a></li><li class="toc-nav-item toc-nav-level-5"><a class="toc-nav-link" href="#%E2%96%BC-2-%E4%B8%8B"><span class="toc-nav-text">▼ 2 下</span></a></li><li class="toc-nav-item toc-nav-level-5"><a class="toc-nav-link" href="#%E2%96%BC-3-%E4%B8%8A"><span class="toc-nav-text">▼ 3 上</span></a></li><li class="toc-nav-item toc-nav-level-5"><a class="toc-nav-link" href="#%E2%96%BC-3-%E4%B8%AD"><span class="toc-nav-text">▼ 3 中</span></a></li><li class="toc-nav-item toc-nav-level-5"><a class="toc-nav-link" href="#%E2%96%BC-3-%E4%B8%8B"><span class="toc-nav-text">▼ 3 下</span></a></li><li class="toc-nav-item toc-nav-level-5"><a class="toc-nav-link" href="#%E2%96%BC-4-%E4%B8%8A"><span class="toc-nav-text">▼ 4 上</span></a></li></ol>
+    
+  </div>
+</div>
+
+<main class="app-body flex-box">
+  <article class="post-article">
+    
+      <div class="front-parent" id="front-parent">
+  <div class="front-child" id="front-fontsize">
+    <label class="front-label" for="fontsize-range">字体大小</label>
+    <input type="range" min="50" max="200" id="fontsize-slider" step="1" value="100" />
+    <span id="fontsize-value"></span>
+  </div>
+
+  <div class="front-child" id="front-fontselector">
+    <label class="front-label" for="font-select">更换字体</label>
+    <select name="font" id="font">
+      <option value="default">默认</option>
+      <option value="heiti">黑体</option>
+      <option value="light-heiti">黑体（细体）</option>
+      <option value="lighter-heiti">黑体（极细）</option>
+      <option value="songti">宋体</option>
+      <option value="light-songti">宋体（细体）</option>
+      <option value="kaiti">楷体</option>
+      <option value="fangsong">仿宋</option>
+    </select>
+  </div>
+
+  <div class="front-child" id="front-indent">
+    <label class="front-label" for="TextIndent">段首缩进</label>
+    <input type="checkbox" id="indent-checkbox" name="text-indent" value="" />
+  </div>
+</div>
+
+<h1 class="article-author">
+  
+    缀理
+      
+</h1>
+
+<script>
+  $(document).ready(
+    function () {
+      let FontChanger = function () {
+        if (this.value == "default") {
+          $(".markdown-content").css({ "font-family": "Arial, Helvetica, sans-serif" });
+          $(".markdown-content").css({ "font-weight": 'initial' });
+        } if (this.value == "heiti") {
+          $(".markdown-content").css({ "font-weight": '400' });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',sans-serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400&display=swap rel=stylesheet>");
+        } else if (this.value == "light-heiti") {
+          $(".markdown-content").css({ "font-weight": '300' });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',sans-serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300&display=swap rel=stylesheet>");
+        } else if (this.value == "lighter-heiti") {
+          $(".markdown-content").css({ "font-weight": '100' });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',sans-serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100&display=swap rel=stylesheet>");
+        } else if (this.value == "songti") {
+          $(".markdown-content").css({ "font-weight": '400' });
+          $(".markdown-content").css({ "font-family": "'Noto Serif SC',serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400&display=swap rel=stylesheet>");
+        } else if (this.value == "light-songti") {
+          $(".markdown-content").css({ "font-weight": '200' });
+          $(".markdown-content").css({ "font-family": "'Noto Serif SC',serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200&display=swap rel=stylesheet>");
+        } else if (this.value == "kaiti") {
+          $(".markdown-content").css({ "font-weight": 'initial' });
+          $(".markdown-content").css({ "font-family": "Arial,'STKaiti','KaiTi','FZKai-Z03S',Serif" });
+          $("head").append("<link href=https://cdn.jsdelivr.net/npm/cn-fontsource-fz-kai-z-03-s/font.css rel=stylesheet>");
+        } else if (this.value == "fangsong") {
+          $(".markdown-content").css({ "font-weight": 'initial' });
+          $(".markdown-content").css({ "font-family": "Arial,'STFangsong','FangSong','FangSong_GB2312','FZFangSong-Z02S',Serif" });
+          $("head").append("<link href=https://cdn.jsdelivr.net/npm/cn-fontsource-fz-fang-song-z-02-s/font.css rel=stylesheet>");
+        }
+      };
+      $("#font").on('change', FontChanger);
+      $("#font").on('click', FontChanger);
+    });
+
+  $("#indent-checkbox").change(function () {
+    if (this.checked) {
+      $(".markdown-content > p").css({ "text-indent": "2em" });
+    } else {
+      $(".markdown-content > p").css({ "text-indent": "0" });
+    }
+  });
+
+  $("#fontsize-value").html("100%");
+  let rangeSwitch = function () {
+    let fontsizePercent = $("#fontsize-slider").val();
+    $(".markdown-content").css("font-size", fontsizePercent + "%")
+    $("#fontsize-value").html(fontsizePercent + "%")
+  }
+  $("#fontsize-slider").on("input", rangeSwitch)
+</script>
+      <section class="markdown-content" id="content">
+        <p>▽写在前面的废话<br>《SECOND LIFE》这本书在我手上到现在已经有很久了。遇见它是在羽田机场，逛到书店时（在这里吹一波羽田机场的室内设计）在一堆日文书中的英文书书架上拾起，随手翻阅了几下，感觉并不是很难看懂就看了下去。本想买回来看顺便做纪念品，但日元不够了…so<br>回来后一直心心念念这本书，倒不是它有多好看，而是它在我心中的纪念价值实在很大。所以在网上（貌似是当当）又找到了这本书，以50元左右的高价买了回来。<br>做翻译纯粹是心血来潮罢了。如果刚好有看过这本书的朋友，发现哪里翻译得不对劲，欢迎斧正。如果这本书已经有中文译本…就当我是在做游戏吧。</p>
+<p>▽关于翻译<br>我并不是一个专业的译者，词汇量也很有限，所以不得不边看边翻阅词典，信达雅的标准更是想都别想达到。好在这本书并不是很难读，不过难免会有我不理解、翻译不到位的地方。如果读者 感到有些阅读障碍，那一定是我的问题，希望各位谅解。在同等的情况下，我会把通顺易理解，而不是准确作为翻译的第一标准。<br>小说很长，我会尽量一章一章的翻译。因各种原因，人名地名等名称我会保留原文。当然我可能随时会弃坑，因为懒……<br>还是，希望我这个粗糙译者翻译的劣质（不是作品本身劣质！）小说能给一些人带来短暂的乐趣吧:D<br>&amp;nbsp;</p>
+<h5 id="▼-1-上"><a href="#▼-1-上" class="headerlink" title="▼ 1 上"></a>▼ 1 上</h5><p>　　我爬上楼梯，但门却关着。我在犹豫。现在我在这里，我不想进去。我想转身，回家。之后再做尝试。<br>　　但这是我最后一次机会了。展览已经开放了几个星期，明天就将结束。现在不进去便再没有机会了。<br>　　我闭上眼睛，尽我所能地深呼吸了一口。我把注意力集中在填满我的肺部，挺直了肩膀，随着呼气我感到那种紧张的情绪从身体里消失。我对自己说，这没什么好担心的，我定期来这里——和朋友一起吃午饭，看最新的展览，听讲座。这次也和以前没什么不同。这里没有东西可以伤害我。这不是一个陷阱。<br>　　终于，我感到自已已经准备完毕。我推开门走了进去。<br>　　这个地方就和它平时看上去的一样——灰白的墙壁，磨光的木地板，在天花板上沿轨迹排列的小斑点——尽管现在还很早，已经有一些人在四处观览了。我看着他们在照片前停下，一些人为了享受更好的观感而站得远远的，另一些人则对同伴的小声评论点头或者翻阅他们在楼下拿的宣传单。这里的气氛中带有一种静默的尊敬，平静的沉思。这些人会看这些照片。他们或许喜欢它们，或许不喜欢，接着他们就会走出去，回到他们的生活，并且在非常大的可能性上忘了这些照片。<br>　　最开始我只允许我自己瞥墙上的照片一眼。墙上按一定的间隔挂着很多这样大的照片，除了间隔中一些更小点的。我告诉自己我可以四处走走，假装对这些照片都感兴趣，但今天我来只是为了看一张照片。<br>　　我花了相当一段时间来找到它。它被挂在很远的墙上，在画廊的后面，不太偏中间的位置。它在一些其他照片的旁边——一幅很长的穿破旧衣裙的小女孩的彩色肖像，一个画着眼影正在吸烟的女人的照片。就算在这个距离看它也相当震撼。它是彩色的，尽管它是在自然光下拍摄，主色调只是蓝、灰，由于这个大小，它看起来非常壮观。这个展览的主题叫做“分离”，尽管直到我离它只有几步远之前我都没有好好看过它，我还是能理解为什么这张照片处于一个如此突出的位置。<br>　　我已经有十年多没有看过它了。这并不确切。我曾经看到过它，对——尽管在那时它并不是一张被好好利用了的照片，它被一些杂志甚至一本书突出介绍过——但我那几次都没有好好看过它，没在距离这么近的地方看过。<br>　　我并不明显地走近它，先看了它的名标——”Julia Plummer,”上面写着，“镜中的Marcus，1997，Cibachrome印制。”没有别的了，没有传记性质的文字，这让我很高兴。我想我可以抬头看看这张照片。<br>　　这是一个男人的照片；他看上去大概二十岁。他裸露着身体，看着镜中的倒影，这张照片拍摄了腰部以上的部分。他面前的影响看上去精力集中，但他看上去并不是这样。他的脸很瘦。他的眼睛很窄，嘴唇微张，好像他就要说话或者叹息。从照片里可以看出一种忧郁感，但你看不到的是，就在照片被拍下的前几分钟，里面的男人——Marcus——正在笑。他和她的女朋友已经在床上度过了一整个下午，他爱她，就像她爱他一样。他们在读一本书——Isherwood（伊舍伍）的《告别柏林》，或者她已经读过而他还没有的《盖茨比》——在吃盒子里装的冰淇淋。他们非常温暖，快乐，并且安全。收音机中播放着蓝调歌曲，从他们的卧室飘到大厅。照片中男人嘴张开着，因为他的女朋友，那个拍这张照片的女人，正在轻声哼唱，而他也准备加入。<br>　　最开始这张照片和现在不同。女朋友也在照片中，反映在镜子中，靠着他的肩膀，正把相机举到眼睛的位置。她也没穿衣服，因焦距看起来模糊不清。这是他们两个人的肖像，在那个镜中照片还并不常见的时候。<br>　　我很喜欢这张照片。几乎到了偏爱的程度。但是在某种程度上——我不记得是什么时候，确切地说，但肯定在我第一次展出它之前——我改变了主意。我觉得没有我，它看起来会更好一些。所以我把我裁了下来。<br>　　我现在后悔了。这对我来说是一种不诚实，这是我第一次用我的艺术撒谎。我想对Marcus道歉，为了一切。我很抱歉跟着他去了柏林，抱歉把他留在那里，抱歉没能成为他心目中的那个我。<br>　　在如此长的一段时间后，我依然感到很抱歉。我在照片前停留了许久。从那之后我不再拍这样的照片。现在我拍各种家庭的照片，Connor的朋友们，和他们的父母和兄弟姐妹坐在一起，这是我在学校门口找到的工作。为了生计。这并没有什么不好：我很努力，也有一些名声。我很好，但拍照对我来说纯粹是机械性的了；这和拍像那张照片一样的肖像并不一样。这不是艺术——为了能有一个更好的世界的愿望——有些时候我十分想念艺术创作。我在想我是否还能，还有那样一双眼睛，那种知道在何时按下快门的直觉。那决定性的时刻。从我上一次努力尝试已经过去了很长时间了。<br>　　Hugh认为我应该重新尝试。Connor已经长大，他现在正开始过他自己的生活。因为他的开始的艰难，我和Hugh都全神贯注于照顾他，但他现在已不像过去那样需要我们。现在我有了更多自己的空间。<br>&amp;nbsp;</p>
+<h5 id="▼-1-下"><a href="#▼-1-下" class="headerlink" title="▼ 1 下"></a>▼ 1 下</h5><p>　　我下楼去等Adrienne。最开始她想和我一起来看展览，但是我告诉她别来，我想一个人看那张照片。她并不介意。“我就在餐厅等你，”她这么说，“我们可以点一些东西吃。”<br>　　她来的很早，坐在窗户边放着一杯白葡萄酒的桌子边。我走近时她站了起来，随后我们拥抱。我们一坐下她就开始说话。<br>　　“怎么样？”<br>　　我把椅子从桌子下拉出。“老实说，有些奇怪。”Adrienne已经为我点了一瓶汽水，我倒出一杯。“那看起来不再像是我拍的照片了。”<br>　　她点点头。她知道一直以来我多么焦急地想要来这里。“那上面有一些有趣的照片。你还要去看看吗？过一会儿？”<br>　　她举起酒杯。“也许。”我知道她不会喝，但我并没有被冒犯的感觉。“干杯。”她说。我们喝了一口。“你没有带Connor过来？”<br>　　我摇了摇头。“那肯定很奇怪。”我笑了，“再说他也很忙。”<br>　　“和他的朋友出去？”<br>　　“不。Hugh带他去游泳了。他们去了Ironmonger街。”<br>　　她笑了。Connor是她的教子，她认识我丈夫的时间几乎和我一样长。“游泳？”<br>　　“他们的新玩意。这是Hugh的主意。他意识到他明年就要五十岁了，他很害怕。他想保持好的体型。”我顿了顿。“你收到Kate的消息了吗？”<br>　　我低头看我的饮料。我原本无意提出问题，至少不要这么快，但现在话已出口。我不确定我希望得到怎样的回答。是，或不是。<br>　　她抿了口酒。“有段时间没有了。你呢？”<br>　　“大概三周前。”<br>　　“然后…？”<br>　　我耸耸肩。“和平常一样。”<br>　　“在深夜？”<br>　　“对，”我叹了口气。我回想起我妹妹最后一次打来。早晨的两个电话，对她来说或许更晚，因为她在巴黎。她听起来不太清醒。我猜她是喝醉了。她想把Connor要回去。她不知道为什么我不让她抚养他。这并不公平，以及，她并不是唯一一个认为我和Hugh自私而又令人讨厌的人。<br>　　“她只是在说了些和以前一样的话。”<br>　　“也许你只需要和她谈谈。我是说，再一次。当她没有那么——”<br>　　“生气？”我笑了，“你和我一样清楚这有什么样的效果，还有，我对付不了她。她不会接电话，如果我打座机我只会联系到她的室友，一个什么也不会告诉我的人。不，她已经打定主意了。在这么长的时间过后，突然，她在这个世界上唯一想要的事变成了照顾Connor。而且她认为我和Hugh是出于自私才阻止她。她没有停下来，哪怕一小会儿，去考虑Connor是怎么想的，他可能想要什么。她肯定也没有问过他。又一次，这全都怪她。”<br>　　我没再说话。Adrienne知道剩下的内容；我不需要再继续。她知道为什么Hugh和我接管了我妹妹的儿子，而且三年来Kate对此一直很满意。我们都不知道的是，为什么这一切忽然都变了。<br>　　“你会和她谈谈吗？”我说。<br>　　她深呼吸了一口气，闭上了眼。一段时间里我在想她会告诉我我必须自己去解决这些，我不能每次和妹妹吵架时都向她求助；这就是以前爸爸常告诉我的。但是她没有，只是笑了。“我会试试的。”<br>　　我们点单，吃午饭。我们讨论了一些共同的朋友——她问我最近有没有见过Fatima，我知不知道Ali找到了一份新工作，她想知道我去不去Dee举办的周末酒会——然后就到了她要离开的时间。她要参加一个会议，我告诉她我周六再和她叙旧。<br>　　在我出去的路上我不可抗拒地去了纪念品商店。他们想要把我的Marcus的照片作为目录册的封面，但我从没回过那封邮件。作为代替，封面被换为了一个舔着棒棒糖的看起来像双性人的人。<br>　　他让我想起了Fosty。我快速翻阅了那本书，随后移动到被放在展示架上的明信片前。一般来说我会买几张，但今天我只买了一张，镜中的Marcus。有一瞬间我想告诉收银员这是我的作品，我为了自己拍的，以及，尽管这么多年来我一直主动避免见到它，我还是很高兴他们展出了它，让我再有机会拥有它。<br>　　但是我没有。我没有说话，只是轻声说了句“谢谢”，接着就把明信片放在包里，离开了画廊。除了February Chill我走过了大部分回家的路——走过Cocent Garden和Holbon，朝着Gray’s Inn的方向沿Theobald’s Road走——最开始我除了Marcus以及我们多年前在柏林度过的时间外无法思考别的事。但当我到达Roseberry Avenue的时候我已经能够从过去中走出，并且思考这里，现在，正在发生的事。我正在想我的妹妹，希望Adrienne能够让她理解，尽管我知道她不能。我将亲自和Kate谈谈。我会很坚定，但是态度和缓。我会让她想起我爱她，我希望她能开心，但我也会告诉她Connor现在快要十四岁了，Hugh和我已经非常努力地工作来给他一个稳定的生活条件，并且希望结果令人满意。我的优先事项是让她意识到保持现状是最好的选择。这是第一次我允许我这么想，Hugh和我可能需要找一个律师。<br>　　我转过街角，往我们住的地方走去。有一辆警车停在离房子几扇门远的地方，但我们的房门开着。我跑起来；我除了见到我的儿子不想考虑任何事情。知道我在房子里，在厨房里前我都没有停下来。我看到Hugh站在我的前面，正和一个穿制服的女人说话，她的穿着简直就是完美和一种刻意的中立的代名词，而且我也知道Hugh露出的表情是正在转达坏消息时的表情。我的胸部收紧，我听见我在大喊，仿佛在梦中一样。“Connor在哪里？”我说，“Hugh！我们的儿子在哪里？”但是，他没有回答。他是我在房间里唯一能看见的东西。他眼睛张得大大的；我不知道是不是有一些糟糕的，难以说明的事情发生了。我想大喊“告诉我！”，但是我没有。我无法移动；无法言语。我的嘴张开，又闭上。我把话吞了下去。我正身处水下，无法呼吸。我看见Hugh向我走来，在抓住我的手臂努力摇晃我。我终于找回了我的声音。“告诉我！”我说，一遍又一遍地，一会儿后他张开了嘴。<br>　　“不是Connor，”他说，但我仅仅只有时间意识到一种释然在我的血液里开始扩散，在他说出下一句话之前，“抱歉，亲爱的。是Kate。”<br>&amp;nbsp;</p>
+<h5 id="▼-2-上"><a href="#▼-2-上" class="headerlink" title="▼ 2 上"></a>▼ 2 上</h5><p>　　我坐在厨房桌前，不知道我是怎么来到这里的。警官已经走了，她的工作已经完成，现在这里只有我和Hugh。房间里很冷，Hugh握着我的手。<br>　　“什么时候？”我问。<br>　　“昨晚。”<br>　　一大杯甜茶在我前方的桌子上冒着蒸汽，我看着这一幕。它和我毫无关系，我根本不理解它为什么会在这儿。我能想到的所有仅仅是我的妹妹，孤零零地躺在巴黎的一条小巷里，被雨水浸透。<br>　　“昨晚？”<br>　　“这是他们说的。”<br>　　他说话很轻。他知道我只会记得一小部分他所说的内容。<br>　　“她在那里做什么？”<br>　　“他们不知道。也许是抄近路？”<br>　　“近路？”<br>　　我试图想象那个画面。Kate，正在回家的Kate，也许喝醉了。她想减少些路途所需的时间。<br>　　“发生了什么？”<br>　　“他们认为她刚从一个酒吧离开，被攻击了。”<br>　　我记起来了。抢劫，那个警官这么说，尽管他们还不知道是否有什么东西被拿走了。她说完后便移开视线不看向我，把视线和音量都下调了，转向Hugh那边。即便如此我还是听到她说，“她似乎没有被强奸。”<br>　　当我想到这些时我感到我的内里有什么东西正在崩坏。我的心蜷曲起来。我变得很小。那时我十一岁，Kate四岁，我不得不告诉她妈妈这次不会从医院回来了。爸爸认为我已经够大，可以自己把这件事告诉她，他自己无法面对，这次，这项工作要落在我的头上。Kate正在哭泣，虽然我不确定她是否理解了我对她说的，我还是握住她的肩膀。“我们会没事的。”我说，尽管我已经隐约明白接下来会发生什么。爸爸遇见了难以翻越的障碍，他的朋友们也无法帮助他。我们只能靠自己。但我不能把这说出来，我必须变得坚强，为了Kate，为了我的妹妹。“你和我，”我对她说，“我保证会照顾你的。永远。”<br>　　但我没能做到。是吧？我逃去了柏林。我带走了她的儿子。我让她一个人死去。<br>　　“发生了什么？”我又问了一遍。<br>　　Hugh很有耐心。“亲爱的，我们不知道。但他们正在尽最大的努力找出真相。”<br>　　<br>　　最开始我觉得对Connor来说，不要参加Kate的葬礼会更好。他还太小，恐怕无法适应这一切。但Hugh不同意。他提醒我，我父亲没有让Kate和我去母亲的葬礼，我和Kate就因此在他余生里一直记恨着他。<br>　　我们给他买了一套西装，一条黑领带。他穿上后看起来成熟多了，在去往火葬场的路上就走在我和Hugh中间。“你还好吗？”我们一坐下来我就问。<br>　　他点点头，没有说话。这个地方仿佛被痛苦浸透，但大部分的人都沉默着。在震惊中沉默。Kate的死给人带来剧烈的情感，却又仿佛在梦中，无法理解。人们都为了自我保护而在心中后退了一步。<br>　　但我没有哭，Connor和他的父亲也没有。只有Hugh看着棺木。我用手臂圈住我们的儿子。“没事的。”我说。<br>　　我们的身后，人们不断地涌进来，找到他们的位子并坐下。他们脚步轻轻，说话声音也很小。我闭上眼睛，想到了Kate和我们的童年。那时事情都很简单，不过并不意味着我和Kate过得很容易。自从母亲死后父亲就开始酗酒。他的朋友们——大多是艺术家，画家，剧院里的人——开始和我们度过越来越多的时间，我们看着我们的房子变成一种定期的喧闹的派对的举办地点，这些派对一个不如一个，但从没有停下过。每过一些日子就会有一批人离开，然后另一批人接替；他们会带来更多的酒和香烟，这里都是更多的音乐和毒品。现在我已能理解这是父亲悲痛的一种形式，但是在那时这一切看起来都像是一种对自由的庆祝，一场持续十年的放纵。Kate和我感觉像是提醒他那不愉快过去的信使，尽管他不让我们和那些毒品有所接触，并告诉我们他爱我们，他却不愿意也不能做一个合格的父亲，所以照看两人的重担就落在了我的肩上。我会准备两人份的餐点，我会给Kate的牙刷上挤上牙膏并在睡觉前放在那里，在她哭着醒来时我会给她读书，我会检查她的作业并确保她做好去学校的准备。我对她说爸爸爱我们以及一切都会好起来。我发现我喜欢我的妹妹，虽然年龄相差很大，我们却亲密如一对双胞胎，我们之间的紧密联系几乎无法解释。<br>　　现在她就在那个小盒子里，我在这里，在盒子前，连哭泣也做不到。这简直不可想象，在心里，我知道，我让她失望了。<br>　　有人轻轻拍了拍我的肩膀。我转过头。是一个陌生的女人。“我只是想打个招呼。”她说她叫Anna。我花了一段时间才想起她，Kate的室友，我们曾经让她读过一份东西。“我想跟你们说我感到多么的抱歉。”<br>　　她正在哭，但看得出来相当克制。那是一种适应的能力。“谢谢你。”我说。过了一会儿她打开了大腿旁的包，递给我一张纸。“这是我挑选的诗…你们觉得怎样？”<br>　　我粗略浏览了一下，尽管我已经读过它了。“令人生气的是，我被欺骗了。”开头如此，“令人高兴的是，我已身处平和。”<br>　　我觉得当愤怒确实是唯一可能的反应时，这显得相当古怪，但我什么都没说。我把纸交还给她。“挺好的。谢谢你。”<br>　　“我觉得Kate会喜欢这一首。”我告诉她我确信她是对的。她的手在颤抖，虽然这首诗不长，但我想知道她会以怎样的心情读它。<br>　　她最后读了。尽管悲伤，她利用发自内心的力量读了它，声音清楚而有力量。Connor看着她，我看到他在用手背擦拭自己的眼泪。Hugh也在哭，我告诉自己为了他们，我必须坚强，我必须让他们看到一个好好的我，而不是崩溃的我。但我还是情不自禁地想我是不是仅仅在欺骗自己，其实我根本感觉不到悲痛。
+　　</p>
+<ul>
+<li>注<br>这是一份完整悼词的摘录。我无法很好地翻译，也找不到现成的中文翻译，因此在这里放出原文（来自网络）。*</li>
+</ul>
+<p><img src="/story/%E3%80%8ASECOND%20LIFE%E3%80%8B%E7%BF%BB%E8%AF%91%20by%20%E7%BC%80%E7%90%86/01.png" alt="Remember Me"><br>&amp;nbsp;</p>
+<h5 id="▼-2-下"><a href="#▼-2-下" class="headerlink" title="▼ 2 下"></a>▼ 2 下</h5><p>　　之后我向Anna走去。“做得很好，”我说。我们正站在小教堂的外面。Connor看起来明显是一副为事情结束而感到轻松的样子。<br>　　她笑了。我想起过去几周Kate打来的电话，希望了解Anna是怎么看我的，了解我的妹妹跟她说了什么。<br>　　“谢谢你。”她说。<br>　　“这是我的丈夫，Hugh。这个是我的好朋友Adrienne。”<br>　　Anna转身面向我的儿子。“那你一定就是Connor了吧？”她说。他点点头，并伸出手来好同她握手，在那一瞬间，我为他表现出来的成熟的感觉所惊讶。<br>　　“很高兴认识你。”他说。他看起来相当的茫然，不知道他应该做何种表现。那个几星期之前无忧无虑的男孩，那个会冲进房子里的男孩，那个被他的两三个朋友说服就会去拿他的足球或自行车的男孩，好像忽然就消失了。那个会拿着铅笔在素描板前坐很长时间的男孩消失了。我告诉自己这只是暂时的，我的小男孩还会回来，不过我不确信。<br>　　我们继续谈了好一会儿，但不久Hugh就注意到了Connor的低落，并提议让他们回到车上。Adrienne说她会和他们一起去，Hugh转向Anna。“谢谢你做的这些。”他说，在把手搭到Connor肩膀上前再次握了握她的手。“过来，儿子。”他说，然后他们三个就走了。<br>　　“他看上去是一个很好的少年。”等到他们走到无法听到我们谈话的距离Anna立马这么说。风抽在脸上，不久将会有雨来。她把头发从嘴角拨弄开。<br>　　“确实如此。”我说。<br>　　“他对这些感觉如何？”<br>　　“我不认为他被悲伤击垮了。”我们走过转角，走向种在教堂院子里的花那边。<br>　　“这对他来说一定很难过。”<br>　　我想知道她对Connor到底了解多少。她和我的妹妹是老朋友；Kate告诉我她们在学校时就已经认识彼此，尽管只是模模糊糊地通过其他人了解的。几年前她们通过Facebook联系到对方并很快意识到两人都搬到了巴黎。她们一起喝酒，几个月之后，Anna的室友搬离了她的公寓，Kate就住了进去。我对此感到高兴；我的妹妹并不总是能交到朋友。她们肯定聊了很多，虽然Kate有时候会显得遮遮掩掩，我猜有关Connor的那些难受的事不是能被轻易聊起的。<br>　　“他很好。”我说，“我想。”<br>　　我们已经到了火葬场的西南角——这里有白菊花和粉玫瑰做成的花圈，以及附着手写卡片的百合花束。我弯腰去读这些卡片，还不是很明白为什么这里到处都是Kate的名字。就在这时，阳光穿过云层，有那么一瞬间，我们被它的光所照亮。<br>　　“我敢打赌他有些难受。”Anna说。我站起来。Connor是一个很好的孩子，根本不会给人添麻烦。我们曾决定等到他足够大，能够理解这一切时，就把他的身世告诉他。<br>　　“他很好，”我说，“到目前为止…”<br>　　“他和他的爸爸相处得好吗？”<br>　　“挺好。”我没有告诉她，他和他爸爸相处得如此好才是我所担心的。我尽我的努力去做一个好妈妈，但有时候这并不容易。对Hugh来说当一个好爸爸肯定也如此。<br>　　我记起又一次我曾经和Adrienne说过这些——那时Hugh正忙于工作，Connor和我正在和她的两个双胞胎一起度假。她一整天都充满活力，和三个小孩子在一起。那时他们比现在更小，经常发脾气，耍小性子，怨东怨西并且拒绝吃东西。我应付不了这种情况，感到非常糟糕。“我担心这可能是因为他不是我的孩子。”等到孩子们已经去睡觉，她端着一杯酒坐在我面前时，而我端着一杯汽水时，我这么说。“你知道吗？”她说，告诉我我对自己太苛刻了。“他是你的孩子，你是他的妈妈，而且你还是一个很好的妈妈。你必须知道所有人都是不同的，你的妈妈也没能在你身边做一个很好的示范。没有人觉得这很容易。”<br>　　“或许如此。”我说。我情不自禁地想Kate会说些什么。<br>“很好。”Anna现在说到。我笑了。“是的。”我说，“我们很幸运，能有这么一个儿子。”我们继续看那些花。我们有一搭没一搭地聊着，避免谈到Kate。几分钟之后我们走回去，走向停车场。Adrienne正在向我招手，我对Anna说我可能要走了。<br>　　“见到你很高兴。”我说。<br>　　她转向我，把我的手放在她的手上。悲痛再一次爆发，她哭起来。“我想她。”她简短地说。<br>　　我握住她的手。我也想哭，但我没有。麻木将周围一切浸透。那是一种防御，Hugh曾说过。我把一切都堵住。Adrienne也同意，“为Kate而悲伤是没有标准形式的。”她说过。我没有和任何朋友说过我是怎么想的，以防他们认为我并不关心Kate的死。我觉得很糟糕。<br>　　“我知道。”我说，“我也很想她。”<br>　　她抬头看向我。她想要说什么。话语从她的嘴里滚出，“我们能继续联系吗？我是说，我希望这样。如果你愿意的话？你可以来巴黎看我，或者我可以来拜访你。我的意思是，如果你希望的话，我猜你很忙——”<br>　　“Anna。”我把手放在她的手臂上，让她冷静下来。忙着做什么？我想。我的日记里写了我的几项工作——一些为别人八个月大的婴儿拍照的工作，一些为Connor朋友的家庭和他们的拉布拉多犬拍照的工作——但是我已经把那些取消了。现在我除了存在于此，想着Kate，想着我去看Marcus的那一天刚好也是Kate死去的那一天是不是只是巧合这件事，没有做任何其他事情。<br>　　我勉强自己笑了出来。我不想表现得没有礼貌。“我很乐意。”<br>&amp;nbsp;</p>
+<h5 id="▼-3-上"><a href="#▼-3-上" class="headerlink" title="▼ 3 上"></a>▼ 3 上</h5><p>　　Hugh正在吃早饭。我看着他把牛奶倒进咖啡里，再加了半勺糖。<br>　　“你确定这不会太快了吗？”<br>　　但这正是为什么我想去的原因，我这么认为。因为自那件事起已经过了两个月，据我的丈夫说，我还在拒绝接受这个事实。我必须要学会接受。<br>　　“我想去那儿。我想和Anna见面，和她聊聊。”<br>　　说着我意识到了这对我来说意味着什么。Anna和我仍在联系。她看上去是个温暖，有趣，善解人意，不会随意评判他人的人。而且，跟Kate比我们所有人都更亲近的是她——比我，比Hugh和Adrienne——所以Anna才是能帮助我的人，用一种我的其他朋友都不能的方式。也许，我也能帮助她。<br>　　“我觉得这对我来说会有帮助。”<br>　　“但是你想做什么呢？”<br>　　我顿住了。也许，也有一部分是我想要确认她没有认为我和Hugh是很坏的人，因为我们带走了Connor。“我不知道。我只是想这么做。”<br>　　他沉默。已经过去了九个星期，我想。九个星期了，我还是没有哭过。完全没有。我又一次想到仍然在我包里的那张明信片，它还在Kate死的那天我把它放置的地方。镜中的Marcus。<br>　　“Kate死了。我必须面对这个事实。”不管怎么说。<br>　　他喝完了他的饮料。“我不能确定，但是…”他的声音柔和了下来，“如果你确实想这么做，那你就应该去。”<br>　　<br>　　走出火车的那一刻我很紧张，但Anna在站台的末尾等我。她穿了一件淡柠檬色的连衣裙，站在从高处的窗户透出的阳光下。她看起来比我记忆中的更加年轻，有一种在葬礼上我没有注意到的平和干净的美。她的脸是我曾经想要用照片记录下来的类型；温暖开朗。当她看到我时，她微笑起来，我在想她是不是已经从悲伤中走出来，然而我的悲伤才刚刚开始。<br>　　我走近而她向我招手。“Julia！”她跑过来向我打了个招呼。我们相互亲吻了脸颊，然后拥抱了对方。“很高兴你能来！看见你真好…”<br>　　“我也是。”我说。<br>　　“你肯定累坏了。我们去喝点什么吧。”<br>　　我们去了附近的一个小餐馆，离站台不远。她为我们俩点了咖啡。“有什么新的消息吗？”<br>　　我叹了口气。有什么好说的呢？她已经知道大部分的消息了。警察没有什么进展；Kate在她被袭击的那晚在酒吧喝酒，显然是一个人。一些人想起来曾见过她；她看起来精神很好，正在和酒保聊天。她的通话记录无法提供有用线索，她离开的时候也是独自一人。这并不合理，但我不能摆脱那种我对发生的一切负有责任的感觉。<br>　　“还没有。”<br>　　“我很抱歉。你最近在做什么？”<br>　　“我只是一直在想她，想Kate。有些时候，就像什么事情都没有发生。好像我只要一拿起电话拨给她，一切就会如往常一样。”<br>　　“你还没有接受这一切。这很正常。毕竟，还没有过去多久。”<br>　　我还是叹气。我不想告诉她Kate的事是怎样一直萦绕我心头的。我一遍又一遍地按下她的号码，却只能听到一段被事先录好的录音，用法语告诉我我拨的号码是空号。我不想让她知道我给Kate买了一张卡片，在上面写下我想写的话，把它封进信封，然后把它藏在我书桌上一堆文件下面。我最不想承认的，最令我感到最困扰的事，某种程度上我对此感到厌恶却不能否认的事，是我很高兴她终于消失了，因为至少她不会再在半夜打电话来要求我把儿子还给她。<br>　　“两个月。”我说，“Hugh说这根本没过去多久。”<br>　　她悲伤地笑了，但是什么都没有说。就某方面而言，我松了口气；再没有任何人说的任何话能够起到帮助了，所有的事都那么无关紧要。有时候沉默才是更好的，我很佩服她能勇敢面对这些。<br>　　“你怎么样？”我问。<br>　　“啊，你知道的。我忙于工作，这对我有好处。”我记起来她是一个律师，为一个规模很大的制药公司工作，尽管她没有告诉过我这些。我等着她说下去但她没再继续。<br>　　“Connor怎么样？”她问。她看起来真的很关心Connor；我不敢相信，有那么一瞬间，我竟然觉得这是她在帮助我的妹妹把他要回去。<br>　　“他很好，我想。”<br>　　我们的咖啡被端上。两杯浓咖啡，每个碟子中都放了几小袋糖和一块用锡箔纸包着的巧克力。<br>　　“实际上，我不确定他很好。他并不是没事，我的意思是说。他看上去时时刻刻都在生气，毫无理由地捶打着门，我知道他哭了很多次。我听到他哭了，尽管他否认。”<br>　　“这可以理解。”她说，“他还很小。他失去了他的姨妈。”<br>　　我犹豫了一下。她知道这一切吧，应该是知道的？<br>　　“你知道Kate是Connor的母亲吗？”<br>　　她点点头。<br>　　“她跟你说了多少？”<br>　　“所有，我想。我知道当Connor还是个婴儿时你们就把他带走了。”<br>　　我的喉咙里有什么收紧了，一种自我防御。那个词。“带走。”我感到一种熟悉的恼怒的升起——那个被改写的故事，被埋葬的真相——我努力把话咽下去。<br>　　　　“我们没有带走他，确切的说。那时候，Kate想要我们来抚养他。”<br>　　尽管那之后她就不那么想了，我觉得。我想知道Kate把故事描述成了什么样。我想象着她告诉她的朋友们，我们突然闯入，就在她和Connor过得很好的时候把他夺走，而我们想要她的孩子仅仅是因为我们不能自己生育。<br>　　我为她的去世而感到高兴的一部分重新升起。我无法控制自己，尽管这让我感到厌恶。Connor是我的孩子。<br>　　Anna笑了，仿佛是为了使我安心。我继续下去。“我知道这对她来说并不容易。放弃他，我是说。她那时还很年轻，当他出生时，她只有十六岁。她自己都还只是个孩子，真的，只有十六岁。只比Connor现在大一点点。”<br>　　我低头看向我的咖啡杯。我记得Connor出生的那天。那时我刚从柏林回来还只有几个月，正在开会。我回到了项目中，而这令我感到高兴。一切都很好。当我回到家中时我看到Hugh收拾好了过夜的行李。“你要去哪儿？”我说，然后他告诉了我。Kate在医院里。正在分娩。“我已经打电话给你们的爸爸了，”他补充道，“但他没有接。”</p>
+<ul>
+<li>注<br>穆兹利是欧洲人常食用的一种混合干果和燕麦等的早餐。</li>
+</ul>
+<p>&amp;nbsp;</p>
+<h5 id="▼-3-中"><a href="#▼-3-中" class="headerlink" title="▼ 3 中"></a>▼ 3 中</h5><p>　　我无法相信自己听到的内容，但同时我又知道，这是真的。<br>　　“在分娩？”我说，“但是——？”<br>　　“这是他们说的。”<br>　　但是她才十六岁。我想这么说。她没有工作，她住在自己家里，而且爸爸应该在照顾她。<br>　　“这不可能。”<br>　　“但，事情确实如此。我们要走了。”<br>　　等到我们到达时Connor已经出生了。“不要生气。”Hugh说，“她需要我们的支持。”<br>　　她坐在床上，抱着他。当我走进来时她把他递给我，我从他身上立刻感到了一种强烈到令人惊讶的疼爱。我无法对她生气，尽管我之前想这样做。<br>　　“他很可爱。”我说。Kate闭上了她的眼睛，仿佛突然感到疲倦，往远处看去。<br>　　之后，我们讨论了一下发生的事情。她说她甚至不知道自己怀孕了。Hugh说这并不是什么反常的事。“特别是少女，”他说，“她们的荷尔蒙还不稳定，所以周期可能会不规律。这听起来可能令人震惊，但有时候是会这样。”（译者实在忍不住吐个槽：但这也有点太离谱了吧！！！而且Hugh你为什么会知道这些啊！）我尝试着去想象。这也许是可能的吧，我觉得；Kate是一个身材丰满的孩子，面对一副自己现在并不熟悉的身体。她可能忽略了她有一个孩子的事实。<br>　　“她想要处理这一些。”我对Anna说，“有好几年，但是…”<br>　　我耸耸肩。她什么都没有。Connor三岁的时候她把他带去了布里斯托尔——谁都没有告诉——住在一个没有厨房的房间里，和别人共用厕所。她有一个插在水槽旁的电炉灶，还有一个放在倒置的碗上的水壶。我唯一一次去那个满是尿骚味和弄脏的尿布味道的地方时，Kate正在床上，而她的儿子则用带子固定在一辆地板上的玩具小汽车上，赤裸着身子并且饥肠辘辘。<br>　　我抬头看Anna。“她让我们把他抱走。只需要几个月，等到她安顿下来。她爱Connor但无法照顾他。妈妈不在，而爸爸对这些并不关心。时间从六个月变成一年，然后是两年。你知道的。Connor需要安定的生活。当他五岁的时候我们决定——我们都——觉得如果我们正式收养他会更好。”<br>　　她点点头。“你们没有试过联系他的父亲？”<br>　　“一切都很混乱。Kate从没告诉我们他是谁。”我们都沉默了。除了为Connor感到伤心，我还替Kate感到一种羞耻。“我不觉得她知道孩子的父亲是谁。”<br>　　“也许是他不是那种她想寻求帮助的人。”<br>　　“不。”我看向窗外的车流，出租车，过路的自行车。周围气氛凝重，我想让它更轻松一些。“但现在他有Hugh了。他们很接近，很相像。”<br>　　我快速说出这番话。这有些讽刺，我想。Hugh是和Connor没有血缘关系的人，但现在，Hugh却是Connor钦敬的人。<br>　　“你知道，”Anna说，“Kate总是和我说，尽管那很痛苦，但你们说可以照顾Connor的时候她真是松了口气。换句话说，你们拯救了她。”<br>　　我想知道她是不是只是为了让我感觉更好才这么说。“她真的这么说吗？”<br>　　“是的。Kate很爱你，你知道吧？”<br>　　我感到一阵轻松，但接下来它就被一种强烈的伤感代替了，一种击中内心的伤感。我看着被Anna握住的手，想象着我会怎样握住Kate的手。当她还是个婴儿的时候，我会抓住她的每一根小小的手指，对它的精致和脆弱感到惊讶。她是早产儿，如此脆弱，但又充满着活力和对生命的渴望。我那时还不到七岁，但我对我妹妹的爱已经很强烈了。<br>　　但这并不足以拯救她。<br>　　<br>　　我们喝完了咖啡，然后坐地铁去了Rue Saint Maur。我们前往Anna的公寓。她住在公寓街区，在一个自助洗衣店上。在按下解锁的密码前Anna先试着转了转门把手。“半数时候它是坏的。”她说。我们上了第一层楼。在楼梯平台上有一张写字桌，上面堆满了邮件，她打开其中的一个抽屉，在抽屉背面摸了摸。“这里有一把备用钥匙。”她说，“这是Kate的主意。她总是忘记带钥匙。我的男朋友也可以用它，如果他比我早到。”<br>　　所以，这里还住着一个男朋友。我没有提问。就像每一段新的友谊一样，这些是我之后会逐渐了解的细节。我们走进去，她拿过了我的包，放在门边。“你确定你不住在这里？”她说，但我告诉她没关系，我会住在我提前预定的酒店里，就在几条街外。我们聊了一会；我会去Kate的房间，被她的东西围绕。但现在还太早了。“我们可以去喝点什么，然后你可以在去吃晚餐的路上登记入住。我知道一家很好的店。不管怎么说，跟我来…”<br>　　这是一个很好的公寓，很大，有着高高的房顶和落地窗。起居室里的家具以淡雅来讲，很有品味。墙上挂着一些裱起来的海报，Folies Bergere，Chat Noir；是那种匆忙之下谁都会选择的印刷品。它们没有被精心装饰过。<br>　　“是你租下这个地方的吗？”她点点头。“这里很棒。”<br>　　“一段时期内是这样的。你想来点什么？葡萄酒？我说不定还有一些啤酒。”<br>　　所以还有一些事Kate没有告诉她。“你有果汁或者水吗？”<br>　　“当然。”我跟着她进了厨房。厨房在公寓的后部，整洁而干净——不像我离开时家里的厨房——但是Anna还是道歉了。她快速地收起了一条吃剩的面包和一罐花生酱。我笑了，走向窗户边。“我和一个孩子住在一起。这没什么的。”<br>　　我想到了我的家人。我想知道Hugh和Connor相处得怎么样。他说今晚他会带他出去——去电影院——或者玩象棋。他们会吃外卖，或者，出去吃。我知道我应该给他们打个电话，但只需要考虑我自己的事对我来说很轻松。<br>　　Anna咧开嘴笑了，递给我一杯苹果汁。“你确定你只需要这个吗？”<br>　　“是的，谢谢。”她从冰箱里拿出一瓶葡萄酒。“我诱惑不了你吗？只有最后一次机会咯！”<br>　　我微笑，再一次告诉她这样就好。我可以告诉她我什么也不想喝，但我不想对她说。她可能会有问题，但这不是我想谈论的。至少现在不。我不想被评判。<br>　　Anna坐在我对面，举起酒杯。“为了Kate。”<br>　　“为了Kate。”我说，喝了一小口果汁。我有一个很小很小的念头，希望我的杯子里也是葡萄酒，但，像之前每次一样，我放弃了这个想法。<br>　　“你想看看她的房间吗？”<br>　　我犹豫了一下。我不想，但我不能回避。这是我来这里的目的之一。去正视她的生活，因此，也正视她的死亡。<br>　　“是的。”我说，“走吧。”
+　　</p>
+<ul>
+<li>注<br>布里斯托尔：一个英国城市<br>&amp;nbsp;</li>
+</ul>
+<h5 id="▼-3-下"><a href="#▼-3-下" class="headerlink" title="▼ 3 下"></a>▼ 3 下</h5><p>　　这里并不像我之前想的那样坏。房间与阳台间有一扇窗户，房内的双人床上盖着一床奶油色羽绒被，一个CD播放器被放在梳妆台上的香水旁。这里相当整洁，一切都被精心安排过。完全不是我想象中的Kate生活的地方。<br>　　“警察已经调查过这个地方了，”Anna说，“他们尽量让东西保持了它们一开始的样子。”<br>　　警察。我想象他们用东西涂抹寻找指纹，捡起她的东西，记录下她的生活的样子。我的皮肤灼烧起来，微小的惊异的情感不断炸裂。这是我第一次，把脚下站立的地方和我妹妹的死联系起来。<br>　　我深吸一口气，仿佛能吸入她的气息，但是她已经走了，连魂魄也没有留下。这个房间可以属于任何人。我从Anna那边转身走向那张床，坐下来。梳妆台上有一本册子。<br>　　“那是给你的。”<br>　　是一本相册，那种有着硬壳封面和带有粘性好让照片留在相应位置的塑料内页的相册。甚至在我打开它之前，我已经感觉到了里面会有什么。<br>　　“Kate以前常常向别人展示这些，”Anna说，“‘这是我的姐姐！’她会这么说。她感到很骄傲，我发誓。”<br>　　我的照片。Anna坐在我旁边。“Kate告诉我你们的父亲保存着这些。在他死后她找到的。”<br>　　“我的父亲？”我说。我从来不觉得他对我我的作品有哪怕一丝一毫的兴趣。<br>　　“这是她说的…”<br>　　第一页就放着那张照片。镜中的Marcus。<br>　　“我的天…”我说。我必须把我的惊讶咽下去。这是一张完整的照片，没有被裁剪过。我也在里面，站在Marcus旁边，把相机高举到眼睛的位置。没穿任何衣服。<br>　　“那是你吗？”<br>　　“是的。”<br>　　“那这个又是谁？最近我在很多地方都见过他。”<br>　　我感到一种不经意的骄傲。“这张照片被用在一个展览里，现在很流行。”<br>　　“所以他是谁呢？”<br>　　我看向照片。“前任。Marcus。”我结结巴巴地说出他的名字；我在想上一次我大声说出它是在什么时候。我继续说。“我们住在一起，一段时间里。那是很多年以前了。我那时有…恩…二十岁？或许还没有。他是一个艺术家，给了我我的第一台相机。我是在我们住的公寓里拍这张照片的。好吧，认真来说，其实那算非法占据。在柏林。我们和其他几个人一起住，大部分都是艺术家。人员来来去去，经常变更。”<br>　　“柏林？”<br>　　“是的。Marcus想去那里。那是九十年代中叶，柏林墙被推倒，那个地方焕然一新，好像被擦干净了一样。你知道吗？”她点点头。我不知道她是不是那么感兴趣，但我继续说了下去。“我们住在Kreuzberg，是Marcus选的。我觉得那是Bowie的财产。”她看起来很困惑，或许是因为她太年轻。“David Bowie。他住在那里，或者记录过那里，我不确定…”<br>　　我把手指放在照片上。我记得我以前是怎样把我的相机带到每个地方的，就像Marcus会带着他的写生簿，和我们的朋友Johan会带着他的笔记本那样。这些东西不仅仅是工具，还是我们的一部分，是我们用之以感受世界的。我生发了为他人拍摄肖像的兴趣，当他们准备好，穿好衣服，化上妆，在镜子前检查过头发之后。<br>　　Anna的视线离开我，转向照片。“他看起来…”她说，但接下来又停住了。这就好像她从照片中读出了什么，什么令人烦恼而又无法言说的东西。我再次看向它。它有着这种影响人的魔力，悄悄地渗透心灵。<br>　　我说完她想说的话。“并不开心？是的。但不是什么时候都这样，我是说，在照片拍完后他跟着收音机唱歌，但，是的，他有时候是会这样。”<br>　　“为什么呢？”<br>　　我不想告诉她真相。至少不是全部的真相。<br>　　“他只是…有一点迷茫，我想，在那个时间点。”<br>　　“他没有家人吗？”<br>　　“有的。他们以前很亲密，但是…你知道吗？毒品会让一切都变得那样艰难。”<br>　　她抬头看我。“毒品？”<br>　　我点头。她真的能理解吗？<br>　　“你爱他吗？”<br>　　“我很爱他。”我发现自己深深地希望她能不要问发生了什么，就像我不希望她问我们是怎么相遇的那样。<br>　　她一定是感觉到了我的不情愿。“这是一张很棒的照片，”她说，把手放在我的胳臂上，“这些都是。你很有才华。我们再看一些吧？”<br>　　我翻到了另一页。在这里，Kate放了一张更早之前拍的照片。黑白的，边缘故意裁得不齐。Frosty，化了妆，没有戴她的假发，但是穿着高跟鞋。她正坐在我们的长沙发上，脚上放着一个满到溢出的烟灰缸，旁边还有一盒香烟和一个打火机。这一直是我最喜欢的照片之一。<br>　　“这是谁？”<br>　　“这是Frosty。一个朋友。”<br>　　“Frosty？”<br>　　“我记不起她的真名了。她讨厌用那个名字。”<br>　　“她？”她看起来有些惊讶，不过我知道为什么，我想。在这张照片里，Frosty的头发剪得很短；尽管化了妆，她看起来还是更像个男人。<br>　　“是的。她是女人。”我笑了，“事实上，她两边都不是，但她一直称呼她自己为女性。她之前说，‘在这个世界上，你们必须做出决定。酒吧里只有两种厕所，表格里也只有两种空格。男或女。’她决定当一个女人。”<br>　　Anna再一次看向那张照片。我不期望她能理解。像Frosty这样的人——或者像Marcus这样的人——和她不生活在同一个世界里。他们甚至不和我生活在一个世界里。<br>　　“她身上发生了什么？”<br>　　“我不知道，”我说，“我们没有一个人觉得Frosty可以一直这样。就这个世界来说，她太脆弱了…但是这也许只是我们小题大做。事实是，我匆忙离开了柏林。我把他们抛下了。当我走后，就失去了他们的消息。”<br>　　“你没有再回头看看吗？”<br>　　这是一个奇怪的问题。我想起了Lot的妻子（罗德的妻子），那个盐柱。“我不能那么做。”那太痛苦了，我想说，但没有说。我关上相簿，把它还给了她。<br>　　“不。它们是你的。”<br>　　我迟疑了。<br>　　“留着它们吧。这个也是。”<br>　　她交给我一个放在Kate床边的盒子。是一个饼干盒。盖子上有“Huile d’Olive”的字样，和一个穿着红裙子的女人。<br>　　“这是为你准备的。”<br>　　“这是什么？”<br>　　“只是一些Kate的私人物品。我觉得你应该拿着它们。”<br>　　所以这就是我的妹妹留下的东西，是我来这里要拿的，还给她的儿子的东西。<br>　　我是紧张的，好像这个盒子里可能有一个陷阱，一只老鼠，或一只毒蜘蛛。<br>　　我打开了盖子。盒子里面全是笔记本，照片和纸页。她的护照被放在最顶上，我打开到她的照片的那一页。这是一张最近的照片，一张我以前没看过的照片。她的头发比我记忆中的更短，我看得出来她瘦了。她看起来几乎是另一个人。<br>　　我看向护照截止日期。它在八年内有效。她不再需要的八年。我啪地合上了它，把它放了回去，然后关上盒子。<br>　　“我以后会看剩下的东西的。”我说。我意识到了，我已经开始哭了，自从她死后第一次哭。我暴露在空气中，没有任何遮掩。好像我已经向Hugh的病人那样，从脖子到腹股沟被切开。我被剥皮，心脏被切出一条不规则的口子，在心灵深处，我厌恶自己。<br>　　“这没什么，”Anna说，“你去那边哭吧。没事的。”
+　　</p>
+<ul>
+<li>注<br>罗德的妻子：圣经故事。回望的盐柱。</li>
+</ul>
+<blockquote>
+<p>　　那天晚上，罗德坐在城门口。两个天使从亚伯拉罕那里来，警告罗德，灾难就要来临。他们对罗德说：“赶紧带着你的妻子女儿女婿们逃离所多玛吧！赶紧去通知他们，不要迟延，神要毁灭这城了。”<br>　　遗憾的是，罗德的女婿们不相信这个警告，拒绝离开那城。罗德只好带着他的妻子和他的女儿们离开。但是他极不情愿离开那个享受的家。可是天使抓住他们的双手，把他们带出那座城市。警告他们快些逃离，不要回头看，要逃到山岗上躲藏起来，免得灾难牵连他们。<br>　　罗德害怕爬到那座高山，他恳求天使让他呆在离所多玛较近的一座名叫琐珥的小城里。天使答应了，催促他说：“你快跑吧！”<br>　　罗德的妻子知道不能回头看，但是她违背了天使的嘱咐，忍不住回头看了。当她在后面回头看的时候，她立刻变成了一个盐柱。<br>　　罗德和他的女儿们不敢再停留，他们俩忙离开那里，只剩下罗德的妻子，一个白色的盐柱留在那里。</p>
+</blockquote>
+<p>&amp;nbsp;</p>
+<h5 id="▼-4-上"><a href="#▼-4-上" class="headerlink" title="▼ 4 上"></a>▼ 4 上</h5><p>　　我们打车到了那家餐馆。服务生把我们带到我们在餐厅外，人行道上的桌子。白色的桌布，用塑料夹子夹住，桌布上放着一篮面包。这天晚上十分暖和，令人愉快，空气里面充满着希望的气息。<br>　　我们在聊天。一旦我恢复过来后，我们就决定，今晚我们必须为Kate的生活庆祝，同时也为她的死去默哀。我们一起开怀地笑，两人之间充满了轻松的气氛；Anna甚至拿出她的手机，拍了一张以这里的河为背景的我们的照片。她告诉我说她喜欢城市的这片地方，有一天她还想住在这里。“这里在非常中心的位置，”她说，“在河的旁边。”她点了一瓶酒。当服务生开始倒酒时我把手覆在杯子上方并摇了摇头。<br>　　“你不喝酒吗？”<br>　　“不喝。”我说。我想着我以前搬出过的一些理由——我正在服用抗生素，我在减肥，或者我还要开车——但接着，一些不可避免的事情发生了。其他的理由涌入我的脑海，那些可以解释为什么这次，这一次，我不喝哪怕一口酒的理由。这段时间我过得并不容易，压力巨大，已经十五年了而这并没有什么坏处。<br>　　我的妹妹被杀了。<br>　　“我很好。”<br>　　我想起过去我学到的。我不能抗拒喝酒的冲动，但我必须知道什么才是要紧的。我必须知道这很正常，也是暂时的。我必须挑战它，从中解放。<br>　　“老实说，我不喝酒。一段时间没喝了。”Anna点点头，自己喝了一小口，而我则要了汽水。她看起来对此很干兴趣，但没有问任何问题，这让我松了口气。当她把杯子放下时我注意到她注意力并不集中，显得焦躁不安，在椅子上挪动，又把玩她的餐巾。<br>　　“我想和你谈点事情。”<br>　　“你说吧。”<br>　　她犹豫了。我想知道她要说什么。我知道警察已经仔细盘问过她了；那晚Kate去的酒吧是她以前也去过的。因为一件事情，我让自己打起精神来。<br>　　“是关于那笔钱…”<br>　　我微笑。Kate的遗嘱一定吓到她了，Hugh已经提醒过我她可能会问起这件事。<br>　　“是Kate留给你的那笔钱吗？”<br>　　“对。这让我很惊讶…”她拿出了一些面包。“我真的没有想到。实话说，我并不知道她留下来了遗产，更不用说她会把其中一部分给我…以及我并没有向她要过。我希望你们能了解。”<br>　　我再一次笑了。我记得是Hugh说服了Kate提前些一份遗嘱，而且，当她之后把Anna列入其中时我们都很欣慰。因为这意味着她有朋友。她在这里找到了自己的家园。<br>　　“我知道。这没关系。”<br>　　“你们不惊讶吗？她居然把钱给了我？”<br>　　“并不。这是正常的，你是她最好的朋友。Kate是一个大方的人，她一定希望你拥有它们。”<br>　　她看起来松了口气。我想知道这是否是因为那笔钱，或者是因为这场谈话并没有她想象中的那么尴尬。<br>　　“这些钱来自哪里？”<br>　　“我们的父亲。他数年前死了，并把钱留给了Kate。就是那些在银行里的钱，不包括卖掉房子的收入。这钱比所有人想象的都更多。”<br>　　多了很多，我想。几乎一百万英镑。但是我没有说出来。<br>　　“他给了一些给你吗？”<br>　　我摇了摇头。“他可能觉得我不需要它们。”<br>　　又或者是因为愧疚。他知道他一直忽视了他的小女儿，希望能补偿她。<br>　　Anna叹了口气。<br>　　“哦，这没什么关系。”我快速地说，“Hugh有存款，而Kate没什么钱，过得不好。”<br>　　“但是她没有用掉它们。”<br>　　“是没有。Hugh建议她存一部分钱，以防万一。但是我们没有人想到她会真的听从他所说的话。”<br>　　“我会把我的那部分给你们的。如果你们想要的话？”<br>　　她是认真的。我把手搭在她的手臂上。“当然不用。另外，她把剩下的给了Connor。有很多钱。”比给你的多多了，我想，尽管我还是没有说。“我是他的受托人，但是直到我确信他不会把钱都花在电脑游戏和新跑鞋上之前，我都不会把钱给他。”<br>　　她什么都没说，看上去并没有被说服。<br>　　“Kate肯定希望你拿着这笔钱，你就接受吧…”<br>　　她笑了，脸色这才看上去轻松一些，感谢了我。一会后服务员过来了，有一段时间我们忙着点菜。当他以后退，我们就陷入了沉默。金色的阳光铺在河面上。人们漫无目的地闲逛，手挽着手。我的悲伤的面纱被慢慢揭开，轻轻地，我感受到了平静。<br>　　“这里真的很美妙。”我说，“我能理解Kate为什么来巴黎了。”<br>　　Anna笑了。我想着，如果之前我的妹妹和我成功的理解了对方，找到了一种让我们回复过去亲密关系的办法，事情会变得怎么样。也许我就能来巴黎看望她们两个。事情就会变成我们三个坐在这里聊天，八卦，享受乐趣。我们真的有那么不同吗，Kate和我？<br>　　我转向Anna。我第一次感到我能问她。“我想知道发生了什么，”我轻轻地说，“在那一晚…”<br>　　她抿了口酒。<br>　　“通常来说我们会一起出去。”她说。她说出来的有些话会让我觉得我不是唯一一个感到内疚的人。“但我那天很忙，她就一个人去了。”<br>　　我叹气。我不想在脑中描绘那幅图景。<br>　　“那地方很乱吗？她是在哪里被找到的？”<br>　　“不。并不很乱。”<br>　　“到底发生了什么，Anna？”<br>　　“警察说了什么？你没有和他们谈过吗？”<br>　　“谈过。但没有像Hugh谈得那么多。那个外国警官说他们更希望和我们中的一个人联络。这会让事情变得更简单，我想，然后他自愿这样。但我也和他们说了话。”<br>　　“然后你们讨论了他们所说的？”<br>　　“啊，他把一切都告诉我了。但是没有有用的东西。”<br>　　“真的吗？”<br>　　“是的。线索被封死，没有作案动机。他们说他们已经和她的朋友谈过，但——”<br>　　“但他们没有一个人知道些什么。”<br>　　“对。所以他们还是在迷雾中调查。唯一让他们感到怀疑的，是她的耳环。”</p>
+<ul>
+<li>注<br>①：塞纳河穿过巴黎市中心。<br>②：服用头孢类抗生素时不得饮酒，否则会出现乙醇积蓄中毒现象。</li>
+</ul>
+
+      </section>
+      
+        <div class="tags">
+          <span>标签：</span>
+
+  <a href="/tag#小说" >
+    <span class="tag-code">小说</span>
+  </a>
+
+        </div>
+       
+    
+    
+  <div class="nav-container">
+    <!-- reverse left and right to put prev and next in a more logic postition -->
+    
+      <a class="nav-left" href="/video/video1/" target="_blank">
+        <span class="nav-arrow">← </span>
+        
+          忘了发出来的微电影（大概算吧）
+        
+      </a>
+    
+    
+      <a class="nav-right" href="/thinking/phy02/" target="_blank">
+        
+          奥卡姆上帝
+        
+        <span class="nav-arrow"> →</span>
+      </a>
+    
+  </div>
+
+    
+      <div class="advertisement">
+        <p> 广告：快速学习 Crash Course十分钟速成课 <a target="_blank" rel="noopener" href="https://crashcourse.club/">字幕组网站</a></p>
+      </div>
+    
+    
+      <div id="waline"></div>
+
+<link href="https://cdn.bootcdn.net/ajax/libs/waline/2.15.1/waline.min.css" rel="stylesheet">
+<script src="//cdn.bootcdn.net/ajax/libs/waline/2.15.1/waline.min.js"></script>
+<script defer src="/js/waline-qqavatar.js"></script>
+<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/waline/2.14.9/waline.min.js"></script>-->
+<!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/waline/2.14.9/waline.min.css">-->
+
+<script>
+  // 中文默认
+  const locale = {
+    nick: '昵称',
+    nickError: '昵称不能少于3个英文字符或2个中文汉字',
+    mail: '邮箱(可用QQ邮箱)',
+    mailError: '请填写正确的邮件地址',
+    link: '网址',
+    optional: '可选',
+    placeholder: '' || '说、什么8 \n\n可使用QQ邮箱获取QQ头像，或在gravatar.com注册后使用邮箱绑定头像 \n支持Markdown语法：*斜体*, **粗体**, \# - ###### 1-6级标题, *** 或 --- = 水平分割线, ~~删除线~~, > 引用内容, `代码块`, 1. 序号列表, * 无序列表, ^上角标^, ~下角标~, <br> = 空行, [链接文字](链接地址), ![图片名称](图片地址.png), ',
+    sofa: '来发评论吧~',
+    submit: '提交',
+    like: '喜欢',
+    cancelLike: '取消喜欢',
+    reply: '回复',
+    cancelReply: '取消回复',
+    comment: '评论',
+    refresh: '刷新',
+    more: '加载更多...',
+    preview: '预览',
+    emoji: '表情',
+    uploadImage: '上传图片',
+    seconds: '秒前',
+    minutes: '分钟前',
+    hours: '小时前',
+    days: '天前',
+    now: '刚刚',
+    uploading: '正在上传',
+    login: '登录',
+    logout: '退出',
+    admin: '博主',
+    sticky: '置顶',
+    word: '字',
+    wordHint: '评论字数应在 $0 到 $1 字之间！\n当前字数：$2',
+    anonymous: '匿名',
+    level0: '潜水',
+    level1: '冒泡',
+    level2: '吐槽',
+    level3: '活跃',
+    level4: '话痨',
+    level5: '传说',
+    gif: '表情包',
+    gifSearchPlaceholder: '搜索表情包',
+    profile: '个人资料',
+    approved: '通过',
+    waiting: '待审核',
+    spam: '垃圾',
+    unsticky: '取消置顶',
+    oldest: '按倒序',
+    latest: '按正序',
+    hottest: '按热度',
+    reactionTitle: '你认为这篇文章怎么样？',
+  };
+
+  Waline.init({
+    el: "#waline",
+    serverURL: "waline.voiiu.com",
+    appId: "" || "M2JD6yGQhefhH2O0aSjFfclc-MdYXbMMI",
+    appKey: "" || "arEPHdbMnKwMjQgiWsLgw34N",
+    login: "disable",
+    avatarCDN: "https://gravatar.loli.top/avatar/",
+    //avatar: '',
+    placeholder: "",
+    meta: ["nick", "mail"],
+    requiredMeta: [""],
+    pageview: "true" && "",
+    emoji: [
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/tieba",
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/weibo",
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/qq",
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/alus",
+      "https://testingcf.jsdelivr.net/gh/Saidosi/azuki-emoji-for-waline@1.0/azukisan",
+      "https://testingcf.jsdelivr.net/gh/norevi/blob-emoji-for-waline@2.0/blobs-gif",
+    ],
+    locale,
+  });
+</script>
+<script>
+  // emoji
+  $('.wl-actions').append("<a href=https://emoji.zhuochi.org target=_blank id=wl-emoji-wrapper><img src=/images/emoji.png class=wl-action id=wl-emoji></a>")
+
+  // Clean TEXTAREA 
+  //$(".wl-cards").change(function () {
+  //  alert('changed')
+    //('#wl-edit').html("")
+  //})
+
+  //$(".primary .wl-btn").click(function () {
+    //document.getElementsByClassName('wl-num')[0].innerHTML ++
+  //})
+</script>
+    
+    
+    
+      <div class="qrcode">
+    <img id="share-qrcode" class="qrcode-image"/>
+    <div class="qrcode-notice">保存二维码，分享此文章</div>
+</div>
+
+<!--<script type="text/javascript" src="/js/qrious.min.js"></script>-->
+<script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/qrious/4.0.2/qrious.min.js" ></script>
+<script>
+    // qrcode
+    let qr = new QRious({
+        element: document.getElementById('share-qrcode'),
+        value: document.location.href
+    })
+
+    $("#share-qrcode").click(function () {
+        let img = document.getElementById('share-qrcode')
+        let url = img.src
+        let a = document.createElement('a')
+        let down_event = new MouseEvent('click')
+        a.download = 'CloudPool浊池-《SECOND LIFE》翻译'
+        a.href = url
+        a.dispatchEvent(down_event)
+    })
+</script>
+    
+  </article>
+</main>
+
+<script>
+    (function () {
+      var url = "https://zhuochi.org/story/《SECOND LIFE》翻译 by 缀理/";
+      var banner = "";
+      if (banner !== "" && banner !== "undefined" && banner !== "null") {
+        $("#article-banner").css({
+          "background-image": "url(" + banner + ")",
+        });
+      } else {
+        $("#article-banner").geopattern(url);
+      }
+      $(".header").removeClass("fixed-header");
+    })();
+  </script>
+<script>
+  !function () {
+    var OriginTitile = document.title;
+    var titleTime;
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) {
+        document.title = "(つェ⊂)看不见我看不见我~ " + OriginTitile;
+        clearTimeout(titleTime);
+      } else {
+        document.title = "(*´∇｀*) 被你发现啦~ " + OriginTitile;
+        titleTime = setTimeout(function () {
+          document.title = OriginTitile;
+        }, 1500);
+      }
+    });
+  }
+</script>
+
+<script>
+  // error image
+  $(".markdown-content img").on("error", function () {
+    $(this).attr("src", "/images/error.png");
+    $(this).css({cursor: "default",});
+  });
+</script>
+
+    <aside class="sidebar">
+  <span class="scroll-top fa fa-arrow-up"></span>
+  <span class="fa fa-share-alt share-icon">
+    <span class="list-icon">
+      
+        <a href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=https://zhuochi.org/story/%E3%80%8ASECOND%20LIFE%E3%80%8B%E7%BF%BB%E8%AF%91%20by%20%E7%BC%80%E7%90%86/index.html&title=《SECOND LIFE》翻译&pics=https://zhuochi.org/images/logo.svg&desc=废话与不是废话与翻译&summary=CloudPool浊池是由年轻人管理的博客" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659969569042" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1231"><path d="M1023.210667 395.690667c-2.005333-6.08-7.381333-10.410667-13.781333-10.944l-347.114667-29.802667L526.634667 33.984C524.117333 28.096 518.4 24.256 512 24.256s-12.181333 3.861333-14.677333 9.749333l-135.616 320.938667L14.570667 384.746667c-6.357333 0.533333-11.797333 4.864-13.781333 10.944-1.941333 6.101333-0.106667 12.778667 4.714667 16.96l263.338667 228.138667L189.888 980.16c-1.429333 6.208 1.002667 12.757333 6.122667 16.512 5.205333 3.733333 12.117333 4.010667 17.642667 0.682667L512 817.450667l298.282667 179.946667c2.581333 1.557333 5.418667 2.346667 8.32 2.346667 3.221333 0 6.528-1.002667 9.344-3.008 5.162667-3.84 7.594667-10.368 6.122667-16.576l-62.442667-268.352c26.730667-13.482667 56.277333-36.245333 56.277333-36.245333s-116.864 57.066667-536.341333 29.205333L595.626667 484.437333c0 0-11.968-18.581333-392.981333-31.872-25.408-0.917333 310.677333-63.722667 558.933333-10.645333L456.298667 660.906667c0 0 122.453333 18.197333 307.328 16.085333l-8.448-36.181333 263.36-228.16C1023.381333 408.469333 1025.216 401.792 1023.210667 395.690667z" p-id="1232" fill="#04b2f1"></path></svg>
+        </a> 
+      
+      
+        <a href="https://service.weibo.com/share/share.php?url=https://zhuochi.org/story/%E3%80%8ASECOND%20LIFE%E3%80%8B%E7%BF%BB%E8%AF%91%20by%20%E7%BC%80%E7%90%86/index.html&title=《SECOND LIFE》翻译&pic=https://zhuochi.org/images/logo.svg&summary=废话与不是废话与翻译" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659970330786" class="icon" viewBox="0 0 1138 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="3639" fill="#04b2f1"><path d="M914.432 518.144q27.648 21.504 38.912 51.712t9.216 62.976-14.336 65.536-31.744 59.392q-34.816 48.128-78.848 81.92t-91.136 56.32-94.72 35.328-89.6 18.944-75.264 7.68-51.712 1.536-49.152-2.56-68.096-10.24-78.336-21.504-79.872-36.352-74.24-55.296-59.904-78.848q-16.384-29.696-22.016-63.488t-5.632-86.016q0-22.528 7.68-51.2t27.136-63.488 53.248-75.776 86.016-90.112q51.2-48.128 105.984-85.504t117.248-57.856q28.672-10.24 63.488-11.264t57.344 11.264q10.24 11.264 19.456 23.04t12.288 29.184q3.072 14.336 0.512 27.648t-5.632 26.624-5.12 25.6 2.048 22.528q17.408 2.048 33.792-1.536t31.744-9.216 31.232-11.776 33.28-9.216q27.648-5.12 54.784-4.608t49.152 7.68 36.352 22.016 17.408 38.4q2.048 14.336-2.048 26.624t-8.704 23.04-7.168 22.016 1.536 23.552q3.072 7.168 14.848 13.312t27.136 12.288 32.256 13.312 29.184 16.384zM656.384 836.608q26.624-16.384 53.76-45.056t44.032-64 18.944-75.776-20.48-81.408q-19.456-33.792-47.616-57.344t-62.976-37.376-74.24-19.968-80.384-6.144q-78.848 0-139.776 16.384t-105.472 43.008-72.192 60.416-38.912 68.608q-11.264 33.792-6.656 67.072t20.992 62.976 42.496 53.248 57.856 37.888q58.368 25.6 119.296 32.256t116.224 0.512 100.864-21.504 74.24-33.792zM522.24 513.024q20.48 8.192 38.912 18.432t32.768 27.648q10.24 12.288 17.92 30.72t10.752 39.424 1.536 42.496-9.728 38.912q-8.192 18.432-19.968 37.376t-28.672 35.328-40.448 29.184-57.344 18.944q-61.44 11.264-117.76-11.264t-88.064-74.752q-12.288-39.936-13.312-70.656t16.384-66.56q13.312-27.648 40.448-51.712t62.464-38.912 75.264-17.408 78.848 12.8zM359.424 764.928q37.888 3.072 57.856-18.432t21.504-48.128-15.36-47.616-52.736-16.896q-27.648 3.072-43.008 23.552t-17.408 43.52 9.728 42.496 39.424 21.504zM778.24 6.144q74.752 0 139.776 19.968t113.664 57.856 76.288 92.16 27.648 122.88q0 33.792-16.384 50.688t-35.328 17.408-35.328-14.336-16.384-45.568q0-40.96-22.528-77.824t-59.392-64.512-84.48-43.52-96.768-15.872q-31.744 0-47.104-15.36t-14.336-34.304 18.944-34.304 51.712-15.36zM778.24 169.984q95.232 0 144.384 48.64t49.152 146.944q0 30.72-10.24 43.52t-22.528 11.264-22.528-14.848-10.24-35.84q0-60.416-34.816-96.256t-93.184-35.84q-19.456 0-28.672-10.752t-9.216-23.04 9.728-23.04 28.16-10.752z" p-id="3640"></path></svg>
+        </a>
+      
+      
+        <a href="https://www.douban.com/recommend/?url=https://zhuochi.org/story/%E3%80%8ASECOND%20LIFE%E3%80%8B%E7%BF%BB%E8%AF%91%20by%20%E7%BC%80%E7%90%86/index.html&title=《SECOND LIFE》翻译&pic=https://zhuochi.org/images/logo.svg&summary=废话与不是废话与翻译" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659970941550" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1055"><path d="M88 72.9h848v95.5H88z" p-id="1056" fill="#04b2f1"></path><path d="M88 72.9h848v95.5H88zM862.3 641.5V268H161.7v373.5h700.6zM263.4 363.4h498.4v182.5H263.4V363.4z" p-id="1057" fill="#04b2f1"></path><path d="M862.3 641.5V268H161.7v373.5h700.6zM263.4 363.4h498.4v182.5H263.4V363.4zM710.8 856.7c30.5-46.7 59.3-100.8 85.9-162.2l-102-37.2c-26.5 72.8-57.4 139.4-92.5 199.4H424.9c-29.4-77.8-62.6-144.3-99.8-199.4l-93.8 37.2c38.6 58 69.9 111.9 93.8 162.2H64v94.5h896v-94.5H710.8z" p-id="1058" fill="#04b2f1"></path><path d="M710.8 856.7c30.5-46.7 59.3-100.8 85.9-162.2l-102-37.2c-26.5 72.8-57.4 139.4-92.5 199.4H424.9c-29.4-77.8-62.6-144.3-99.8-199.4l-93.8 37.2c38.6 58 69.9 111.9 93.8 162.2H64v94.5h896v-94.5H710.8z" p-id="1059" fill="#04b2f1"></path></svg>
+        </a>
+      
+      
+        <a href="http://tieba.baidu.com/f/commit/share/openShareApi?url=https://zhuochi.org/story/%E3%80%8ASECOND%20LIFE%E3%80%8B%E7%BF%BB%E8%AF%91%20by%20%E7%BC%80%E7%90%86/index.html&title=《SECOND LIFE》翻译&pic=https://zhuochi.org/images/logo.svg&desc=废话与不是废话与翻译" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659968685554" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1659"><path d="M1024 862.826667a161.152 161.152 0 0 1-161.173333 161.173333h-701.632a161.152 161.152 0 0 1-161.173334-161.173333v-701.632a161.194667 161.194667 0 0 1 161.173334-161.173334h701.632a161.194667 161.194667 0 0 1 161.173333 161.173334v701.632z" fill="#04b2f1" p-id="1660"></path><path d="M828.842667 250.261333h-173.461334v-36.522666a17.066667 17.066667 0 0 0-17.066666-17.066667h-41.941334a17.045333 17.045333 0 0 0-17.045333 17.066667v263.296h-24.896a17.066667 17.066667 0 0 0-17.045333 17.066666V810.218667a17.066667 17.066667 0 0 0 17.045333 17.088h257.365333a17.066667 17.066667 0 0 0 17.066667-17.088v-58.986667h-0.256v-198.144h0.256v-58.986667a17.066667 17.066667 0 0 0-17.066667-17.066666H655.381333v-150.72h173.461334a17.066667 17.066667 0 0 0 17.066666-17.066667v-41.941333a17.066667 17.066667 0 0 0-17.066666-17.045334z m-93.376 302.848c9.429333 0 17.045333 7.637333 17.045333 17.066667v164.010667a17.066667 17.066667 0 0 1-17.045333 17.066666h-104.981334a17.045333 17.045333 0 0 1-17.045333-17.066666v-164.010667a17.066667 17.066667 0 0 1 17.045333-17.066667h104.981334zM197.909333 657.408h41.941334a17.088 17.088 0 0 0 17.088-17.088v-358.741333h174.528v358.741333a17.066667 17.066667 0 0 0 17.045333 17.088h41.941333a17.088 17.088 0 0 0 17.088-17.088v-417.749333c0-9.408-7.658667-17.066667-17.088-17.066667h-292.522666a17.066667 17.066667 0 0 0-17.045334 17.066667v417.749333a17.024 17.024 0 0 0 17.024 17.088z" fill="#FFFFFF" p-id="1661"></path><path d="M492.970667 739.2v-0.170667a110.656 110.656 0 0 1-110.656-110.656h-0.106667v-296.042666a17.066667 17.066667 0 0 0-17.066667-17.045334h-41.941333a17.045333 17.045333 0 0 0-17.045333 17.045334v296.042666h-0.362667a110.677333 110.677333 0 0 1-110.677333 110.656v0.170667a17.045333 17.045333 0 0 0-17.045334 17.066667v42.112a17.066667 17.066667 0 0 0 17.045334 17.066666 186.602667 186.602667 0 0 0 148.928-74.176 186.624 186.624 0 0 0 148.928 74.176 17.045333 17.045333 0 0 0 17.045333-17.066666v-42.112a17.024 17.024 0 0 0-17.045333-17.066667z" fill="#FFFFFF" p-id="1662"></path><path d="M865.450667 873.685333c17.664-3.797333 15.253333-24.896 14.741333-29.504-0.874667-7.125333-9.237333-19.541333-20.586667-18.581333-14.293333 1.28-16.362667 21.930667-16.362666 21.930667-1.962667 9.557333 4.608 29.952 22.208 26.154666z m18.752 36.693334c-0.533333 1.493333-1.664 5.290667-0.682667 8.597333 1.962667 7.402667 8.405333 7.744 8.405333 7.744h9.258667v-22.613333h-9.898667a10.837333 10.837333 0 0 0-7.082666 6.272z m14.037333-72.085334c9.749333 0 17.621333-11.221333 17.621333-25.109333 0-13.866667-7.872-25.088-17.621333-25.088-9.728 0-17.642667 11.221333-17.642667 25.088 0 13.888 7.893333 25.109333 17.642667 25.109333z m41.984 1.664c13.034667 1.706667 21.418667-12.202667 23.082667-22.762666 1.706667-10.538667-6.698667-22.762667-15.936-24.853334-9.258667-2.112-20.778667 12.672-21.845334 22.357334-1.258667 11.797333 1.685333 23.573333 14.698667 25.258666z m31.936 61.973334s-20.16-15.594667-31.936-32.448c-15.957333-24.874667-38.634667-14.762667-46.208-2.112-7.552 12.650667-19.328 20.629333-20.992 22.741333-1.685333 2.090667-24.362667 14.336-19.328 36.672 5.034667 22.336 22.72 21.909333 22.72 21.909333s13.013333 1.28 28.138667-2.112c15.104-3.349333 28.117333 0.832 28.117333 0.832s35.306667 11.818667 44.970667-10.944c9.621333-22.72-5.482667-34.538667-5.482667-34.538666z m-60.394667 33.877333h-22.954666c-9.92-1.984-13.866667-8.746667-14.357334-9.898667-0.490667-1.173333-3.306667-6.613333-1.813333-15.850666 4.288-13.866667 16.490667-14.848 16.490667-14.848h12.224v-15.04l10.410666 0.149333v55.488z m42.752-0.170667h-26.410666c-10.24-2.624-10.709333-9.92-10.709334-9.92v-29.205333l10.709334-0.170667v26.261334c0.64 2.794667 4.117333 3.306667 4.117333 3.306666h10.88v-29.397333h11.413333v39.125333z m37.376-77.994666c0-5.034667-4.181333-20.224-19.733333-20.224-15.552 0-17.642667 14.336-17.642667 24.469333 0 9.685333 0.810667 23.189333 20.16 22.741333 19.328-0.426667 17.216-21.909333 17.216-26.986666z" fill="#FFFFFF" p-id="1663"></path></svg>
+        </a>
+      
+      
+        <a href="https://connect.qq.com/widget/shareqq/index.html?url=https://zhuochi.org/story/%E3%80%8ASECOND%20LIFE%E3%80%8B%E7%BF%BB%E8%AF%91%20by%20%E7%BC%80%E7%90%86/index.html&title=《SECOND LIFE》翻译&pic=https://zhuochi.org/images/logo.svg&desc=废话与不是废话与翻译&summary=CloudPool浊池是由年轻人管理的博客" aria-hidden="true" target="_blank">
+        <svg t="1659969969936" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2714"><path d="M866.991 707.772c0 0-25.341 69.55-71.877 132.071 0 0 83.050 28.439 76.137 102.196 0 0 2.709 82.331-177.613 76.685 0 0-126.817-9.898-164.88-63.85h-33.53c-38.018 54.006-164.834 63.85-164.834 63.85-180.431 5.7-177.556-76.685-177.556-76.685-7.025-73.756 76.081-102.196 76.081-102.196-46.475-62.519-71.875-132.071-71.875-132.071-112.759 183.141-101.477-25.567-101.477-25.567 21.141-123.495 109.949-204.384 109.949-204.384-12.677-112.157 33.805-132.078 33.805-132.078 9.68-346.979 306.473-340.887 312.675-340.722 6.249-0.163 302.931-6.256 312.72 340.723 0 0 46.538 19.866 33.812 132.078 0 0 88.751 80.89 109.886 204.384 0.055-0.001 11.285 208.707-101.421 25.566v0 0z" p-id="2715" fill="#04b2f1"></path></svg>
+        </a>
+      
+    </span>
+  </span>
+</aside>
+    <footer class="app-footer">
+  <p class="copyright">
+    Copyright &copy; 2017 - 2023, CloudPool浊池, All Rights Reserved <br/>
+    本站为基于<a href="https://hexo.io" target="_blank">Hexo</a>的静态博客， <span id="busuanzi_container_site_pv">总访问量 <span id="busuanzi_value_site_pv"></span> 次</span><!--，来自 <span id="busuanzi_value_site_uv"></span> 个 IP--><br/>
+    主题源自 <a target="_blank" rel="noopener" href="https://github.com/yanm1ng/hexo-theme-vexo">Vexo</a> by <a target="_blank" rel="noopener" href="https://github.com/yanm1ng">yanm1ng</a>，感谢 <a target="_blank" rel="noopener" href="https://github.com/MoePlayer/APlayer">APlayer</a> by <a target="_blank" rel="noopener" href="https://github.com/DIYgod">DIYgod</a> 
+</footer>
+
+<script>
+  function async(u, c) {
+    var d = document, t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0];
+    o.src = u;
+    if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+    s.parentNode.insertBefore(o, s);
+  }
+</script>
+
+<script src="/js/script.js"></script>
+ <!--无法移至head.js中，原因不明-->
+<script type="text/javascript" src="/js/busuanzi.min.js" async></script>
+
+
+  </body>
+</html>
