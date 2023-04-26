@@ -1347,10 +1347,19 @@ header:hover .chn_mark {
   font-size: 18px;
   padding: 0 10px;
 }
+.search-popup .popup-btn-go {
+  color: #999;
+  font-size: 18px;
+  padding: 0 5px;
+  cursor: pointer;
+}
+.search-popup .popup-btn-go:hover .fa {
+  color: #222;
+}
 .search-popup .popup-btn-close {
   color: #999;
   font-size: 18px;
-  padding: 0 10px;
+  padding: 0 5px;
   cursor: pointer;
 }
 .search-popup .popup-btn-close:hover .fa {

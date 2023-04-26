@@ -275,4 +275,10 @@ document.addEventListener('DOMContentLoaded', () => {
       onPopupClose();
     }
   });
+
+  // PageJumper button
+  let onJumpPage = () => {
+    window.location = window.location.origin + '/' + input.value
+  };
+  document.querySelector('.popup-btn-go').addEventListener('click', onJumpPage);
 });
