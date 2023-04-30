@@ -7,7 +7,7 @@ html {
   color: #fcf5e5;
 }
 body {
-  font-family: arial, system-ui, -apple-system, sans-serif, "MS PGothic";
+  font-family: arial, system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: none;
@@ -441,36 +441,36 @@ header:hover .chn_mark {
   width: 1.4em;
   border-radius: 100%;
 }
-.markdown-content {
+.post-article .markdown-content {
   overflow-y: auto;
   overflow-x: hidden;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Arial, Helvetica, sans-serif, "MS PGothic";
 }
-.markdown-content pre,
-.markdown-content code {
+.post-article .markdown-content pre,
+.post-article .markdown-content code {
   font-family: 'Roboto Mono', Monaco, courier, monospace;
   font-size: 13px;
   scrollbar-width: thin;
 }
 @media screen and (max-width: 700px) {
-  .markdown-content pre,
-  .markdown-content code {
+  .post-article .markdown-content pre,
+  .post-article .markdown-content code {
     font-size: 12px;
   }
 }
-.markdown-content pre .line,
-.markdown-content code .line {
+.post-article .markdown-content pre .line,
+.post-article .markdown-content code .line {
   min-height: 13px;
   margin: 2px 0;
 }
-.markdown-content img {
+.post-article .markdown-content img {
   width: 40vmax;
 }
-.markdown-content p {
+.post-article .markdown-content p {
   line-height: 1.6em;
   margin-bottom: 0.7em;
 }
-.markdown-content p code {
+.post-article .markdown-content p code {
   background-color: #faf9f6;
   color: #34495e;
   padding: 3px 5px;
@@ -478,40 +478,40 @@ header:hover .chn_mark {
   border-radius: 2px;
   white-space: nowrap;
 }
-.markdown-content h1 {
+.post-article .markdown-content h1 {
   font-size: 2em;
 }
-.markdown-content h2 {
+.post-article .markdown-content h2 {
   font-size: 1.7em;
 }
-.markdown-content h3 {
+.post-article .markdown-content h3 {
   margin: 1em 0;
   font-size: 1.5em;
   padding-bottom: 0.3em;
   border-bottom: 1px solid #e5e5e5;
 }
-.markdown-content h4 {
+.post-article .markdown-content h4 {
   margin: 1em 0;
   font-size: 1.2em;
 }
-.markdown-content h4:before {
+.post-article .markdown-content h4:before {
   content: "#";
   color: #00bfff;
   margin-right: 5px;
   font-size: 1.2em;
   font-weight: 700;
 }
-.markdown-content h5 {
+.post-article .markdown-content h5 {
   font-size: 1.2em;
   margin: 0.8em 0;
 }
-.markdown-content h6 {
+.post-article .markdown-content h6 {
   font-size: 1em;
 }
-.markdown-content a:hover {
+.post-article .markdown-content a:hover {
   color: #fa3;
 }
-.markdown-content blockquote {
+.post-article .markdown-content blockquote {
   margin: 1em 0;
   padding: 15px 20px;
   border-left: 4px solid #00bfff;
@@ -519,33 +519,33 @@ header:hover .chn_mark {
   border-bottom-right-radius: 2px;
   border-top-right-radius: 2px;
 }
-.markdown-content ul,
-.markdown-content ol {
+.post-article .markdown-content ul,
+.post-article .markdown-content ol {
   overflow: auto;
   margin: 15px 0;
 }
-.markdown-content ul li,
-.markdown-content ol li {
+.post-article .markdown-content ul li,
+.post-article .markdown-content ol li {
   padding: 5px 0;
 }
-.markdown-content .small-img {
+.post-article .markdown-content .small-img {
   display: inline;
   margin: 0px auto;
 }
-.markdown-content .profile {
+.post-article .markdown-content .profile {
   display: inline;
   margin: 0px auto;
   height: 32px;
   width: 32px;
   border-radius: 100%;
 }
-.markdown-content img {
+.post-article .markdown-content img {
   max-width: 100%;
   display: block;
   margin: 20px auto;
   cursor: zoom-in;
 }
-.markdown-content figure {
+.post-article .markdown-content figure {
   background: #faf9f6;
   padding: 0 10px;
   border-radius: 2px;
@@ -553,7 +553,7 @@ header:hover .chn_mark {
   overflow: auto;
   position: relative;
 }
-.markdown-content figure:after {
+.post-article .markdown-content figure:after {
   content: attr(data-lang);
   position: absolute;
   top: 0;
@@ -566,51 +566,51 @@ header:hover .chn_mark {
   height: 15px;
   font-weight: 500;
 }
-.markdown-content > table {
+.post-article .markdown-content > table {
   width: 100%;
 }
-.markdown-content > table thead {
+.post-article .markdown-content > table thead {
   background-color: #00bfff;
   border-top-width: 1px;
   border-top-style: solid;
   border-top-color: #e5e5e5;
 }
-.markdown-content > table thead th {
+.post-article .markdown-content > table thead th {
   padding: 5px 10px;
   color: #fcf5e5;
 }
-.markdown-content > table tbody tr:nth-child(even) {
+.post-article .markdown-content > table tbody tr:nth-child(even) {
   background: #e6eed6;
 }
-.markdown-content > table tbody tr:nth-child(odd) {
+.post-article .markdown-content > table tbody tr:nth-child(odd) {
   background: #fcf5e5;
 }
-.markdown-content > table tbody tr td {
+.post-article .markdown-content > table tbody tr td {
   padding: 5px 10px;
 }
-.markdown-content hr {
+.post-article .markdown-content hr {
   border: none;
   border-bottom: 1px dashed #ccc;
   margin: 30px 0;
 }
-.markdown-content del {
+.post-article .markdown-content del {
   background-color: #000;
   color: #000;
   border-radius: 2px;
   text-decoration: none;
 }
-.markdown-content del a {
+.post-article .markdown-content del a {
   color: #000;
 }
-.markdown-content del:hover {
+.post-article .markdown-content del:hover {
   transition: color 0.13s linear;
   color: #fff;
 }
-.markdown-content del:hover a {
+.post-article .markdown-content del:hover a {
   transition: color 0.13s linear;
   color: #add8e6;
 }
-.markdown-content .fold .fold_hider .hider_title {
+.post-article .markdown-content .fold .fold_hider .hider_title {
   font-family: initial;
   width: fit-content;
   font-size: 1em;
@@ -623,10 +623,77 @@ header:hover .chn_mark {
   padding-left: 2px;
   padding-right: 5px;
 }
-.markdown-content .fold .fold_content {
+.post-article .markdown-content .fold .fold_content {
   font-family: 'Times New Roman', 'Noto Serif SC', serif;
   font-display: swap;
   font-size: smaller;
+}
+.post-article .markdown-content .heimu {
+  background-color: #000;
+  color: #000;
+}
+.post-article .markdown-content .heimu a {
+  color: #000;
+}
+.post-article .markdown-content .heimu:hover {
+  transition: color 0.13s linear;
+  color: #fff;
+}
+.post-article .markdown-content .heimu:hover a {
+  transition: color 0.13s linear;
+  color: #add8e6;
+}
+.post-article .nav-container {
+  width: 100%;
+  padding-top: 1.5em;
+  margin-top: 1.5em;
+  border-top: 1px dashed #e5e5e5;
+  font-weight: 600;
+}
+.post-article .nav-container:after,
+.post-article .nav-container:before {
+  content: '';
+  display: table;
+  clear: both;
+}
+.post-article .nav-container .nav-left {
+  float: left;
+}
+.post-article .nav-container .nav-right {
+  float: right;
+}
+.post-article .nav-container .nav-arrow {
+  color: #34495e;
+}
+.post-article .nav-container a {
+  color: #0096ff;
+}
+.post-article .nav-container a:hover {
+  color: #ffac1c;
+}
+.post-article .advertisement {
+  font-size: 0.7em;
+  color: #808080;
+  margin: 1em auto;
+}
+.post-article .qrcode {
+  padding-top: 40px;
+  padding-bottom: 20px;
+  text-align: center;
+}
+.post-article .qrcode .qrcode-image {
+  width: 8em;
+  height: 8em;
+  padding: 0.25em;
+  box-shadow: 0 0 1px #e3e3e3;
+  cursor: pointer;
+}
+.post-article .qrcode .qrcode-notice {
+  font-size: 12px;
+  margin-top: 10px;
+  text-align: center;
+  color: #7f8c8d;
+  font-style: italic;
 }
 .money-like {
   padding: 2em 0 0.5em;
@@ -700,45 +767,6 @@ header:hover .chn_mark {
   color: #808080;
   margin: 1em auto;
 }
-.qrcode {
-  padding-top: 40px;
-  padding-bottom: 20px;
-  text-align: center;
-}
-.qrcode .qrcode-image {
-  width: 8em;
-  height: 8em;
-  padding: 0.25em;
-  box-shadow: 0 0 1px #e3e3e3;
-  cursor: pointer;
-}
-.qrcode .qrcode-notice {
-  font-size: 12px;
-  margin-top: 10px;
-  text-align: center;
-  color: #7f8c8d;
-  font-style: italic;
-}
-.advertisement {
-  font-size: 0.7em;
-  color: #808080;
-  margin: 1em auto;
-}
-.heimu {
-  background-color: #000;
-  color: #000;
-}
-.heimu a {
-  color: #000;
-}
-.heimu:hover {
-  transition: color 0.13s linear;
-  color: #fff;
-}
-.heimu:hover a {
-  transition: color 0.13s linear;
-  color: #add8e6;
-}
 .post-share {
   width: 100%;
   text-align: center;
@@ -778,34 +806,6 @@ header:hover .chn_mark {
 }
 .aplayer .aplayer-lrc .aplayer-lrc-contents .aplayer-lrc-current {
   opacity: 1 !important;
-}
-.nav-container {
-  width: 100%;
-  padding-top: 1.5em;
-  margin-top: 1.5em;
-  border-top: 1px dashed #e5e5e5;
-  font-weight: 600;
-}
-.nav-container:after,
-.nav-container:before {
-  content: '';
-  display: table;
-  clear: both;
-}
-.nav-container .nav-left {
-  float: left;
-}
-.nav-container .nav-right {
-  float: right;
-}
-.nav-container .nav-arrow {
-  color: #34495e;
-}
-.nav-container a {
-  color: #0096ff;
-}
-.nav-container a:hover {
-  color: #ffac1c;
 }
 #archive:before {
   position: absolute;
@@ -1028,7 +1028,7 @@ header:hover .chn_mark {
 }
 .catalog-container .fixed-toc {
   position: fixed;
-  top: 60px;
+  top: 60px /* ! modify in js */;
 }
 @media screen and (max-width: 700px) {
   .catalog-container .fixed-toc {
@@ -1041,7 +1041,7 @@ header:hover .chn_mark {
   }
 }
 #category-cloud {
-  margin: 30px 0;
+  margin: 40px 0 30px 0;
   text-align: center;
 }
 #category-cloud a {
@@ -1115,7 +1115,7 @@ header:hover .chn_mark {
   margin: 10px 0;
 }
 #tag-cloud {
-  margin: 30px 0;
+  margin: 40px 0 30px 0;
   text-align: center;
 }
 #tag-cloud a {
@@ -1142,33 +1142,15 @@ header:hover .chn_mark {
 #tag-cloud .tag2 {
   background: #00f;
 }
-.tag {
-  margin: 15px 0;
-}
-.tag span:first-child {
-  margin-right: 10px;
-  font-weight: 600;
-}
-.tag-code {
-  font-family: 'Noto Sans SC', 'Source Serif 4 src1', 'Source Serif 4 src2', sans-serif;
-  font-size: 0.8em;
-  display: inline-block;
-  background-color: #faf9f6;
-  color: #fa3;
-  padding: 3px 5px;
-  margin: 0 2px 5px 0;
-  border-radius: 2px;
-  white-space: nowrap;
-}
 .tag-list {
   margin-left: 2em;
   margin-right: 2em;
 }
-.tag-name {
+.tag-list .tag-name {
   font-size: 1.5em;
   position: relative;
 }
-.tag-name:before {
+.tag-list .tag-name:before {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1178,13 +1160,28 @@ header:hover .chn_mark {
   left: -0.7em;
   font-weight: 700;
 }
-.tag-preview {
+.tag-list .tag-preview {
   font-size: 1.1em;
   padding-left: 1em;
 }
-.tag-preview li {
+.tag-list .tag-preview li {
   cursor: pointer;
   margin: 10px 0;
+}
+.post-tags span:first-child {
+  margin-right: 10px;
+  font-weight: 600;
+}
+.post-tags .tag-code {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 0.8em;
+  display: inline-block;
+  background-color: #faf9f6;
+  color: #fa3;
+  padding: 3px 5px;
+  margin: 0 2px 5px 0;
+  border-radius: 2px;
+  white-space: nowrap;
 }
 .cloudpoolmag {
   background-color: #f3f3f3;
