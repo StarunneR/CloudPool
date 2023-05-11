@@ -11,12 +11,6 @@
   var isOpen = false
 
   $(document).ready(function () {
-    NProgress.start()
-    $('#nprogress .bar').css({
-      'background': '#42b983'
-    })
-    $('#nprogress .spinner').hide()
-
     var fade = {
       transform: 'translateY(0)',
       opacity: 1
@@ -29,13 +23,23 @@
       $('.author').children().css(fade)
     }
     app.css(fade)
+
+    /*
+    NProgress.start()
+    $('#nprogress .bar').css({
+      'background': '#42b983'
+    })
+    $('#nprogress .spinner').hide()
+    */
   })
 
+  /*
   window.onload = function () {
     setTimeout(function () {
       NProgress.done()
     }, 200)
   }
+  */
 
   $('.menu').on('click', function () {
     if (!header.hasClass('fixed-header') || isOpen) {
