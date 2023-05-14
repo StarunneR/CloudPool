@@ -1281,7 +1281,7 @@ header:hover .chn_mark {
   font-family: 'Noto Serif SC', serif;
   font-weight: 200;
   font-size: 1.5em;
-  color: color-white;
+  color: #fcf5e5;
   margin: 1em auto auto 25%;
   line-height: 1.5em;
 }
@@ -1298,6 +1298,65 @@ header:hover .chn_mark {
 .one .one_source .one_buttons img:active {
   transform: scale(0.9);
   -webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+.checkbox:checked {
+  background: #32cd32;
+}
+.checkbox {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  outline: none;
+  width: 20px;
+  height: 20px;
+  background-color: #fff;
+  border: solid 2px #ddd;
+  border-radius: 50%;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  display: inline-block;
+/*文字对齐方式*/
+  vertical-align: middle;
+  transition: background-color ease 0.1s;
+}
+.checkbox:checked::after {
+  content: '';
+  top: 3px;
+  left: 3px;
+  position: absolute;
+  border: #fff solid 3px;
+  border-top: none;
+  border-right: none;
+  height: 6px;
+  width: 10px;
+  transform: rotate(-45deg);
+}
+label {
+  font-weight: bold;
+  color: #fcf5e5;
+  padding: 0.5em;
+}
+.hijikoto_options {
+  line-height: 2em;
+  margin: 10px;
+}
+.options_control {
+  margin: 1em;
+}
+.options_control input {
+  font-size: 14px !important;
+  height: 30px;
+  line-height: 18px !important;
+  padding: 3px 18px;
+  display: inline-block;
+  vertical-align: middle;
+  font-weight: normal;
+  border-radius: 3px;
+  margin: 0 8px 0 3px;
+  border: 4px solid #0096ff;
+  color: #fff;
+  background-color: #0096ff;
+  cursor: pointer;
 }
 .search-pop-overlay {
   background: rgba(0,0,0,0);
