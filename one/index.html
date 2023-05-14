@@ -498,9 +498,6 @@
           id="copy_button" onclick="copyYiju()" ontouchend="buttonTouchEnd()" src="/css/images/copy.png" /></span>
     </div>
   </div>
-  <div class="arrow-down">
-    <a href="javascript:;"></a>
-  </div>
   <div class="options_container">
     <input type="checkbox" class="checkbox" value="a" name="hijikoto_type" checked /><label><span></span>动画</label>
     <input type="checkbox" class="checkbox" value="b" name="hijikoto_type" checked /><label><span></span>漫画</label>
@@ -654,14 +651,13 @@
 <script>
   function getYiju() {
     let osource = "https://v1.hitokoto.cn?";
-    let source1 = ""
+    let source = ""
     let htypes = document.getElementsByName("hijikoto_type");
     for (var i = 0; i < htypes.length; i++) {
       if (htypes[i].checked === true) {
-        source1 = source1 + "c=" + htypes[i].value + "&";
+        source = source + "c=" + htypes[i].value + "&";
       }
     }
-    console.log(osource + source1);
 
     var CheckAll=document.getElementById('checkall');
     var UnCheck=document.getElementById('uncheck');
@@ -682,7 +678,7 @@
       };
     }
 
-    fetch(osource + source1)
+    fetch(osource + source)
       .then((response) => response.json())
       .then((data) => {
         const hitokoto = document.getElementById("hitokoto_text");
