@@ -349,7 +349,7 @@ header:hover .chn_mark {
 }
 #article-banner .page-subtitle {
   margin: 10px 0 20px 0;
-  color: color-white3;
+  color: #f9f6ee;
   opacity: 0;
   transform: translateY(10px);
   transition: all 1s;
@@ -358,7 +358,7 @@ header:hover .chn_mark {
 #article-banner .post-title {
   margin: 0.4em 0;
   font-size: 2em;
-  color: color-white2;
+  color: #faf9f6;
   opacity: 0;
   transform: translateY(-20px);
   transition: all 0.4s;
@@ -371,7 +371,7 @@ header:hover .chn_mark {
 #article-banner .post-subtitle {
   font-weight: normal;
   margin: 1.2em 0 20px 0;
-  color: color-white;
+  color: #fcf5e5;
   opacity: 0;
   transform: translateY(-20px);
   transition: all 0.4s;
@@ -379,7 +379,7 @@ header:hover .chn_mark {
 }
 #article-banner .post-date {
   margin: 10px 0 20px 0;
-  color: color-white;
+  color: #fcf5e5;
   opacity: 0;
   transform: translateY(-20px);
   transition: all 0.4s;
@@ -408,8 +408,8 @@ header:hover .chn_mark {
   animation-duration: 3s;
   animation-iteration-count: infinite;
   animation-timing-function: ease-in-out;
-  border-bottom: 1px solid color-white;
-  border-left: 1px solid color-white;
+  border-bottom: 1px solid #fcf5e5;
+  border-left: 1px solid #fcf5e5;
 }
 .post-article {
   position: relative;
@@ -578,13 +578,13 @@ header:hover .chn_mark {
 }
 .post-article .markdown-content > table thead th {
   padding: 5px 10px;
-  color: color-white;
+  color: #fcf5e5;
 }
 .post-article .markdown-content > table tbody tr:nth-child(even) {
   background: #e6eed6;
 }
 .post-article .markdown-content > table tbody tr:nth-child(odd) {
-  background: color-white;
+  background: #fcf5e5;
 }
 .post-article .markdown-content > table tbody tr td {
   padding: 5px 10px;
@@ -618,7 +618,7 @@ header:hover .chn_mark {
   font-style: oblique;
   font-weight: bold;
   background-color: #87ceeb;
-  color: color-white;
+  color: #fcf5e5;
   border-radius: 4px;
   text-indent: 0.1em;
   padding-left: 2px;
@@ -711,7 +711,7 @@ header:hover .chn_mark {
   padding: 0;
   text-align: center;
   vertical-align: middle;
-  color: color-white;
+  color: #fcf5e5;
   border: 1px solid #f1b60e;
   border-radius: 50%;
   background: linear-gradient(to bottom, #fccd60 0, #fbae12 100%, #2989d8 100%, #207cca 100%);
@@ -725,7 +725,7 @@ header:hover .chn_mark {
   height: 5.5em;
   margin-left: -5.9em;
   padding: 10px 15px;
-  background: color-white;
+  background: #fcf5e5;
   box-shadow: 0 0 0 1px #e5e5e5;
   border-radius: 4px;
 }
@@ -1249,7 +1249,7 @@ header:hover .chn_mark {
 }
 .one {
   margin: 10px 0 20px 0;
-  color: color-white;
+  color: #fcf5e5;
   opacity: 0;
   transform: translateY(-20px);
   transition: all 0.4s;
