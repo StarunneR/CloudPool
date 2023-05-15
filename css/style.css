@@ -1331,19 +1331,20 @@ header:hover .chn_mark {
   width: 10px;
   transform: rotate(-45deg);
 }
-label {
+.options_container {
   font-weight: bold;
   color: #fcf5e5;
-  padding: 0.5em;
 }
-.hijikoto_options {
-  line-height: 2em;
-  margin: 10px;
+.options_container .checkbox {
+  padding: initial;
 }
-.options_control {
+.options_container label {
+  padding: 0 1em 0 0.5em;
+}
+.options_container .options_control {
   margin: 1em;
 }
-.options_control input {
+.options_container .options_control input {
   font-size: 14px !important;
   height: 30px;
   line-height: 18px !important;
@@ -1353,10 +1354,14 @@ label {
   font-weight: normal;
   border-radius: 3px;
   margin: 0 8px 0 3px;
-  border: 4px solid #0096ff;
+  border: 3px solid #87ceeb;
   color: #fff;
   background-color: #0096ff;
   cursor: pointer;
+}
+.hijikoto_options {
+  line-height: 2em;
+  margin: 10px;
 }
 .search-pop-overlay {
   background: rgba(0,0,0,0);
