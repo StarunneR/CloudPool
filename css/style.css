@@ -1334,6 +1334,7 @@ header:hover .chn_mark {
 .options_container {
   font-weight: bold;
   color: #fcf5e5;
+  line-height: 2em;
 }
 .options_container .checkbox {
   padding: initial;
@@ -1342,7 +1343,7 @@ header:hover .chn_mark {
   padding: 0 1em 0 0.5em;
 }
 .options_container .options_control {
-  margin: 1em;
+  margin-top: 0.5em;
 }
 .options_container .options_control input {
   font-size: 14px !important;
