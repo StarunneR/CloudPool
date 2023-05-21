@@ -1,1 +1,1 @@
-{"mouseover":[{"selector":"#live2d","text":["喵喵喵？"]}],"click":[{"selector":"#live2d","text":[]},{"selector":".veditor","text":[]},{"selector":".vsubmit","text":[]}],"message":{"default":["喵~"],"console":"喵？","copy":"喵喵喵！","visibilitychange":"喵喵喵~"}}
+{"mouseover":[{"selector":"#live2d","text":["喵喵喵？"]}],"click":[{"selector":"#live2d","text":["咕噜咕噜"]},{"selector":".veditor","text":[]},{"selector":".vsubmit","text":[]}],"message":{"default":["喵~"],"console":"喵？","copy":"喵喵喵！","visibilitychange":"喵喵喵~"}}

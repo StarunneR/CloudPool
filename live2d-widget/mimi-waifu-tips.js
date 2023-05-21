@@ -4,28 +4,26 @@
  */
 !(function () {
   "use strict";
-
   function e(e) {
     return Array.isArray(e) ? e[Math.floor(Math.random() * e.length)] : e;
   }
   let t;
-
-  function o(o, s, i) {
+  function o(o, s, n) {
     if (
       !o ||
       (sessionStorage.getItem("waifu-text") &&
-        sessionStorage.getItem("waifu-text") > i)
+        sessionStorage.getItem("waifu-text") > n)
     )
       return;
     t && (clearTimeout(t), (t = null)),
       (o = e(o)),
-      sessionStorage.setItem("waifu-text", i);
-    const n = document.getElementById("waifu-tips");
-    (n.innerHTML = o),
-      n.classList.add("waifu-tips-active"),
+      sessionStorage.setItem("waifu-text", n);
+    const i = document.getElementById("waifu-tips");
+    (i.innerHTML = o),
+      i.classList.add("waifu-tips-active"),
       (t = setTimeout(() => {
         sessionStorage.removeItem("waifu-text"),
-          n.classList.remove("waifu-tips-active");
+          i.classList.remove("waifu-tips-active");
       }, s));
   }
   class s {
@@ -43,11 +41,11 @@
       const e = await fetch(`${this.cdnPath}model_list.json`);
       this.modelList = await e.json();
     }
-    async loadModel(t, s, i) {
+    async loadModel(t, s, n) {
       if (
         (localStorage.setItem("modelId", t),
         localStorage.setItem("modelTexturesId", s),
-        o(i, 4e3, 10),
+        o(n, 4e3, 10),
         this.useCDN)
       ) {
         this.modelList || (await this.loadModelList());
@@ -88,14 +86,14 @@
           });
     }
   }
-  const i = {
+  const n = {
     hitokoto: {
-      icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 512">\x3c!--! Font Awesome Pro 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --\x3e<path d="M160 64c0-11.8-6.5-22.6-16.9-28.2s-23-5-32.8 1.6l-96 64C-.5 111.2-4.4 131 5.4 145.8s29.7 18.7 44.4 8.9L96 123.8V416H32c-17.7 0-32 14.3-32 32s14.3 32 32 32h96 96c17.7 0 32-14.3 32-32s-14.3-32-32-32H160V64z"/></svg>',
+      icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">\x3c!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --\x3e<path d="M512 240c0 114.9-114.6 208-256 208c-37.1 0-72.3-6.4-104.1-17.9c-11.9 8.7-31.3 20.6-54.3 30.6C73.6 471.1 44.7 480 16 480c-6.5 0-12.3-3.9-14.8-9.9c-2.5-6-1.1-12.8 3.4-17.4l0 0 0 0 0 0 0 0 .3-.3c.3-.3 .7-.7 1.3-1.4c1.1-1.2 2.8-3.1 4.9-5.7c4.1-5 9.6-12.4 15.2-21.6c10-16.6 19.5-38.4 21.4-62.9C17.7 326.8 0 285.1 0 240C0 125.1 114.6 32 256 32s256 93.1 256 208z"/></svg>',
       callback: function () {
         fetch("https://v1.hitokoto.cn")
           .then((e) => e.json())
           .then((e) => {
-            const t = `此句一言来自 <span>「${e.from}」</span>，由 <span>${e.creator}</span> 在 hitokoto.cn 投稿。`;
+            const t = `这句一言来自 <span>「${e.from}」</span>，是 <span>${e.creator}</span> 在 hitokoto.cn 投稿的。`;
             o(e.hitokoto, 6e3, 9),
               setTimeout(() => {
                 o(t, 4e3, 9);
@@ -118,7 +116,7 @@
       },
     },
     "switch-model": {
-      icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">\x3c!--! Font Awesome Pro 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --\x3e<path d="M448 256c0-106-86-192-192-192V448c106 0 192-86 192-192zM0 256a256 256 0 1 1 512 0A256 256 0 1 1 0 256z"/></svg>',
+      icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">\x3c!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --\x3e<path d="M399 384.2C376.9 345.8 335.4 320 288 320H224c-47.4 0-88.9 25.8-111 64.2c35.2 39.2 86.2 63.8 143 63.8s107.8-24.7 143-63.8zM512 256c0 141.4-114.6 256-256 256S0 397.4 0 256S114.6 0 256 0S512 114.6 512 256zM256 272c39.8 0 72-32.2 72-72s-32.2-72-72-72s-72 32.2-72 72s32.2 72 72 72z"/></svg>',
       callback: () => {},
     },
     "switch-texture": {
@@ -140,10 +138,10 @@
       },
     },
     quit: {
-      icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">\x3c!--! Font Awesome Pro 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --\x3e<path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/></svg>',
+      icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512">\x3c!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --\x3e<path d="M310.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L160 210.7 54.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L114.7 256 9.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L160 301.3 265.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L205.3 256 310.6 150.6z"/></svg>',
       callback: () => {
         localStorage.setItem("waifu-display", Date.now()),
-          o("愿有一天你能与挚爱之人重逢。", 2e3, 11),
+          o("愿你有一天能与重要的人重逢。", 2e3, 11),
           (document.getElementById("waifu").style.bottom = "-500px"),
           setTimeout(() => {
             (document.getElementById("waifu").style.display = "none"),
@@ -154,22 +152,20 @@
       },
     },
   };
-
-  function n(t) {
-    const n = new s(t);
-
-    function a(t) {
+  function i(t) {
+    const i = new s(t);
+    function c(t) {
       let s,
-        i = !1,
-        n = t.message.default;
-      window.addEventListener("mousemove", () => (i = !0)),
-        window.addEventListener("keydown", () => (i = !0)),
+        n = !1,
+        i = t.message.default;
+      window.addEventListener("mousemove", () => (n = !0)),
+        window.addEventListener("keydown", () => (n = !0)),
         setInterval(() => {
-          i
-            ? ((i = !1), clearInterval(s), (s = null))
+          n
+            ? ((n = !1), clearInterval(s), (s = null))
             : s ||
               (s = setInterval(() => {
-                o(n, 6e3, 9);
+                o(i, 6e3, 9);
               }, 2e4));
         }, 1e3),
         o(
@@ -178,8 +174,8 @@
               for (let { hour: t, text: o } of e) {
                 const e = new Date(),
                   s = t.split("-")[0],
-                  i = t.split("-")[1] || s;
-                if (s <= e.getHours() && e.getHours() <= i) return o;
+                  n = t.split("-")[1] || s;
+                if (s <= e.getHours() && e.getHours() <= n) return o;
               }
             const t = `欢迎阅读<span>「${
               document.title.split(" - ")[0]
@@ -188,14 +184,10 @@
             if ("" !== document.referrer) {
               const e = new URL(document.referrer),
                 s = e.hostname.split(".")[1],
-                i = {
-                  baidu: "百度",
-                  so: "360搜索",
-                  google: "谷歌搜索",
-                };
+                n = { baidu: "百度", so: "360搜索", google: "谷歌搜索" };
               return location.hostname === e.hostname
                 ? t
-                : ((o = s in i ? i[s] : e.hostname),
+                : ((o = s in n ? n[s] : e.hostname),
                   `Hello！来自 <span>${o}</span> 的朋友<br>${t}`);
             }
             return t;
@@ -204,36 +196,36 @@
           11
         ),
         window.addEventListener("mouseover", (s) => {
-          for (let { selector: i, text: n } of t.mouseover)
-            if (s.target.matches(i))
+          for (let { selector: n, text: i } of t.mouseover)
+            if (s.target.matches(n))
               return (
-                (n = e(n)),
-                (n = n.replace("{text}", s.target.innerText)),
-                void o(n, 4e3, 8)
+                (i = e(i)),
+                (i = i.replace("{text}", s.target.innerText)),
+                void o(i, 4e3, 8)
               );
         }),
         window.addEventListener("click", (s) => {
-          for (let { selector: i, text: n } of t.click)
-            if (s.target.matches(i))
+          for (let { selector: n, text: i } of t.click)
+            if (s.target.matches(n))
               return (
-                (n = e(n)),
-                (n = n.replace("{text}", s.target.innerText)),
-                void o(n, 4e3, 8)
+                (i = e(i)),
+                (i = i.replace("{text}", s.target.innerText)),
+                void o(i, 4e3, 8)
               );
         }),
         t.seasons.forEach(({ date: t, text: o }) => {
           const s = new Date(),
-            i = t.split("-")[0],
-            a = t.split("-")[1] || i;
-          i.split("/")[0] <= s.getMonth() + 1 &&
-            s.getMonth() + 1 <= a.split("/")[0] &&
-            i.split("/")[1] <= s.getDate() &&
-            s.getDate() <= a.split("/")[1] &&
-            ((o = (o = e(o)).replace("{year}", s.getFullYear())), n.push(o));
+            n = t.split("-")[0],
+            c = t.split("-")[1] || n;
+          n.split("/")[0] <= s.getMonth() + 1 &&
+            s.getMonth() + 1 <= c.split("/")[0] &&
+            n.split("/")[1] <= s.getDate() &&
+            s.getDate() <= c.split("/")[1] &&
+            ((o = (o = e(o)).replace("{year}", s.getFullYear())), i.push(o));
         });
-      const a = () => {};
-      console.log("%c", a),
-        (a.toString = () => {
+      const c = () => {};
+      console.log("%c", c),
+        (c.toString = () => {
           o(t.message.console, 6e3, 9);
         }),
         window.addEventListener("copy", () => {
@@ -253,12 +245,12 @@
         document.getElementById("waifu").style.bottom = 0;
       }, 0),
       (function () {
-        (i["switch-model"].callback = () => n.loadOtherModel()),
-          (i["switch-texture"].callback = () => n.loadRandModel()),
-          Array.isArray(t.tools) || (t.tools = Object.keys(i));
+        (n["switch-model"].callback = () => i.loadOtherModel()),
+          (n["switch-texture"].callback = () => i.loadRandModel()),
+          Array.isArray(t.tools) || (t.tools = Object.keys(n));
         for (let e of t.tools)
-          if (i[e]) {
-            const { icon: t, callback: o } = i[e];
+          if (n[e]) {
+            const { icon: t, callback: o } = n[e];
             document
               .getElementById("waifu-tool")
               .insertAdjacentHTML(
@@ -274,18 +266,14 @@
         let e = localStorage.getItem("modelId"),
           o = localStorage.getItem("modelTexturesId");
         null === e && ((e = 1), (o = 53)),
-          n.loadModel(e, o),
+          i.loadModel(e, o),
           fetch(t.waifuPath)
             .then((e) => e.json())
-            .then(a);
+            .then(c);
       })();
   }
   window.initWidget = function (e, t) {
-    "string" == typeof e &&
-      (e = {
-        waifuPath: e,
-        apiPath: t,
-      }),
+    "string" == typeof e && (e = { waifuPath: e, apiPath: t }),
       document.body.insertAdjacentHTML(
         "beforeend",
         '<div id="waifu-toggle">\n            <span>看板娘</span>\n        </div>'
@@ -294,7 +282,7 @@
     o.addEventListener("click", () => {
       o.classList.remove("waifu-toggle-active"),
         o.getAttribute("first-time")
-          ? (n(e), o.removeAttribute("first-time"))
+          ? (i(e), o.removeAttribute("first-time"))
           : (localStorage.removeItem("waifu-display"),
             (document.getElementById("waifu").style.display = ""),
             setTimeout(() => {
@@ -307,6 +295,6 @@
           setTimeout(() => {
             o.classList.add("waifu-toggle-active");
           }, 0))
-        : n(e);
+        : i(e);
   };
 })();
