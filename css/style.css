@@ -1,10 +1,10 @@
 html {
   scrollbar-width: thin;
-  scrollbar-color: #87ceeb #fcf5e5;
+  scrollbar-color: #7df9ff color-light;
 }
 ::selection {
   background: #00bfff;
-  color: #fcf5e5;
+  color: color-light;
 }
 body {
   font-family: arial, system-ui, -apple-system, sans-serif;
@@ -78,10 +78,10 @@ pre {
 }
 ::-webkit-scrollbar {
   width: 10px;
-  background-color: #fcf5e5;
+  background-color: color-light;
 }
 ::-webkit-scrollbar-thumb {
-  background-color: #87ceeb;
+  background-color: #7df9ff;
   -webkit-border-radius: 5em;
   -moz-border-radius: 5em;
   border-radius: 5em;
@@ -140,7 +140,7 @@ pre {
   max-height: 1.5em;
 }
 .home-link .eng_mark {
-  text-shadow: 1px 1px 2px #87ceeb;
+  text-shadow: 1px 1px 2px #7df9ff;
   margin-right: 2px;
 }
 .home-link .chn_mark {
@@ -255,7 +255,7 @@ header:hover .chn_mark {
   width: 100%;
   bottom: 0;
   border-top: 1px solid #e5e5e5;
-  background-color: #fff;
+  background-color: #fcf5e5;
   text-align: center;
   font-size: 0.9em;
 }
@@ -618,7 +618,7 @@ header:hover .chn_mark {
   font-size: 1em;
   font-style: oblique;
   font-weight: bold;
-  background-color: #87ceeb;
+  background-color: #7df9ff;
   color: #34495e;
   border-radius: 4px;
   text-indent: 0.1em;
@@ -1062,16 +1062,13 @@ header:hover .chn_mark {
   background: #0085a1;
 }
 #category-cloud .category0 {
-  background: #66cd00;
+  background: #0096ff;
 }
 #category-cloud .category1 {
-  background: #458b00;
+  background: #6495ed;
 }
 #category-cloud .category2 {
-  background: #a2cd5a;
-}
-#category-cloud .category3 {
-  background: #6e8b3d;
+  background: #4169e1;
 }
 .category {
   margin: 15px 0;
@@ -1136,13 +1133,16 @@ header:hover .chn_mark {
   background: #0085a1;
 }
 #tag-cloud .tag0 {
-  background: #1e90ff;
+  background: #228b22;
 }
 #tag-cloud .tag1 {
-  background: #4169e1;
+  background: #4cbb17;
 }
 #tag-cloud .tag2 {
-  background: #00f;
+  background: #32cd32;
+}
+#tag-cloud .tag3 {
+  background: #50c878;
 }
 .tag-list {
   margin-left: 2em;
@@ -1466,7 +1466,7 @@ header:hover .chn_mark {
   padding: 10px 0px 10px 0px;
 }
 .search-popup li.search-result-element::marker {
-  color: #008000;
+  color: #228b22;
 }
 .search-popup p.search-result {
   border-bottom: 1px;
@@ -1475,7 +1475,7 @@ header:hover .chn_mark {
 }
 .search-popup a.search-result-title {
   font-weight: bold;
-  color: #0f52ba;
+  color: #4169e1;
 }
 .search-popup a.search-result-title:hover,
 .search-popup a.search-result-title:active {

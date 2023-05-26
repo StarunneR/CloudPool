@@ -288,7 +288,7 @@
       }),
       document.body.insertAdjacentHTML(
         "beforeend",
-        '<div id="waifu-toggle">\n            <span>看板娘</span>\n        </div>'
+        '<div id="waifu-toggle">\n            <span>看板喵</span>\n        </div>'
       );
     const o = document.getElementById("waifu-toggle");
     o.addEventListener("click", () => {
