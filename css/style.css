@@ -1,10 +1,10 @@
 html {
   scrollbar-width: thin;
-  scrollbar-color: #7df9ff color-light;
+  scrollbar-color: #7f8c8d #fcf5e5;
 }
 ::selection {
   background: #00bfff;
-  color: color-light;
+  color: #fcf5e5;
 }
 body {
   font-family: arial, system-ui, -apple-system, sans-serif;
@@ -47,7 +47,6 @@ pre {
   transform: unset !important;
 }
 .app-body {
-  background-color: #fff;
   padding: 0 30px;
   margin: auto;
   height: 100%;
@@ -78,7 +77,7 @@ pre {
 }
 ::-webkit-scrollbar {
   width: 10px;
-  background-color: color-light;
+  background-color: #fcf5e5;
 }
 ::-webkit-scrollbar-thumb {
   background-color: #7df9ff;
@@ -255,7 +254,7 @@ header:hover .chn_mark {
   width: 100%;
   bottom: 0;
   border-top: 1px solid #e5e5e5;
-  background-color: #fcf5e5;
+  background-color: #faf9f6;
   text-align: center;
   font-size: 0.9em;
 }
