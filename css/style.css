@@ -111,7 +111,6 @@ pre {
 }
 .fixed-header .item-link {
   color: #34495e !important;
-  padding-bottom: 4px;
 }
 .header-container {
   max-width: 1200px;
@@ -166,6 +165,7 @@ pre {
   line-height: 40px;
   text-decoration: none;
   color: #fcf5e5;
+  padding-bottom: 3px;
 }
 .right-list .list-item .item-link:hover {
   font-weight: bold;

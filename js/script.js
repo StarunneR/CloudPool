@@ -8,6 +8,7 @@
   var about = document.getElementById('about-banner') || false
   var top = $('.scroll-top') || false
   var catalog_toc = $('.catalog-container .toc-main') || false
+  var headerH = header.height()
   var isOpen = false
 
   $(document).ready(function () {
@@ -51,7 +52,7 @@
     var name = $(this).data('name').replace(/[\ \'\/\+\#]/gi, "\\$&")
     var maoH = list.find('#' + name).offset().top
     $('html,body').animate({
-      scrollTop: maoH - header.height()
+      scrollTop: maoH - headerH
     }, 500)
   })
 
@@ -60,7 +61,7 @@
     var name = $(this).data('name').replace(/[\ \'\/\+\#]/gi, "\\$&")
     var maoH = list.find('#' + name).offset().top
     $('html,body').animate({
-      scrollTop: maoH - header.height()
+      scrollTop: maoH - headerH
     }, 500)
   })
 
@@ -74,7 +75,7 @@
 
   $('.arrow-down').on('click', function () {
     $('html, body').animate({
-      scrollTop: banner.offsetHeight - header.height() + front.offsetHeight
+      scrollTop: banner.offsetHeight - headerH + front.offsetHeight
       //scrollTop: banner.offsetHeight - header.height()
     }, 500)
   })
@@ -86,7 +87,7 @@
     var top = scrollTarget.offset().top
     if (top > 0) {
       $('html,body').animate({
-        scrollTop: top - 65
+        scrollTop: top - headerH
       }, 600)
     }
   })
@@ -98,7 +99,6 @@
 
   document.addEventListener('scroll', function () {
     var scrollTop = document.documentElement.scrollTop || document.body.scrollTop
-    var headerH = header.height()
     if (banner) {
       if (scrollTop > headerH) {
         header.addClass('fixed-header')
@@ -106,11 +106,13 @@
         header.removeClass('fixed-header')
       }
     }
+    /*
     if (scrollTop > 100) {
-      top.addClass('opacity')
+      top_button.addClass('opacity')
     } else {
-      top.removeClass('opacity')
+      top_button.removeClass('opacity')
     }
+    */
     if (catalog) {
       let catalog_top = $('#catalog').offset().top
       if (scrollTop > catalog_top) {
