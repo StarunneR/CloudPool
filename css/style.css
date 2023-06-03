@@ -111,6 +111,7 @@ pre {
 }
 .fixed-header .item-link {
   color: #34495e !important;
+  padding-bottom: 4px;
 }
 .header-container {
   max-width: 1200px;
