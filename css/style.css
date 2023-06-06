@@ -1,6 +1,6 @@
 html {
   scrollbar-width: thin;
-  scrollbar-color: #7f8c8d #fcf5e5;
+  scrollbar-color: #808080 #fcf5e5;
 }
 ::selection {
   background: #00bfff;
@@ -107,7 +107,7 @@ pre {
   color: #00bfff;
 }
 .fixed-header .menu .icon-bar {
-  background-color: #7f8c8d;
+  background-color: #808080;
 }
 .fixed-header .item-link {
   color: #34495e !important;
@@ -233,7 +233,7 @@ pre {
 }
 .menu-mask .menu-list .menu-item .menu-link {
   text-decoration: none;
-  color: #7f8c8d;
+  color: #808080;
 }
 .open {
   max-height: 1000px;
@@ -260,7 +260,7 @@ header:hover .chn_mark {
   font-size: 0.9em;
 }
 .copyright {
-  color: #7f8c8d;
+  color: #808080;
   line-height: 1.5;
 }
 .guide-pager {
@@ -618,8 +618,8 @@ header:hover .chn_mark {
   font-size: 1em;
   font-style: oblique;
   font-weight: bold;
-  background-color: #7df9ff;
-  color: #34495e;
+  background-color: #0096ff;
+  color: #fcf5e5;
   border-radius: 4px;
   text-indent: 0.1em;
   padding-left: 2px;
@@ -694,7 +694,7 @@ header:hover .chn_mark {
   font-size: 12px;
   margin-top: 10px;
   text-align: center;
-  color: #7f8c8d;
+  color: #808080;
   font-style: italic;
 }
 .money-like {
@@ -863,7 +863,7 @@ header:hover .chn_mark {
   padding-left: 10px;
 }
 .time-section .section-list .section-list-item .archive-date {
-  color: #7f8c8d;
+  color: #808080;
   font-size: 0.9em;
   margin: 5px 0;
 }
@@ -879,7 +879,7 @@ header:hover .chn_mark {
   margin-top: 80px;
 }
 .article-card .article-date {
-  color: #7f8c8d;
+  color: #808080;
   margin: 10px 0;
   font-family: Arial, Helvetica, sans-serif;
   font-size: 0.8em;
