@@ -14,7 +14,7 @@ body {
   position: relative;
   height: 100%;
   margin: 0;
-  color: #34495e;
+  color: #36454f;
   font-size: 16px;
 }
 @media screen and (max-width: 700px) {
@@ -110,7 +110,7 @@ pre {
   background-color: #808080;
 }
 .fixed-header .item-link {
-  color: #34495e !important;
+  color: #36454f !important;
 }
 .header-container {
   max-width: 1200px;
@@ -271,7 +271,7 @@ header:hover .chn_mark {
   font-weight: 600;
 }
 .page-arrow {
-  color: #34495e;
+  color: #36454f;
 }
 .unvisible {
   visibility: hidden;
@@ -474,7 +474,7 @@ header:hover .chn_mark {
 }
 .post-article .markdown-content p code {
   background-color: #fff;
-  color: #34495e;
+  color: #36454f;
   padding: 3px 5px;
   margin: 0 2px;
   border-radius: 2px;
@@ -665,7 +665,7 @@ header:hover .chn_mark {
   float: right;
 }
 .post-article .nav-container .nav-arrow {
-  color: #34495e;
+  color: #36454f;
 }
 .post-article .nav-container a {
   color: #0096ff;
@@ -761,7 +761,7 @@ header:hover .chn_mark {
   display: block;
   margin: 0;
   text-align: center;
-  color: #34495e;
+  color: #36454f;
 }
 .money-like .reward_notice {
   font-size: 0.8em;
@@ -854,7 +854,7 @@ header:hover .chn_mark {
   border-radius: 50%;
 }
 .time-section .section-list .section-list-item .archive-title {
-  color: #34495e;
+  color: #36454f;
   transition: all 0.3s ease;
   font-size: 1.1em;
 }
@@ -889,7 +889,7 @@ header:hover .chn_mark {
   font-size: medium;
   font-style: italic;
   margin: 10px 0;
-  color: #34495e;
+  color: #36454f;
 }
 .article-card .more {
   font-weight: 600;
@@ -905,7 +905,7 @@ header:hover .chn_mark {
   }
 }
 .article-head > a {
-  color: #34495e;
+  color: #36454f;
   transition: all 0.3s ease-in-out;
   display: inline-block;
   position: relative;
@@ -1349,7 +1349,7 @@ header:hover .chn_mark {
 .options_container .options_control input {
   background-color: #fff;
   border: none;
-  color: #34495e;
+  color: #36454f;
   padding: 6px 15px;
   margin: 0.5em 0.5em;
   border-radius: 10%;
@@ -1471,7 +1471,7 @@ header:hover .chn_mark {
 .search-popup p.search-result {
   border-bottom: 1px;
   padding: 3px 0px 0px 0px;
-  color: #34495e;
+  color: #36454f;
 }
 .search-popup a.search-result-title {
   font-weight: bold;
