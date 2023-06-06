@@ -227,7 +227,7 @@ pre {
   left: 0;
   bottom: 0;
   width: 100%;
-  border-bottom: 1px solid #e5e5e5;
+  border-bottom: 1px solid #e5e4e2;
   -webkit-transform: scaleY(0.5);
   transform: scaleY(0.5);
 }
@@ -254,7 +254,7 @@ header:hover .chn_mark {
   margin: 0 auto;
   width: 100%;
   bottom: 0;
-  border-top: 1px solid #e5e5e5;
+  border-top: 1px solid #e5e4e2;
   background-color: #faf9f6;
   text-align: center;
   font-size: 0.9em;
@@ -473,7 +473,7 @@ header:hover .chn_mark {
   margin-bottom: 0.7em;
 }
 .post-article .markdown-content p code {
-  background-color: #faf9f6;
+  background-color: #fff;
   color: #34495e;
   padding: 3px 5px;
   margin: 0 2px;
@@ -490,7 +490,7 @@ header:hover .chn_mark {
   margin: 1em 0;
   font-size: 1.5em;
   padding-bottom: 0.3em;
-  border-bottom: 1px solid #e5e5e5;
+  border-bottom: 1px solid #e5e4e2;
 }
 .post-article .markdown-content h4 {
   margin: 1em 0;
@@ -517,7 +517,7 @@ header:hover .chn_mark {
   margin: 1em 0;
   padding: 15px 20px;
   border-left: 4px solid #00bfff;
-  background: #faf9f6;
+  background: #fff;
   border-bottom-right-radius: 2px;
   border-top-right-radius: 2px;
 }
@@ -548,7 +548,7 @@ header:hover .chn_mark {
   cursor: zoom-in;
 }
 .post-article .markdown-content figure {
-  background: #faf9f6;
+  background: #fff;
   padding: 0 10px;
   border-radius: 2px;
   margin: 20px 0;
@@ -575,7 +575,7 @@ header:hover .chn_mark {
   background-color: #00bfff;
   border-top-width: 1px;
   border-top-style: solid;
-  border-top-color: #e5e5e5;
+  border-top-color: #e5e4e2;
 }
 .post-article .markdown-content > table thead th {
   padding: 5px 10px;
@@ -649,7 +649,7 @@ header:hover .chn_mark {
   width: 100%;
   padding-top: 1.5em;
   margin-top: 1.5em;
-  border-top: 1px dashed #e5e5e5;
+  border-top: 1px dashed #e5e4e2;
   font-weight: 600;
 }
 .post-article .nav-container:after,
@@ -687,7 +687,7 @@ header:hover .chn_mark {
   width: 8em;
   height: 8em;
   padding: 0.25em;
-  box-shadow: 0 0 1px #e3e3e3;
+  box-shadow: 0 0 1px #d3d3d3;
   cursor: pointer;
 }
 .post-article .qrcode .qrcode-notice {
@@ -727,7 +727,7 @@ header:hover .chn_mark {
   margin-left: -5.9em;
   padding: 10px 15px;
   background: #fcf5e5;
-  box-shadow: 0 0 0 1px #e5e5e5;
+  box-shadow: 0 0 0 1px #e5e4e2;
   border-radius: 4px;
 }
 .money-like .money-code span {
@@ -971,7 +971,7 @@ header:hover .chn_mark {
 .catalog-container .toc-main {
   padding-top: 1em;
   padding-left: 0.5em;
-  border-left: 1px solid #e5e5e5;
+  border-left: 1px solid #e5e4e2;
   width: 145px;
   white-space: nowrap;
   overflow: auto;
@@ -1081,7 +1081,7 @@ header:hover .chn_mark {
   font-family: 'Roboto Mono', Monaco, courier, monospace;
   font-size: 0.8em;
   display: inline-block;
-  background-color: #faf9f6;
+  background-color: #fff;
   color: #ffac1c;
   padding: 3px 5px;
   margin: 0 2px 5px 0;
@@ -1178,7 +1178,7 @@ header:hover .chn_mark {
   font-family: 'Noto Sans SC', sans-serif;
   font-size: 0.8em;
   display: inline-block;
-  background-color: #faf9f6;
+  background-color: #fff;
   color: #fa3;
   padding: 3px 5px;
   margin: 0 2px 5px 0;
@@ -1347,7 +1347,7 @@ header:hover .chn_mark {
   margin-top: 0.5em;
 }
 .options_container .options_control input {
-  background-color: #faf9f6;
+  background-color: #fff;
   border: none;
   color: #34495e;
   padding: 6px 15px;
