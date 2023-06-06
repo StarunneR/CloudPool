@@ -17,7 +17,7 @@ body {
   color: #36454f;
   font-size: 16px;
 }
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 768px) {
   body {
     font-size: 15px;
   }
@@ -56,7 +56,7 @@ pre {
   transform: translateY(-20px);
   transition: all 0.4s;
 }
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 768px) {
   .app-body {
     padding: 0 10px;
   }
@@ -120,7 +120,7 @@ pre {
   position: relative;
   font-family: Tahoma, Verdana, Segoe, PingFang SC, Microsoft YaHei, Source Han Sans SC, Noto Sans CJK SC, WenQuanYi Micro Hei, sans-serif;
 }
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 768px) {
   .header-container {
     padding: 0.5em 1em;
     position: relative;
@@ -151,7 +151,7 @@ pre {
   float: right;
   padding: 0;
 }
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 768px) {
   .right-list {
     display: none;
   }
@@ -189,7 +189,7 @@ pre {
   margin-top: 4px;
   background-color: #fcf5e5;
 }
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 768px) {
   .menu {
     display: block;
   }
@@ -207,7 +207,7 @@ pre {
   -webkit-transition: max-height 0.2s ease;
   transition: max-height 0.2s ease;
 }
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 768px) {
   .menu-mask {
     display: block;
   }
@@ -329,7 +329,7 @@ header:hover .chn_mark {
   background-position: center;
   background-size: cover;
 }
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 768px) {
   #article-banner {
     padding: 80px 10px 25px 10px;
   }
@@ -343,7 +343,7 @@ header:hover .chn_mark {
   transform: translateY(10px);
   transition: all 0.5s;
 }
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 768px) {
   #article-banner .page-title {
     font-size: 2em;
   }
@@ -364,7 +364,7 @@ header:hover .chn_mark {
   transform: translateY(-20px);
   transition: all 0.4s;
 }
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 768px) {
   #article-banner .post-title {
     font-size: 2em;
   }
@@ -454,7 +454,7 @@ header:hover .chn_mark {
   font-size: 13px;
   scrollbar-width: thin;
 }
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 768px) {
   .post-article .markdown-content pre,
   .post-article .markdown-content code {
     font-size: 12px;
@@ -899,7 +899,7 @@ header:hover .chn_mark {
 .article-card .more:hover {
   transform: translateX(10px);
 }
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 768px) {
   .article-card {
     padding-left: 1em;
   }
@@ -954,14 +954,14 @@ header:hover .chn_mark {
   flex-shrink: 0;
   -webkit-flex-shrink: 0;
 }
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 768px) {
   .catalog-container {
     display: inline-block;
     flex-basis: 25px;
     -webkit-flex-basis: 25px;
   }
 }
-@media screen and (max-width: 1480px) and (min-width: 700px) {
+@media screen and (max-width: 1480px) and (min-width: 768px) {
   .catalog-container {
     display: inline-block;
     flex-basis: 25px;
@@ -980,13 +980,13 @@ header:hover .chn_mark {
   position: absolute;
   max-height: 550px;
 }
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 768px) {
   .catalog-container .toc-main {
     padding-left: 0.3em;
     position: static;
   }
 }
-@media screen and (max-width: 1480px) and (min-width: 700px) {
+@media screen and (max-width: 1480px) and (min-width: 768px) {
   .catalog-container .toc-main {
     padding-left: 0.3em;
     position: static;
@@ -1011,12 +1011,12 @@ header:hover .chn_mark {
   padding-top: 1em;
   padding-left: 1em;
 }
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 768px) {
   .catalog-container .toc-main .toc-nav {
     max-height: 200px;
   }
 }
-@media screen and (max-width: 1480px) and (min-width: 700px) {
+@media screen and (max-width: 1480px) and (min-width: 768px) {
   .catalog-container .toc-main .toc-nav {
     max-height: 200px;
   }
@@ -1032,12 +1032,12 @@ header:hover .chn_mark {
   position: fixed;
   top: 60px /* ! modify in js */;
 }
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 768px) {
   .catalog-container .fixed-toc {
     position: static;
   }
 }
-@media screen and (max-width: 1480px) and (min-width: 700px) {
+@media screen and (max-width: 1480px) and (min-width: 768px) {
   .catalog-container .fixed-toc {
     position: static;
   }
@@ -1200,7 +1200,7 @@ header:hover .chn_mark {
   background-position: center;
   background-size: cover;
 }
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 768px) {
   #magazine-banner {
     padding: 80px 10px 25px 10px;
   }
@@ -1404,7 +1404,7 @@ header:hover .chn_mark {
 .search-active .search-popup {
   transform: scale(1);
 }
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 768px) {
   .search-popup {
     border-radius: 0;
     height: 100%;
@@ -1504,12 +1504,12 @@ header:hover .chn_mark {
   color: #808080;
   text-align: right;
 }
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 768px) {
   .busuanzi_page_pv {
     display: none;
   }
 }
-@media screen and (max-width: 1480px) and (min-width: 700px) {
+@media screen and (max-width: 1480px) and (min-width: 768px) {
   .busuanzi_page_pv {
     display: none;
   }
@@ -1553,7 +1553,7 @@ header:hover .chn_mark {
 .wl-content .wl-emoji {
   height: 2.5em !important;
 }
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 768px) {
   .wl-editor {
     width: calc(100% - 2em) !important;
   }
