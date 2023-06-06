@@ -15,7 +15,7 @@
     
   </title>
   <!-- CSS -->
-  <link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/6.4.0/css/all.min.css" />
   <!--<link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">-->
   <!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />-->
   <!--<link href="https://cdn.staticfile.org/nprogress/0.2.0/nprogress.min.css" rel="stylesheet"/>-->
@@ -30,7 +30,7 @@
   <!--<script type="text/javascript" src="https://cdn.staticfile.org/nprogress/0.2.0/nprogress.min.js"></script>-->
   <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/nprogress/0.2.0/nprogress.min.js"></script>
   
-    <div class="search-pop-overlay">
+  <div class="search-pop-overlay">
     <div class="popup search-popup">
         <div class="search-header">
             <span class="search-icon">
@@ -55,299 +55,299 @@
         </div>
     </div>
 </div>
-    <link prefetch rel="preconnect" as="fetch" href="/search.xml" crossorigin="anonymous">
-    <script>
-      document.addEventListener('DOMContentLoaded', () => {
-        // Popup Window
-        let isfetched = false;
-        let datas;
-        let isXml = true;
-        // Search DB path
-        let searchPath = "search.xml"; //CONFIG.search.path
-        if (searchPath.length === 0) {
-          searchPath = 'search.xml';
-        } else if (searchPath.endsWith('json')) {
-          isXml = false;
+  <link prefetch rel="preconnect" as="fetch" href="/search.xml" crossorigin="anonymous">
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Popup Window
+      let isfetched = false;
+      let datas;
+      let isXml = true;
+      // Search DB path
+      let searchPath = 'search.xml'; //CONFIG.search.path
+      if (searchPath.length === 0) {
+        searchPath = 'search.xml';
+      } else if (searchPath.endsWith('json')) {
+        isXml = false;
+      }
+      const input = document.querySelector('.search-input');
+      const resultContent = document.getElementById('search-result');
+
+      const getIndexByWord = (word, text, caseSensitive) => {
+        if ('false' == false) { // CONFIG.localsearch.unescape = false
+          let div = document.createElement('div');
+          div.innerText = word;
+          word = div.innerHTML;
         }
-        const input = document.querySelector('.search-input');
-        const resultContent = document.getElementById('search-result');
+        let wordLen = word.length;
+        if (wordLen === 0) return [];
+        let startPosition = 0;
+        let position = [];
+        let index = [];
+        if (!caseSensitive) {
+          text = text.toLowerCase();
+          word = word.toLowerCase();
+        }
+        while ((position = text.indexOf(word, startPosition)) > -1) {
+          index.push({ position, word });
+          startPosition = position + wordLen;
+        }
+        return index;
+      };
 
-        const getIndexByWord = (word, text, caseSensitive) => {
-          if (false) { // CONFIG.localsearch.unescape = false
-            let div = document.createElement('div');
-            div.innerText = word;
-            word = div.innerHTML;
+      // Merge hits into slices
+      const mergeIntoSlice = (start, end, index, searchText) => {
+        let item = index[index.length - 1];
+        let { position, word } = item;
+        let hits = [];
+        let searchTextCountInSlice = 0;
+        while (position + word.length <= end && index.length !== 0) {
+          if (word === searchText) {
+            searchTextCountInSlice++;
           }
-          let wordLen = word.length;
-          if (wordLen === 0) return [];
-          let startPosition = 0;
-          let position = [];
-          let index = [];
-          if (!caseSensitive) {
-            text = text.toLowerCase();
-            word = word.toLowerCase();
-          }
-          while ((position = text.indexOf(word, startPosition)) > -1) {
-            index.push({ position, word });
-            startPosition = position + wordLen;
-          }
-          return index;
-        };
+          hits.push({
+            position,
+            length: word.length
+          });
+          let wordEnd = position + word.length;
 
-        // Merge hits into slices
-        const mergeIntoSlice = (start, end, index, searchText) => {
-          let item = index[index.length - 1];
-          let { position, word } = item;
-          let hits = [];
-          let searchTextCountInSlice = 0;
-          while (position + word.length <= end && index.length !== 0) {
-            if (word === searchText) {
-              searchTextCountInSlice++;
+          // Move to next position of hit
+          index.pop();
+          while (index.length !== 0) {
+            item = index[index.length - 1];
+            position = item.position;
+            word = item.word;
+            if (wordEnd > position) {
+              index.pop();
+            } else {
+              break;
             }
-            hits.push({
-              position,
-              length: word.length
-            });
-            let wordEnd = position + word.length;
+          }
+        }
+        return {
+          hits,
+          start,
+          end,
+          searchTextCount: searchTextCountInSlice
+        };
+      };
 
-            // Move to next position of hit
-            index.pop();
-            while (index.length !== 0) {
-              item = index[index.length - 1];
-              position = item.position;
-              word = item.word;
-              if (wordEnd > position) {
-                index.pop();
+      // Highlight title and content
+      const highlightKeyword = (text, slice) => {
+        let result = '';
+        let prevEnd = slice.start;
+        slice.hits.forEach(hit => {
+          result += text.substring(prevEnd, hit.position);
+          let end = hit.position + hit.length;
+          result += `<b class="search-keyword">${text.substring(hit.position, end)}</b>`;
+          prevEnd = end;
+        });
+        result += text.substring(prevEnd, slice.end);
+        return result;
+      };
+
+      const inputEventFunction = () => {
+        if (!isfetched) return;
+        let searchText = input.value.trim().toLowerCase();
+        let keywords = searchText.split(/[-\s]+/);
+        if (keywords.length > 1) {
+          keywords.push(searchText);
+        }
+        let resultItems = [];
+        if (searchText.length > 0) {
+          // Perform local searching
+          datas.forEach(({ title, content, url }) => {
+            let titleInLowerCase = title.toLowerCase();
+            let contentInLowerCase = content.toLowerCase();
+            let indexOfTitle = [];
+            let indexOfContent = [];
+            let searchTextCount = 0;
+            keywords.forEach(keyword => {
+              indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+              indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+            });
+
+            // Show search results
+            if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+              let hitCount = indexOfTitle.length + indexOfContent.length;
+              // Sort index by position of keyword
+              [indexOfTitle, indexOfContent].forEach(index => {
+                index.sort((itemLeft, itemRight) => {
+                  if (itemRight.position !== itemLeft.position) {
+                    return itemRight.position - itemLeft.position;
+                  }
+                  return itemLeft.word.length - itemRight.word.length;
+                });
+              });
+
+              let slicesOfTitle = [];
+              if (indexOfTitle.length !== 0) {
+                let tmp = mergeIntoSlice(0, title.length, indexOfTitle, searchText);
+                searchTextCount += tmp.searchTextCountInSlice;
+                slicesOfTitle.push(tmp);
+              }
+
+              let slicesOfContent = [];
+              while (indexOfContent.length !== 0) {
+                let item = indexOfContent[indexOfContent.length - 1];
+                let { position, word } = item;
+                // Cut out 100 characters
+                let start = position - 20;
+                let end = position + 80;
+                if (start < 0) {
+                  start = 0;
+                }
+                if (end < position + word.length) {
+                  end = position + word.length;
+                }
+                if (end > content.length) {
+                  end = content.length;
+                }
+                let tmp = mergeIntoSlice(start, end, indexOfContent, searchText);
+                searchTextCount += tmp.searchTextCountInSlice;
+                slicesOfContent.push(tmp);
+              }
+
+              // Sort slices in content by search text's count and hits' count
+              slicesOfContent.sort((sliceLeft, sliceRight) => {
+                if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                  return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                  return sliceRight.hits.length - sliceLeft.hits.length;
+                }
+                return sliceLeft.start - sliceRight.start;
+              });
+
+              // Select top N slices in content
+              let upperBound = parseInt('1', 10); // CONFIG.localsearch.top_n_per_article: 1
+              if (upperBound >= 0) {
+                slicesOfContent = slicesOfContent.slice(0, upperBound);
+              }
+
+              let resultItem = '';
+
+              if (slicesOfTitle.length !== 0) {
+                resultItem += `<li class="search-result-element"><a href="${url}" class="search-result-title" target="_blank">${highlightKeyword(title, slicesOfTitle[0])}</a>`;
               } else {
-                break;
+                resultItem += `<li class="search-result-element"><a href="${url}" class="search-result-title" target="_blank">${title}</a>`;
               }
+
+              slicesOfContent.forEach(slice => {
+                resultItem += `<a href="${url}" target="_blank"><p class="search-result">${highlightKeyword(content, slice)}...</p></a>`;
+              });
+
+              resultItem += '</li>';
+              resultItems.push({
+                item: resultItem,
+                id: resultItems.length,
+                hitCount,
+                searchTextCount
+              });
             }
-          }
-          return {
-            hits,
-            start,
-            end,
-            searchTextCount: searchTextCountInSlice
-          };
-        };
-
-        // Highlight title and content
-        const highlightKeyword = (text, slice) => {
-          let result = '';
-          let prevEnd = slice.start;
-          slice.hits.forEach(hit => {
-            result += text.substring(prevEnd, hit.position);
-            let end = hit.position + hit.length;
-            result += `<b class="search-keyword">${text.substring(hit.position, end)}</b>`;
-            prevEnd = end;
           });
-          result += text.substring(prevEnd, slice.end);
-          return result;
-        };
-
-        const inputEventFunction = () => {
-          if (!isfetched) return;
-          let searchText = input.value.trim().toLowerCase();
-          let keywords = searchText.split(/[-\s]+/);
-          if (keywords.length > 1) {
-            keywords.push(searchText);
-          }
-          let resultItems = [];
-          if (searchText.length > 0) {
-            // Perform local searching
-            datas.forEach(({ title, content, url }) => {
-              let titleInLowerCase = title.toLowerCase();
-              let contentInLowerCase = content.toLowerCase();
-              let indexOfTitle = [];
-              let indexOfContent = [];
-              let searchTextCount = 0;
-              keywords.forEach(keyword => {
-                indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
-                indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
-              });
-
-              // Show search results
-              if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
-                let hitCount = indexOfTitle.length + indexOfContent.length;
-                // Sort index by position of keyword
-                [indexOfTitle, indexOfContent].forEach(index => {
-                  index.sort((itemLeft, itemRight) => {
-                    if (itemRight.position !== itemLeft.position) {
-                      return itemRight.position - itemLeft.position;
-                    }
-                    return itemLeft.word.length - itemRight.word.length;
-                  });
-                });
-
-                let slicesOfTitle = [];
-                if (indexOfTitle.length !== 0) {
-                  let tmp = mergeIntoSlice(0, title.length, indexOfTitle, searchText);
-                  searchTextCount += tmp.searchTextCountInSlice;
-                  slicesOfTitle.push(tmp);
-                }
-
-                let slicesOfContent = [];
-                while (indexOfContent.length !== 0) {
-                  let item = indexOfContent[indexOfContent.length - 1];
-                  let { position, word } = item;
-                  // Cut out 100 characters
-                  let start = position - 20;
-                  let end = position + 80;
-                  if (start < 0) {
-                    start = 0;
-                  }
-                  if (end < position + word.length) {
-                    end = position + word.length;
-                  }
-                  if (end > content.length) {
-                    end = content.length;
-                  }
-                  let tmp = mergeIntoSlice(start, end, indexOfContent, searchText);
-                  searchTextCount += tmp.searchTextCountInSlice;
-                  slicesOfContent.push(tmp);
-                }
-
-                // Sort slices in content by search text's count and hits' count
-                slicesOfContent.sort((sliceLeft, sliceRight) => {
-                  if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
-                    return sliceRight.searchTextCount - sliceLeft.searchTextCount;
-                  } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
-                    return sliceRight.hits.length - sliceLeft.hits.length;
-                  }
-                  return sliceLeft.start - sliceRight.start;
-                });
-
-                // Select top N slices in content
-                let upperBound = parseInt(1, 10); // CONFIG.localsearch.top_n_per_article: 1
-                if (upperBound >= 0) {
-                  slicesOfContent = slicesOfContent.slice(0, upperBound);
-                }
-
-                let resultItem = '';
-
-                if (slicesOfTitle.length !== 0) {
-                  resultItem += `<li class="search-result-element"><a href="${url}" class="search-result-title" target="_blank">${highlightKeyword(title, slicesOfTitle[0])}</a>`;
-                } else {
-                  resultItem += `<li class="search-result-element"><a href="${url}" class="search-result-title" target="_blank">${title}</a>`;
-                }
-
-                slicesOfContent.forEach(slice => {
-                  resultItem += `<a href="${url}" target="_blank"><p class="search-result">${highlightKeyword(content, slice)}...</p></a>`;
-                });
-
-                resultItem += '</li>';
-                resultItems.push({
-                  item: resultItem,
-                  id: resultItems.length,
-                  hitCount,
-                  searchTextCount
-                });
-              }
-            });
-          }
-          if (keywords.length === 1 && keywords[0] === '') {
-            resultContent.innerHTML = '<div id="no-result"><i class="fa-sharp fa-regular fa-circle-check fa-5x"></i></div>';
-          } else if (resultItems.length === 0) {
-            resultContent.innerHTML = '<div id="no-result"><i class="fa-regular fa-face-frown-open fa-5x"></i></div>';
-          } else {
-            resultItems.sort((resultLeft, resultRight) => {
-              if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
-                return resultRight.searchTextCount - resultLeft.searchTextCount;
-              } else if (resultLeft.hitCount !== resultRight.hitCount) {
-                return resultRight.hitCount - resultLeft.hitCount;
-              }
-              return resultRight.id - resultLeft.id;
-            });
-            resultContent.innerHTML = `<ul class="search-result-list">${resultItems.map(result => result.item).join('')}</ul>`;
-            window.pjax && window.pjax.refresh(resultContent);
-          }
-        };
-
-        const fetchData = () => {
-          fetch('/' + searchPath) // CONFIG.root = ''
-            .then(response => response.text())
-            .then(res => {
-              // Get the contents from search data
-              isfetched = true;
-              datas = isXml ? [...new DOMParser().parseFromString(res, 'text/xml').querySelectorAll('entry')].map(element => {
-                return {
-                  title: element.querySelector('title').textContent,
-                  content: element.querySelector('content').textContent,
-                  url: element.querySelector('url').textContent
-                };
-              }) : JSON.parse(res);
-              // Only match articles with not empty titles
-              datas = datas.filter(data => data.title).map(data => {
-                data.title = data.title.trim();
-                data.content = data.content ? data.content.trim().replace(/<[^>]+>/g, '') : '';
-                data.url = decodeURIComponent(data.url).replace(/\/{2,}/g, '/');
-                return data;
-              });
-              // Remove loading animation
-              document.getElementById('no-result').innerHTML = '<i class="fa-sharp fa-regular fa-circle-check fa-5x"></i></i>';
-              inputEventFunction();
-            });
-        };
-
-        if (false) { // CONFIG.localsearch.preload: false
-          fetchData();
         }
-
-        if ('auto' === 'auto') { // CONFIG.localsearch.trigger: 'auto' / 'manual'
-          input.addEventListener('input', inputEventFunction);
+        if (keywords.length === 1 && keywords[0] === '') {
+          resultContent.innerHTML = '<div id="no-result"><i class="fa-sharp fa-regular fa-circle-check fa-5x"></i></div>';
+        } else if (resultItems.length === 0) {
+          resultContent.innerHTML = '<div id="no-result"><i class="fa-regular fa-face-frown-open fa-5x"></i></div>';
         } else {
-          document.querySelector('.search-icon').addEventListener('click', inputEventFunction);
-          input.addEventListener('keypress', event => {
-            if (event.key === 'Enter') {
-              inputEventFunction();
+          resultItems.sort((resultLeft, resultRight) => {
+            if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+              return resultRight.searchTextCount - resultLeft.searchTextCount;
+            } else if (resultLeft.hitCount !== resultRight.hitCount) {
+              return resultRight.hitCount - resultLeft.hitCount;
             }
+            return resultRight.id - resultLeft.id;
           });
+          resultContent.innerHTML = `<ul class="search-result-list">${resultItems.map(result => result.item).join('')}</ul>`;
+          window.pjax && window.pjax.refresh(resultContent);
         }
+      };
 
-        // Handle and trigger popup window
-        document.querySelectorAll('.popup-trigger').forEach(element => {
-          element.addEventListener('click', () => {
-            document.body.style.overflow = 'hidden';
-            document.querySelector('.search-pop-overlay').classList.add('search-active');
-            input.focus();
-            if (!isfetched) fetchData();
+      const fetchData = () => {
+        fetch('/' + searchPath) // CONFIG.root = ''
+          .then(response => response.text())
+          .then(res => {
+            // Get the contents from search data
+            isfetched = true;
+            datas = isXml ? [...new DOMParser().parseFromString(res, 'text/xml').querySelectorAll('entry')].map(element => {
+              return {
+                title: element.querySelector('title').textContent,
+                content: element.querySelector('content').textContent,
+                url: element.querySelector('url').textContent
+              };
+            }) : JSON.parse(res);
+            // Only match articles with not empty titles
+            datas = datas.filter(data => data.title).map(data => {
+              data.title = data.title.trim();
+              data.content = data.content ? data.content.trim().replace(/<[^>]+>/g, '') : '';
+              data.url = decodeURIComponent(data.url).replace(/\/{2,}/g, '/');
+              return data;
+            });
+            // Remove loading animation
+            document.getElementById('no-result').innerHTML = '<i class="fa-sharp fa-regular fa-circle-check fa-5x"></i></i>';
+            inputEventFunction();
           });
-        });
+      };
 
-        // Monitor main search box
-        const onPopupClose = () => {
-          document.body.style.overflow = '';
-          document.querySelector('.search-pop-overlay').classList.remove('search-active');
-        };
+      if (false) { // CONFIG.localsearch.preload: false
+        fetchData();
+      }
 
-        document.querySelector('.search-pop-overlay').addEventListener('click', event => {
-          if (event.target === document.querySelector('.search-pop-overlay')) {
-            onPopupClose();
+      if ('auto' === 'auto') { // CONFIG.localsearch.trigger: 'auto' / 'manual'
+        input.addEventListener('input', inputEventFunction);
+      } else {
+        document.querySelector('.search-icon').addEventListener('click', inputEventFunction);
+        input.addEventListener('keypress', event => {
+          if (event.key === 'Enter') {
+            inputEventFunction();
           }
         });
-        document.querySelector('.popup-btn-close').addEventListener('click', onPopupClose);
-        window.addEventListener('pjax:success', onPopupClose);
-        window.addEventListener('keyup', event => {
-          if (event.key === 'Escape') {
-            onPopupClose();
-          }
-        });
+      }
 
-        // PageJumper button
-        let onJumpPage = () => {
-          window.location = window.location.origin + '/' + input.value
-        };
-        document.querySelector('.popup-btn-go').addEventListener('click', onJumpPage);
-        /*document.querySelector('.search-input').addEventListener('keydown', event => {
-          if (event.keyCode === 13) {
-            onJumpPage();
-            return;
-          }
-        });*/
+      // Handle and trigger popup window
+      document.querySelectorAll('.popup-trigger').forEach(element => {
+        element.addEventListener('click', () => {
+          document.body.style.overflow = 'hidden';
+          document.querySelector('.search-pop-overlay').classList.add('search-active');
+          input.focus();
+          if (!isfetched) fetchData();
+        });
+      });
+
+      // Monitor main search box
+      const onPopupClose = () => {
+        document.body.style.overflow = '';
+        document.querySelector('.search-pop-overlay').classList.remove('search-active');
+      };
+
+      document.querySelector('.search-pop-overlay').addEventListener('click', event => {
+        if (event.target === document.querySelector('.search-pop-overlay')) {
+          onPopupClose();
+        }
+      });
+      document.querySelector('.popup-btn-close').addEventListener('click', onPopupClose);
+      window.addEventListener('pjax:success', onPopupClose);
+      window.addEventListener('keyup', event => {
+        if (event.key === 'Escape') {
+          onPopupClose();
+        }
+      });
+
+      // PageJumper button
+      let onJumpPage = () => {
+        window.location = window.location.origin + '/' + input.value
+      };
+      document.querySelector('.popup-btn-go').addEventListener('click', onJumpPage);
+      document.querySelector('.search-input').addEventListener('keydown', event => {
+        if (event.keyCode === 13) {
+          onJumpPage();
+          return;
+        }
+      });
     });
-    </script>
+  </script>
 
-    <!--
+  <!--
 <script src="/js/local-search.js"></script>
 --> 
 
@@ -497,111 +497,31 @@
 <main class="app-body">
   <div id="tag-cloud">
     
-      <a class="tag1" data-name="tag-BB">
-        BB
-      </a>
-    
-      <a class="tag2" data-name="tag-Daily">
-        Daily
-      </a>
-    
-      <a class="tag1" data-name="tag-随笔">
+      <a class="tag3" data-name="tag-随笔">
         随笔
       </a>
     
-      <a class="tag0" data-name="tag-游记">
+      <a class="tag2" data-name="tag-游记">
         游记
       </a>
     
-      <a class="tag2" data-name="tag-音乐">
+      <a class="tag3" data-name="tag-BB">
+        BB
+      </a>
+    
+      <a class="tag1" data-name="tag-Daily">
+        Daily
+      </a>
+    
+      <a class="tag3" data-name="tag-音乐">
         音乐
-      </a>
-    
-      <a class="tag2" data-name="tag-视频">
-        视频
-      </a>
-    
-      <a class="tag0" data-name="tag-学习">
-        学习
-      </a>
-    
-      <a class="tag3" data-name="tag-MOOC">
-        MOOC
-      </a>
-    
-      <a class="tag1" data-name="tag-Kindle">
-        Kindle
-      </a>
-    
-      <a class="tag3" data-name="tag-电子书">
-        电子书
-      </a>
-    
-      <a class="tag1" data-name="tag-破解">
-        破解
-      </a>
-    
-      <a class="tag2" data-name="tag-下载">
-        下载
-      </a>
-    
-      <a class="tag3" data-name="tag-资源">
-        资源
-      </a>
-    
-      <a class="tag3" data-name="tag-电影">
-        电影
-      </a>
-    
-      <a class="tag3" data-name="tag-娱乐">
-        娱乐
       </a>
     
       <a class="tag1" data-name="tag-网络">
         网络
       </a>
     
-      <a class="tag2" data-name="tag-技术">
-        技术
-      </a>
-    
-      <a class="tag2" data-name="tag-搜素">
-        搜素
-      </a>
-    
-      <a class="tag2" data-name="tag-实用">
-        实用
-      </a>
-    
-      <a class="tag2" data-name="tag-软件">
-        软件
-      </a>
-    
-      <a class="tag1" data-name="tag-安装">
-        安装
-      </a>
-    
-      <a class="tag2" data-name="tag-Windows">
-        Windows
-      </a>
-    
-      <a class="tag0" data-name="tag-激活">
-        激活
-      </a>
-    
-      <a class="tag2" data-name="tag-字体">
-        字体
-      </a>
-    
-      <a class="tag1" data-name="tag-小说">
-        小说
-      </a>
-    
-      <a class="tag2" data-name="tag-很早以前">
-        很早以前
-      </a>
-    
-      <a class="tag3" data-name="tag-学术">
+      <a class="tag1" data-name="tag-学术">
         学术
       </a>
     
@@ -609,19 +529,185 @@
         杂谈
       </a>
     
-      <a class="tag3" data-name="tag-物理">
+      <a class="tag1" data-name="tag-视频">
+        视频
+      </a>
+    
+      <a class="tag2" data-name="tag-学习">
+        学习
+      </a>
+    
+      <a class="tag0" data-name="tag-MOOC">
+        MOOC
+      </a>
+    
+      <a class="tag2" data-name="tag-技术">
+        技术
+      </a>
+    
+      <a class="tag0" data-name="tag-字体">
+        字体
+      </a>
+    
+      <a class="tag0" data-name="tag-Kindle">
+        Kindle
+      </a>
+    
+      <a class="tag2" data-name="tag-电子书">
+        电子书
+      </a>
+    
+      <a class="tag2" data-name="tag-破解">
+        破解
+      </a>
+    
+      <a class="tag1" data-name="tag-搜素">
+        搜素
+      </a>
+    
+      <a class="tag2" data-name="tag-下载">
+        下载
+      </a>
+    
+      <a class="tag1" data-name="tag-资源">
+        资源
+      </a>
+    
+      <a class="tag0" data-name="tag-电影">
+        电影
+      </a>
+    
+      <a class="tag2" data-name="tag-娱乐">
+        娱乐
+      </a>
+    
+      <a class="tag3" data-name="tag-Windows">
+        Windows
+      </a>
+    
+      <a class="tag1" data-name="tag-安装">
+        安装
+      </a>
+    
+      <a class="tag2" data-name="tag-激活">
+        激活
+      </a>
+    
+      <a class="tag1" data-name="tag-实用">
+        实用
+      </a>
+    
+      <a class="tag1" data-name="tag-软件">
+        软件
+      </a>
+    
+      <a class="tag1" data-name="tag-小说">
+        小说
+      </a>
+    
+      <a class="tag3" data-name="tag-很早以前">
+        很早以前
+      </a>
+    
+      <a class="tag2" data-name="tag-物理">
         物理
       </a>
     
-      <a class="tag0" data-name="tag-微电影01">
+      <a class="tag2" data-name="tag-微电影01">
         微电影01
       </a>
     
-      <a class="tag0" data-name="tag-都市怪谈">
+      <a class="tag3" data-name="tag-都市怪谈">
         都市怪谈
       </a>
     
   </div>
+  
+    <div class="tag-list">
+      <h3 class="tag-name" id="tag-随笔">
+        随笔
+      </h3>
+      
+        <ul class="tag-preview">
+          <li>
+            <a href="/go/在北京第三天/" target="_blank">在北京第三天</a>
+          </li>
+        </ul>
+        
+        <ul class="tag-preview">
+          <li>
+            <a href="/go/在北京第一天/" target="_blank">在北京第一天</a>
+          </li>
+        </ul>
+        
+        <ul class="tag-preview">
+          <li>
+            <a href="/go/在北京第二天/" target="_blank">在北京第二天</a>
+          </li>
+        </ul>
+        
+        <ul class="tag-preview">
+          <li>
+            <a href="/go/在北京第四天/" target="_blank">在北京第四天</a>
+          </li>
+        </ul>
+        
+        <ul class="tag-preview">
+          <li>
+            <a href="/go/日记2017.1.15/" target="_blank">日记2017.1.15</a>
+          </li>
+        </ul>
+        
+        <ul class="tag-preview">
+          <li>
+            <a href="/go/我在考试前去了桂林/" target="_blank">我在考试前去了桂林</a>
+          </li>
+        </ul>
+        
+        <ul class="tag-preview">
+          <li>
+            <a href="/thinking/妈的热死了/" target="_blank">长沙的四季</a>
+          </li>
+        </ul>
+        
+    </div>
+  
+    <div class="tag-list">
+      <h3 class="tag-name" id="tag-游记">
+        游记
+      </h3>
+      
+        <ul class="tag-preview">
+          <li>
+            <a href="/go/在北京第三天/" target="_blank">在北京第三天</a>
+          </li>
+        </ul>
+        
+        <ul class="tag-preview">
+          <li>
+            <a href="/go/在北京第一天/" target="_blank">在北京第一天</a>
+          </li>
+        </ul>
+        
+        <ul class="tag-preview">
+          <li>
+            <a href="/go/在北京第二天/" target="_blank">在北京第二天</a>
+          </li>
+        </ul>
+        
+        <ul class="tag-preview">
+          <li>
+            <a href="/go/在北京第四天/" target="_blank">在北京第四天</a>
+          </li>
+        </ul>
+        
+        <ul class="tag-preview">
+          <li>
+            <a href="/go/我在考试前去了桂林/" target="_blank">我在考试前去了桂林</a>
+          </li>
+        </ul>
+        
+    </div>
   
     <div class="tag-list">
       <h3 class="tag-name" id="tag-BB">
@@ -636,19 +722,13 @@
         
         <ul class="tag-preview">
           <li>
-            <a href="/daily/daily2018/" target="_blank">每日一句2018</a>
-          </li>
-        </ul>
-        
-        <ul class="tag-preview">
-          <li>
-            <a href="/daily/daily2020/" target="_blank">偶尔几句2020</a>
-          </li>
-        </ul>
-        
-        <ul class="tag-preview">
-          <li>
             <a href="/daily/daily2019/" target="_blank">每日一句2019</a>
+          </li>
+        </ul>
+        
+        <ul class="tag-preview">
+          <li>
+            <a href="/daily/daily2018/" target="_blank">每日一句2018</a>
           </li>
         </ul>
         
@@ -666,6 +746,12 @@
         
         <ul class="tag-preview">
           <li>
+            <a href="/daily/daily2020/" target="_blank">偶尔几句2020</a>
+          </li>
+        </ul>
+        
+        <ul class="tag-preview">
+          <li>
             <a href="/daily/daily2023/" target="_blank">每日一句2023</a>
           </li>
         </ul>
@@ -678,13 +764,13 @@
         
         <ul class="tag-preview">
           <li>
-            <a href="/thinking/令人难过的事情1/" target="_blank">令人难过的事情1</a>
+            <a href="/thinking/令人难过的事情2/" target="_blank">令人难过的事情2</a>
           </li>
         </ul>
         
         <ul class="tag-preview">
           <li>
-            <a href="/thinking/令人难过的事情2/" target="_blank">令人难过的事情2</a>
+            <a href="/thinking/令人难过的事情1/" target="_blank">令人难过的事情1</a>
           </li>
         </ul>
         
@@ -709,19 +795,13 @@
         
         <ul class="tag-preview">
           <li>
-            <a href="/daily/daily2018/" target="_blank">每日一句2018</a>
-          </li>
-        </ul>
-        
-        <ul class="tag-preview">
-          <li>
-            <a href="/daily/daily2020/" target="_blank">偶尔几句2020</a>
-          </li>
-        </ul>
-        
-        <ul class="tag-preview">
-          <li>
             <a href="/daily/daily2019/" target="_blank">每日一句2019</a>
+          </li>
+        </ul>
+        
+        <ul class="tag-preview">
+          <li>
+            <a href="/daily/daily2018/" target="_blank">每日一句2018</a>
           </li>
         </ul>
         
@@ -739,93 +819,13 @@
         
         <ul class="tag-preview">
           <li>
+            <a href="/daily/daily2020/" target="_blank">偶尔几句2020</a>
+          </li>
+        </ul>
+        
+        <ul class="tag-preview">
+          <li>
             <a href="/daily/daily2023/" target="_blank">每日一句2023</a>
-          </li>
-        </ul>
-        
-    </div>
-  
-    <div class="tag-list">
-      <h3 class="tag-name" id="tag-随笔">
-        随笔
-      </h3>
-      
-        <ul class="tag-preview">
-          <li>
-            <a href="/go/在北京第一天/" target="_blank">在北京第一天</a>
-          </li>
-        </ul>
-        
-        <ul class="tag-preview">
-          <li>
-            <a href="/go/在北京第三天/" target="_blank">在北京第三天</a>
-          </li>
-        </ul>
-        
-        <ul class="tag-preview">
-          <li>
-            <a href="/go/我在考试前去了桂林/" target="_blank">我在考试前去了桂林</a>
-          </li>
-        </ul>
-        
-        <ul class="tag-preview">
-          <li>
-            <a href="/go/在北京第四天/" target="_blank">在北京第四天</a>
-          </li>
-        </ul>
-        
-        <ul class="tag-preview">
-          <li>
-            <a href="/go/在北京第二天/" target="_blank">在北京第二天</a>
-          </li>
-        </ul>
-        
-        <ul class="tag-preview">
-          <li>
-            <a href="/go/日记2017.1.15/" target="_blank">日记2017.1.15</a>
-          </li>
-        </ul>
-        
-        <ul class="tag-preview">
-          <li>
-            <a href="/thinking/妈的热死了/" target="_blank">长沙的四季</a>
-          </li>
-        </ul>
-        
-    </div>
-  
-    <div class="tag-list">
-      <h3 class="tag-name" id="tag-游记">
-        游记
-      </h3>
-      
-        <ul class="tag-preview">
-          <li>
-            <a href="/go/在北京第一天/" target="_blank">在北京第一天</a>
-          </li>
-        </ul>
-        
-        <ul class="tag-preview">
-          <li>
-            <a href="/go/在北京第三天/" target="_blank">在北京第三天</a>
-          </li>
-        </ul>
-        
-        <ul class="tag-preview">
-          <li>
-            <a href="/go/我在考试前去了桂林/" target="_blank">我在考试前去了桂林</a>
-          </li>
-        </ul>
-        
-        <ul class="tag-preview">
-          <li>
-            <a href="/go/在北京第四天/" target="_blank">在北京第四天</a>
-          </li>
-        </ul>
-        
-        <ul class="tag-preview">
-          <li>
-            <a href="/go/在北京第二天/" target="_blank">在北京第二天</a>
           </li>
         </ul>
         
@@ -836,12 +836,6 @@
         音乐
       </h3>
       
-        <ul class="tag-preview">
-          <li>
-            <a href="/listen/American_Authors-Oh,What_a_Life/" target="_blank">American Authors - Oh, What a Life</a>
-          </li>
-        </ul>
-        
         <ul class="tag-preview">
           <li>
             <a href="/listen/Avicii-AVĪCI_(01)/" target="_blank">Avicii - AVĪCI (01)</a>
@@ -856,13 +850,13 @@
         
         <ul class="tag-preview">
           <li>
-            <a href="/listen/Avicii-True/" target="_blank">Avicii - True</a>
+            <a href="/listen/American_Authors-Oh,What_a_Life/" target="_blank">American Authors - Oh, What a Life</a>
           </li>
         </ul>
         
         <ul class="tag-preview">
           <li>
-            <a href="/listen/Avicii-True_(Avicii_by_Avicii)/" target="_blank">Avicii - True (Avicii by Avicii)</a>
+            <a href="/listen/Avicii-True/" target="_blank">Avicii - True</a>
           </li>
         </ul>
         
@@ -874,13 +868,13 @@
         
         <ul class="tag-preview">
           <li>
-            <a href="/listen/Coldplay_-_Viva_La_Vida_or_Death_And_All_His_Friends/" target="_blank">Coldplay - Viva La Vida or Death And All His Friends</a>
+            <a href="/listen/Avicii-True_(Avicii_by_Avicii)/" target="_blank">Avicii - True (Avicii by Avicii)</a>
           </li>
         </ul>
         
         <ul class="tag-preview">
           <li>
-            <a href="/listen/Cyberpunk-Edgerunners/" target="_blank">Cyberpunk：Edgerunners Soundtrack</a>
+            <a href="/listen/Coldplay_-_Viva_La_Vida_or_Death_And_All_His_Friends/" target="_blank">Coldplay - Viva La Vida or Death And All His Friends</a>
           </li>
         </ul>
         
@@ -892,19 +886,19 @@
         
         <ul class="tag-preview">
           <li>
-            <a href="/listen/David_Guetta_-_Listen/" target="_blank">David Guetta - Listen</a>
-          </li>
-        </ul>
-        
-        <ul class="tag-preview">
-          <li>
             <a href="/listen/Daft_Punk_-_Random_Access_Memory/" target="_blank">Daft Punk - Random Access Memory</a>
           </li>
         </ul>
         
         <ul class="tag-preview">
           <li>
-            <a href="/listen/Ed Sheeran - 5/" target="_blank">Ed Sheeran - 5</a>
+            <a href="/listen/David_Guetta_-_Listen/" target="_blank">David Guetta - Listen</a>
+          </li>
+        </ul>
+        
+        <ul class="tag-preview">
+          <li>
+            <a href="/listen/Cyberpunk-Edgerunners/" target="_blank">Cyberpunk：Edgerunners Soundtrack</a>
           </li>
         </ul>
         
@@ -916,13 +910,13 @@
         
         <ul class="tag-preview">
           <li>
-            <a href="/listen/Imagine_Dragons_-_Smoke_+_Mirrors/" target="_blank">Imagine Dragons - Smoke + Mirrors</a>
+            <a href="/listen/Imagine_Dragons_-_Evolve/" target="_blank">Imagine Dragons - Evolve</a>
           </li>
         </ul>
         
         <ul class="tag-preview">
           <li>
-            <a href="/listen/Imagine_Dragons_-_Evolve/" target="_blank">Imagine Dragons - Evolve</a>
+            <a href="/listen/Ed Sheeran - 5/" target="_blank">Ed Sheeran - 5</a>
           </li>
         </ul>
         
@@ -934,7 +928,13 @@
         
         <ul class="tag-preview">
           <li>
-            <a href="/listen/The Brothers Four - The Big Folk Hits/" target="_blank">The Brothers Four - The Big Folk Hits</a>
+            <a href="/listen/Imagine_Dragons_-_Smoke_+_Mirrors/" target="_blank">Imagine Dragons - Smoke + Mirrors</a>
+          </li>
+        </ul>
+        
+        <ul class="tag-preview">
+          <li>
+            <a href="/listen/OneRepublic_-_Native/" target="_blank">OneRepublic - Native</a>
           </li>
         </ul>
         
@@ -946,7 +946,7 @@
         
         <ul class="tag-preview">
           <li>
-            <a href="/listen/OneRepublic_-_Native/" target="_blank">OneRepublic - Native</a>
+            <a href="/listen/The Brothers Four - The Big Folk Hits/" target="_blank">The Brothers Four - The Big Folk Hits</a>
           </li>
         </ul>
         
@@ -976,13 +976,19 @@
         
         <ul class="tag-preview">
           <li>
-            <a href="/listen/幽霊東京/" target="_blank">Ayase/初音ミク - 幽霊東京</a>
+            <a href="/listen/万能青年旅店 - 万能青年旅店/" target="_blank">万能青年旅店 - 万能青年旅店</a>
           </li>
         </ul>
         
         <ul class="tag-preview">
           <li>
             <a href="/listen/万能青年旅店 - 冀西南林路行/" target="_blank">万能青年旅店 - 冀西南林路行</a>
+          </li>
+        </ul>
+        
+        <ul class="tag-preview">
+          <li>
+            <a href="/listen/幽霊東京/" target="_blank">Ayase/初音ミク - 幽霊東京</a>
           </li>
         </ul>
         
@@ -998,9 +1004,66 @@
           </li>
         </ul>
         
+    </div>
+  
+    <div class="tag-list">
+      <h3 class="tag-name" id="tag-网络">
+        网络
+      </h3>
+      
         <ul class="tag-preview">
           <li>
-            <a href="/listen/万能青年旅店 - 万能青年旅店/" target="_blank">万能青年旅店 - 万能青年旅店</a>
+            <a href="/thinking/dai/" target="_blank">两张图</a>
+          </li>
+        </ul>
+        
+        <ul class="tag-preview">
+          <li>
+            <a href="/tech/network/" target="_blank">网络相关笔记</a>
+          </li>
+        </ul>
+        
+        <ul class="tag-preview">
+          <li>
+            <a href="/tech/phone_num/" target="_blank">临时手机号&邮箱</a>
+          </li>
+        </ul>
+        
+    </div>
+  
+    <div class="tag-list">
+      <h3 class="tag-name" id="tag-学术">
+        学术
+      </h3>
+      
+        <ul class="tag-preview">
+          <li>
+            <a href="/thinking/phy01/" target="_blank">当我们在学物理的时候我们在学什么</a>
+          </li>
+        </ul>
+        
+        <ul class="tag-preview">
+          <li>
+            <a href="/thinking/phy02/" target="_blank">奥卡姆上帝</a>
+          </li>
+        </ul>
+        
+    </div>
+  
+    <div class="tag-list">
+      <h3 class="tag-name" id="tag-杂谈">
+        杂谈
+      </h3>
+      
+        <ul class="tag-preview">
+          <li>
+            <a href="/thinking/phy01/" target="_blank">当我们在学物理的时候我们在学什么</a>
+          </li>
+        </ul>
+        
+        <ul class="tag-preview">
+          <li>
+            <a href="/thinking/phy02/" target="_blank">奥卡姆上帝</a>
           </li>
         </ul>
         
@@ -1052,6 +1115,38 @@
     </div>
   
     <div class="tag-list">
+      <h3 class="tag-name" id="tag-技术">
+        技术
+      </h3>
+      
+        <ul class="tag-preview">
+          <li>
+            <a href="/tech/fonts/" target="_blank">字体库的自我修养</a>
+          </li>
+        </ul>
+        
+        <ul class="tag-preview">
+          <li>
+            <a href="/tech/search/" target="_blank">搜索引擎推荐</a>
+          </li>
+        </ul>
+        
+    </div>
+  
+    <div class="tag-list">
+      <h3 class="tag-name" id="tag-字体">
+        字体
+      </h3>
+      
+        <ul class="tag-preview">
+          <li>
+            <a href="/tech/fonts/" target="_blank">字体库的自我修养</a>
+          </li>
+        </ul>
+        
+    </div>
+  
+    <div class="tag-list">
       <h3 class="tag-name" id="tag-Kindle">
         Kindle
       </h3>
@@ -1085,6 +1180,19 @@
         <ul class="tag-preview">
           <li>
             <a href="/tech/kindle/" target="_blank">Kindle电子书共享指南</a>
+          </li>
+        </ul>
+        
+    </div>
+  
+    <div class="tag-list">
+      <h3 class="tag-name" id="tag-搜素">
+        搜素
+      </h3>
+      
+        <ul class="tag-preview">
+          <li>
+            <a href="/tech/search/" target="_blank">搜索引擎推荐</a>
           </li>
         </ul>
         
@@ -1143,57 +1251,57 @@
     </div>
   
     <div class="tag-list">
-      <h3 class="tag-name" id="tag-网络">
-        网络
+      <h3 class="tag-name" id="tag-Windows">
+        Windows
       </h3>
       
         <ul class="tag-preview">
           <li>
-            <a href="/tech/network/" target="_blank">网络相关笔记</a>
+            <a href="/tech/windows/" target="_blank">Windows安装与激活</a>
           </li>
         </ul>
         
         <ul class="tag-preview">
           <li>
-            <a href="/tech/phone_num/" target="_blank">临时手机号&邮箱</a>
-          </li>
-        </ul>
-        
-        <ul class="tag-preview">
-          <li>
-            <a href="/thinking/dai/" target="_blank">两张图</a>
+            <a href="/tech/windows_to_go/" target="_blank">Windows To Go</a>
           </li>
         </ul>
         
     </div>
   
     <div class="tag-list">
-      <h3 class="tag-name" id="tag-技术">
-        技术
+      <h3 class="tag-name" id="tag-安装">
+        安装
       </h3>
       
         <ul class="tag-preview">
           <li>
-            <a href="/tech/search/" target="_blank">搜索引擎推荐</a>
+            <a href="/tech/windows/" target="_blank">Windows安装与激活</a>
           </li>
         </ul>
         
         <ul class="tag-preview">
           <li>
-            <a href="/tech/fonts/" target="_blank">字体库的自我修养</a>
+            <a href="/tech/windows_to_go/" target="_blank">Windows To Go</a>
+          </li>
+        </ul>
+        
+        <ul class="tag-preview">
+          <li>
+            <a href="/tech/software/" target="_blank">常用软件推荐</a>
           </li>
         </ul>
         
     </div>
   
     <div class="tag-list">
-      <h3 class="tag-name" id="tag-搜素">
-        搜素
+      <h3 class="tag-name" id="tag-激活">
+        激活
       </h3>
       
         <ul class="tag-preview">
           <li>
-            <a href="/tech/search/" target="_blank">搜索引擎推荐</a>
+            <a href="/tech/windows/" target="_blank">Windows安装与激活</a>
           </li>
         </ul>
         
@@ -1226,76 +1334,6 @@
     </div>
   
     <div class="tag-list">
-      <h3 class="tag-name" id="tag-安装">
-        安装
-      </h3>
-      
-        <ul class="tag-preview">
-          <li>
-            <a href="/tech/software/" target="_blank">常用软件推荐</a>
-          </li>
-        </ul>
-        
-        <ul class="tag-preview">
-          <li>
-            <a href="/tech/windows/" target="_blank">Windows安装与激活</a>
-          </li>
-        </ul>
-        
-        <ul class="tag-preview">
-          <li>
-            <a href="/tech/windows_to_go/" target="_blank">Windows To Go</a>
-          </li>
-        </ul>
-        
-    </div>
-  
-    <div class="tag-list">
-      <h3 class="tag-name" id="tag-Windows">
-        Windows
-      </h3>
-      
-        <ul class="tag-preview">
-          <li>
-            <a href="/tech/windows/" target="_blank">Windows安装与激活</a>
-          </li>
-        </ul>
-        
-        <ul class="tag-preview">
-          <li>
-            <a href="/tech/windows_to_go/" target="_blank">Windows To Go</a>
-          </li>
-        </ul>
-        
-    </div>
-  
-    <div class="tag-list">
-      <h3 class="tag-name" id="tag-激活">
-        激活
-      </h3>
-      
-        <ul class="tag-preview">
-          <li>
-            <a href="/tech/windows/" target="_blank">Windows安装与激活</a>
-          </li>
-        </ul>
-        
-    </div>
-  
-    <div class="tag-list">
-      <h3 class="tag-name" id="tag-字体">
-        字体
-      </h3>
-      
-        <ul class="tag-preview">
-          <li>
-            <a href="/tech/fonts/" target="_blank">字体库的自我修养</a>
-          </li>
-        </ul>
-        
-    </div>
-  
-    <div class="tag-list">
       <h3 class="tag-name" id="tag-小说">
         小说
       </h3>
@@ -1314,12 +1352,6 @@
         
         <ul class="tag-preview">
           <li>
-            <a href="/story/上瘾/" target="_blank">上瘾</a>
-          </li>
-        </ul>
-        
-        <ul class="tag-preview">
-          <li>
             <a href="/story/云树/" target="_blank">云树</a>
           </li>
         </ul>
@@ -1332,13 +1364,19 @@
         
         <ul class="tag-preview">
           <li>
-            <a href="/story/非语文类小说三部曲/" target="_blank">非语文类小说三部曲</a>
+            <a href="/story/《SECOND LIFE》翻译 by 缀理/" target="_blank">《SECOND LIFE》翻译</a>
           </li>
         </ul>
         
         <ul class="tag-preview">
           <li>
-            <a href="/story/《SECOND LIFE》翻译 by 缀理/" target="_blank">《SECOND LIFE》翻译</a>
+            <a href="/story/上瘾/" target="_blank">上瘾</a>
+          </li>
+        </ul>
+        
+        <ul class="tag-preview">
+          <li>
+            <a href="/story/非语文类小说三部曲/" target="_blank">非语文类小说三部曲</a>
           </li>
         </ul>
         
@@ -1358,44 +1396,6 @@
         <ul class="tag-preview">
           <li>
             <a href="/story/答案在风中飘/" target="_blank">答案在风中飘</a>
-          </li>
-        </ul>
-        
-    </div>
-  
-    <div class="tag-list">
-      <h3 class="tag-name" id="tag-学术">
-        学术
-      </h3>
-      
-        <ul class="tag-preview">
-          <li>
-            <a href="/thinking/phy01/" target="_blank">当我们在学物理的时候我们在学什么</a>
-          </li>
-        </ul>
-        
-        <ul class="tag-preview">
-          <li>
-            <a href="/thinking/phy02/" target="_blank">奥卡姆上帝</a>
-          </li>
-        </ul>
-        
-    </div>
-  
-    <div class="tag-list">
-      <h3 class="tag-name" id="tag-杂谈">
-        杂谈
-      </h3>
-      
-        <ul class="tag-preview">
-          <li>
-            <a href="/thinking/phy01/" target="_blank">当我们在学物理的时候我们在学什么</a>
-          </li>
-        </ul>
-        
-        <ul class="tag-preview">
-          <li>
-            <a href="/thinking/phy02/" target="_blank">奥卡姆上帝</a>
           </li>
         </ul>
         
