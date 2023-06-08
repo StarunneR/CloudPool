@@ -169,6 +169,7 @@ pre {
 }
 .right-list .list-item .item-link:hover {
   font-weight: bold;
+  word-spacing: 1em;
 }
 .right-list .list-item .active {
   font-weight: bold;
