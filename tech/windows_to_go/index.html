@@ -615,12 +615,12 @@
         <div class="post-tags">
           <span>标签：</span>
           
-  <a href="/tags#安装" >
-    <span class="tag-code">安装</span>
-  </a>
-
   <a href="/tags#Windows" >
     <span class="tag-code">Windows</span>
+  </a>
+
+  <a href="/tags#安装" >
+    <span class="tag-code">安装</span>
   </a>
 
         </div>
@@ -754,7 +754,7 @@
     
     
     
-      <div class="qrcode">
+      <div class="qrcode" id="qr-box">
     <img id="share-qrcode" class="qrcode-image"/>
     <div class="qrcode-notice">保存二维码，分享此文章</div>
 </div>
@@ -766,7 +766,7 @@
     let qr = new QRious({
         element: document.getElementById('share-qrcode'),
         value: document.location.href,
-        background: '#E5E4E2',
+        background: '#F9F6EE',
         backgroundAlpha: 0.8,
         foreground: '#0096FF',
         foregroundAlpha: 0.8,

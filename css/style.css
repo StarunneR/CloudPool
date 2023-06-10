@@ -685,11 +685,13 @@ header:hover .chn_mark {
   text-align: center;
 }
 .post-article .qrcode .qrcode-image {
-  width: 8em;
-  height: 8em;
-  padding: 0.25em;
+  width: 120px;
+  height: 120px;
+  padding: 4px;
   box-shadow: 0 0 1px #d3d3d3;
-  cursor: pointer;
+  cursor: crosshair;
+  background-color: #c0c0c0;
+  border-radius: 4px;
 }
 .post-article .qrcode .qrcode-notice {
   font-size: 12px;
@@ -1369,10 +1371,6 @@ header:hover .chn_mark {
   opacity: 1;
   font-weight: bold;
   border: none;
-}
-.hijikoto_options {
-  line-height: 2em;
-  margin: 10px;
 }
 .search-pop-overlay {
   background: rgba(0,0,0,0);
