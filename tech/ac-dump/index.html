@@ -642,12 +642,12 @@
         <div class="post-tags">
           <span>标签：</span>
           
-  <a href="/tags#视频" >
-    <span class="tag-code">视频</span>
-  </a>
-
   <a href="/tags#学习" >
     <span class="tag-code">学习</span>
+  </a>
+
+  <a href="/tags#视频" >
+    <span class="tag-code">视频</span>
   </a>
 
   <a href="/tags#MOOC" >
@@ -796,7 +796,14 @@
     // qrcode
     let qr = new QRious({
         element: document.getElementById('share-qrcode'),
-        value: document.location.href
+        value: document.location.href,
+        background: '#E5E4E2',
+        backgroundAlpha: 0.8,
+        foreground: '#0096FF',
+        foregroundAlpha: 0.8,
+        level: 'L',
+        padding: 12, // pixels
+        //size: 500,
     })
 
     $("#share-qrcode").click(function () {

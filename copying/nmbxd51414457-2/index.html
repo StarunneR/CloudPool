@@ -1148,17 +1148,17 @@ ID:2Z0lxI0 (PO主)
   <div class="nav-container">
     <!-- reverse left and right to put prev and next in a more logic postition -->
     
-      <a class="nav-left" href="/todo/learning/" target="_blank">
+      <a class="nav-left" href="/copying/nmbxd51414457-1/" target="_blank">
         <span class="nav-arrow">← </span>
         
-          To Learn
+          《兔耳朵魔王》（拟题）(一)
         
       </a>
     
     
-      <a class="nav-right" href="/copying/nmbxd51414457-1/" target="_blank">
+      <a class="nav-right" href="/copy/huanleegao205/" target="_blank">
         
-          《兔耳朵魔王》（拟题）(一)
+          《heart.》
         
         <span class="nav-arrow"> →</span>
       </a>
@@ -1283,7 +1283,14 @@ ID:2Z0lxI0 (PO主)
     // qrcode
     let qr = new QRious({
         element: document.getElementById('share-qrcode'),
-        value: document.location.href
+        value: document.location.href,
+        background: '#E5E4E2',
+        backgroundAlpha: 0.8,
+        foreground: '#0096FF',
+        foregroundAlpha: 0.8,
+        level: 'L',
+        padding: 12, // pixels
+        //size: 500,
     })
 
     $("#share-qrcode").click(function () {

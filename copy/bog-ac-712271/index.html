@@ -686,9 +686,9 @@
       </a>
     
     
-      <a class="nav-right" href="/poem/14/" target="_blank">
+      <a class="nav-right" href="/listen/Vance%20Joy%20-%20Dream%20Your%20Life%20Away/" target="_blank">
         
-          14（谎言桥）
+          Vance Joy - Dream Your Life Away
         
         <span class="nav-arrow"> →</span>
       </a>
@@ -813,7 +813,14 @@
     // qrcode
     let qr = new QRious({
         element: document.getElementById('share-qrcode'),
-        value: document.location.href
+        value: document.location.href,
+        background: '#E5E4E2',
+        backgroundAlpha: 0.8,
+        foreground: '#0096FF',
+        foregroundAlpha: 0.8,
+        level: 'L',
+        padding: 12, // pixels
+        //size: 500,
     })
 
     $("#share-qrcode").click(function () {
