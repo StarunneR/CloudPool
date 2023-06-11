@@ -95,7 +95,7 @@
         fetch("https://v1.hitokoto.cn")
           .then((e) => e.json())
           .then((e) => {
-            const t = `此句一言来自 <span>「${e.from}」</span>，由 <span>${e.creator}</span> 在 hitokoto.cn 投稿。`;
+            const t = `此句一言出自 <span>「${e.from}」</span>，by <span>${e.creator}</span> @hitokoto.cn.`;
             o(e.hitokoto, 6e3, 9),
               setTimeout(() => {
                 o(t, 4e3, 9);

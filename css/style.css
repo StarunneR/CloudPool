@@ -139,7 +139,7 @@ pre {
   max-height: 1.5em;
 }
 .home-link .eng_mark {
-  text-shadow: 1px 1px 2px #7df9ff;
+  text-shadow: 1px 1px 2px #0096ff;
   margin-right: 2px;
 }
 .home-link .chn_mark {
@@ -238,7 +238,7 @@ pre {
 }
 .open {
   max-height: 1000px;
-  transition-delay: 0.1s;
+  transition-delay: 0.3s;
 }
 .mobile-active {
   color: #32cd32 !important;
@@ -499,9 +499,8 @@ header:hover .chn_mark {
 }
 .post-article .markdown-content h4:before {
   content: "#";
-  color: #00bfff;
+  color: #0096ff;
   margin-right: 5px;
-  font-size: 1.2em;
   font-weight: 700;
 }
 .post-article .markdown-content h5 {
@@ -622,7 +621,6 @@ header:hover .chn_mark {
   background-color: #0096ff;
   color: #fcf5e5;
   border-radius: 4px;
-  text-indent: 0.1em;
   padding-left: 2px;
   padding-right: 5px;
 }
@@ -694,6 +692,7 @@ header:hover .chn_mark {
   border-radius: 4px;
 }
 .post-article .qrcode .qrcode-notice {
+  font-weight: bold;
   font-size: 12px;
   margin-top: 10px;
   text-align: center;
