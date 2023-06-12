@@ -686,7 +686,6 @@ header:hover .chn_mark {
 .post-article .qrcode .qrcode-image {
   width: 120px;
   height: 120px;
-  padding: 4px;
   box-shadow: 0 0 1px #d3d3d3;
   cursor: crosshair;
   background-color: #c0c0c0;
