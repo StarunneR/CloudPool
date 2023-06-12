@@ -2247,7 +2247,7 @@
       <link href="/about/%E5%BB%BA%E7%AB%99%E7%AC%94%E8%AE%B0/"/>
       <url>/about/%E5%BB%BA%E7%AB%99%E7%AC%94%E8%AE%B0/</url>
       
-        <content type="html"><![CDATA[<p>Hexo使用</p><span id="more"></span><h2 id="Hexo安装"><a href="#Hexo安装" class="headerlink" title="Hexo安装"></a>Hexo安装</h2><pre><code>git设置代理：$ git config --global http.https://github.com.proxy socks5://127.0.0.1:****$ git config --global https.https://github.com.proxy socks5://127.0.0.1:****git取消代理：$ git config --global --unset http.proxy$ git config --global --unset https.proxy</code></pre><ol><li>安装环境与依赖包</li></ol><ul><li><a href="https://nodejs.org/zh-cn/">Node.js</a></li><li>$ npm install hexo-cli -g</li></ul><ol start="2"><li>初始化设置</li></ol><p>case1: 压缩包可解压后直接cd运行</p><p>case2: 从头开始</p><pre><code>1. 空文件夹：cd - hexo init2. $ git clone https://github.com/theme-next/hexo-theme-SOMETHEME themes/SOMETHEME 3. OPEN ./config.yml:theme: landscape   --&gt;   theme: SOMETHEME</code></pre><h2 id="域名设置"><a href="#域名设置" class="headerlink" title="域名设置"></a>域名设置</h2><ol><li>注册（购买）域名</li></ol><ul><li><a href="https://porkbun.com/">Porkbun</a> （廉价，但需要国际信用卡）</li></ul><ol start="2"><li>DNS相关设置</li></ol><p>2.1  DNS解析服务商</p><ul><li><a href="https://dash.cloudflare.com/">CloudFlare</a> #功能丰富 #访问情况统计</li></ul><p>2.2  回到域名注册商页面 - 填写DNS服务器(AUTHORITATIVE NAMESERVERS)<br>    cass.ns.cloudflare.com<br>    charles.ns.cloudflare.com</p><p>2.3 GitLab - Pages - New Domain</p><pre><code>Example:cloudpool.me CNAME StarunneR.gitlab.io. --&gt; CloudFlare: Type = CNAME; Name = cloudpool.me; Content = StarunneR.gitlab.io.</code></pre><h2 id="Git设置"><a href="#Git设置" class="headerlink" title="Git设置"></a>Git设置</h2><ol><li>建议安装<a href="https://code.visualstudio.com/">Visual Studio Code</a></li><li>安装<a href="https://git-scm.com/">git</a>，一直回车，在第三次回车确认前 将default editor设置为Visual Studio Code，打开git bash</li><li>生成公共密钥：<br> $ ssh-keygen -t rsa + 三次回车<br> 查看公共密钥：<br> $ cat ~&#x2F;.ssh&#x2F;id_rsa.pub<br> 并复制以ssh-rsa开头的所有内容</li><li>打开Gitlab网页用户设置中ssh密钥一栏，粘贴ssh-rsa开头的公共密钥，设置用户名，生效时间。</li><li>配置命令：<br> $ git config –global user.name “USERNAME”(–global代表应用到整个系统)<br> $ git config –global user.email EMAIL<br> $ cd blog<br> $ git remote add gitlab <a href="mailto:&#103;&#105;&#116;&#64;&#103;&#105;&#116;&#108;&#97;&#98;&#x2e;&#x63;&#111;&#109;">&#103;&#105;&#116;&#64;&#103;&#105;&#116;&#108;&#97;&#98;&#x2e;&#x63;&#111;&#109;</a>:cloudpool&#x2F;blog.git</li><li>提交<br> $ git add .<br> $ git commit -m “COMMENT”#暂存文件，暂存附加信息为COMMENT</li><li>推送<br>$ git push gitlab master （推送到远端名gitlab的master分支）<br>$ read -n 1 （暂停运行）</li></ol><h2 id="GitLab自动部署设置"><a href="#GitLab自动部署设置" class="headerlink" title="GitLab自动部署设置"></a>GitLab自动部署设置</h2><p>新建文件 .&#x2F;.gitlab-ci.yml </p><pre><code>./.gitlab-ci.yml:</code></pre><pre>    image: node:12.19.0    cache:      paths:        - node_modules/    before_script:      - npm install hexo-cli -g      - npm install    pages:      script:        - hexo generate      artifacts:        paths:          - public      only:        - master</pre><h2 id="本地测试"><a href="#本地测试" class="headerlink" title="本地测试"></a>本地测试</h2><p>.&#x2F;test.sh 清理缓存 生成静态文件 启动服务器</p><pre><code>$ hexo clean$ hexo g$ hexo s</code></pre>]]></content>
+        <content type="html"><![CDATA[<p>Hexo使用</p><span id="more"></span><h2 id="Hexo安装"><a href="#Hexo安装" class="headerlink" title="Hexo安装"></a>Hexo安装</h2><pre><code>git设置代理：$ git config --global http.https://github.com.proxy socks5://127.0.0.1:****$ git config --global https.https://github.com.proxy socks5://127.0.0.1:****git取消代理：$ git config --global --unset http.proxy$ git config --global --unset https.proxy</code></pre><ol><li>安装环境与依赖包</li></ol><ul><li><a href="https://nodejs.org/zh-cn/">Node.js</a></li><li>$ npm install hexo-cli -g</li></ul><ol start="2"><li>初始化设置</li></ol><p>case1: 压缩包可解压后直接cd运行</p><p>case2: 从头开始</p><pre><code>1. 空文件夹：cd - hexo init2. $ git clone https://github.com/theme-next/hexo-theme-SOMETHEME themes/SOMETHEME 3. OPEN ./config.yml:theme: landscape   --&gt;   theme: SOMETHEME</code></pre><h2 id="域名设置"><a href="#域名设置" class="headerlink" title="域名设置"></a>域名设置</h2><ol><li>注册（购买）域名</li></ol><ul><li><a href="https://porkbun.com/">Porkbun</a> （廉价，但需要国际信用卡）</li></ul><ol start="2"><li>DNS相关设置</li></ol><p>2.1  DNS解析服务商</p><ul><li><a href="https://dash.cloudflare.com/">CloudFlare</a> #功能丰富 #访问情况统计</li></ul><p>2.2  回到域名注册商页面 - 填写DNS服务器(AUTHORITATIVE NAMESERVERS)<br>    cass.ns.cloudflare.com<br>    charles.ns.cloudflare.com</p><p>2.3 GitLab - Pages - New Domain</p><pre><code>Example:cloudpool.me CNAME StarunneR.gitlab.io. --&gt; CloudFlare: Type = CNAME; Name = cloudpool.me; Content = StarunneR.gitlab.io.</code></pre><h2 id="Git设置"><a href="#Git设置" class="headerlink" title="Git设置"></a>Git设置</h2><ol><li>建议安装<a href="https://code.visualstudio.com/">Visual Studio Code</a></li><li>安装<a href="https://git-scm.com/">git</a>，一直回车，在第三次回车确认前 将default editor设置为Visual Studio Code，打开git bash</li><li>生成公共密钥：<br> $ ssh-keygen -t rsa + 三次回车<br> 查看公共密钥：<br> $ cat ~&#x2F;.ssh&#x2F;id_rsa.pub<br> 并复制以ssh-rsa开头的所有内容</li><li>打开Gitlab网页用户设置中ssh密钥一栏，粘贴ssh-rsa开头的公共密钥，设置用户名，生效时间。</li><li>配置命令：<br> $ git config –global user.name “USERNAME”(–global代表应用到整个系统)<br> $ git config –global user.email EMAIL<br> $ cd blog<br> $ git remote add gitlab <a href="mailto:&#103;&#x69;&#116;&#64;&#x67;&#x69;&#x74;&#108;&#97;&#x62;&#x2e;&#99;&#x6f;&#109;">&#103;&#x69;&#116;&#64;&#x67;&#x69;&#x74;&#108;&#97;&#x62;&#x2e;&#99;&#x6f;&#109;</a>:cloudpool&#x2F;blog.git</li><li>提交<br> $ git add .<br> $ git commit -m “COMMENT”#暂存文件，暂存附加信息为COMMENT</li><li>推送<br>$ git push gitlab master （推送到远端名gitlab的master分支）<br>$ read -n 1 （暂停运行）</li></ol><h2 id="GitLab自动部署设置"><a href="#GitLab自动部署设置" class="headerlink" title="GitLab自动部署设置"></a>GitLab自动部署设置</h2><p>新建文件 .&#x2F;.gitlab-ci.yml </p><pre><code>./.gitlab-ci.yml:</code></pre><pre>    image: node:12.19.0    cache:      paths:        - node_modules/    before_script:      - npm install hexo-cli -g      - npm install    pages:      script:        - hexo generate      artifacts:        paths:          - public      only:        - master</pre><h2 id="本地测试"><a href="#本地测试" class="headerlink" title="本地测试"></a>本地测试</h2><p>.&#x2F;test.sh 清理缓存 生成静态文件 启动服务器</p><pre><code>$ hexo clean$ hexo g$ hexo s</code></pre>]]></content>
       
       
       
@@ -2954,25 +2954,6 @@
     
     
     <entry>
-      <title>名言警句</title>
-      <link href="/shxt/%E5%90%8D%E8%A8%80%E8%AD%A6%E5%8F%A5/"/>
-      <url>/shxt/%E5%90%8D%E8%A8%80%E8%AD%A6%E5%8F%A5/</url>
-      
-        <content type="html"><![CDATA[<p>被言语蒙蔽大脑<br>被幻想蒙蔽下体<br>被理想蒙蔽双眼<br>被理想蒙蔽下体</p>]]></content>
-      
-      
-      <categories>
-          
-          <category> 浊shi </category>
-          
-      </categories>
-      
-      
-    </entry>
-    
-    
-    
-    <entry>
       <title>每天只有一小时</title>
       <link href="/poem/%E6%AF%8F%E5%A4%A9%E5%8F%AA%E6%9C%89%E4%B8%80%E5%B0%8F%E6%97%B6/"/>
       <url>/poem/%E6%AF%8F%E5%A4%A9%E5%8F%AA%E6%9C%89%E4%B8%80%E5%B0%8F%E6%97%B6/</url>
@@ -2983,6 +2964,25 @@
       <categories>
           
           <category> 浊诗 </category>
+          
+      </categories>
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>名言警句</title>
+      <link href="/shxt/%E5%90%8D%E8%A8%80%E8%AD%A6%E5%8F%A5/"/>
+      <url>/shxt/%E5%90%8D%E8%A8%80%E8%AD%A6%E5%8F%A5/</url>
+      
+        <content type="html"><![CDATA[<p>被言语蒙蔽大脑<br>被幻想蒙蔽下体<br>被理想蒙蔽双眼<br>被理想蒙蔽下体</p>]]></content>
+      
+      
+      <categories>
+          
+          <category> 浊shi </category>
           
       </categories>
       
@@ -3220,25 +3220,6 @@
     
     
     <entry>
-      <title>晚自习打蚊子</title>
-      <link href="/shxt/%E6%99%9A%E8%87%AA%E4%B9%A0%E6%89%93%E8%9A%8A%E5%AD%90/"/>
-      <url>/shxt/%E6%99%9A%E8%87%AA%E4%B9%A0%E6%89%93%E8%9A%8A%E5%AD%90/</url>
-      
-        <content type="html"><![CDATA[<p>用笔捅声音短促<br>用纸捏声音嘈杂<br>用书拍声音震耳<br>用手打声音清脆<br>用尺子敲声音干净<br>用橡皮碾声音沙哑<br>用文具盒咣当咣当响<br>用餐巾纸几乎没声音<br>啊——<br>我操我刚看见一颗<br>蚊子比蚕豆还大</p>]]></content>
-      
-      
-      <categories>
-          
-          <category> 浊shi </category>
-          
-      </categories>
-      
-      
-    </entry>
-    
-    
-    
-    <entry>
       <title>5.20创新作文大赛作品</title>
       <link href="/story/5-20%E5%88%9B%E6%96%B0%E4%BD%9C%E6%96%87%E5%A4%A7%E8%B5%9B%E4%BD%9C%E5%93%81/"/>
       <url>/story/5-20%E5%88%9B%E6%96%B0%E4%BD%9C%E6%96%87%E5%A4%A7%E8%B5%9B%E4%BD%9C%E5%93%81/</url>
@@ -3258,6 +3239,25 @@
             <tag> 小说 </tag>
             
         </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>晚自习打蚊子</title>
+      <link href="/shxt/%E6%99%9A%E8%87%AA%E4%B9%A0%E6%89%93%E8%9A%8A%E5%AD%90/"/>
+      <url>/shxt/%E6%99%9A%E8%87%AA%E4%B9%A0%E6%89%93%E8%9A%8A%E5%AD%90/</url>
+      
+        <content type="html"><![CDATA[<p>用笔捅声音短促<br>用纸捏声音嘈杂<br>用书拍声音震耳<br>用手打声音清脆<br>用尺子敲声音干净<br>用橡皮碾声音沙哑<br>用文具盒咣当咣当响<br>用餐巾纸几乎没声音<br>啊——<br>我操我刚看见一颗<br>蚊子比蚕豆还大</p>]]></content>
+      
+      
+      <categories>
+          
+          <category> 浊shi </category>
+          
+      </categories>
+      
       
     </entry>
     
