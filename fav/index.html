@@ -574,10 +574,12 @@
     serverURL: "waline.voiiu.com",
     appId: "dMzSen7BPrX4ggxPFNjOBAo0-MdYXbMMI" || "M2JD6yGQhefhH2O0aSjFfclc-MdYXbMMI",
     appKey: "jlMSR3wkfrQHN5cx0eqWjcRq" || "arEPHdbMnKwMjQgiWsLgw34N",
-    login: "disable",
+    path:  "" || window.location.pathname,  // window.location.pathname.replace(/\/$/,''),
+    login: "disable",  // 'enable' || 'disable' || 'force'
     avatarCDN: "https://gravatar.loli.top/avatar/",
     //avatar: '',
     placeholder: "",
+    pageSize: 10,
     meta: ["nick", "mail"],
     requiredMeta: [""],
     pageview: "true" && "",

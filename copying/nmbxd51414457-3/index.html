@@ -1404,10 +1404,12 @@ uccu切错饼干的样子
     serverURL: "waline.voiiu.com",
     appId: "" || "M2JD6yGQhefhH2O0aSjFfclc-MdYXbMMI",
     appKey: "" || "arEPHdbMnKwMjQgiWsLgw34N",
-    login: "disable",
+    path:  "" || window.location.pathname,  // window.location.pathname.replace(/\/$/,''),
+    login: "disable",  // 'enable' || 'disable' || 'force'
     avatarCDN: "https://gravatar.loli.top/avatar/",
     //avatar: '',
     placeholder: "",
+    pageSize: 10,
     meta: ["nick", "mail"],
     requiredMeta: [""],
     pageview: "true" && "true",
@@ -1455,8 +1457,8 @@ uccu切错饼干的样子
         foreground: '#0096FF',
         foregroundAlpha: 0.8,
         level: 'L',
-        padding: 6, // pixels
-        //size: 500,
+        padding: 12, // pixels
+        size: 100,
     })
 
     $("#share-qrcode").click(function () {

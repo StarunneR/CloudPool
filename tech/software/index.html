@@ -734,16 +734,16 @@ Ref: https://theipfire.com/driver-booster-pro-9-free-license-key/
         <div class="post-tags">
           <span>标签：</span>
           
-  <a href="/tags#安装" >
-    <span class="tag-code">安装</span>
-  </a>
-
   <a href="/tags#实用" >
     <span class="tag-code">实用</span>
   </a>
 
   <a href="/tags#软件" >
     <span class="tag-code">软件</span>
+  </a>
+
+  <a href="/tags#安装" >
+    <span class="tag-code">安装</span>
   </a>
 
         </div>
@@ -843,10 +843,12 @@ Ref: https://theipfire.com/driver-booster-pro-9-free-license-key/
     serverURL: "waline.voiiu.com",
     appId: "" || "M2JD6yGQhefhH2O0aSjFfclc-MdYXbMMI",
     appKey: "" || "arEPHdbMnKwMjQgiWsLgw34N",
-    login: "disable",
+    path:  "" || window.location.pathname,  // window.location.pathname.replace(/\/$/,''),
+    login: "disable",  // 'enable' || 'disable' || 'force'
     avatarCDN: "https://gravatar.loli.top/avatar/",
     //avatar: '',
     placeholder: "",
+    pageSize: 10,
     meta: ["nick", "mail"],
     requiredMeta: [""],
     pageview: "true" && "",
@@ -894,8 +896,8 @@ Ref: https://theipfire.com/driver-booster-pro-9-free-license-key/
         foreground: '#0096FF',
         foregroundAlpha: 0.8,
         level: 'L',
-        padding: 6, // pixels
-        //size: 500,
+        padding: 12, // pixels
+        size: 100,
     })
 
     $("#share-qrcode").click(function () {

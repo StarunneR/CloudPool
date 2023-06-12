@@ -643,17 +643,17 @@
   <div class="nav-container">
     <!-- reverse left and right to put prev and next in a more logic postition -->
     
-      <a class="nav-left" href="/copying/nmbxd51414457-1/" target="_blank">
+      <a class="nav-left" href="/copy/huanleegao114/" target="_blank">
         <span class="nav-arrow">← </span>
         
-          《兔耳朵魔王》（拟题）(一)
+          《Rain.》
         
       </a>
     
     
-      <a class="nav-right" href="/copy/huanleegao114/" target="_blank">
+      <a class="nav-right" href="/daily/daily2023/" target="_blank">
         
-          《Rain.》
+          每日一句2023
         
         <span class="nav-arrow"> →</span>
       </a>
@@ -733,10 +733,12 @@
     serverURL: "waline.voiiu.com",
     appId: "" || "M2JD6yGQhefhH2O0aSjFfclc-MdYXbMMI",
     appKey: "" || "arEPHdbMnKwMjQgiWsLgw34N",
-    login: "disable",
+    path:  "" || window.location.pathname,  // window.location.pathname.replace(/\/$/,''),
+    login: "disable",  // 'enable' || 'disable' || 'force'
     avatarCDN: "https://gravatar.loli.top/avatar/",
     //avatar: '',
     placeholder: "",
+    pageSize: 10,
     meta: ["nick", "mail"],
     requiredMeta: [""],
     pageview: "true" && "",
@@ -784,8 +786,8 @@
         foreground: '#0096FF',
         foregroundAlpha: 0.8,
         level: 'L',
-        padding: 6, // pixels
-        //size: 500,
+        padding: 12, // pixels
+        size: 100,
     })
 
     $("#share-qrcode").click(function () {

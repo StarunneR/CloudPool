@@ -606,10 +606,12 @@
     serverURL: "waline.voiiu.com",
     appId: "M2JD6yGQhefhH2O0aSjFfclc-MdYXbMMI" || "M2JD6yGQhefhH2O0aSjFfclc-MdYXbMMI",
     appKey: "arEPHdbMnKwMjQgiWsLgw34N" || "arEPHdbMnKwMjQgiWsLgw34N",
-    login: "disable",
+    path:  "" || window.location.pathname,  // window.location.pathname.replace(/\/$/,''),
+    login: "disable",  // 'enable' || 'disable' || 'force'
     avatarCDN: "https://gravatar.loli.top/avatar/",
     //avatar: '',
     placeholder: "一言以蔽之，曰：“思无邪”。",
+    pageSize: 10,
     meta: ["nick", "mail"],
     requiredMeta: ["nick"],
     pageview: "true" && "",
