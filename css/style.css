@@ -1301,10 +1301,13 @@ header:hover .chn_mark {
   transform: scale(0.9);
   -webkit-tap-highlight-color: rgba(0,0,0,0);
 }
-.checkbox:checked {
-  background: #32cd32;
+.options_container {
+  font-weight: bold;
+  color: #fcf5e5;
+  opacity: 0.8 !important;
 }
-.checkbox {
+.options_container .checkbox {
+  padding: initial;
   -webkit-appearance: none;
   -moz-appearance: none;
   outline: none;
@@ -1313,15 +1316,16 @@ header:hover .chn_mark {
   background-color: #fff;
   border: solid 2px #ddd;
   border-radius: 50%;
-  margin: 0;
-  padding: 0;
   position: relative;
   display: inline-block;
 /*文字对齐方式*/
   vertical-align: middle;
   transition: background-color ease 0.1s;
 }
-.checkbox:checked::after {
+.options_container .checkbox:checked {
+  background-color: #32cd32;
+}
+.options_container .checkbox:checked::after {
   content: '';
   top: 3px;
   left: 2.5px;
@@ -1332,15 +1336,6 @@ header:hover .chn_mark {
   height: 6px;
   width: 10px;
   transform: rotate(-45deg);
-}
-.options_container {
-  font-weight: bold;
-  color: #fcf5e5;
-  line-height: 2em;
-  opacity: 0.8 !important;
-}
-.options_container .checkbox {
-  padding: initial;
 }
 .options_container label {
   padding: 0 1em 0 0.5em;
@@ -1353,7 +1348,7 @@ header:hover .chn_mark {
   border: none;
   color: #36454f;
   padding: 6px 15px;
-  margin: 0.5em 0.5em;
+  margin: 16px;
   border-radius: 10%;
   text-align: center;
   font-size: 16px;
@@ -1369,7 +1364,21 @@ header:hover .chn_mark {
   color: #fff;
   opacity: 1;
   font-weight: bold;
-  border: none;
+}
+.options_container .checkbox {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  outline: none;
+  width: 20px;
+  height: 20px;
+  background-color: #fff;
+  border: solid 2px #ddd;
+  border-radius: 50%;
+  position: relative;
+  display: inline-block;
+/*文字对齐方式*/
+  vertical-align: middle;
+  transition: background-color ease 0.1s;
 }
 .search-pop-overlay {
   background: rgba(0,0,0,0);
