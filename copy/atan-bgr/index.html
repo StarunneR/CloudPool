@@ -623,10 +623,10 @@
   <div class="nav-container">
     <!-- reverse left and right to put prev and next in a more logic postition -->
     
-      <a class="nav-left" href="/copy/atan-mmmddy/" target="_blank">
+      <a class="nav-left" href="/copy/atan-rgjnb/" target="_blank">
         <span class="nav-arrow">← </span>
         
-          《魅魔们的地狱》
+          《人工纪念碑》
         
       </a>
     
@@ -750,7 +750,7 @@
     
     
       <div class="qrcode" id="qr-box">
-    <img id="share-qrcode" class="qrcode-image"/>
+    <img id="share-qrcode" class="qrcode-image" src=""/>
     <div class="qrcode-notice">保存二维码，分享此文章</div>
 </div>
 
@@ -759,15 +759,16 @@
 <script>
     // qrcode
     let qr = new QRious({
-        element: document.getElementById('share-qrcode'),
-        value: document.location.href,
         background: '#F0FFFF',
-        backgroundAlpha: 0.8,
+        backgroundAlpha: 1,
         foreground: '#0096FF',
         foregroundAlpha: 0.8,
         level: 'L',
-        padding: 0, // pixels
+        mime: "image/png",
+        padding: null, // pixels
         size: 100,
+        element: document.getElementById('share-qrcode'),
+        value: document.location.href,
     })
 
     $("#share-qrcode").click(function () {
@@ -780,6 +781,8 @@
         a.dispatchEvent(down_event)
     })
 </script>
+
+
     
   </article>
 </main>
