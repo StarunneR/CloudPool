@@ -645,6 +645,9 @@ header:hover .chn_mark {
   transition: color 0.13s linear;
   color: #add8e6;
 }
+.post-article .post-tags {
+  margin-top: 1em;
+}
 .post-article .nav-container {
   width: 100%;
   padding-top: 1.5em;
