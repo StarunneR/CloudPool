@@ -1031,7 +1031,7 @@ Dollar $：你看我是不是挺有自知之明的？
         foreground: '#0096FF',
         foregroundAlpha: 0.8,
         level: 'L',
-        mime: "image/png",
+        mime: "image/gif",
         padding: null, // pixels
         size: 100,
         element: document.getElementById('share-qrcode'),
@@ -1040,11 +1040,11 @@ Dollar $：你看我是不是挺有自知之明的？
 
     $("#share-qrcode").click(function () {
         let img = document.getElementById('share-qrcode')
-        let url = img.src
+        let imgurl = img.src
         let a = document.createElement('a')
         let down_event = new MouseEvent('click')
         a.download = 'CloudPool浊池-《我的室友虽然是个福利姬但是她贼喜欢吃我做的饭》第二卷（下）'
-        a.href = url
+        a.href = imgurl
         a.dispatchEvent(down_event)
     })
 </script>

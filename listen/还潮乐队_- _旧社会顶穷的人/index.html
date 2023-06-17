@@ -596,12 +596,13 @@
   $("#fontsize-slider").on("input", rangeSwitch)
 </script>
       <section class="markdown-content" id="content">
-        <link rel="stylesheet" href="/css/APlayer.min.css"><div id="aplayer"></div><script src="/js/APlayer.min.js"></script><script>const ap = new APlayer({container: document.getElementById("aplayer"),lrcType: 3,loop: "no",audio: [{name: '旧社会顶穷的人',
+        <link rel="stylesheet" href="/css/APlayer.min.css"><div id="aplayer"></div><script src="/js/APlayer.min.js"></script><script>const ap = new APlayer({container: document.getElementById("aplayer"),lrcType: 3,loop: "all",audio: [{
+name: '旧社会顶穷的人',
 artist: '还潮乐队',
 url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/%E8%BF%98%E6%BD%AE%E4%B9%90%E9%98%9F/2019+-+%E8%80%81%E9%85%92%E6%97%A5%E6%97%A5%E9%86%89%EF%BC%8C%E7%9A%87%E5%B8%9D%E4%B8%87%E4%B8%87%E5%B2%81/08+-+%E6%97%A7%E7%A4%BE%E4%BC%9A%E9%A1%B6%E7%A9%B7%E7%9A%84%E4%BA%BA.flac',
 cover: 'cover.jpg',
-lrc: '旧社会顶穷的人.lrc',}]});</script>
-
+lrc: '旧社会顶穷的人.lrc',
+},]});</script>
 <p>test music</p>
 
       </section>
@@ -628,9 +629,9 @@ lrc: '旧社会顶穷的人.lrc',}]});</script>
       </a>
     
     
-      <a class="nav-right" href="/about/top/" target="_blank">
+      <a class="nav-right" href="/listen/%E5%91%A8%E7%92%87%20Denon%20Mastersonic/" target="_blank">
         
-          【手动置顶】新的开始？
+          Denon Mastersonic 周璇
         
         <span class="nav-arrow"> →</span>
       </a>
@@ -761,7 +762,7 @@ lrc: '旧社会顶穷的人.lrc',}]});</script>
         foreground: '#0096FF',
         foregroundAlpha: 0.8,
         level: 'L',
-        mime: "image/png",
+        mime: "image/gif",
         padding: null, // pixels
         size: 100,
         element: document.getElementById('share-qrcode'),
@@ -770,11 +771,11 @@ lrc: '旧社会顶穷的人.lrc',}]});</script>
 
     $("#share-qrcode").click(function () {
         let img = document.getElementById('share-qrcode')
-        let url = img.src
+        let imgurl = img.src
         let a = document.createElement('a')
         let down_event = new MouseEvent('click')
         a.download = 'CloudPool浊池-还潮乐队 - 旧社会顶穷的人'
-        a.href = url
+        a.href = imgurl
         a.dispatchEvent(down_event)
     })
 </script>

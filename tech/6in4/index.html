@@ -786,7 +786,7 @@
         foreground: '#0096FF',
         foregroundAlpha: 0.8,
         level: 'L',
-        mime: "image/png",
+        mime: "image/gif",
         padding: null, // pixels
         size: 100,
         element: document.getElementById('share-qrcode'),
@@ -795,11 +795,11 @@
 
     $("#share-qrcode").click(function () {
         let img = document.getElementById('share-qrcode')
-        let url = img.src
+        let imgurl = img.src
         let a = document.createElement('a')
         let down_event = new MouseEvent('click')
         a.download = 'CloudPool浊池-使用6in4隧道的IPv6开启教程'
-        a.href = url
+        a.href = imgurl
         a.dispatchEvent(down_event)
     })
 </script>

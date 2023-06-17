@@ -596,11 +596,11 @@
   $("#fontsize-slider").on("input", rangeSwitch)
 </script>
       <section class="markdown-content" id="content">
-        <link rel="stylesheet" href="/css/APlayer.min.css"><div id="aplayer"></div><script src="/js/APlayer.min.js"></script><script>const ap = new APlayer({container: document.getElementById("aplayer"),lrcType: 3,loop: "no",audio: [{name: 'What Would I Change It To',
+        <link rel="stylesheet" href="/css/APlayer.min.css"><div id="aplayer"></div><script src="/js/APlayer.min.js"></script><script>const ap = new APlayer({container: document.getElementById("aplayer"),lrcType: 3,loop: "all",audio: [name: 'What Would I Change It To',
 artist: 'Avicii (feat. AlunaGeorge)',
 url: 'What_Would_I_Change_It_To.m4a',
 cover: 'What_Would_I_Change_It_To.jpg',
-lrc: 'What_Would_I_Change_It_To.lrc',}]});</script>
+lrc: 'What_Would_I_Change_It_To.lrc',]});</script>
 
 <hr>
 <p>CloudPool浊池是由年轻人管理的博客，十分感谢你的关注。使用Hexo作为博客框架，GitHub Page&#x2F;GitLab Page作为静态页面托管平台，<br>站长联系QQ: 1783074382。</p>
@@ -710,10 +710,10 @@ lrc: 'What_Would_I_Change_It_To.lrc',}]});</script>
   <div class="nav-container">
     <!-- reverse left and right to put prev and next in a more logic postition -->
     
-      <a class="nav-left" href="/listen/%E8%BF%98%E6%BD%AE%E4%B9%90%E9%98%9F_-%20_%E6%97%A7%E7%A4%BE%E4%BC%9A%E9%A1%B6%E7%A9%B7%E7%9A%84%E4%BA%BA/" target="_blank">
+      <a class="nav-left" href="/listen/%E5%91%A8%E7%92%87%20Denon%20Mastersonic/" target="_blank">
         <span class="nav-arrow">← </span>
         
-          还潮乐队 - 旧社会顶穷的人
+          Denon Mastersonic 周璇
         
       </a>
     
@@ -844,7 +844,7 @@ lrc: 'What_Would_I_Change_It_To.lrc',}]});</script>
         foreground: '#0096FF',
         foregroundAlpha: 0.8,
         level: 'L',
-        mime: "image/png",
+        mime: "image/gif",
         padding: null, // pixels
         size: 100,
         element: document.getElementById('share-qrcode'),
@@ -853,11 +853,11 @@ lrc: 'What_Would_I_Change_It_To.lrc',}]});</script>
 
     $("#share-qrcode").click(function () {
         let img = document.getElementById('share-qrcode')
-        let url = img.src
+        let imgurl = img.src
         let a = document.createElement('a')
         let down_event = new MouseEvent('click')
         a.download = 'CloudPool浊池-【手动置顶】新的开始？'
-        a.href = url
+        a.href = imgurl
         a.dispatchEvent(down_event)
     })
 </script>

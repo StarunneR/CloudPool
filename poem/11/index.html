@@ -605,17 +605,17 @@
   <div class="nav-container">
     <!-- reverse left and right to put prev and next in a more logic postition -->
     
-      <a class="nav-left" href="/listen/Avicii-AV%C4%AACI_(01)/" target="_blank">
+      <a class="nav-left" href="/poem/10/" target="_blank">
         <span class="nav-arrow">← </span>
         
-          Avicii - AVĪCI (01)
+          10（有聊至死）
         
       </a>
     
     
-      <a class="nav-right" href="/listen/Ed%20Sheeran%20-%205/" target="_blank">
+      <a class="nav-right" href="/listen/Avicii-AV%C4%AACI_(01)/" target="_blank">
         
-          Ed Sheeran - 5
+          Avicii - AVĪCI (01)
         
         <span class="nav-arrow"> →</span>
       </a>
@@ -746,7 +746,7 @@
         foreground: '#0096FF',
         foregroundAlpha: 0.8,
         level: 'L',
-        mime: "image/png",
+        mime: "image/gif",
         padding: null, // pixels
         size: 100,
         element: document.getElementById('share-qrcode'),
@@ -755,11 +755,11 @@
 
     $("#share-qrcode").click(function () {
         let img = document.getElementById('share-qrcode')
-        let url = img.src
+        let imgurl = img.src
         let a = document.createElement('a')
         let down_event = new MouseEvent('click')
         a.download = 'CloudPool浊池-11（咬文嚼字）'
-        a.href = url
+        a.href = imgurl
         a.dispatchEvent(down_event)
     })
 </script>
