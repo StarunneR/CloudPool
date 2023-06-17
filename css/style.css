@@ -795,7 +795,8 @@ header:hover .chn_mark {
   transform: rotate(-360deg);
 }
 .aplayer {
-  margin-bottom: 1em !important;
+  margin-bottom: 20px !important;
+  font-size: initial;
 }
 .aplayer.aplayer-withlrc .aplayer-info {
   height: 106px !important;
