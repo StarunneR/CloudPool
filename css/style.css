@@ -794,6 +794,9 @@ header:hover .chn_mark {
   color: $main-color;
   transform: rotate(-360deg);
 }
+.aplayer {
+  margin-bottom: 1em !important;
+}
 .aplayer.aplayer-withlrc .aplayer-info {
   height: 106px !important;
   margin-left: 106px !important;
