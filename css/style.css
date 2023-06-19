@@ -797,6 +797,8 @@ header:hover .chn_mark {
 .aplayer {
   margin-bottom: 20px !important;
   font-size: initial;
+  font-family: initial;
+  font-weight: initial;
 }
 .aplayer.aplayer-withlrc .aplayer-info {
   height: 106px !important;

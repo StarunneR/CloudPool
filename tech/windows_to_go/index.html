@@ -547,31 +547,31 @@
           $(".markdown-content").css({ "font-weight": 'initial' });
         } if (this.value == "heiti") {
           $(".markdown-content").css({ "font-weight": '400' });
-          $(".markdown-content").css({ "font-family": "'Noto Sans SC',sans-serif" });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',STHeiti,SimHei,sans-serif" });
           $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400&display=swap rel=stylesheet>");
         } else if (this.value == "light-heiti") {
           $(".markdown-content").css({ "font-weight": '300' });
-          $(".markdown-content").css({ "font-family": "'Noto Sans SC',sans-serif" });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',STHeiti,SimHei,sans-serif" });
           $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300&display=swap rel=stylesheet>");
         } else if (this.value == "lighter-heiti") {
           $(".markdown-content").css({ "font-weight": '100' });
-          $(".markdown-content").css({ "font-family": "'Noto Sans SC',sans-serif" });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',STHeiti,SimHei,sans-serif" });
           $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100&display=swap rel=stylesheet>");
         } else if (this.value == "songti") {
           $(".markdown-content").css({ "font-weight": '400' });
-          $(".markdown-content").css({ "font-family": "'Noto Serif SC',serif" });
+          $(".markdown-content").css({ "font-family": "'Noto Serif SC',STSong,NSimSun,SimSun,serif" });
           $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400&display=swap rel=stylesheet>");
         } else if (this.value == "light-songti") {
           $(".markdown-content").css({ "font-weight": '200' });
-          $(".markdown-content").css({ "font-family": "'Noto Serif SC',serif" });
+          $(".markdown-content").css({ "font-family": "'Noto Serif SC',STSong,NSimSun,SimSun,serif" });
           $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200&display=swap rel=stylesheet>");
         } else if (this.value == "kaiti") {
           $(".markdown-content").css({ "font-weight": 'initial' });
-          $(".markdown-content").css({ "font-family": "Arial,'STKaiti','KaiTi','FZKai-Z03S',Serif" });
+          $(".markdown-content").css({ "font-family": "'FZKai-Z03S','STKaiti','KaiTi',Serif" });
           $("head").append("<link href=https://cdn.jsdelivr.net/npm/cn-fontsource-fz-kai-z-03-s/font.css rel=stylesheet>");
         } else if (this.value == "fangsong") {
           $(".markdown-content").css({ "font-weight": 'initial' });
-          $(".markdown-content").css({ "font-family": "Arial,'STFangsong','FangSong','FangSong_GB2312','FZFangSong-Z02S',Serif" });
+          $(".markdown-content").css({ "font-family": "'FZFangSong-Z02S','STFangsong','FangSong','FangSong_GB2312',Serif" });
           $("head").append("<link href=https://cdn.jsdelivr.net/npm/cn-fontsource-fz-fang-song-z-02-s/font.css rel=stylesheet>");
         }
       };
@@ -616,12 +616,12 @@
         <div class="post-tags">
           <span>标签：</span>
           
-  <a href="/tags#安装" >
-    <span class="tag-code">安装</span>
-  </a>
-
   <a href="/tags#Windows" >
     <span class="tag-code">Windows</span>
+  </a>
+
+  <a href="/tags#安装" >
+    <span class="tag-code">安装</span>
   </a>
 
         </div>
