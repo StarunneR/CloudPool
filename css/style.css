@@ -512,7 +512,7 @@ header:hover .chn_mark {
   font-size: 1.5em;
   padding: 10px 0px 10px 10px;
   border-bottom: 1px solid #e5e4e2;
-  border-left: 12px #0ff solid;
+  border-left: 12px #228b22 solid;
 }
 .post-article .markdown-content h3:before {
   background: linear-gradient(90deg, rgba(246,114,128,0.6), rgba(255,255,255,0.6));
@@ -1608,10 +1608,10 @@ header:hover .chn_mark {
   height: 48px !important;
 }
 .aplayer .aplayer-lrc .aplayer-lrc-contents {
-  margin-top: 12px !important;
+  margin-top: 15px !important;
 }
 .aplayer .aplayer-lrc .aplayer-lrc-contents p {
-  opacity: 0.5 !important;
+  opacity: 0.75 !important;
 }
 .aplayer .aplayer-lrc .aplayer-lrc-contents .aplayer-lrc-current {
   opacity: 1 !important;
