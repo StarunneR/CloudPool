@@ -528,7 +528,6 @@ header:hover .chn_mark {
   content: "#";
   color: #0096ff;
   margin-right: 5px;
-  font-size: 1.2em;
   font-weight: 700;
 }
 .post-article .markdown-content h5 {
@@ -1604,6 +1603,11 @@ header:hover .chn_mark {
 .aplayer.aplayer-withlrc .aplayer-pic {
   height: 106px !important;
   width: 106px !important;
+}
+.aplayer.aplayer-withlrc .aplayer-pic:hover {
+  height: 250px !important;
+  width: 250px !important;
+  margin-right: 1rem;
 }
 .aplayer .aplayer-lrc {
   height: 48px !important;
