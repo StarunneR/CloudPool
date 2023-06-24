@@ -522,12 +522,13 @@ header:hover .chn_mark {
 }
 .post-article .markdown-content h4 {
   padding: 1em 0;
-  font-size: 1.2em;
+  font-size: 1.4em;
 }
 .post-article .markdown-content h4:before {
   content: "#";
   color: #0096ff;
   margin-right: 5px;
+  font-size: 1.2em;
   font-weight: 700;
 }
 .post-article .markdown-content h5 {
