@@ -241,7 +241,7 @@ pre {
   transition-delay: 0.3s;
 }
 .mobile-active {
-  color: #32cd32 !important;
+  color: #50c878 !important;
   font-weight: bold;
 }
 header:hover .chn_mark {
@@ -512,7 +512,7 @@ header:hover .chn_mark {
   font-size: 1.5em;
   padding: 10px 0px 10px 10px;
   border-bottom: 1px solid #e5e4e2;
-  border-left: 12px #228b22 solid;
+  border-left: 12px #90ee90 solid;
 }
 .post-article .markdown-content h3:before {
   background: linear-gradient(90deg, rgba(246,114,128,0.6), rgba(255,255,255,0.6));
@@ -1147,13 +1147,13 @@ header:hover .chn_mark {
   background: #228b22;
 }
 #tag-cloud .tag1 {
-  background: #4cbb17;
-}
-#tag-cloud .tag2 {
   background: #32cd32;
 }
-#tag-cloud .tag3 {
+#tag-cloud .tag2 {
   background: #50c878;
+}
+#tag-cloud .tag3 {
+  background: #00ff7f;
 }
 .tag-list {
   margin-left: 2em;
@@ -1332,7 +1332,7 @@ header:hover .chn_mark {
   transition: background-color ease 0.1s;
 }
 .options_container .checkbox:checked {
-  background-color: #32cd32;
+  background-color: #50c878;
 }
 .options_container .checkbox:checked::after {
   content: '';

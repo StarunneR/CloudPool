@@ -56,7 +56,6 @@
     </div>
 </div>
   <link rel="prefetch" href="/search.xml" crossorigin="anonymous"> 
-  <!---->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       // Popup Window
@@ -596,7 +595,7 @@
   $("#fontsize-slider").on("input", rangeSwitch)
 </script>
       <section class="markdown-content" id="content">
-        <link rel="stylesheet" href="/css/APlayer.min.css"><div id="aplayer"></div><script src="/js/APlayer.min.js"></script><script>const ap = new APlayer({container: document.getElementById("aplayer"),lrcType: 3,loop: "all",audio: [{
+        <link rel="stylesheet" href="/css/APlayer.min.css"><div id="aplayer"></div><script src="/js/APlayer.min.js"></script><script>const ap = new APlayer({container: document.getElementById("aplayer"),lrcType: 3,loop: "all",mutex: true,preload:"auto",audio: [{
 name: '天涯歌女',
 artist: '周璇',
 url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/Denon+Mastersonic+周璇/天涯歌女.m4a',
