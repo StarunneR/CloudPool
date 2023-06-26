@@ -1611,9 +1611,15 @@ header:hover .chn_mark {
   width: 106px !important;
 }
 .aplayer.aplayer-withlrc .aplayer-pic:hover {
-  height: 250px !important;
-  width: 250px !important;
+  height: 300px !important;
+  width: 300px !important;
   margin-right: 1rem;
+}
+@media screen and (max-width: 768px) {
+  .aplayer.aplayer-withlrc .aplayer-pic:hover {
+    height: 200px !important;
+    width: 200px !important;
+  }
 }
 .aplayer .aplayer-lrc {
   height: 48px !important;
