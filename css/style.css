@@ -487,9 +487,6 @@ header:hover .chn_mark {
   border-bottom: 2px solid #fa3;
 }
 .post-article .markdown-content h1::first-letter {
-  color: #333;
-  font-size: 1.5em;
-  float: left;
   text-transform: capitalize;
 }
 .post-article .markdown-content h2 {
@@ -501,9 +498,6 @@ header:hover .chn_mark {
   padding: 15px 0px 15px 20px;
 }
 .post-article .markdown-content h2::first-letter {
-  color: #333;
-  font-size: 1.5em;
-  float: left;
   text-transform: capitalize;
 }
 .post-article .markdown-content h3 {
