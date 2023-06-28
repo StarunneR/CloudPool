@@ -501,7 +501,7 @@ header:hover .chn_mark {
   text-transform: capitalize;
 }
 .post-article .markdown-content h3 {
-  padding: 1em 0;
+  padding: 2em 0;
   color: #36454f;
   font-size: 1.5em;
   padding: 10px 0px 10px 10px;
@@ -515,7 +515,6 @@ header:hover .chn_mark {
   font-weight: 700;
 }
 .post-article .markdown-content h4 {
-  padding: 1em 0;
   font-size: 1.4em;
 }
 .post-article .markdown-content h4:before {
