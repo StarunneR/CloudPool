@@ -1599,7 +1599,6 @@ header:hover .chn_mark {
 .aplayer.aplayer-withlrc .aplayer-body .aplayer-pic:hover {
   height: 300px !important;
   width: 300px !important;
-  margin-right: 1rem;
 }
 @media screen and (max-width: 768px) {
   .aplayer.aplayer-withlrc .aplayer-body .aplayer-pic:hover {
@@ -1626,6 +1625,7 @@ header:hover .chn_mark {
 .aplayer.aplayer-withlrc .aplayer-list > ol {
   scrollbar-width: thin !important;
   scrollbar-color: initial;
+  margin: 0;
 }
 @-moz-keyframes shine {
   0%, 100% {
