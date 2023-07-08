@@ -1,13 +1,15 @@
 ---
-title: 
-date: 202 -  - 
+title: Daft Punk
+date: 2023-07-08
 author: m1
 tags: 音乐
 categories: 浊音
 main: Songs
 ---
 
-{% aplayer %}
+### Homework 1997
+
+{% aplayer 1 %}
 
 {
 name: '',
