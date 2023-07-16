@@ -289,6 +289,14 @@
           return;
         }
       });
+      
+      // Search Preload
+      var head = document.head || document.getElementsByTagName('head')[0];
+      var searchlink = document.createElement('link');
+        searchlink.rel="search";
+        searchlink.href="<%- '/' + theme.search.path %>";
+        searchlink.crossorigin="anonymous";
+      head.appendChild(searchlink);
     });
   </script>
 
