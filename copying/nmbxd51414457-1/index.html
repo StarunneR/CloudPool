@@ -345,6 +345,14 @@
           return;
         }
       });
+      
+      // Search Preload
+      var head = document.head || document.getElementsByTagName('head')[0];
+      var searchlink = document.createElement('link');
+        searchlink.rel="search";
+        searchlink.href="/search.xml";
+        searchlink.crossorigin="anonymous";
+      head.appendChild(searchlink);
     });
   </script>
 
@@ -1259,9 +1267,9 @@ c(　╹^╹)σ[F5]
       </a>
     
     
-      <a class="nav-right" href="/copy/huanleegao114/" target="_blank">
+      <a class="nav-right" href="/copy/huanleegao205/" target="_blank">
         
-          《Rain.》
+          《heart.》
         
         <span class="nav-arrow"> →</span>
       </a>

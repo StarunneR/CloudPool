@@ -345,6 +345,14 @@
           return;
         }
       });
+      
+      // Search Preload
+      var head = document.head || document.getElementsByTagName('head')[0];
+      var searchlink = document.createElement('link');
+        searchlink.rel="search";
+        searchlink.href="/search.xml";
+        searchlink.crossorigin="anonymous";
+      head.appendChild(searchlink);
     });
   </script>
 
@@ -635,9 +643,9 @@
       </a>
     
     
-      <a class="nav-right" href="/daily/daily2022/" target="_blank">
+      <a class="nav-right" href="/copy/bog-ac-863679/" target="_blank">
         
-          每日一句2022
+          《一见钟情》
         
         <span class="nav-arrow"> →</span>
       </a>

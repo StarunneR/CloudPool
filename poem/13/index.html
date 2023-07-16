@@ -345,6 +345,14 @@
           return;
         }
       });
+      
+      // Search Preload
+      var head = document.head || document.getElementsByTagName('head')[0];
+      var searchlink = document.createElement('link');
+        searchlink.rel="search";
+        searchlink.href="/search.xml";
+        searchlink.crossorigin="anonymous";
+      head.appendChild(searchlink);
     });
   </script>
 

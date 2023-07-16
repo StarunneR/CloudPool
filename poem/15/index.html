@@ -345,6 +345,14 @@
           return;
         }
       });
+      
+      // Search Preload
+      var head = document.head || document.getElementsByTagName('head')[0];
+      var searchlink = document.createElement('link');
+        searchlink.rel="search";
+        searchlink.href="/search.xml";
+        searchlink.crossorigin="anonymous";
+      head.appendChild(searchlink);
     });
   </script>
 
@@ -613,9 +621,9 @@
       </a>
     
     
-      <a class="nav-right" href="/copy/atan-rgjnb/" target="_blank">
+      <a class="nav-right" href="/copy/atan-mmmddy/" target="_blank">
         
-          《人工纪念碑》
+          《魅魔们的地狱》
         
         <span class="nav-arrow"> →</span>
       </a>
