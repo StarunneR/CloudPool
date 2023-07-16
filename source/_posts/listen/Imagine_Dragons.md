@@ -11,7 +11,7 @@ main: 5 Albums, 103 Songs
 
 #### CD1
 
-{% aplayer 1 %}
+{% aplayer 1A %}
 {
 name: 'Radioactive',
 artist: 'Imagine Dragons',
@@ -100,7 +100,7 @@ lrc: 'Night_Visions/Nothing Left To Say - Rocks (Medley)\.lrc',
 
 #### CD2
 
-{% aplayer 1_2 %}
+{% aplayer 1B %}
 {
 name: 'Cha-Ching (Till We Grow Older)',
 artist: 'Imagine Dragons',
@@ -170,7 +170,7 @@ lrc: 'Night_Visions/I Don\'t Mind\.lrc',
 
 #### CD1
 
-{% aplayer 2_1 %}
+{% aplayer 2A %}
 {
 name: 'Shots',
 artist: 'Imagine Dragons',
@@ -266,7 +266,7 @@ lrc: 'Smoke_And_Mirrors/The Fall\.lrc',
 
 #### CD2
 
-{% aplayer 2_2 %}
+{% aplayer 2B %}
 {
 name: 'Thief',
 artist: 'Imagine Dragons',
@@ -542,7 +542,7 @@ lrc: 'Origins/Real Life\.lrc',
 
 #### CD1 Mercury - Acts 1
 
-{% aplayer 5_1 %}
+{% aplayer 5A %}
 {
 name: 'Enemy (from the series Arcane League of Legends)',
 artist: 'Imagine Dragons',
@@ -645,7 +645,7 @@ lrc: 'Mercury_-_Acts_1_&_2/One Day\.lrc',
 
 #### CD2 Mercury - Acts 2
 
-{% aplayer 5_2 %}
+{% aplayer 5B %}
 {
 name: 'Bones',
 artist: 'Imagine Dragons',
