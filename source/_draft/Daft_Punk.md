@@ -9,14 +9,15 @@ main: Songs
 
 ### Homework 1997
 
-{% aplayer 1 %}
+#### CD A
 
+{% aplayer 1A %}
 {
-name: '',
-artist: '',
-url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/.m4a',
-cover: '.jpg',
-lrc: '.lrc',
+name: 'Daftendirekt',
+artist: 'Daft Punk',
+url: 'HOST/Daft_Punk/Homework/Daftendirekt.m4a',
+cover: 'Homework/cover.webp',
+lrc: 'Homework/Album/Daftendirekt.lrc',
 },
 
 {% endaplayer %}

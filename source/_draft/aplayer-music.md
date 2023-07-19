@@ -7,14 +7,14 @@ categories: 浊音
 main: Songs
 ---
 
-{% aplayer %}
+{% aplayer 1A %}
 
 {
-name: '',
+name: 'Music',
 artist: '',
-url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/.m4a',
-cover: '.jpg',
-lrc: '.lrc',
+url: 'HOST/Artist/Album/Music.m4a',
+cover: 'Album/cover.webp',
+lrc: 'Artist/Album/Music.lrc',
 },
 
 {% endaplayer %}
