@@ -347,11 +347,11 @@
       });
       
       // Search Preload
-      var head = document.head || document.getElementsByTagName('head')[0];
-      var searchlink = document.createElement('link');
+      let head = document.head || document.getElementsByTagName('head')[0];
+      let searchlink = document.createElement('link');
         searchlink.rel="search";
+        searchlink.crossOrigin="anonymous";
         searchlink.href="/search.xml";
-        searchlink.crossorigin="anonymous";
       head.appendChild(searchlink);
     });
   </script>
@@ -695,9 +695,9 @@
       </a>
     
     
-      <a class="nav-right" href="/poem/14/" target="_blank">
+      <a class="nav-right" href="/listen/Vance%20Joy%20-%20Dream%20Your%20Life%20Away/" target="_blank">
         
-          14（谎言桥）
+          Vance Joy - Dream Your Life Away
         
         <span class="nav-arrow"> →</span>
       </a>
