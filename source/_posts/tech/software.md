@@ -95,9 +95,9 @@ qrcode:
 1. **[Internet Download Manager (IDM)](https://www.internetdownloadmanager.com/)**
 
     非常好用的下载工具，有浏览器网页视频嗅探与一键下载功能
-    收费软件，30天试用期，虽然网上有破解版，但还是建议购买，因为更新频繁，视频嗅探功能可能失效
+    收费软件，30天试用期，虽然网上有破解版，但还是建议购买，因为更新频繁，若不及时更新，部分功能可能失效
 
-    淘宝搜素 Internet Download Manager 即可，哪家便宜买哪家。一年许可：约35元，三年更新+
+    淘宝搜素 Internet Download Manager 即可，哪家便宜买哪家。一年许可：约35元，三年更新+永久使用：约80元
 
 2. **[Motrix](https://motrix.app/)**
 
@@ -182,8 +182,9 @@ CAJ 转 PDF 转换器，写论文必备
 Ref: <https://www.mydigit.cn/forum.php?mod=viewthread&tid=209287>
 
 [垃圾清理工具 CCleaner](https://www.ccleaner.com/ccleaner/download)
-~~可在[AppNee](https://appnee.com/fl-studio/)找到破解版下载链接。~~
-注册机：[CCleaner Pro 6.12.10490 + crack下载](https://rsload.net/download?a%3AaHR0cHM6Ly9mMy4xcnNsb2FkLnJ1L2xvYWQyLzA3NC9DQ2xlYW5lclByby5yYXI%3D)  来自 [rsload.net](https://rsload.net/soft/cleaner-disk/8306-ccleaner.html) [备份](https://pan.zhuochi.org/CloudShare/Software/cc612Patch22.rar)
+~~可在[AppNee](https://appnee.com/ccleaner-professional/)找到破解版下载链接。~~
+注册机：[CCleaner Pro 6 crack](CCleaner_Patch22.exe)  来自 [rsload.net](https://rsload.net/soft/cleaner-disk/8306-ccleaner.html) [备份](https://pan.zhuochi.org/CloudShare/Software/cc612Patch22.rar)
+打开CCleaner后请不要点击开始试用许可证
 
 [驱动更新工具Driver Booster](https://www.iobit.com/en/driver-booster.php) [下载直链](https://cdn.iobit.com/dl/driver_booster_setup.exe)
 
