@@ -74,11 +74,11 @@ qrcode:
 
 1. **[7-zip](https://sparanoid.com/lab/7z/)** (推荐)
 
-    老牌开源压缩软件，带有CRC SHA校验功能。
+    老牌开源压缩软件。Windows操作系统请下载x64版本。
 
-    **[7-Zip zstd](https://github.com/mcmilk/7-Zip-zstd)** (推荐)
+    **[7-Zip zstd](https://github.com/mcmilk/7-Zip-zstd/releases)** (推荐)
 
-    7-zip增强版，更多的压缩算法，增加了MD5及更多的校验功能。
+    7-zip增强版，更多的压缩算法，增加了MD5及更多的校验功能。Windows操作系统请下载x64.exe版本。
 
 2. **WinRAR**
 

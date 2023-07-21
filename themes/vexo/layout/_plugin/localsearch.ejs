@@ -294,8 +294,8 @@
       let head = document.head || document.getElementsByTagName('head')[0];
       let searchlink = document.createElement('link');
         searchlink.rel="search";
-        searchlink.crossOrigin="anonymous";
         searchlink.href="<%- '/' + theme.search.path %>";
+        searchlink.crossOrigin="anonymous";
       head.appendChild(searchlink);
     });
   </script>
