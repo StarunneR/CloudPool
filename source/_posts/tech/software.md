@@ -184,7 +184,7 @@ Ref: <https://www.mydigit.cn/forum.php?mod=viewthread&tid=209287>
 [垃圾清理工具 CCleaner](https://www.ccleaner.com/ccleaner/download)
 ~~可在[AppNee](https://appnee.com/ccleaner-professional/)找到破解版下载链接。~~
 注册机：[CCleaner Pro 6 crack](CCleaner_Patch22.exe)  来自 [rsload.net](https://rsload.net/soft/cleaner-disk/8306-ccleaner.html) [备份](https://pan.zhuochi.org/CloudShare/Software/cc612Patch22.rar)
-打开CCleaner后请不要点击开始试用许可证
+注册机需放置在软件安装目录下，安装CCleaner后请直接使用注册机注册，不要点击开始试用许可证。
 
 [驱动更新工具Driver Booster](https://www.iobit.com/en/driver-booster.php) [下载直链](https://cdn.iobit.com/dl/driver_booster_setup.exe)
 
