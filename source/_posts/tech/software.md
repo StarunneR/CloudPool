@@ -93,11 +93,9 @@ qrcode:
 #### 下载工具
 
 1. **[Internet Download Manager (IDM)](https://www.internetdownloadmanager.com/)**
-
-    非常好用的下载工具，有浏览器网页视频嗅探与一键下载功能
-    收费软件，30天试用期，虽然网上有破解版，但还是建议购买，因为更新频繁，若不及时更新，部分功能可能失效
-
-    淘宝搜素 Internet Download Manager 即可，哪家便宜买哪家。一年许可：约35元，三年更新+永久使用：约80元
+非常好用的下载工具，有浏览器网页视频嗅探与一键下载功能
+收费软件，30天试用期，虽然网上有破解版，但还是建议购买，因为更新频繁，若不及时更新，部分功能可能失效
+淘宝搜素 Internet Download Manager 即可，哪家便宜买哪家。一年许可：约35元，三年更新+永久使用：约80元
 
 2. **[Motrix](https://motrix.app/)**
 
