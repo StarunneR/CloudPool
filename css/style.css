@@ -894,6 +894,7 @@ header:hover .chn_mark {
   font-family: 'SimSun', Serif;
   font-size: medium;
   font-style: italic;
+  line-height: 1.25em;
   margin: 10px 0;
   color: #36454f;
 }
