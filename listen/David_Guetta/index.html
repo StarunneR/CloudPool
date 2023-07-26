@@ -1,0 +1,1620 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta http-equiv="Access-Control-Allow-Origin" content="*">
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport" />
+  <meta name="description" content="CloudPool浊池是由年轻人管理的博客">
+  <meta name="keyword" content="浊池, CloudPool, CloudPool浊池">
+  
+  <link rel="shortcut icon" type="image/ico" href="/images/cloudpool-favicon.ico">
+  
+  <title>
+    
+      David Guetta
+    
+  </title>
+  <!-- CSS -->
+  <!--<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/6.4.0/css/all.min.css" />-->
+  <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />-->
+  <!--<link href="https://cdn.staticfile.org/nprogress/0.2.0/nprogress.min.css" rel="stylesheet"/>-->
+  <link href="https://cdn.bootcdn.net/ajax/libs/nprogress/0.2.0/nprogress.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/aplayer/1.10.1/APlayer.min.css"/>
+  
+<link rel="stylesheet" href="/css/style.css">
+
+
+  <!-- JS -->
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/geopattern/1.2.3/js/geopattern.min.js"></script>
+  <!--<script type="text/javascript" src="https://cdn.staticfile.org/nprogress/0.2.0/nprogress.min.js"></script>-->
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/nprogress/0.2.0/nprogress.min.js"></script>
+  
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+            <span class="search-icon">
+                <i class="fa fa-search"></i>
+            </span>
+            <div class="search-input-container">
+                <input autocomplete="off" autocapitalize="off" maxlength="80"
+                    placeholder="Anything...  今天想看什么w" spellcheck="false"
+                    type="" class="search-input">
+            </div>
+            <span class="popup-btn-go">
+                <i class="fa-solid fa-arrow-circle-right"></i>
+            </span>
+            <span class="popup-btn-close">
+                <i class="fa-solid fa-circle-xmark"></i>
+            </span>
+        </div>
+        <div id="search-result" class="search-result-container">
+            <div id="no-result" class="no-result">
+                <i class="fa-solid fa-spinner fa-pulse fa-5x fa-fw"></i>
+            </div>
+        </div>
+    </div>
+</div>
+  <link rel="prefetch" href="/search.xml" crossorigin="anonymous"> 
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Popup Window
+      let isfetched = false;
+      let datas;
+      let isXml = true;
+      // Search DB path
+      let searchPath = 'search.xml'; //CONFIG.search.path
+      if (searchPath.length === 0) {
+        searchPath = 'search.xml';
+      } else if (searchPath.endsWith('json')) {
+        isXml = false;
+      }
+      const input = document.querySelector('.search-input');
+      const resultContent = document.getElementById('search-result');
+
+      const getIndexByWord = (word, text, caseSensitive) => {
+        if ('false' == false) { // CONFIG.localsearch.unescape = false
+          let div = document.createElement('div');
+          div.innerText = word;
+          word = div.innerHTML;
+        }
+        let wordLen = word.length;
+        if (wordLen === 0) return [];
+        let startPosition = 0;
+        let position = [];
+        let index = [];
+        if (!caseSensitive) {
+          text = text.toLowerCase();
+          word = word.toLowerCase();
+        }
+        while ((position = text.indexOf(word, startPosition)) > -1) {
+          index.push({ position, word });
+          startPosition = position + wordLen;
+        }
+        return index;
+      };
+
+      // Merge hits into slices
+      const mergeIntoSlice = (start, end, index, searchText) => {
+        let item = index[index.length - 1];
+        let { position, word } = item;
+        let hits = [];
+        let searchTextCountInSlice = 0;
+        while (position + word.length <= end && index.length !== 0) {
+          if (word === searchText) {
+            searchTextCountInSlice++;
+          }
+          hits.push({
+            position,
+            length: word.length
+          });
+          let wordEnd = position + word.length;
+
+          // Move to next position of hit
+          index.pop();
+          while (index.length !== 0) {
+            item = index[index.length - 1];
+            position = item.position;
+            word = item.word;
+            if (wordEnd > position) {
+              index.pop();
+            } else {
+              break;
+            }
+          }
+        }
+        return {
+          hits,
+          start,
+          end,
+          searchTextCount: searchTextCountInSlice
+        };
+      };
+
+      // Highlight title and content
+      const highlightKeyword = (text, slice) => {
+        let result = '';
+        let prevEnd = slice.start;
+        slice.hits.forEach(hit => {
+          result += text.substring(prevEnd, hit.position);
+          let end = hit.position + hit.length;
+          result += `<b class="search-keyword">${text.substring(hit.position, end)}</b>`;
+          prevEnd = end;
+        });
+        result += text.substring(prevEnd, slice.end);
+        return result;
+      };
+
+      const inputEventFunction = () => {
+        if (!isfetched) return;
+        let searchText = input.value.trim().toLowerCase();
+        let keywords = searchText.split(/[-\s]+/);
+        if (keywords.length > 1) {
+          keywords.push(searchText);
+        }
+        let resultItems = [];
+        if (searchText.length > 0) {
+          // Perform local searching
+          datas.forEach(({ title, content, url }) => {
+            let titleInLowerCase = title.toLowerCase();
+            let contentInLowerCase = content.toLowerCase();
+            let indexOfTitle = [];
+            let indexOfContent = [];
+            let searchTextCount = 0;
+            keywords.forEach(keyword => {
+              indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+              indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+            });
+
+            // Show search results
+            if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+              let hitCount = indexOfTitle.length + indexOfContent.length;
+              // Sort index by position of keyword
+              [indexOfTitle, indexOfContent].forEach(index => {
+                index.sort((itemLeft, itemRight) => {
+                  if (itemRight.position !== itemLeft.position) {
+                    return itemRight.position - itemLeft.position;
+                  }
+                  return itemLeft.word.length - itemRight.word.length;
+                });
+              });
+
+              let slicesOfTitle = [];
+              if (indexOfTitle.length !== 0) {
+                let tmp = mergeIntoSlice(0, title.length, indexOfTitle, searchText);
+                searchTextCount += tmp.searchTextCountInSlice;
+                slicesOfTitle.push(tmp);
+              }
+
+              let slicesOfContent = [];
+              while (indexOfContent.length !== 0) {
+                let item = indexOfContent[indexOfContent.length - 1];
+                let { position, word } = item;
+                // Cut out 100 characters
+                let start = position - 20;
+                let end = position + 80;
+                if (start < 0) {
+                  start = 0;
+                }
+                if (end < position + word.length) {
+                  end = position + word.length;
+                }
+                if (end > content.length) {
+                  end = content.length;
+                }
+                let tmp = mergeIntoSlice(start, end, indexOfContent, searchText);
+                searchTextCount += tmp.searchTextCountInSlice;
+                slicesOfContent.push(tmp);
+              }
+
+              // Sort slices in content by search text's count and hits' count
+              slicesOfContent.sort((sliceLeft, sliceRight) => {
+                if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                  return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                  return sliceRight.hits.length - sliceLeft.hits.length;
+                }
+                return sliceLeft.start - sliceRight.start;
+              });
+
+              // Select top N slices in content
+              let upperBound = parseInt('1', 10); // CONFIG.localsearch.top_n_per_article: 1
+              if (upperBound >= 0) {
+                slicesOfContent = slicesOfContent.slice(0, upperBound);
+              }
+
+              let resultItem = '';
+
+              if (slicesOfTitle.length !== 0) {
+                resultItem += `<li class="search-result-element"><a href="${url}" class="search-result-title" target="_blank">${highlightKeyword(title, slicesOfTitle[0])}</a>`;
+              } else {
+                resultItem += `<li class="search-result-element"><a href="${url}" class="search-result-title" target="_blank">${title}</a>`;
+              }
+
+              slicesOfContent.forEach(slice => {
+                resultItem += `<a href="${url}" target="_blank"><p class="search-result">${highlightKeyword(content, slice)}...</p></a>`;
+              });
+
+              resultItem += '</li>';
+              resultItems.push({
+                item: resultItem,
+                id: resultItems.length,
+                hitCount,
+                searchTextCount
+              });
+            }
+          });
+        }
+        if (keywords.length === 1 && keywords[0] === '') {
+          resultContent.innerHTML = '<div id="no-result"><i class="fa-sharp fa-regular fa-circle-check fa-5x"></i></div>';
+        } else if (resultItems.length === 0) {
+          resultContent.innerHTML = '<div id="no-result"><i class="fa-regular fa-face-frown-open fa-5x"></i></div>';
+        } else {
+          resultItems.sort((resultLeft, resultRight) => {
+            if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+              return resultRight.searchTextCount - resultLeft.searchTextCount;
+            } else if (resultLeft.hitCount !== resultRight.hitCount) {
+              return resultRight.hitCount - resultLeft.hitCount;
+            }
+            return resultRight.id - resultLeft.id;
+          });
+          resultContent.innerHTML = `<ul class="search-result-list">${resultItems.map(result => result.item).join('')}</ul>`;
+          window.pjax && window.pjax.refresh(resultContent);
+        }
+      };
+
+      const fetchData = () => {
+        fetch('/' + searchPath) // CONFIG.root = ''
+          .then(response => response.text())
+          .then(res => {
+            // Get the contents from search data
+            isfetched = true;
+            datas = isXml ? [...new DOMParser().parseFromString(res, 'text/xml').querySelectorAll('entry')].map(element => {
+              return {
+                title: element.querySelector('title').textContent,
+                content: element.querySelector('content').textContent,
+                url: element.querySelector('url').textContent
+              };
+            }) : JSON.parse(res);
+            // Only match articles with not empty titles
+            datas = datas.filter(data => data.title).map(data => {
+              data.title = data.title.trim();
+              data.content = data.content ? data.content.trim().replace(/<[^>]+>/g, '') : '';
+              data.url = decodeURIComponent(data.url).replace(/\/{2,}/g, '/');
+              return data;
+            });
+            // Remove loading animation
+            document.getElementById('no-result').innerHTML = '<i class="fa-sharp fa-regular fa-circle-check fa-5x"></i></i>';
+            inputEventFunction();
+          });
+      };
+
+      if (false) { // CONFIG.localsearch.preload: false
+        fetchData();
+      }
+
+      if ('auto' === 'auto') { // CONFIG.localsearch.trigger: 'auto' / 'manual'
+        input.addEventListener('input', inputEventFunction);
+      } else {
+        document.querySelector('.search-icon').addEventListener('click', inputEventFunction);
+        input.addEventListener('keypress', event => {
+          if (event.key === 'Enter') {
+            inputEventFunction();
+          }
+        });
+      }
+
+      // Handle and trigger popup window
+      document.querySelectorAll('.popup-trigger').forEach(element => {
+        element.addEventListener('click', () => {
+          document.body.style.overflow = 'hidden';
+          document.querySelector('.search-pop-overlay').classList.add('search-active');
+          input.focus();
+          if (!isfetched) fetchData();
+        });
+      });
+
+      // Monitor main search box
+      const onPopupClose = () => {
+        document.body.style.overflow = '';
+        document.querySelector('.search-pop-overlay').classList.remove('search-active');
+      };
+
+      document.querySelector('.search-pop-overlay').addEventListener('click', event => {
+        if (event.target === document.querySelector('.search-pop-overlay')) {
+          onPopupClose();
+        }
+      });
+      document.querySelector('.popup-btn-close').addEventListener('click', onPopupClose);
+      window.addEventListener('pjax:success', onPopupClose);
+      window.addEventListener('keyup', event => {
+        if (event.key === 'Escape') {
+          onPopupClose();
+        }
+      });
+
+      // PageJumper button
+      let onJumpPage = () => {
+        window.location = window.location.origin + '/' + input.value
+      };
+      document.querySelector('.popup-btn-go').addEventListener('click', onJumpPage);
+      document.querySelector('.search-input').addEventListener('keydown', event => {
+        if (event.keyCode === 13) {
+          onJumpPage();
+          return;
+        }
+      });
+      
+      // Search Preload
+      let head = document.head || document.getElementsByTagName('head')[0];
+      let searchlink = document.createElement('link');
+        searchlink.rel="search";
+        searchlink.href="/search.xml";
+        searchlink.crossOrigin="anonymous";
+      head.appendChild(searchlink);
+    });
+  </script>
+
+  <!--
+<script src="/js/local-search.js"></script>
+--> 
+
+  <script src="/live2d-widget/autoload.js"></script>
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/aplayer/1.10.1/APlayer.min.js"></script>
+  <!-- Fonts -->
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+  <body>
+    <header class="header fixed-header">
+  <nav class="header-container">
+    <a class="home-link" href="/">
+      <img class="logo" src="/images/logo.png" alt="logo"/>
+      <span class="eng_mark">CloudPool</span><span class="chn_mark">浊池</span>
+    </a>
+    <ul class="right-list">
+      
+        <li class="list-item">
+          
+            <a href="/" class="item-link">主页</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/categories/" class="item-link">分类</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/tags/" class="item-link">标签</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/archive/" class="item-link">归档</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/mag/" class="item-link">网刊</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/one/" class="item-link">一言</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a target="_blank" rel="noopener" href="//pan.zhuochi.org/CloudShare/" class="item-link">网盘</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="//<emoji>" class="item-link">( ^ω^)</a>
+          
+        </li>
+      
+      
+        <li class="list-item">
+    <a role="button" class="item-link popup-trigger">
+        <i class="fa fa-search fa-fw"></i>
+    </a>
+</li>
+      
+    </ul>
+    <div class="menu">
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+    </div>
+    <div class="menu-mask">
+      <ul class="menu-list">
+        
+          <li class="menu-item">
+            
+              <a href="/" class="menu-link">主页</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/categories/" class="menu-link">分类</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/tags/" class="menu-link">标签</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/archive/" class="menu-link">归档</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/mag/" class="menu-link">网刊</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/one/" class="menu-link">一言</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a target="_blank" rel="noopener" href="//pan.zhuochi.org/CloudShare/" class="menu-link">网盘</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="//<emoji>" class="menu-link">( ^ω^)</a>
+            
+          </li>
+        
+        
+          <li class="menu-item">
+    <a role="button" class="item-link popup-trigger">
+        <i class="fa fa-search fa-fw"></i>
+    </a>
+</li>
+        
+      </ul>
+    </div>
+  </nav>
+</header>
+
+    <div id="article-banner">
+  <h2 class="post-title">David Guetta</h2>
+  
+   
+    <p class="post-date">2023-07-16</p>
+  
+  <div class="arrow-down">
+    <a href="javascript:;"></a>
+  </div>
+</div>
+
+<main class="app-body flex-box">
+  <article class="post-article">
+    
+      <div class="front-parent" id="front-parent">
+  <div class="front-child" id="front-fontsize">
+    <label class="front-label" for="fontsize-range">字体大小</label>
+    <input type="range" min="50" max="200" id="fontsize-slider" step="1" value="100" />
+    <span id="fontsize-value"></span>
+  </div>
+
+  <div class="front-child" id="front-fontselector">
+    <label class="front-label" for="font-select">更换字体</label>
+    <select name="font" id="font">
+      <option value="default">默认</option>
+      <option value="heiti">黑体</option>
+      <option value="light-heiti">黑体（细体）</option>
+      <option value="lighter-heiti">黑体（极细）</option>
+      <option value="songti">宋体</option>
+      <option value="light-songti">宋体（细体）</option>
+      <option value="kaiti">楷体</option>
+      <option value="fangsong">仿宋</option>
+    </select>
+  </div>
+
+  <div class="front-child" id="front-indent">
+    <label class="front-label" for="TextIndent">段首缩进</label>
+    <input type="checkbox" id="indent-checkbox" name="text-indent" value="" />
+  </div>
+</div>
+
+<h1 class="article-author">
+  
+        StʌrunneR
+        
+</h1>
+
+<script>
+  $(document).ready(
+    function () {
+      let FontChanger = function () {
+        if (this.value == "default") {
+          $(".markdown-content").css({ "font-family": "Arial, Helvetica, sans-serif" });
+          $(".markdown-content").css({ "font-weight": 'initial' });
+        } if (this.value == "heiti") {
+          $(".markdown-content").css({ "font-weight": '400' });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',STHeiti,SimHei,sans-serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400&display=swap rel=stylesheet>");
+        } else if (this.value == "light-heiti") {
+          $(".markdown-content").css({ "font-weight": '300' });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',STHeiti,SimHei,sans-serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300&display=swap rel=stylesheet>");
+        } else if (this.value == "lighter-heiti") {
+          $(".markdown-content").css({ "font-weight": '100' });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',STHeiti,SimHei,sans-serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100&display=swap rel=stylesheet>");
+        } else if (this.value == "songti") {
+          $(".markdown-content").css({ "font-weight": '400' });
+          $(".markdown-content").css({ "font-family": "'Noto Serif SC',STSong,NSimSun,SimSun,serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400&display=swap rel=stylesheet>");
+        } else if (this.value == "light-songti") {
+          $(".markdown-content").css({ "font-weight": '200' });
+          $(".markdown-content").css({ "font-family": "'Noto Serif SC',STSong,NSimSun,SimSun,serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200&display=swap rel=stylesheet>");
+        } else if (this.value == "kaiti") {
+          $(".markdown-content").css({ "font-weight": 'initial' });
+          $(".markdown-content").css({ "font-family": "'FZKai-Z03S','STKaiti','KaiTi',Serif" });
+          $("head").append("<link href=https://cdn.jsdelivr.net/npm/cn-fontsource-fz-kai-z-03-s/font.css rel=stylesheet>");
+        } else if (this.value == "fangsong") {
+          $(".markdown-content").css({ "font-weight": 'initial' });
+          $(".markdown-content").css({ "font-family": "'FZFangSong-Z02S','STFangsong','FangSong','FangSong_GB2312',Serif" });
+          $("head").append("<link href=https://cdn.jsdelivr.net/npm/cn-fontsource-fz-fang-song-z-02-s/font.css rel=stylesheet>");
+        }
+      };
+      $("#font").on('change', FontChanger);
+      $("#font").on('click', FontChanger);
+    });
+
+  $("#indent-checkbox").change(function () {
+    if (this.checked) {
+      $(".markdown-content > p").css({ "text-indent": "2em" });
+    } else {
+      $(".markdown-content > p").css({ "text-indent": "0" });
+    }
+  });
+
+  $("#fontsize-value").html("100%");
+  let rangeSwitch = function () {
+    let fontsizePercent = $("#fontsize-slider").val();
+    $(".markdown-content").css("font-size", fontsizePercent + "%")
+    $("#fontsize-value").html(fontsizePercent + "%")
+  }
+  $("#fontsize-slider").on("input", rangeSwitch)
+</script>
+      <section class="markdown-content" id="content">
+        <h3 id="One-More-Love-2010"><a href="#One-More-Love-2010" class="headerlink" title="One More Love 2010"></a>One More Love 2010</h3><h4 id="CD1"><a href="#CD1" class="headerlink" title="CD1"></a>CD1</h4><div id="aplayer1A"></div></script><script>const ap1A = new APlayer({container: document.getElementById("aplayer1A"),lrcType: 3,loop: "all",mutex: true,preload:"auto",audio: [{
+name: 'When Love Takes Over (feat. Kelly Rowland)',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2010_OM/CD1/When Love Takes Over (feat. Kelly Rowland).m4a',
+cover: '2010_OM/cover.webp',
+lrc: '2010_OM/CD1/When Love Takes Over (feat. Kelly Rowland).lrc',
+},
+{
+name: 'Gettin\' Over (feat. Chris Willis)',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2010_OM/CD1/Gettin\' Over (feat. Chris Willis).m4a',
+cover: '2010_OM/cover.webp',
+lrc: '2010_OM/CD1/Gettin\' Over (feat. Chris Willis).lrc',
+},
+{
+name: 'Sexy Bitch (feat. Akon)',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2010_OM/CD1/Sexy Bitch (feat. Akon).m4a',
+cover: '2010_OM/cover.webp',
+lrc: '2010_OM/CD1/Sexy Bitch (feat. Akon).lrc',
+},
+{
+name: 'Memories (feat. Kid Cudi)',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2010_OM/CD1/Memories (feat. Kid Cudi).m4a',
+cover: '2010_OM/cover.webp',
+lrc: '2010_OM/CD1/Memories (feat. Kid Cudi).lrc',
+},
+{
+name: 'On the Dancefloor (feat. will.i.am & apl.de.ap)',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2010_OM/CD1/On the Dancefloor (feat. will.i.am & apl.de.ap).m4a',
+cover: '2010_OM/cover.webp',
+lrc: '2010_OM/CD1/On the Dancefloor (feat. will.i.am & apl.de.ap).lrc',
+},
+{
+name: 'It\'s the Way You Love Me (feat. Kelly Rowland)',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2010_OM/CD1/It\'s the Way You Love Me (feat. Kelly Rowland).m4a',
+cover: '2010_OM/cover.webp',
+lrc: '2010_OM/CD1/It\'s the Way You Love Me (feat. Kelly Rowland).lrc',
+},
+{
+name: 'Missing You (feat. Novel)',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2010_OM/CD1/Missing You (feat. Novel).m4a',
+cover: '2010_OM/cover.webp',
+lrc: '2010_OM/CD1/Missing You (feat. Novel).lrc',
+},
+{
+name: 'Choose (feat. Ne-Yo & Kelly Rowland)',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2010_OM/CD1/Choose (feat. Ne-Yo & Kelly Rowland).m4a',
+cover: '2010_OM/cover.webp',
+lrc: '2010_OM/CD1/Choose (feat. Ne-Yo & Kelly Rowland).lrc',
+},
+{
+name: 'How Soon Is Now (feat. Julie McKnight)',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2010_OM/CD1/How Soon Is Now (feat. Julie McKnight).m4a',
+cover: '2010_OM/cover.webp',
+lrc: '2010_OM/CD1/How Soon Is Now (feat. Julie McKnight).lrc',
+},
+{
+name: 'I Gotta Feeling (FMIF Remix Edit)',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2010_OM/CD1/I Gotta Feeling (FMIF Remix Edit).m4a',
+cover: '2010_OM/cover.webp',
+lrc: '2010_OM/CD1/I Gotta Feeling (FMIF Remix Edit).lrc',
+},
+{
+name: 'One Love (feat. Estelle)',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2010_OM/CD1/One Love (feat. Estelle).m4a',
+cover: '2010_OM/cover.webp',
+lrc: '2010_OM/CD1/One Love (feat. Estelle).lrc',
+},
+{
+name: 'I Wanna Go Crazy (feat. will.i.am)',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2010_OM/CD1/I Wanna Go Crazy (feat. will.i.am).m4a',
+cover: '2010_OM/cover.webp',
+lrc: '2010_OM/CD1/I Wanna Go Crazy (feat. will.i.am).lrc',
+},
+{
+name: 'Sound of Letting Go (feat. Chris Willis)',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2010_OM/CD1/Sound of Letting Go (feat. Chris Willis).m4a',
+cover: '2010_OM/cover.webp',
+lrc: '2010_OM/CD1/Sound of Letting Go (feat. Chris Willis).lrc',
+},
+{
+name: 'Toyfriend (feat. Wynter Gordon)',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2010_OM/CD1/Toyfriend (feat. Wynter Gordon).m4a',
+cover: '2010_OM/cover.webp',
+lrc: '2010_OM/CD1/Toyfriend (feat. Wynter Gordon).lrc',
+},
+{
+name: 'If We Ever (feat. Makeba)',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2010_OM/CD1/If We Ever (feat. Makeba).m4a',
+cover: '2010_OM/cover.webp',
+lrc: '2010_OM/CD1/If We Ever (feat. Makeba).lrc',
+}]});</script>
+
+<h4 id="CD2"><a href="#CD2" class="headerlink" title="CD2"></a>CD2</h4><div id="aplayer1B"></div></script><script>const ap1B = new APlayer({container: document.getElementById("aplayer1B"),lrcType: 3,loop: "all",mutex: true,preload:"auto",audio: [
+{
+name: 'Who\'s That Chick  (feat. Rihanna)',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2010_OM/CD2/Who\'s That Chick  (feat. Rihanna).m4a',
+cover: '2010_OM/cover.webp',
+lrc: '2010_OM/CD2/Who\'s That Chick  (feat. Rihanna).lrc',
+},
+{
+name: 'Gettin\' Over You (feat. Fergie & LMFAO)',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2010_OM/CD2/Gettin\' Over You (feat. Fergie & LMFAO).m4a',
+cover: '2010_OM/cover.webp',
+lrc: '2010_OM/CD2/Gettin\' Over You (feat. Fergie & LMFAO).lrc',
+},
+{
+name: 'Revolver (Madonna vs. David Guetta) [feat. Lil Wayne] {One Love Remix}',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2010_OM/CD2/Revolver (Madonna vs. David Guetta) [feat. Lil Wayne] {One Love Remix}.m4a',
+cover: '2010_OM/cover.webp',
+lrc: '2010_OM/CD2/Revolver (Madonna vs. David Guetta) [feat. Lil Wayne] {One Love Remix}.lrc',
+},
+{
+name: 'Commander (feat. David Guetta)',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2010_OM/CD2/Commander (feat. David Guetta).m4a',
+cover: '2010_OM/cover.webp',
+lrc: '2010_OM/CD2/Commander (feat. David Guetta).lrc',
+},
+{
+name: 'Acapella',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2010_OM/CD2/Acapella.m4a',
+cover: '2010_OM/cover.webp',
+lrc: '2010_OM/CD2/Acapella.lrc',
+},
+{
+name: 'Missing You (feat. Novel) [New Version]',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2010_OM/CD2/Missing You (feat. Novel) [New Version].m4a',
+cover: '2010_OM/cover.webp',
+lrc: '2010_OM/CD2/Missing You (feat. Novel) [New Version].lrc',
+},
+{
+name: 'Louder Than Words (Radio Edit) [feat. Niles Mason]',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2010_OM/CD2/Louder Than Words (Radio Edit) [feat. Niles Mason].m4a',
+cover: '2010_OM/cover.webp',
+lrc: '2010_OM/CD2/Louder Than Words (Radio Edit) [feat. Niles Mason].lrc',
+},
+{
+name: 'Freak (feat. Kardinal Offishall)',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2010_OM/CD2/Freak (feat. Kardinal Offishall).m4a',
+cover: '2010_OM/cover.webp',
+lrc: '2010_OM/CD2/Freak (feat. Kardinal Offishall).lrc',
+},
+{
+name: 'Sexy Bitch (feat. Akon) [Chuckie & Lil Jon Remix] {Edit}',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2010_OM/CD2/Sexy Bitch (feat. Akon) [Chuckie & Lil Jon Remix] {Edit}.m4a',
+cover: '2010_OM/cover.webp',
+lrc: '2010_OM/CD2/Sexy Bitch (feat. Akon) [Chuckie & Lil Jon Remix] {Edit}.lrc',
+},
+{
+name: 'Grrrr',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2010_OM/CD2/Grrrr.m4a',
+cover: '2010_OM/cover.webp',
+lrc: '2010_OM/CD2/Grrrr.lrc',
+},
+{
+name: 'Love Don\'t Let Me Go (Walking Away)',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2010_OM/CD2/Love Don\'t Let Me Go (Walking Away).m4a',
+cover: '2010_OM/cover.webp',
+lrc: '2010_OM/CD2/Love Don\'t Let Me Go (Walking Away).lrc',
+},
+{
+name: 'The World Is Mine (feat. JD Davis)',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2010_OM/CD2/The World Is Mine (feat. JD Davis).m4a',
+cover: '2010_OM/cover.webp',
+lrc: '2010_OM/CD2/The World Is Mine (feat. JD Davis).lrc',
+},
+{
+name: 'Love Is Gone (Original Mix)',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2010_OM/CD2/Love Is Gone (Original Mix).m4a',
+cover: '2010_OM/cover.webp',
+lrc: '2010_OM/CD2/Love Is Gone (Original Mix).lrc',
+}]});</script>
+
+<h3 id="Nothing-But-the-Beat-2011"><a href="#Nothing-But-the-Beat-2011" class="headerlink" title="Nothing But the Beat 2011"></a>Nothing But the Beat 2011</h3><h4 id="CD1-1"><a href="#CD1-1" class="headerlink" title="CD1"></a>CD1</h4><div id="aplayer2A"></div></script><script>const ap2A = new APlayer({container: document.getElementById("aplayer2A"),lrcType: 3,loop: "all",mutex: true,preload:"auto",audio: [{
+name: 'Titanium',
+artist: 'David Guetta feat. Sia',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2011_NB/CD1/Titanium.m4a',
+cover: '2011_NB/cover.webp',
+lrc: '2011_NB/CD1/Titanium.lrc',
+},
+{
+name: 'Turn Me On',
+artist: 'David Guetta feat. Nicki Minaj',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2011_NB/CD1/Turn Me On.m4a',
+cover: '2011_NB/cover.webp',
+lrc: '2011_NB/CD1/Turn Me On.lrc',
+},
+{
+name: 'She Wolf (Falling to Pieces)',
+artist: 'David Guetta feat. Sia',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2011_NB/CD1/She Wolf (Falling to Pieces).m4a',
+cover: '2011_NB/cover.webp',
+lrc: '2011_NB/CD1/She Wolf (Falling to Pieces).lrc',
+},
+{
+name: 'Without You',
+artist: 'David Guetta feat. Usher',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2011_NB/CD1/Without You.m4a',
+cover: '2011_NB/cover.webp',
+lrc: '2011_NB/CD1/Without You.lrc',
+},
+{
+name: 'I Can Only Imagine',
+artist: 'David Guetta feat. Chris Brown & Lil Wayne',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2011_NB/CD1/I Can Only Imagine.m4a',
+cover: '2011_NB/cover.webp',
+lrc: '2011_NB/CD1/I Can Only Imagine.lrc',
+},
+{
+name: 'Play Hard',
+artist: 'David Guetta feat. Ne-Yo & Akon',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2011_NB/CD1/Play Hard.m4a',
+cover: '2011_NB/cover.webp',
+lrc: '2011_NB/CD1/Play Hard.lrc',
+},
+{
+name: 'Wild One Two',
+artist: 'David Guetta & Nicky Romero (Jack Back) feat. Sia',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2011_NB/CD1/Wild One Two.m4a',
+cover: '2011_NB/cover.webp',
+lrc: '2011_NB/CD1/Wild One Two.lrc',
+},
+{
+name: 'Just One Last Time',
+artist: 'David Guetta feat. Taped Rai',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2011_NB/CD1/Just One Last Time.m4a',
+cover: '2011_NB/cover.webp',
+lrc: '2011_NB/CD1/Just One Last Time.lrc',
+},
+{
+name: 'In My Head',
+artist: 'David Guetta & Daddy\'s Groove feat. NERVO',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2011_NB/CD1/In My Head.m4a',
+cover: '2011_NB/cover.webp',
+lrc: '2011_NB/CD1/In My Head.lrc',
+},
+{
+name: 'Where Them Girls At',
+artist: 'David Guetta feat. Flo Rida & Nicki Minaj',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2011_NB/CD1/Where Them Girls At.m4a',
+cover: '2011_NB/cover.webp',
+lrc: '2011_NB/CD1/Where Them Girls At.lrc',
+},
+{
+name: 'Little Bad Girl',
+artist: 'David Guetta feat. Taio Cruz & Ludacris',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2011_NB/CD1/Little Bad Girl.m4a',
+cover: '2011_NB/cover.webp',
+lrc: '2011_NB/CD1/Little Bad Girl.lrc',
+},
+{
+name: 'Sweat',
+artist: 'Snoop Dogg vs. David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2011_NB/CD1/Sweat.m4a',
+cover: '2011_NB/cover.webp',
+lrc: '2011_NB/CD1/Sweat.lrc',
+},
+{
+name: 'Crank It Up',
+artist: 'David Guetta feat. Akon',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2011_NB/CD1/Crank It Up.m4a',
+cover: '2011_NB/cover.webp',
+lrc: '2011_NB/CD1/Crank It Up.lrc',
+},
+{
+name: 'Nothing Really Matters',
+artist: 'David Guetta feat. will.i.am',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2011_NB/CD1/Nothing Really Matters.m4a',
+cover: '2011_NB/cover.webp',
+lrc: '2011_NB/CD1/Nothing Really Matters.lrc',
+},
+{
+name: 'I Just Wanna F.',
+artist: 'David Guetta & Afrojack feat. Timbaland & Dev',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2011_NB/CD1/I Just Wanna F..m4a',
+cover: '2011_NB/cover.webp',
+lrc: '2011_NB/CD1/I Just Wanna F..lrc',
+},
+{
+name: 'Night of Your Life',
+artist: 'David Guetta feat. Jennifer Hudson',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2011_NB/CD1/Night of Your Life.m4a',
+cover: '2011_NB/cover.webp',
+lrc: '2011_NB/CD1/Night of Your Life.lrc',
+},
+{
+name: 'Repeat',
+artist: 'David Guetta feat. Jessie J',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2011_NB/CD1/Repeat.m4a',
+cover: '2011_NB/cover.webp',
+lrc: '2011_NB/CD1/Repeat.lrc',
+}]});</script>
+
+<h4 id="CD2-1"><a href="#CD2-1" class="headerlink" title="CD2"></a>CD2</h4><div id="aplayer2B"></div></script><script>const ap2B = new APlayer({container: document.getElementById("aplayer2B"),lrcType: 3,loop: "all",mutex: true,preload:"auto",audio: [{
+name: 'Every Chance We Get We Run',
+artist: 'David Guetta & Alesso feat. Tegan & Sara',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2011_NB/CD2/Every Chance We Get We Run.m4a',
+cover: '2011_NB/cover.webp',
+lrc: '2011_NB/CD2/Every Chance We Get We Run.lrc',
+},
+{
+name: 'Sunshine',
+artist: 'David Guetta & Avicii',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2011_NB/CD2/Sunshine.m4a',
+cover: '2011_NB/cover.webp',
+lrc: '',
+},
+{
+name: 'Lunar',
+artist: 'David Guetta & Afrojack',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2011_NB/CD2/Lunar.m4a',
+cover: '2011_NB/cover.webp',
+lrc: '',
+},
+{
+name: 'What the F***',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2011_NB/CD2/What the Fxxx.m4a',
+cover: '2011_NB/cover.webp',
+lrc: '',
+},
+{
+name: 'Metropolis',
+artist: 'David Guetta & Nicky Romero',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2011_NB/CD2/Metropolis.m4a',
+cover: '2011_NB/cover.webp',
+lrc: '',
+},
+{
+name: 'The Alphabeat',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2011_NB/CD2/The Alphabeat.m4a',
+cover: '2011_NB/cover.webp',
+lrc: '',
+},
+{
+name: 'Metro Music',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2011_NB/CD2/Metro Music.m4a',
+cover: '2011_NB/cover.webp',
+lrc: '',
+},
+{
+name: 'Toy Story',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2011_NB/CD2/Toy Story.m4a',
+cover: '2011_NB/cover.webp',
+lrc: '',
+},
+{
+name: 'The Future',
+artist: 'David Guetta & Afrojack',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2011_NB/CD2/The Future.m4a',
+cover: '2011_NB/cover.webp',
+lrc: '',
+},
+{
+name: 'Dreams',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2011_NB/CD2/Dreams.m4a',
+cover: '2011_NB/cover.webp',
+lrc: '',
+},
+{
+name: 'Paris',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2011_NB/CD2/Paris.m4a',
+cover: '2011_NB/cover.webp',
+lrc: '',
+},
+{
+name: 'Glasgow',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2011_NB/CD2/Glasgow.m4a',
+cover: '2011_NB/cover.webp',
+lrc: '',
+}]});</script>
+
+<h3 id="Listen-2014"><a href="#Listen-2014" class="headerlink" title="Listen 2014"></a>Listen 2014</h3><h4 id="CD1-2"><a href="#CD1-2" class="headerlink" title="CD1"></a>CD1</h4><div id="aplayer3A"></div></script><script>const ap3A = new APlayer({container: document.getElementById("aplayer3A"),lrcType: 3,loop: "all",mutex: true,preload:"auto",audio: [{
+name: 'Dangerous',
+artist: 'David Guetta feat. Sam Martin',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2014_Li/CD1/Dangerous.m4a',
+cover: '2014_Li/cover.webp',
+lrc: '2014_Li/CD1/Dangerous.lrc',
+},
+{
+name: 'What I Did For Love',
+artist: 'David Guetta feat. Emeli Sande',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2014_Li/CD1/What I Did For Love.m4a',
+cover: '2014_Li/cover.webp',
+lrc: '2014_Li/CD1/What I Did For Love.lrc',
+},
+{
+name: 'No Money No Love',
+artist: 'David Guetta & Showtek feat. feat. Elliphant & Ms. Dynamite',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2014_Li/CD1/No Money No Love.m4a',
+cover: '2014_Li/cover.webp',
+lrc: '2014_Li/CD1/No Money No Love.lrc',
+},
+{
+name: 'Lovers on the Sun',
+artist: 'David Guetta feat. Sam Martin',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2014_Li/CD1/Lovers on the Sun.m4a',
+cover: '2014_Li/cover.webp',
+lrc: '2014_Li/CD1/Lovers on the Sun.lrc',
+},
+{
+name: 'Goodbye Friend',
+artist: 'David Guetta feat. The Script',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2014_Li/CD1/Goodbye Friend.m4a',
+cover: '2014_Li/cover.webp',
+lrc: '2014_Li/CD1/Goodbye Friend.lrc',
+},
+{
+name: 'Lift Me Up',
+artist: 'David Guetta feat. Nico & Vinz and Ladysmith Black Mambazo',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2014_Li/CD1/Lift Me Up.m4a',
+cover: '2014_Li/cover.webp',
+lrc: '2014_Li/CD1/Lift Me Up.lrc',
+},
+{
+name: 'Listen',
+artist: 'David Guetta feat. John Legend',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2014_Li/CD1/Listen.m4a',
+cover: '2014_Li/cover.webp',
+lrc: '2014_Li/CD1/Listen.lrc',
+},
+{
+name: 'Bang My Head',
+artist: 'David Guetta feat. Sia',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2014_Li/CD1/Bang My Head.m4a',
+cover: '2014_Li/cover.webp',
+lrc: '2014_Li/CD1/Bang My Head.lrc',
+},
+{
+name: 'Yesterday',
+artist: 'David Guetta feat. Bebe Rexha',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2014_Li/CD1/Yesterday.m4a',
+cover: '2014_Li/cover.webp',
+lrc: '2014_Li/CD1/Yesterday.lrc',
+},
+{
+name: 'Hey Mama',
+artist: 'David Guetta feat. Nicki Minaj & Afrojack',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2014_Li/CD1/Hey Mama.m4a',
+cover: '2014_Li/cover.webp',
+lrc: '2014_Li/CD1/Hey Mama.lrc',
+},
+{
+name: 'Sun Goes Down',
+artist: 'David Guetta & Showtek feat. MAGIC! & Sonny Wilson',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2014_Li/CD1/Sun Goes Down.m4a',
+cover: '2014_Li/cover.webp',
+lrc: '2014_Li/CD1/Sun Goes Down.lrc',
+},
+{
+name: 'S.T.O.P.',
+artist: 'David Guetta feat. Ryan Tedder',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2014_Li/CD1/S.T.O.P..m4a',
+cover: '2014_Li/cover.webp',
+lrc: '2014_Li/CD1/S.T.O.P..lrc',
+},
+{
+name: 'I\'ll Keep Loving You',
+artist: 'David Guetta feat. Jaymes Young & Birdy',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2014_Li/CD1/I\'ll Keep Loving You.m4a',
+cover: '2014_Li/cover.webp',
+lrc: '2014_Li/CD1/I\'ll Keep Loving You.lrc',
+},
+{
+name: 'The Whisperer',
+artist: 'David Guetta feat. Sia',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2014_Li/CD1/The Whisperer.m4a',
+cover: '2014_Li/cover.webp',
+lrc: '2014_Li/CD1/The Whisperer.lrc',
+}]});</script>
+
+<h4 id="CD2-2"><a href="#CD2-2" class="headerlink" title="CD2"></a>CD2</h4><div id="aplayer3B"></div></script><script>const ap3B = new APlayer({container: document.getElementById("aplayer3B"),lrcType: 3,loop: "all",mutex: true,preload:"auto",audio: [{
+name: 'Bad',
+artist: 'David Guetta & Showtek feat. Vassy',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2014_Li/CD2/Bad.m4a',
+cover: '2014_Li/cover.webp',
+lrc: '2014_Li/CD2/Bad.lrc',
+},
+{
+name: 'Rise',
+artist: 'David Guetta feat. Skylar Grey',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2014_Li/CD2/Rise.m4a',
+cover: '2014_Li/cover.webp',
+lrc: '2014_Li/CD2/Rise.lrc',
+},
+{
+name: 'Shot Me Down',
+artist: 'David Guetta feat. Skylar Grey',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2014_Li/CD2/Shot Me Down.m4a',
+cover: '2014_Li/cover.webp',
+lrc: '2014_Li/CD2/Shot Me Down.lrc',
+},
+{
+name: 'Dangerous (Robin Schulz Remix)',
+artist: 'David Guetta feat. Sam Martin',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2014_Li/CD2/Dangerous (Robin Schulz Remix).m4a',
+cover: '2014_Li/cover.webp',
+lrc: '2014_Li/CD2/Dangerous (Robin Schulz Remix).lrc',
+}]});</script>
+
+<h3 id="7-2018"><a href="#7-2018" class="headerlink" title="7 2018"></a>7 2018</h3><h4 id="CD1-3"><a href="#CD1-3" class="headerlink" title="CD1"></a>CD1</h4><div id="aplayer4A"></div></script><script>const ap4A = new APlayer({container: document.getElementById("aplayer4A"),lrcType: 3,loop: "all",mutex: true,preload:"auto",audio: [{
+name: 'Don\'t Leave Me Alone',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2018_7/CD1/Don\'t Leave Me Alone.m4a',
+cover: '2018_7/cover.webp',
+lrc: '2018_7/CD1/Don\'t Leave Me Alone.lrc',
+},
+{
+name: 'Battle',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2018_7/CD1/Battle.m4a',
+cover: '2018_7/cover.webp',
+lrc: '2018_7/CD1/Battle.lrc',
+},
+{
+name: 'Flames',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2018_7/CD1/Flames.m4a',
+cover: '2018_7/cover.webp',
+lrc: '2018_7/CD1/Flames.lrc',
+},
+{
+name: 'Blame It On Love',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2018_7/CD1/Blame It On Love.m4a',
+cover: '2018_7/cover.webp',
+lrc: '2018_7/CD1/Blame It On Love.lrc',
+},
+{
+name: 'Say My Name',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2018_7/CD1/Say My Name.m4a',
+cover: '2018_7/cover.webp',
+lrc: '2018_7/CD1/Say My Name.lrc',
+},
+{
+name: 'Goodbye',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2018_7/CD1/Goodbye.m4a',
+cover: '2018_7/cover.webp',
+lrc: '2018_7/CD1/Goodbye.lrc',
+},
+{
+name: 'I\'m That Bitch',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2018_7/CD1/I\'m That Bitch.m4a',
+cover: '2018_7/cover.webp',
+lrc: '2018_7/CD1/I\'m That Bitch.lrc',
+},
+{
+name: 'Like I Do',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2018_7/CD1/Like I Do.m4a',
+cover: '2018_7/cover.webp',
+lrc: '2018_7/CD1/Like I Do.lrc',
+},
+{
+name: '2u',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2018_7/CD1/2u.m4a',
+cover: '2018_7/cover.webp',
+lrc: '2018_7/CD1/2u.lrc',
+},
+{
+name: 'She Knows How To Love Me',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2018_7/CD1/She Knows How To Love Me.m4a',
+cover: '2018_7/cover.webp',
+lrc: '2018_7/CD1/She Knows How To Love Me.lrc',
+},
+{
+name: 'Motto',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2018_7/CD1/Motto.m4a',
+cover: '2018_7/cover.webp',
+lrc: '2018_7/CD1/Motto.lrc',
+},
+{
+name: 'Drive',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2018_7/CD1/Drive.m4a',
+cover: '2018_7/cover.webp',
+lrc: '2018_7/CD1/Drive.lrc',
+},
+{
+name: 'Para Que Te Quedes',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2018_7/CD1/Para Que Te Quedes.m4a',
+cover: '2018_7/cover.webp',
+lrc: '2018_7/CD1/Para Que Te Quedes.lrc',
+},
+{
+name: 'Let It Be Me',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2018_7/CD1/Let It Be Me.m4a',
+cover: '2018_7/cover.webp',
+lrc: '2018_7/CD1/Let It Be Me.lrc',
+},
+{
+name: 'Light Headed',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2018_7/CD1/Light Headed.m4a',
+cover: '2018_7/cover.webp',
+lrc: '2018_7/CD1/Light Headed.lrc',
+}]});</script>
+
+<h4 id="CD2-3"><a href="#CD2-3" class="headerlink" title="CD2"></a>CD2</h4><div id="aplayer4B"></div></script><script>const ap4B = new APlayer({container: document.getElementById("aplayer4B"),lrcType: 3,loop: "all",mutex: true,preload:"auto",audio: [{
+name: 'Reach For Me',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2018_7/CD2/Reach For Me.m4a',
+cover: '2018_7/cover.webp',
+lrc: '',
+},
+{
+name: 'Freedom',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2018_7/CD2/Freedom.m4a',
+cover: '2018_7/cover.webp',
+lrc: '2018_7/CD2/Freedom.lrc',
+},
+{
+name: 'Grenade',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2018_7/CD2/Grenade.m4a',
+cover: '2018_7/cover.webp',
+lrc: '',
+},
+{
+name: 'Inferno',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2018_7/CD2/Inferno.m4a',
+cover: '2018_7/cover.webp',
+lrc: '',
+},
+{
+name: 'Overtone',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2018_7/CD2/Overtone.m4a',
+cover: '2018_7/cover.webp',
+lrc: '',
+},
+{
+name: 'Back And Forth',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2018_7/CD2/Back And Forth.m4a',
+cover: '2018_7/cover.webp',
+lrc: '',
+},
+{
+name: 'Pelican',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2018_7/CD2/Pelican.m4a',
+cover: '2018_7/cover.webp',
+lrc: '',
+},
+{
+name: 'Afterglow',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2018_7/CD2/Afterglow.m4a',
+cover: '2018_7/cover.webp',
+lrc: '',
+},
+{
+name: 'Think Think Think',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2018_7/CD2/Think Think Think.m4a',
+cover: '2018_7/cover.webp',
+lrc: '',
+},
+{
+name: 'Orion',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2018_7/CD2/Orion.m4a',
+cover: '2018_7/cover.webp',
+lrc: '',
+},
+{
+name: 'What 2 Say',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2018_7/CD2/What 2 Say.m4a',
+cover: '2018_7/cover.webp',
+lrc: '',
+},
+{
+name: 'Just A Little More Love (Jack Back 2018 Remix)',
+artist: 'David Guetta',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/David_Guetta/2018_7/CD2/Just A Little More Love (Jack Back 2018 Remix).m4a',
+cover: '2018_7/cover.webp',
+lrc: '2018_7/CD2/Just A Little More Love (Jack Back 2018 Remix)',
+}]});</script>
+
+<hr>
+<h3 id="Baidu"><a href="#Baidu" class="headerlink" title="Baidu"></a>Baidu</h3><p>大卫·库塔（David Guetta），本名皮埃尔·詹姆斯·库塔（Pierre James Guetta），1967年11月7日出生于法国巴黎，法国DJ、音乐制作人、歌手。</p>
+<p>2002年，发行个人首张专辑《再爱多一点》并正式出道。2004年，发行第二张个人专辑《轰狂趴踢》。2009年8月，发行个人第四张专辑《One Love》，并凭借专辑获得第52届格莱美最佳电子&#x2F;舞曲专辑奖提名。2010年，凭借歌曲《When Love Takes Over》获得第52届格莱美最佳非古典混音录制奖。2011年，大卫·库塔被英国《DJ杂志》评为年度百大DJ排行榜第一名；8月6日，发行专辑《Nothing But the Beat》 ；同年，凭借歌曲《Revolver》获得第53届格莱美最佳非古典混音录制奖。2012年，获得AMA最受欢迎电子舞曲音乐奖。2016年9月，发行单曲《Would I Lie To You》。2017年，获得MTV欧洲音乐奖最佳电子艺人奖。2020年，大卫·库塔再次成为《DJ杂志》年度百大DJ排行榜第一名。</p>
+<h4 id="演艺经历"><a href="#演艺经历" class="headerlink" title="演艺经历"></a>演艺经历</h4><p>20世纪90年代，大卫·库塔开始在夜店表演并担任DJ。1994年，库塔与美国House歌手Robert Owens推出单曲《Up&amp;Away》。同年，库塔开始担任夜店经理，并在其他夜店举行许多活动。2001年，大卫·库塔与同为DJ的Joachim Garraud共同创立Gum Productions唱片公司，并于同年与美国福音歌手Chris Willis合作推出单曲《Just A Little More Love》。2002年，发行首张个人专辑《再爱多一点》，专辑收录了《Love Don’t Let Me Go》等歌曲。</p>
+<p>2003年，发行音乐合辑《Fuck Me I’m Famous》，该专辑收录了大卫·鲍伊的单曲《Heroes》的重混版本歌曲《Just for One Day （Heroes）》，之后所发表的合辑皆使用“Fuck Me I’m Famous”为名。</p>
+<p>2004年，发行第二张个人专辑《轰狂趴踢》，该专辑共收录了《Money》、《Stay》等四支歌曲。2007年，发行第三张个人专辑《独领风骚》。2009年8月，发行第四张个人专辑《One Love》，该专辑获得第52届格莱美最佳电子&#x2F;舞曲专辑奖提名 ；11月27日，发行第四张专辑的第二个版本《One More Love》，专辑追加了与蕾哈娜合作的《Who’s That Chick?》等歌曲，其中专辑歌曲《When Love Takes Over》获第52届格莱美奖最佳非古典混音录制奖。</p>
+<p>2011年1月，大卫·库塔被提名为第31届全英音乐奖最佳国际男歌手奖 ；5月2日，发行专辑《Nothing But The Beat》，其中收录了与泰欧·克鲁斯和卢达·克里斯合作的单曲《Little Bad Girl》、与亚瑟小子合作的单曲《Without You》、与妮琪·米娜合作的单曲《Turn Me On》、与Avicii合作的单曲《Sunshine》，也收录了几首与希雅·凯特·富勒、Afrojack和詹妮弗·哈德森等人合作的单曲 ；8月30日，发行第五张个人专辑《Nothing But the Beat》，该专辑获第54届格莱美奖最佳电子&#x2F;舞曲专辑奖提名 ，同时专辑内歌曲《Revolver》获得第53届格莱美奖最佳非古典混音录制奖。</p>
+<p>2012年1月，被提名为第32届全英音乐奖最佳国际男歌手奖 ；9月10日，发行专辑《Nothing But the Beat》的第二版本《Nothing But the Beat 2.0》 ；同年，发行专辑《Nothing But the Beat Ultimate》，收录了专辑《Nothing But the Beat》与《Nothing But the Beat 2.0》中的所有歌曲。</p>
+<p>2013年，与卢达·克里斯、亚瑟小子共同演唱电影《速度与激情6》的插曲《Rest Of My Life》；7月5日，发行与Harrison合作的单曲《Ain’t A Party》。2014年6月30日，发行专辑《Lovers On The Sun》；11月3日，发行与Sam Martin合作的单曲《Dangerous》 ；11月24日，发行专辑《Listen》。2015年11月27日，重新发布改版后的个人专辑《Listen Again》 ；12月9日，与日本歌手安室奈美惠合作发行歌曲《What I Did For Love》。2016年1月29日，与瑞典歌手莎拉·拉尔森合作发行法国欧洲杯足球赛官方歌曲《This One’s For You》 ；9月30日，发行单曲《Would I Lie To You》。</p>
+<p>2017年6月，与贾斯汀·比伯合作发行单曲《2U》；11月，获得MTV欧洲音乐奖最佳电子艺人奖 ；12月1日，与马丁·盖瑞斯、Jamie Scott以及Romy合作发行单曲《So Far Away》。2018年2月，与马丁·盖瑞斯、Brooks合作发行单曲《Like I Do》；8月24日，与Jason Derulo和Nicki Minaj合作发行单曲《Goodbye》。2020年10月2日，参与制作由韩国女子组合BLACKPINK演唱的的单曲《Lovesick Girls》随专辑《THE ALBUM》发布。</p>
+<p>2020年11月，大卫·库塔获得2020年MTV欧洲音乐奖最佳电子奖项。 同月， 大卫·库塔再次成为《DJ杂志》年度百大DJ排行榜第一名。</p>
+<p>2022年7月，加盟电音联盟。</p>
+<h4 id="人物评价"><a href="#人物评价" class="headerlink" title="人物评价"></a>人物评价</h4><p>大卫·库塔是DJ的领头人物，他在用音乐才华征服世界。他作为一名制作人或许是成功的，但是他总是把自己当成一名DJ，因为他很喜欢做音乐。大卫·库塔被称为法国“国宝级”音乐人和“世界第一DJ”，他的音乐总是能够点燃全场观众的激情。（搜狐、《DJ Magazine》评）<br>大卫·库塔引领全球时尚夜店的潮流，他受到全球时尚夜店顾客的追捧。他算是House届有名的音乐人。同时大卫·库塔也获得了国际性的成功 ，他的每张专辑都是野心之作，而这也会为流行与舞曲界添上一道新的风景线。（新浪、网易、人民网、腾讯评）</p>
+<h3 id="Wiki"><a href="#Wiki" class="headerlink" title="Wiki"></a>Wiki</h3><p>皮埃尔·“大卫”·雅姆·库塔（法语：Pierre “David” James Guetta，法语发音：[pjɛʁ david ɡɛta];&#x2F;ˈɡɛtə&#x2F;，1967年11月7日—），出生于巴黎，是法国一位浩室唱片骑师及音乐制作人。</p>
+<p>库塔在1980年至1990年代原于夜店担任DJ，2001年创立Gum Productions唱片公司并于隔年发行首张专辑《再爱多一点》，之后又分别于2004年与2007年发行《轰狂趴踢》与《独领风骚》两张专辑，其中还收录了库塔的畅销单曲《Delirious》。库塔在2009年发行的专辑《舞动真爱》为他打入了主流市场，收录的三首歌《真爱奇袭》、《Gettin’ Over You》和《Sexy Bitch》更是皆登上英国单曲排行榜的第一名。2011年的专辑《舞动全世界》更是收录了如《Where Them Girls At》、《Little Bad Girl》、《Without You》、《金刚不坏》及《Turn Me On》等多首热门单曲。</p>
+<p>库塔是目前世界上最著名、最受推崇的DJ之一，曾数次获格莱美奖。据统计，库塔已经销售超过6百万张专辑与1千5百万支单曲。英国DJ杂志于2011年和2020年和2021年将他列为百大DJ排行榜的首位。</p>
+<h4 id="生平"><a href="#生平" class="headerlink" title="生平"></a>生平</h4><h5 id="早年"><a href="#早年" class="headerlink" title="早年"></a>早年</h5><p>1990年代中期，库塔即开始于几间知名的夜店表演。1994年，库塔与美国浩室歌手Robert Owens推出单曲《Up &amp; Away》，在夜店小有知名度。。同年库塔开始担任夜店经理，并在其他夜店举行许多活动。</p>
+<h5 id="三张专辑和逐渐成名（2001－2008年）"><a href="#三张专辑和逐渐成名（2001－2008年）" class="headerlink" title="三张专辑和逐渐成名（2001－2008年）"></a>三张专辑和逐渐成名（2001－2008年）</h5><p>2001年，库塔与同为法国DJ的Joachim Garraud共同创立Gum Productions唱片公司，并于同年与美国福音歌手Chris Willis合作推出单曲《Just A Little More Love》，库塔在Willis至法国度假时认识他。库塔的首张专辑《再爱多一点》于2002年由维珍唱片发行，销售超过300,000张。专辑内的几支单曲《Love Don’t Let Me Go》、《People Come People Go》和《Give Me Something》也于2002年相继发行。库塔于2003年推出合辑《Fuck Me I’m Famous》，此专辑收录了大卫·鲍伊的单曲《Heroes》的重混版本《Just for One Day (Heroes)》。库塔之后所发表的合辑皆使用“Fuck Me I’m Famous”为名。库塔也于2004年发行第二张专辑《轰狂趴踢》，并发行《Money》、《Stay》、《The World Is Mine》和《In Love With Myself》等四支收录在专辑中的单曲。</p>
+<p>2007年，库塔发行第三张专辑《独领风骚》，此张专辑在欧洲各地都创下销售佳绩。据EMI于2010年的统计，专辑在世界各地总共销售达530,000张。专辑的首支单曲《Love Is Gone》也在公告牌舞曲&#x2F;电子单曲榜登上第一位。库塔为此张专辑的宣传至世界各地进行巡回表演。他与法国说唱歌手JoeyStarr于2008年1月至毛里求斯表演。同年，库塔与妻子凯西·库塔策划于7月5日在法兰西体育场，名为“UNIGHTED”的表演活动。库塔与提雅斯多、卡尔·考克斯和Martin Solveig等多位知名DJ在40,000多人面前进行表演。</p>
+<p>2009年，库塔登上了DJ杂志百大DJ排行榜的第三名，并获得DJ Awards颁发的2008年最佳浩室DJ奖项。2009年4月起，库塔在RauteMusik.FM网络电台于每周六晚间有了自己的广播节目。荷兰电台Radio 538后更邀库塔制作广播节目，名为“David Guetta DJ Mix”，在提雅斯多的节目“Tiësto’s Club Life”后播出。</p>
+<h5 id="《舞动真爱》（2009－2010年）"><a href="#《舞动真爱》（2009－2010年）" class="headerlink" title="《舞动真爱》（2009－2010年）"></a>《舞动真爱》（2009－2010年）</h5><p>库塔的第四张专辑《舞动真爱》于2009年8月发行。库塔和凯莉·罗兰合作首支单曲《真爱奇袭》与和阿肯合作的第二支单曲《Sexy Bitch》，皆登上了英国单曲排行榜的第一名。专辑内也收录如库塔与艾丝黛儿合作的《One Love》、与基德·酷迪合作的《Memories》、和与Chris Willis、菲姬、笑本部合作的《Gettin’ Over You》等多支畅销单曲。截至2011年5月，《舞动真爱》在全世界已销售达3,000,000张。《舞动真爱》也在第52届格莱美奖入围最佳电子&#x2F;舞曲专辑，《When Love Takes Over》更是入围最佳舞曲录音和最佳非古典混音录制两奖，并获得了后者。库塔也于2010年11月29日发行专辑的第二个版本《One More Love》，增加收录了如与蕾哈娜合作的《Who’s That Chick?》等歌曲。</p>
+<p>2009年6月19日，黑眼豆豆发行了由库塔制作的单曲《I Gotta Feeling》，创下了当时单曲下载的记录，在美国及英国分别销售超过7,500,000和1,000,000支。这首歌也入围了第52届格莱美奖最佳舞曲录音。2010年，库塔制作凯莉·罗兰《Here I Am》专辑中的两支单曲《Commander》和《Forever and a Day》。库塔也为美国歌手酷莉丝的第五张专辑《Flesh Tone》制作两支单曲《Acapella》和《Scream》。2010年6月28日，美国歌手佛罗·里达发行由库塔制作的一支单曲《Club Can’t Handle Me》，这首歌也被收录在电影《舞出我人生3》的原声带中。</p>
+<h5 id="《舞动全世界》（2011年－至今）"><a href="#《舞动全世界》（2011年－至今）" class="headerlink" title="《舞动全世界》（2011年－至今）"></a>《舞动全世界》（2011年－至今）</h5><p>库塔于2011年8月30日发行他个人的第五张专辑《舞动全世界》，专辑分为两张CD，一张为人声搭配，一张则是纯器乐歌曲。库塔称这张专辑的制作受到了摇滚乐队里昂王族和酷玩乐队影响。首支单曲《Where Them Girls At》与佛罗·里达和妮琪·米娜合作，于2011年5月2日发行，与泰欧·克鲁斯和路达克里斯合作的《Little Bad Girl》、、与亚瑟小子合作的《Without You》、与妮琪·米娜合作的《Turn Me On》也相继发行。专辑内也收录了几首与希雅、Afrojack和珍妮弗·赫德森等人合作的单曲。</p>
+<p>库塔于2012年9月10日发行《舞动全世界》的第二版本《舞动全世界2.0》。这张专辑收录了如再次与希雅合作的《She Wolf (Falling to Pieces)》、与瑞典组合Taped Rai合作的《Just One Last Time》、与尼欧和阿肯合作的《Play Hard》等几支单曲。库塔也于2012年发行《舞动全世界：最终版》，收录了《舞动全世界》与《舞动全世界2.0》中的所有歌曲。</p>
+<p>库塔也释出纪录片《舞动全世界》，描述了库塔的一生，包括他的成名过程等，凯莉·罗兰、will.i.am、史努比狗狗等也有参与纪录片的拍摄。这部纪录片是由库塔与可口可乐公司旗下的机能饮料品牌burn合作推出，库塔于2011年担任burn的代言人。库塔亦为新起DJ的培训与burn合作，于伊维萨推行名为“burn studios residency”计划。</p>
+<p>库塔还受邀负责制作蕾哈娜第七张专辑《道歉太难》，并协助举办蕾哈娜“Diamonds World Tour”巡演的欧洲场次。</p>
+<p>库塔与妻子凯西·库塔出席于2012年NRJ音乐奖颁奖典礼<br>库塔自己成立了一间名为Jack Back Records的唱片公司，主要专注于发行有关电子音乐的歌曲。唱片公司发行的首支单曲为库塔与荷兰DJ Nicky Romero合作的歌曲《Metropolis》，这首歌也收录在《舞动全世界2.0》中。唱片公司的歌曲主要在Beatport上发行。</p>
+<h4 id="个人生活"><a href="#个人生活" class="headerlink" title="个人生活"></a>个人生活</h4><p>库塔的父母皆为餐馆老板，库塔于1992年与名媛及夜店经理凯西·库塔（Cathy Guetta）结婚，并于2012年举办庆祝结婚20周年的典礼。两人育有两子，分别为2004年出生的Tim Elvis Eric与2007年出生的Angie。</p>
+<p><strong><a target="_blank" rel="noopener" href="https://music.apple.com/cn/artist/david-guetta/5557599">Apple Music - David Guetta</a></strong></p>
+
+      </section>
+      
+        <div class="post-tags">
+          <span>标签：</span>
+          
+  <a href="/tags#音乐" >
+    <span class="tag-code">音乐</span>
+  </a>
+
+        </div>
+       
+    
+    
+  <div class="nav-container">
+    <!-- reverse left and right to put prev and next in a more logic postition -->
+    
+      <a class="nav-left" href="/listen/Imagine_Dragons/" target="_blank">
+        <span class="nav-arrow">← </span>
+        
+          Imagine Dragons
+        
+      </a>
+    
+    
+      <a class="nav-right" href="/poem/20/" target="_blank">
+        
+          20（喷水叽）
+        
+        <span class="nav-arrow"> →</span>
+      </a>
+    
+  </div>
+
+    
+      <div class="advertisement">
+        <p> 广告：快速学习 Crash Course十分钟速成课 <a target="_blank" rel="noopener" href="https://crashcourse.club/">字幕组网站</a></p>
+      </div>
+    
+    
+      <div id="waline"></div>
+
+<link href="https://cdn.bootcdn.net/ajax/libs/waline/2.15.5/waline.min.css" rel="stylesheet">
+<script src="//cdn.bootcdn.net/ajax/libs/waline/2.15.5/waline.min.js"></script>
+<script defer src="/js/waline-qqavatar.js"></script>
+<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/waline/2.14.9/waline.min.js"></script>-->
+<!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/waline/2.14.9/waline.min.css">-->
+
+<script>
+  // 中文默认
+  const locale = {
+    nick: '昵称',
+    nickError: '昵称不能少于3个英文字符或2个中文汉字',
+    mail: '邮箱(可用QQ邮箱获取头像)',
+    mailError: '请填写正确的邮件地址',
+    link: '网址',
+    optional: '可选',
+    placeholder: '' || '说、什么8 \n\n可使用QQ邮箱获取QQ头像，或在gravatar.com注册后使用邮箱绑定头像 \n支持Markdown语法：*斜体*, **粗体**, \# - ###### 1-6级标题, *** 或 --- = 水平分割线, ~~删除线~~, > 引用内容, `代码块`, 1. 序号列表, * 无序列表, ^上角标^, ~下角标~, <br> = 空行, [链接文字](链接地址), ![图片名称](图片地址.png), ',
+    sofa: '来发评论吧~',
+    submit: '提交',
+    like: '喜欢',
+    cancelLike: '取消喜欢',
+    reply: '回复',
+    cancelReply: '取消回复',
+    comment: '评论',
+    refresh: '刷新',
+    more: '加载更多...',
+    preview: '预览',
+    emoji: '表情',
+    uploadImage: '上传图片',
+    seconds: '秒前',
+    minutes: '分钟前',
+    hours: '小时前',
+    days: '天前',
+    now: '刚刚',
+    uploading: '正在上传',
+    login: '登录',
+    logout: '退出',
+    admin: '博主',
+    sticky: '置顶',
+    word: '字',
+    wordHint: '评论字数应在 $0 到 $1 字之间！\n当前字数：$2',
+    anonymous: '匿名',
+    level0: '潜水',
+    level1: '冒泡',
+    level2: '吐槽',
+    level3: '活跃',
+    level4: '话痨',
+    level5: '传说',
+    gif: '表情包',
+    gifSearchPlaceholder: '搜索表情包',
+    profile: '个人资料',
+    approved: '通过',
+    waiting: '待审核',
+    spam: '垃圾',
+    unsticky: '取消置顶',
+    oldest: '按倒序',
+    latest: '按正序',
+    hottest: '按热度',
+    reactionTitle: '你认为这篇文章怎么样？',
+  };
+
+  Waline.init({
+    el: "#waline",
+    serverURL: "waline.voiiu.com",
+    appId: "" || "M2JD6yGQhefhH2O0aSjFfclc-MdYXbMMI",
+    appKey: "" || "arEPHdbMnKwMjQgiWsLgw34N",
+    path:  "" || window.location.pathname,  // window.location.pathname.replace(/\/$/,''),
+    login: "disable",  // 'enable' || 'disable' || 'force'
+    avatarCDN: "https://gravatar.loli.top/avatar/",
+    //avatar: '',
+    placeholder: "",
+    pageSize: 10,
+    meta: ["nick", "mail"],
+    requiredMeta: [""],
+    pageview: "true" && "",
+    emoji: [
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/tieba",
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/weibo",
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/qq",
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/alus",
+      "https://testingcf.jsdelivr.net/gh/Saidosi/azuki-emoji-for-waline@1.0/azukisan",
+      "https://testingcf.jsdelivr.net/gh/norevi/blob-emoji-for-waline@2.0/blobs-gif",
+    ],
+    locale,
+  });
+
+  $('.wl-actions').append("<a href=https://emoji.zhuochi.org target=_blank id=wl-emoji-wrapper><img src=/images/emoji.png class=wl-action id=wl-emoji></a>")
+
+  //// Clean TEXTAREA 
+  //$(".wl-cards").change(function () {
+  //  alert('changed')
+    //('#wl-edit').html("")
+  //})
+  
+  //! Not functional
+  //$(".primary .wl-btn").click(function () {
+    //document.getElementsByClassName('wl-num')[0].innerHTML ++
+  //})
+</script>
+    
+    
+    
+      <div class="qrcode" id="qr-box">
+    <img id="share-qrcode" class="qrcode-image" src=""/>
+    <div class="qrcode-notice">保存二维码，分享此文章</div>
+</div>
+
+<!--<script type="text/javascript" src="/js/qrious.min.js"></script>-->
+<script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/qrious/4.0.2/qrious.min.js" ></script>
+<script>
+    // qrcode
+    let qr = new QRious({
+        background: '#F0FFFF',
+        backgroundAlpha: 1,
+        foreground: '#0096FF',
+        foregroundAlpha: 0.8,
+        level: 'L',
+        mime: "image/gif",
+        padding: null, // pixels
+        size: 100,
+        element: document.getElementById('share-qrcode'),
+        value: document.location.href,
+    })
+
+    $("#share-qrcode").click(function () {
+        let img = document.getElementById('share-qrcode')
+        let imgurl = img.src
+        let a = document.createElement('a')
+        let down_event = new MouseEvent('click')
+        a.download = 'David Guetta-CloudPool浊池'
+        a.href = imgurl
+        a.dispatchEvent(down_event)
+    })
+</script>
+
+
+    
+  </article>
+</main>
+
+<script>
+    (function () {
+      var url = "https://zhuochi.org/listen/David_Guetta/";
+      var banner = "";
+      if (banner !== "" && banner !== "undefined" && banner !== "null") {
+        $("#article-banner").css({
+          "background-image": "url(" + banner + ")",
+        });
+      } else {
+        $("#article-banner").geopattern(url);
+      }
+      $(".header").removeClass("fixed-header");
+    })();
+  </script>
+
+<script>
+  // error image
+  $(".markdown-content img").on("error", function () {
+    $(this).attr("src", "/images/error.png");
+    $(this).css({cursor: "default",});
+  });
+</script>
+ 
+    <aside class="sidebar">
+  <span class="scroll-top fa fa-arrow-up"></span>
+  <span class="fa fa-share-alt share-icon">
+    <span class="list-icon">
+      
+        <a href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=https://zhuochi.org/listen/David_Guetta/index.html&title=David Guetta&pics=https://zhuochi.org/images/logo.svg&desc=4 Albums, 102 Songs&summary=CloudPool浊池是由年轻人管理的博客" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659969569042" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1231"><path d="M1023.210667 395.690667c-2.005333-6.08-7.381333-10.410667-13.781333-10.944l-347.114667-29.802667L526.634667 33.984C524.117333 28.096 518.4 24.256 512 24.256s-12.181333 3.861333-14.677333 9.749333l-135.616 320.938667L14.570667 384.746667c-6.357333 0.533333-11.797333 4.864-13.781333 10.944-1.941333 6.101333-0.106667 12.778667 4.714667 16.96l263.338667 228.138667L189.888 980.16c-1.429333 6.208 1.002667 12.757333 6.122667 16.512 5.205333 3.733333 12.117333 4.010667 17.642667 0.682667L512 817.450667l298.282667 179.946667c2.581333 1.557333 5.418667 2.346667 8.32 2.346667 3.221333 0 6.528-1.002667 9.344-3.008 5.162667-3.84 7.594667-10.368 6.122667-16.576l-62.442667-268.352c26.730667-13.482667 56.277333-36.245333 56.277333-36.245333s-116.864 57.066667-536.341333 29.205333L595.626667 484.437333c0 0-11.968-18.581333-392.981333-31.872-25.408-0.917333 310.677333-63.722667 558.933333-10.645333L456.298667 660.906667c0 0 122.453333 18.197333 307.328 16.085333l-8.448-36.181333 263.36-228.16C1023.381333 408.469333 1025.216 401.792 1023.210667 395.690667z" p-id="1232" fill="#04b2f1"></path></svg>
+        </a> 
+      
+      
+        <a href="https://service.weibo.com/share/share.php?url=https://zhuochi.org/listen/David_Guetta/index.html&title=David Guetta&pic=https://zhuochi.org/images/logo.svg&summary=4 Albums, 102 Songs" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659970330786" class="icon" viewBox="0 0 1138 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="3639" fill="#04b2f1"><path d="M914.432 518.144q27.648 21.504 38.912 51.712t9.216 62.976-14.336 65.536-31.744 59.392q-34.816 48.128-78.848 81.92t-91.136 56.32-94.72 35.328-89.6 18.944-75.264 7.68-51.712 1.536-49.152-2.56-68.096-10.24-78.336-21.504-79.872-36.352-74.24-55.296-59.904-78.848q-16.384-29.696-22.016-63.488t-5.632-86.016q0-22.528 7.68-51.2t27.136-63.488 53.248-75.776 86.016-90.112q51.2-48.128 105.984-85.504t117.248-57.856q28.672-10.24 63.488-11.264t57.344 11.264q10.24 11.264 19.456 23.04t12.288 29.184q3.072 14.336 0.512 27.648t-5.632 26.624-5.12 25.6 2.048 22.528q17.408 2.048 33.792-1.536t31.744-9.216 31.232-11.776 33.28-9.216q27.648-5.12 54.784-4.608t49.152 7.68 36.352 22.016 17.408 38.4q2.048 14.336-2.048 26.624t-8.704 23.04-7.168 22.016 1.536 23.552q3.072 7.168 14.848 13.312t27.136 12.288 32.256 13.312 29.184 16.384zM656.384 836.608q26.624-16.384 53.76-45.056t44.032-64 18.944-75.776-20.48-81.408q-19.456-33.792-47.616-57.344t-62.976-37.376-74.24-19.968-80.384-6.144q-78.848 0-139.776 16.384t-105.472 43.008-72.192 60.416-38.912 68.608q-11.264 33.792-6.656 67.072t20.992 62.976 42.496 53.248 57.856 37.888q58.368 25.6 119.296 32.256t116.224 0.512 100.864-21.504 74.24-33.792zM522.24 513.024q20.48 8.192 38.912 18.432t32.768 27.648q10.24 12.288 17.92 30.72t10.752 39.424 1.536 42.496-9.728 38.912q-8.192 18.432-19.968 37.376t-28.672 35.328-40.448 29.184-57.344 18.944q-61.44 11.264-117.76-11.264t-88.064-74.752q-12.288-39.936-13.312-70.656t16.384-66.56q13.312-27.648 40.448-51.712t62.464-38.912 75.264-17.408 78.848 12.8zM359.424 764.928q37.888 3.072 57.856-18.432t21.504-48.128-15.36-47.616-52.736-16.896q-27.648 3.072-43.008 23.552t-17.408 43.52 9.728 42.496 39.424 21.504zM778.24 6.144q74.752 0 139.776 19.968t113.664 57.856 76.288 92.16 27.648 122.88q0 33.792-16.384 50.688t-35.328 17.408-35.328-14.336-16.384-45.568q0-40.96-22.528-77.824t-59.392-64.512-84.48-43.52-96.768-15.872q-31.744 0-47.104-15.36t-14.336-34.304 18.944-34.304 51.712-15.36zM778.24 169.984q95.232 0 144.384 48.64t49.152 146.944q0 30.72-10.24 43.52t-22.528 11.264-22.528-14.848-10.24-35.84q0-60.416-34.816-96.256t-93.184-35.84q-19.456 0-28.672-10.752t-9.216-23.04 9.728-23.04 28.16-10.752z" p-id="3640"></path></svg>
+        </a>
+      
+      
+        <a href="https://www.douban.com/recommend/?url=https://zhuochi.org/listen/David_Guetta/index.html&title=David Guetta&pic=https://zhuochi.org/images/logo.svg&summary=4 Albums, 102 Songs" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659970941550" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1055"><path d="M88 72.9h848v95.5H88z" p-id="1056" fill="#04b2f1"></path><path d="M88 72.9h848v95.5H88zM862.3 641.5V268H161.7v373.5h700.6zM263.4 363.4h498.4v182.5H263.4V363.4z" p-id="1057" fill="#04b2f1"></path><path d="M862.3 641.5V268H161.7v373.5h700.6zM263.4 363.4h498.4v182.5H263.4V363.4zM710.8 856.7c30.5-46.7 59.3-100.8 85.9-162.2l-102-37.2c-26.5 72.8-57.4 139.4-92.5 199.4H424.9c-29.4-77.8-62.6-144.3-99.8-199.4l-93.8 37.2c38.6 58 69.9 111.9 93.8 162.2H64v94.5h896v-94.5H710.8z" p-id="1058" fill="#04b2f1"></path><path d="M710.8 856.7c30.5-46.7 59.3-100.8 85.9-162.2l-102-37.2c-26.5 72.8-57.4 139.4-92.5 199.4H424.9c-29.4-77.8-62.6-144.3-99.8-199.4l-93.8 37.2c38.6 58 69.9 111.9 93.8 162.2H64v94.5h896v-94.5H710.8z" p-id="1059" fill="#04b2f1"></path></svg>
+        </a>
+      
+      
+        <a href="http://tieba.baidu.com/f/commit/share/openShareApi?url=https://zhuochi.org/listen/David_Guetta/index.html&title=David Guetta&pic=https://zhuochi.org/images/logo.svg&desc=4 Albums, 102 Songs" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659968685554" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1659"><path d="M1024 862.826667a161.152 161.152 0 0 1-161.173333 161.173333h-701.632a161.152 161.152 0 0 1-161.173334-161.173333v-701.632a161.194667 161.194667 0 0 1 161.173334-161.173334h701.632a161.194667 161.194667 0 0 1 161.173333 161.173334v701.632z" fill="#04b2f1" p-id="1660"></path><path d="M828.842667 250.261333h-173.461334v-36.522666a17.066667 17.066667 0 0 0-17.066666-17.066667h-41.941334a17.045333 17.045333 0 0 0-17.045333 17.066667v263.296h-24.896a17.066667 17.066667 0 0 0-17.045333 17.066666V810.218667a17.066667 17.066667 0 0 0 17.045333 17.088h257.365333a17.066667 17.066667 0 0 0 17.066667-17.088v-58.986667h-0.256v-198.144h0.256v-58.986667a17.066667 17.066667 0 0 0-17.066667-17.066666H655.381333v-150.72h173.461334a17.066667 17.066667 0 0 0 17.066666-17.066667v-41.941333a17.066667 17.066667 0 0 0-17.066666-17.045334z m-93.376 302.848c9.429333 0 17.045333 7.637333 17.045333 17.066667v164.010667a17.066667 17.066667 0 0 1-17.045333 17.066666h-104.981334a17.045333 17.045333 0 0 1-17.045333-17.066666v-164.010667a17.066667 17.066667 0 0 1 17.045333-17.066667h104.981334zM197.909333 657.408h41.941334a17.088 17.088 0 0 0 17.088-17.088v-358.741333h174.528v358.741333a17.066667 17.066667 0 0 0 17.045333 17.088h41.941333a17.088 17.088 0 0 0 17.088-17.088v-417.749333c0-9.408-7.658667-17.066667-17.088-17.066667h-292.522666a17.066667 17.066667 0 0 0-17.045334 17.066667v417.749333a17.024 17.024 0 0 0 17.024 17.088z" fill="#FFFFFF" p-id="1661"></path><path d="M492.970667 739.2v-0.170667a110.656 110.656 0 0 1-110.656-110.656h-0.106667v-296.042666a17.066667 17.066667 0 0 0-17.066667-17.045334h-41.941333a17.045333 17.045333 0 0 0-17.045333 17.045334v296.042666h-0.362667a110.677333 110.677333 0 0 1-110.677333 110.656v0.170667a17.045333 17.045333 0 0 0-17.045334 17.066667v42.112a17.066667 17.066667 0 0 0 17.045334 17.066666 186.602667 186.602667 0 0 0 148.928-74.176 186.624 186.624 0 0 0 148.928 74.176 17.045333 17.045333 0 0 0 17.045333-17.066666v-42.112a17.024 17.024 0 0 0-17.045333-17.066667z" fill="#FFFFFF" p-id="1662"></path><path d="M865.450667 873.685333c17.664-3.797333 15.253333-24.896 14.741333-29.504-0.874667-7.125333-9.237333-19.541333-20.586667-18.581333-14.293333 1.28-16.362667 21.930667-16.362666 21.930667-1.962667 9.557333 4.608 29.952 22.208 26.154666z m18.752 36.693334c-0.533333 1.493333-1.664 5.290667-0.682667 8.597333 1.962667 7.402667 8.405333 7.744 8.405333 7.744h9.258667v-22.613333h-9.898667a10.837333 10.837333 0 0 0-7.082666 6.272z m14.037333-72.085334c9.749333 0 17.621333-11.221333 17.621333-25.109333 0-13.866667-7.872-25.088-17.621333-25.088-9.728 0-17.642667 11.221333-17.642667 25.088 0 13.888 7.893333 25.109333 17.642667 25.109333z m41.984 1.664c13.034667 1.706667 21.418667-12.202667 23.082667-22.762666 1.706667-10.538667-6.698667-22.762667-15.936-24.853334-9.258667-2.112-20.778667 12.672-21.845334 22.357334-1.258667 11.797333 1.685333 23.573333 14.698667 25.258666z m31.936 61.973334s-20.16-15.594667-31.936-32.448c-15.957333-24.874667-38.634667-14.762667-46.208-2.112-7.552 12.650667-19.328 20.629333-20.992 22.741333-1.685333 2.090667-24.362667 14.336-19.328 36.672 5.034667 22.336 22.72 21.909333 22.72 21.909333s13.013333 1.28 28.138667-2.112c15.104-3.349333 28.117333 0.832 28.117333 0.832s35.306667 11.818667 44.970667-10.944c9.621333-22.72-5.482667-34.538667-5.482667-34.538666z m-60.394667 33.877333h-22.954666c-9.92-1.984-13.866667-8.746667-14.357334-9.898667-0.490667-1.173333-3.306667-6.613333-1.813333-15.850666 4.288-13.866667 16.490667-14.848 16.490667-14.848h12.224v-15.04l10.410666 0.149333v55.488z m42.752-0.170667h-26.410666c-10.24-2.624-10.709333-9.92-10.709334-9.92v-29.205333l10.709334-0.170667v26.261334c0.64 2.794667 4.117333 3.306667 4.117333 3.306666h10.88v-29.397333h11.413333v39.125333z m37.376-77.994666c0-5.034667-4.181333-20.224-19.733333-20.224-15.552 0-17.642667 14.336-17.642667 24.469333 0 9.685333 0.810667 23.189333 20.16 22.741333 19.328-0.426667 17.216-21.909333 17.216-26.986666z" fill="#FFFFFF" p-id="1663"></path></svg>
+        </a>
+      
+      
+        <a href="https://connect.qq.com/widget/shareqq/index.html?url=https://zhuochi.org/listen/David_Guetta/index.html&title=David Guetta&pic=https://zhuochi.org/images/logo.svg&desc=4 Albums, 102 Songs&summary=CloudPool浊池是由年轻人管理的博客" aria-hidden="true" target="_blank">
+        <svg t="1659969969936" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2714"><path d="M866.991 707.772c0 0-25.341 69.55-71.877 132.071 0 0 83.050 28.439 76.137 102.196 0 0 2.709 82.331-177.613 76.685 0 0-126.817-9.898-164.88-63.85h-33.53c-38.018 54.006-164.834 63.85-164.834 63.85-180.431 5.7-177.556-76.685-177.556-76.685-7.025-73.756 76.081-102.196 76.081-102.196-46.475-62.519-71.875-132.071-71.875-132.071-112.759 183.141-101.477-25.567-101.477-25.567 21.141-123.495 109.949-204.384 109.949-204.384-12.677-112.157 33.805-132.078 33.805-132.078 9.68-346.979 306.473-340.887 312.675-340.722 6.249-0.163 302.931-6.256 312.72 340.723 0 0 46.538 19.866 33.812 132.078 0 0 88.751 80.89 109.886 204.384 0.055-0.001 11.285 208.707-101.421 25.566v0 0z" p-id="2715" fill="#04b2f1"></path></svg>
+        </a>
+      
+    </span>
+  </span>
+</aside>
+    <footer class="app-footer">
+  <p class="copyright">
+    Copyright &copy; 2017 - 2023, CloudPool浊池, zhuochi.org︱voiiu.com, All Rights Reserved<br/>
+    本站为基于<a href="https://hexo.io" target="_blank">Hexo</a>的静态博客，<span id="busuanzi_container_site_pv">总访问量 <span id="busuanzi_value_site_pv"></span> 次</span><!--，来自 <span id="busuanzi_value_site_uv"></span> 个 IP--><br/>
+    主题源自 <a target="_blank" rel="noopener" href="https://github.com/yanm1ng/hexo-theme-vexo">Vexo</a> by yanm1ng，感谢 <a target="_blank" rel="noopener" href="https://github.com/MoePlayer/APlayer">APlayer</a> by DIYgod，感谢 <a target="_blank" rel="noopener" href="https://github.com/stevenjoezhang/live2d-widget">Live2D Widget</a> by stevenjoezhang & <a target="_blank" rel="noopener" href="https://github.com/xiazeyu/live2d-widget-models">live2d-widget-models</a> by xiazeyu
+  </p>
+</footer>
+
+<script>
+  function async(u, c) {
+    var d = document, t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0];
+    o.src = u;
+    if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+    s.parentNode.insertBefore(o, s);
+  }
+</script>
+
+<script src="/js/script.js"></script>
+ <!--无法移至head.js中，原因不明-->
+<script type="text/javascript" src="/js/busuanzi.min.js" async></script>
+
+
+  </body>
+</html>

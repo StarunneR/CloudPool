@@ -1,0 +1,1506 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta http-equiv="Access-Control-Allow-Origin" content="*">
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport" />
+  <meta name="description" content="CloudPool浊池是由年轻人管理的博客">
+  <meta name="keyword" content="浊池, CloudPool, CloudPool浊池">
+  
+  <link rel="shortcut icon" type="image/ico" href="/images/cloudpool-favicon.ico">
+  
+  <title>
+    
+      《兔耳魔王》(一)
+    
+  </title>
+  <!-- CSS -->
+  <!--<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/6.4.0/css/all.min.css" />-->
+  <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />-->
+  <!--<link href="https://cdn.staticfile.org/nprogress/0.2.0/nprogress.min.css" rel="stylesheet"/>-->
+  <link href="https://cdn.bootcdn.net/ajax/libs/nprogress/0.2.0/nprogress.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/aplayer/1.10.1/APlayer.min.css"/>
+  
+<link rel="stylesheet" href="/css/style.css">
+
+
+  <!-- JS -->
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/geopattern/1.2.3/js/geopattern.min.js"></script>
+  <!--<script type="text/javascript" src="https://cdn.staticfile.org/nprogress/0.2.0/nprogress.min.js"></script>-->
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/nprogress/0.2.0/nprogress.min.js"></script>
+  
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+            <span class="search-icon">
+                <i class="fa fa-search"></i>
+            </span>
+            <div class="search-input-container">
+                <input autocomplete="off" autocapitalize="off" maxlength="80"
+                    placeholder="Anything...  今天想看什么w" spellcheck="false"
+                    type="" class="search-input">
+            </div>
+            <span class="popup-btn-go">
+                <i class="fa-solid fa-arrow-circle-right"></i>
+            </span>
+            <span class="popup-btn-close">
+                <i class="fa-solid fa-circle-xmark"></i>
+            </span>
+        </div>
+        <div id="search-result" class="search-result-container">
+            <div id="no-result" class="no-result">
+                <i class="fa-solid fa-spinner fa-pulse fa-5x fa-fw"></i>
+            </div>
+        </div>
+    </div>
+</div>
+  <link rel="prefetch" href="/search.xml" crossorigin="anonymous"> 
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Popup Window
+      let isfetched = false;
+      let datas;
+      let isXml = true;
+      // Search DB path
+      let searchPath = 'search.xml'; //CONFIG.search.path
+      if (searchPath.length === 0) {
+        searchPath = 'search.xml';
+      } else if (searchPath.endsWith('json')) {
+        isXml = false;
+      }
+      const input = document.querySelector('.search-input');
+      const resultContent = document.getElementById('search-result');
+
+      const getIndexByWord = (word, text, caseSensitive) => {
+        if ('false' == false) { // CONFIG.localsearch.unescape = false
+          let div = document.createElement('div');
+          div.innerText = word;
+          word = div.innerHTML;
+        }
+        let wordLen = word.length;
+        if (wordLen === 0) return [];
+        let startPosition = 0;
+        let position = [];
+        let index = [];
+        if (!caseSensitive) {
+          text = text.toLowerCase();
+          word = word.toLowerCase();
+        }
+        while ((position = text.indexOf(word, startPosition)) > -1) {
+          index.push({ position, word });
+          startPosition = position + wordLen;
+        }
+        return index;
+      };
+
+      // Merge hits into slices
+      const mergeIntoSlice = (start, end, index, searchText) => {
+        let item = index[index.length - 1];
+        let { position, word } = item;
+        let hits = [];
+        let searchTextCountInSlice = 0;
+        while (position + word.length <= end && index.length !== 0) {
+          if (word === searchText) {
+            searchTextCountInSlice++;
+          }
+          hits.push({
+            position,
+            length: word.length
+          });
+          let wordEnd = position + word.length;
+
+          // Move to next position of hit
+          index.pop();
+          while (index.length !== 0) {
+            item = index[index.length - 1];
+            position = item.position;
+            word = item.word;
+            if (wordEnd > position) {
+              index.pop();
+            } else {
+              break;
+            }
+          }
+        }
+        return {
+          hits,
+          start,
+          end,
+          searchTextCount: searchTextCountInSlice
+        };
+      };
+
+      // Highlight title and content
+      const highlightKeyword = (text, slice) => {
+        let result = '';
+        let prevEnd = slice.start;
+        slice.hits.forEach(hit => {
+          result += text.substring(prevEnd, hit.position);
+          let end = hit.position + hit.length;
+          result += `<b class="search-keyword">${text.substring(hit.position, end)}</b>`;
+          prevEnd = end;
+        });
+        result += text.substring(prevEnd, slice.end);
+        return result;
+      };
+
+      const inputEventFunction = () => {
+        if (!isfetched) return;
+        let searchText = input.value.trim().toLowerCase();
+        let keywords = searchText.split(/[-\s]+/);
+        if (keywords.length > 1) {
+          keywords.push(searchText);
+        }
+        let resultItems = [];
+        if (searchText.length > 0) {
+          // Perform local searching
+          datas.forEach(({ title, content, url }) => {
+            let titleInLowerCase = title.toLowerCase();
+            let contentInLowerCase = content.toLowerCase();
+            let indexOfTitle = [];
+            let indexOfContent = [];
+            let searchTextCount = 0;
+            keywords.forEach(keyword => {
+              indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+              indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+            });
+
+            // Show search results
+            if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+              let hitCount = indexOfTitle.length + indexOfContent.length;
+              // Sort index by position of keyword
+              [indexOfTitle, indexOfContent].forEach(index => {
+                index.sort((itemLeft, itemRight) => {
+                  if (itemRight.position !== itemLeft.position) {
+                    return itemRight.position - itemLeft.position;
+                  }
+                  return itemLeft.word.length - itemRight.word.length;
+                });
+              });
+
+              let slicesOfTitle = [];
+              if (indexOfTitle.length !== 0) {
+                let tmp = mergeIntoSlice(0, title.length, indexOfTitle, searchText);
+                searchTextCount += tmp.searchTextCountInSlice;
+                slicesOfTitle.push(tmp);
+              }
+
+              let slicesOfContent = [];
+              while (indexOfContent.length !== 0) {
+                let item = indexOfContent[indexOfContent.length - 1];
+                let { position, word } = item;
+                // Cut out 100 characters
+                let start = position - 20;
+                let end = position + 80;
+                if (start < 0) {
+                  start = 0;
+                }
+                if (end < position + word.length) {
+                  end = position + word.length;
+                }
+                if (end > content.length) {
+                  end = content.length;
+                }
+                let tmp = mergeIntoSlice(start, end, indexOfContent, searchText);
+                searchTextCount += tmp.searchTextCountInSlice;
+                slicesOfContent.push(tmp);
+              }
+
+              // Sort slices in content by search text's count and hits' count
+              slicesOfContent.sort((sliceLeft, sliceRight) => {
+                if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                  return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                  return sliceRight.hits.length - sliceLeft.hits.length;
+                }
+                return sliceLeft.start - sliceRight.start;
+              });
+
+              // Select top N slices in content
+              let upperBound = parseInt('1', 10); // CONFIG.localsearch.top_n_per_article: 1
+              if (upperBound >= 0) {
+                slicesOfContent = slicesOfContent.slice(0, upperBound);
+              }
+
+              let resultItem = '';
+
+              if (slicesOfTitle.length !== 0) {
+                resultItem += `<li class="search-result-element"><a href="${url}" class="search-result-title" target="_blank">${highlightKeyword(title, slicesOfTitle[0])}</a>`;
+              } else {
+                resultItem += `<li class="search-result-element"><a href="${url}" class="search-result-title" target="_blank">${title}</a>`;
+              }
+
+              slicesOfContent.forEach(slice => {
+                resultItem += `<a href="${url}" target="_blank"><p class="search-result">${highlightKeyword(content, slice)}...</p></a>`;
+              });
+
+              resultItem += '</li>';
+              resultItems.push({
+                item: resultItem,
+                id: resultItems.length,
+                hitCount,
+                searchTextCount
+              });
+            }
+          });
+        }
+        if (keywords.length === 1 && keywords[0] === '') {
+          resultContent.innerHTML = '<div id="no-result"><i class="fa-sharp fa-regular fa-circle-check fa-5x"></i></div>';
+        } else if (resultItems.length === 0) {
+          resultContent.innerHTML = '<div id="no-result"><i class="fa-regular fa-face-frown-open fa-5x"></i></div>';
+        } else {
+          resultItems.sort((resultLeft, resultRight) => {
+            if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+              return resultRight.searchTextCount - resultLeft.searchTextCount;
+            } else if (resultLeft.hitCount !== resultRight.hitCount) {
+              return resultRight.hitCount - resultLeft.hitCount;
+            }
+            return resultRight.id - resultLeft.id;
+          });
+          resultContent.innerHTML = `<ul class="search-result-list">${resultItems.map(result => result.item).join('')}</ul>`;
+          window.pjax && window.pjax.refresh(resultContent);
+        }
+      };
+
+      const fetchData = () => {
+        fetch('/' + searchPath) // CONFIG.root = ''
+          .then(response => response.text())
+          .then(res => {
+            // Get the contents from search data
+            isfetched = true;
+            datas = isXml ? [...new DOMParser().parseFromString(res, 'text/xml').querySelectorAll('entry')].map(element => {
+              return {
+                title: element.querySelector('title').textContent,
+                content: element.querySelector('content').textContent,
+                url: element.querySelector('url').textContent
+              };
+            }) : JSON.parse(res);
+            // Only match articles with not empty titles
+            datas = datas.filter(data => data.title).map(data => {
+              data.title = data.title.trim();
+              data.content = data.content ? data.content.trim().replace(/<[^>]+>/g, '') : '';
+              data.url = decodeURIComponent(data.url).replace(/\/{2,}/g, '/');
+              return data;
+            });
+            // Remove loading animation
+            document.getElementById('no-result').innerHTML = '<i class="fa-sharp fa-regular fa-circle-check fa-5x"></i></i>';
+            inputEventFunction();
+          });
+      };
+
+      if (false) { // CONFIG.localsearch.preload: false
+        fetchData();
+      }
+
+      if ('auto' === 'auto') { // CONFIG.localsearch.trigger: 'auto' / 'manual'
+        input.addEventListener('input', inputEventFunction);
+      } else {
+        document.querySelector('.search-icon').addEventListener('click', inputEventFunction);
+        input.addEventListener('keypress', event => {
+          if (event.key === 'Enter') {
+            inputEventFunction();
+          }
+        });
+      }
+
+      // Handle and trigger popup window
+      document.querySelectorAll('.popup-trigger').forEach(element => {
+        element.addEventListener('click', () => {
+          document.body.style.overflow = 'hidden';
+          document.querySelector('.search-pop-overlay').classList.add('search-active');
+          input.focus();
+          if (!isfetched) fetchData();
+        });
+      });
+
+      // Monitor main search box
+      const onPopupClose = () => {
+        document.body.style.overflow = '';
+        document.querySelector('.search-pop-overlay').classList.remove('search-active');
+      };
+
+      document.querySelector('.search-pop-overlay').addEventListener('click', event => {
+        if (event.target === document.querySelector('.search-pop-overlay')) {
+          onPopupClose();
+        }
+      });
+      document.querySelector('.popup-btn-close').addEventListener('click', onPopupClose);
+      window.addEventListener('pjax:success', onPopupClose);
+      window.addEventListener('keyup', event => {
+        if (event.key === 'Escape') {
+          onPopupClose();
+        }
+      });
+
+      // PageJumper button
+      let onJumpPage = () => {
+        window.location = window.location.origin + '/' + input.value
+      };
+      document.querySelector('.popup-btn-go').addEventListener('click', onJumpPage);
+      document.querySelector('.search-input').addEventListener('keydown', event => {
+        if (event.keyCode === 13) {
+          onJumpPage();
+          return;
+        }
+      });
+      
+      // Search Preload
+      let head = document.head || document.getElementsByTagName('head')[0];
+      let searchlink = document.createElement('link');
+        searchlink.rel="search";
+        searchlink.href="/search.xml";
+        searchlink.crossOrigin="anonymous";
+      head.appendChild(searchlink);
+    });
+  </script>
+
+  <!--
+<script src="/js/local-search.js"></script>
+--> 
+
+  <script src="/live2d-widget/autoload.js"></script>
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/aplayer/1.10.1/APlayer.min.js"></script>
+  <!-- Fonts -->
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+  <body>
+    <header class="header fixed-header">
+  <nav class="header-container">
+    <a class="home-link" href="/">
+      <img class="logo" src="/images/logo.png" alt="logo"/>
+      <span class="eng_mark">CloudPool</span><span class="chn_mark">浊池</span>
+    </a>
+    <ul class="right-list">
+      
+        <li class="list-item">
+          
+            <a href="/" class="item-link">主页</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/categories/" class="item-link">分类</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/tags/" class="item-link">标签</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/archive/" class="item-link">归档</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/mag/" class="item-link">网刊</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/one/" class="item-link">一言</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a target="_blank" rel="noopener" href="//pan.zhuochi.org/CloudShare/" class="item-link">网盘</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="//<emoji>" class="item-link">( ^ω^)</a>
+          
+        </li>
+      
+      
+        <li class="list-item">
+    <a role="button" class="item-link popup-trigger">
+        <i class="fa fa-search fa-fw"></i>
+    </a>
+</li>
+      
+    </ul>
+    <div class="menu">
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+    </div>
+    <div class="menu-mask">
+      <ul class="menu-list">
+        
+          <li class="menu-item">
+            
+              <a href="/" class="menu-link">主页</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/categories/" class="menu-link">分类</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/tags/" class="menu-link">标签</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/archive/" class="menu-link">归档</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/mag/" class="menu-link">网刊</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/one/" class="menu-link">一言</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a target="_blank" rel="noopener" href="//pan.zhuochi.org/CloudShare/" class="menu-link">网盘</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="//<emoji>" class="menu-link">( ^ω^)</a>
+            
+          </li>
+        
+        
+          <li class="menu-item">
+    <a role="button" class="item-link popup-trigger">
+        <i class="fa fa-search fa-fw"></i>
+    </a>
+</li>
+        
+      </ul>
+    </div>
+  </nav>
+</header>
+
+    <div id="article-banner">
+  <h2 class="post-title">《兔耳魔王》(一)</h2>
+  
+   
+    <p class="post-date">2023-03-28</p>
+  
+  <div class="arrow-down">
+    <a href="javascript:;"></a>
+  </div>
+</div>
+
+<main class="app-body flex-box">
+  <article class="post-article">
+    
+      <div class="front-parent" id="front-parent">
+  <div class="front-child" id="front-fontsize">
+    <label class="front-label" for="fontsize-range">字体大小</label>
+    <input type="range" min="50" max="200" id="fontsize-slider" step="1" value="100" />
+    <span id="fontsize-value"></span>
+  </div>
+
+  <div class="front-child" id="front-fontselector">
+    <label class="front-label" for="font-select">更换字体</label>
+    <select name="font" id="font">
+      <option value="default">默认</option>
+      <option value="heiti">黑体</option>
+      <option value="light-heiti">黑体（细体）</option>
+      <option value="lighter-heiti">黑体（极细）</option>
+      <option value="songti">宋体</option>
+      <option value="light-songti">宋体（细体）</option>
+      <option value="kaiti">楷体</option>
+      <option value="fangsong">仿宋</option>
+    </select>
+  </div>
+
+  <div class="front-child" id="front-indent">
+    <label class="front-label" for="TextIndent">段首缩进</label>
+    <input type="checkbox" id="indent-checkbox" name="text-indent" value="" />
+  </div>
+</div>
+
+<h1 class="article-author">
+  
+    2Z0lxI0 @nmbxd1.com
+      
+</h1>
+
+<script>
+  $(document).ready(
+    function () {
+      let FontChanger = function () {
+        if (this.value == "default") {
+          $(".markdown-content").css({ "font-family": "Arial, Helvetica, sans-serif" });
+          $(".markdown-content").css({ "font-weight": 'initial' });
+        } if (this.value == "heiti") {
+          $(".markdown-content").css({ "font-weight": '400' });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',STHeiti,SimHei,sans-serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400&display=swap rel=stylesheet>");
+        } else if (this.value == "light-heiti") {
+          $(".markdown-content").css({ "font-weight": '300' });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',STHeiti,SimHei,sans-serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300&display=swap rel=stylesheet>");
+        } else if (this.value == "lighter-heiti") {
+          $(".markdown-content").css({ "font-weight": '100' });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',STHeiti,SimHei,sans-serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100&display=swap rel=stylesheet>");
+        } else if (this.value == "songti") {
+          $(".markdown-content").css({ "font-weight": '400' });
+          $(".markdown-content").css({ "font-family": "'Noto Serif SC',STSong,NSimSun,SimSun,serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400&display=swap rel=stylesheet>");
+        } else if (this.value == "light-songti") {
+          $(".markdown-content").css({ "font-weight": '200' });
+          $(".markdown-content").css({ "font-family": "'Noto Serif SC',STSong,NSimSun,SimSun,serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200&display=swap rel=stylesheet>");
+        } else if (this.value == "kaiti") {
+          $(".markdown-content").css({ "font-weight": 'initial' });
+          $(".markdown-content").css({ "font-family": "'FZKai-Z03S','STKaiti','KaiTi',Serif" });
+          $("head").append("<link href=https://cdn.jsdelivr.net/npm/cn-fontsource-fz-kai-z-03-s/font.css rel=stylesheet>");
+        } else if (this.value == "fangsong") {
+          $(".markdown-content").css({ "font-weight": 'initial' });
+          $(".markdown-content").css({ "font-family": "'FZFangSong-Z02S','STFangsong','FangSong','FangSong_GB2312',Serif" });
+          $("head").append("<link href=https://cdn.jsdelivr.net/npm/cn-fontsource-fz-fang-song-z-02-s/font.css rel=stylesheet>");
+        }
+      };
+      $("#font").on('change', FontChanger);
+      $("#font").on('click', FontChanger);
+    });
+
+  $("#indent-checkbox").change(function () {
+    if (this.checked) {
+      $(".markdown-content > p").css({ "text-indent": "2em" });
+    } else {
+      $(".markdown-content > p").css({ "text-indent": "0" });
+    }
+  });
+
+  $("#fontsize-value").html("100%");
+  let rangeSwitch = function () {
+    let fontsizePercent = $("#fontsize-slider").val();
+    $(".markdown-content").css("font-size", fontsizePercent + "%")
+    $("#fontsize-value").html(fontsizePercent + "%")
+  }
+  $("#fontsize-slider").on("input", rangeSwitch)
+</script>
+      <section class="markdown-content" id="content">
+        <pre><code>来源：https://www.nmbxd1.com/Forum/po/id/51414457.html
+</code></pre>
+<blockquote>
+<p>相关作品：《家养兔耳魔王》漫画<br><a target="_blank" rel="noopener" href="https://www.acfun.cn/a/ac13570632">1-100</a><br><a target="_blank" rel="noopener" href="https://www.acfun.cn/a/ac16377525">101-172</a></p>
+</blockquote>
+<p>“接下来发生的事，你不能告诉任何人。”<br>一旁带路的魔族再次低声警告我。“也绝不可对陛下做出僭越之举。”<br>那是我第一次看见魔王的真面目。王座上的魔王并没有穿着传闻中那身杯鲜血染透的战袍，而是披着一件纯黑的斗篷，少见的白发也大多被斗篷遮住，但那双暗黄的魔族之眼就足以昭示她高阶魔族的身份。<br>“陛下，这个人类就是他们所说的森林贤者。”带路的魔族把我领到了魔王的座下。“他说，他有可能治愈您遭受的诅咒。”<br>那双威严的眼睛上下打量了我一番，而后，魔王缓缓发话：“好。其他人都退下吧。”<br>“所以，您究竟遭受了怎样的诅咒？”在侍从们离开王座之间后，偌大的房间只剩下了我、魔王与她的贴身护卫，我忍不住发问。<br>“……”<br>仿佛在经历了一番挣扎之后，魔王终于把手伸向头上的斗篷，扯了下来。<br>一对白色的东西摆脱了斗篷的束缚，在魔王的头顶支棱了起来。<br>——是一对兔子的耳朵。<br>“……如你所见，在遭受诅咒之后，本王的能力似乎遭到了弱化。”魔王脸上的表情非常复杂。<br>“并且……长出了一对兔耳朵。”</p>
+<hr>
+<p>我带来的检测器械被放在了魔王的寝宫里。帮忙搬运的仆人们显然没见过这些魔素理论与科学的结晶，一路上窃窃私语。魔王则为了配合检查，半卧在了寝宫的床上，任由我将连着导线的电极贴在她的手臂上。<br>“……这个，需要贴在您的腰侧上。”我的手停下了动作。<br>一旁黑发的贴身侍卫的手已经搭在了佩剑的剑柄上。魔王微微抬手，制止了她。“无妨。”说着便将自己的上衣拢起，“请。”<br>一旁守卫眼中的怒火快要将我吞没了。“……陛下，万分抱歉，我只是不明白这个人类到底在……”<br>魔王瞥了她一眼，她的后半句话立刻吞回了肚子里。<br>魔王比我想象的要更为沉默。只有当我观察着屏幕上显示的魔素水平与各项体征，在纸上抄抄写写时，她才缓缓开口：“本王原以为’森林贤者’的治疗手段会更加顺应自然与元素，比如使用魔药或是图腾。还是说，你的魔力过于稀薄，只能借助这些机械？”<br>这些仪器当然不是这个世界的知识的产物。对于这点，我不打算过多解释。“现在只是在进行基础检测。”我纠正道。“森林贤者也并非我自称，不过是我在森林独自研究时他人为我起的绰号罢了。”<br>“好。”我把笔与纸收回包内，“现在进行身体检查。”<br>“我要摸摸您的兔耳。”</p>
+<hr>
+<p>“你……”<br>侍卫的眼中几乎要喷出火来，佩剑也拔出来了一半。“竟敢对魔王大人口出狂言！”<br>“……罢了。”<br>魔王拦下了气势汹汹的侍卫，犹豫了一会儿。“如果是为了诊疗的话……”她深吸了一口气，仿佛即将走上刑场一般。“请来吧。”<br>“那么，失礼了。”</p>
+<hr>
+<p>……很软。<br>手指首先触碰到的是一层细密的绒毛，而后感受到了温热的体温。翘起的耳朵比想象中的要更加柔软，薄薄的软骨随着手指的揉捏而乖巧地改变了形状，透过光线还能看见几条纤细的血管。是的，这是一对货真价实的兔耳。<br>“嗯？”<br>耳朵似乎想要从指缝间逃走——魔王低下了头。<br>“怎么了？”我俯下身，尝试看清魔王的表情。“您有什么不适吗？”<br>得益于垂下的头，魔王的脸大半藏在了阴影里，但仍能看见她的耳根略有些发红。“……没事。继续检查。”她尽可能用平淡的声音回复道。<br>“那么……”尝试逃走的耳朵被我重新握在了手里，“我继续。”</p>
+<hr>
+<p>兔子的耳朵是很敏感的，这是我从“之前的世界”获得的知识。作为羸弱的被捕食者，必须保证对外界的信息足够敏感，才能在残酷的野外生存下去。当我用指腹轻轻摩挲兔耳内侧时，从耳朵根部传来的微微颤抖也佐证了这一点，<br>同理，也很容易痛。<br>当我的手指掐下去的时候，魔王的身体很明显地颤了一下，我能听见她似乎抽了一口气。也是同一时刻，侍卫的剑架到了我的脖子上。“陛下！”她急迫地想要上前一步，但又对我抱持警戒，不敢放下我脖子上的剑。<br>“诊断结束了，感谢您的配合。”我对此视若无睹，只是放开了握着兔耳的手，“接下来还有几个问题需要问您。”<br>“本王无恙。”<br>魔王的气息还有些乱，但她还是把头抬了起来，脸上平静的表情似乎与刚才别无二致。“你退下吧。”她向侍卫示意。“当务之急是治好这诅咒，尽快恢复战力。诊疗同样也要付出代价，本王的感受无足挂齿，你也不必跟着心惊肉跳了。”<br>“……是。”<br>侍卫将剑收了回去，恶狠狠地瞪了我一眼，沉默地离开了寝宫。<br>“好。”魔王望向我。她的眼神依然冷峻，除了左耳被我捏的有些变形，可怜巴巴地垂着以外，和在王座上的她没有什么区别。“你还有什么想问的吗？”</p>
+<hr>
+<p>“耳朵是有感觉的吗？”<br>明知故问。<br>魔王老实而又有些不情愿地回答：“是。”<br>“但是其中并没有魔素分布。”我翻看着之前的记录，“基本可以排除是把您的魔力封印在了耳朵里。除此之外，耳朵更像是身体天然的一部分，所以……”我顿了顿，“能否向我透露，您是否还长出了兔尾巴？”<br>魔王——用手撑着额头，尝试用这种方法掩盖自己复杂的表情，“……是。这个也要检查吗？”<br>“这倒不必。”但我还是没忍住想象了一下那个画面，“您能说说最早是什么时候出现的症状吗？”<br>“应该是大约二十天前沙蝎峡谷的那场战斗吧。本王在最后遭人暗算，被暗箭伤到了肩膀。伤口本身并无大碍，但似乎箭头混合了毒与诅咒，这种毒与诅咒非常诡异，我们的术士和魔药师都对此束手无策，就算砍掉耳朵也会再生。再然后……”她叹了口气，“就变成现在这样了。”<br>我略微思酌片刻。“这可能是一种伪装成祝福的诅咒。”<br>“伪装成祝福？”<br>“您知道魔人族里的兔人吗？就是魔族与人类的混血儿。尽管继承了部分魔族的特征，但魔人族的战力与人类无异，其中的兔人则更是最为弱小。为了增强能力，有一种祝福可以将魔人族暂时变为魔族，而您受到的可能就是相反的祝福，将您由魔族变成了兔人。”<br>我望着魔王微微摇晃的耳朵。<br>“……而您似乎与兔人族的相性格外好。”</p>
+<hr>
+<p>“根据您之前送来的血样，我在自己的小屋里调配了一部分能短时间抑制祝福的魔药。”我从一旁的箱子里掏出了一个小玻璃瓶。“但作为抑制祝福的‘毒药’，这种魔药的持续时间不长，副作用也很严重。为了彻底祛除这个祝福，必须进行更长期的治疗。”<br>“先让本王试试你的药。”魔王比我想象中的要更加积极，她向我伸出手来，“如果真的能在短时间内恢复正常，本王再考虑你的说法。”<br>“那您得把兔耳朵再给我一次。”<br>看着我从箱子里掏出的黄铜注射器，魔王愣住了。<br>“直接把魔药注射进血液里可以快速增加血药浓度。”我解释道，“在被祝福的部位注射会更快。如果您不愿意用耳朵，尾巴也行。”<br>魔王短暂地沉默了一会儿。“可以，就用耳朵吧。”她回答得很干脆，表情也没有多少改变。<br>不同于神态的是，魔王的兔耳朵在发抖。<br>我装作没看到，用手扶住了轻轻颤抖的柔软兔耳。“我要注射了。”</p>
+<hr>
+<p>“您不害怕我对您下毒吗？”<br>我用镊子夹着沾了酒精的棉花在兔耳的血管上擦拭，听完了我的提问之后，魔王的兔耳动了动。“如果是那样的话，你没法活着离开这座寝宫。本王也不会因为这点顾虑就放弃治愈的可能。”她微微抬头，望向我，“本王好奇的是你想要什么。听说你没有收下任何作为邀请赠礼的财宝与魔器。”<br>想要摸兔耳。<br>……这种话肯定是不能说出来的。<br>“我想要你们魔族的国立图书馆。”<br>我用手轻轻捉着她的左侧兔耳，仔细寻找着血管。“当然……只要允许我借阅就可以。以及，我也想要将您作为研究材料。魔王的身体比人类可有趣多了。”<br>“只有这些吗？”<br>魔王似乎并没有感到冒犯。“只要能治愈本王，当然可以。不管是国立图书馆，还是本王的身体，你都可以拿去尽情使用。”<br>我意味深长地望着魔王的兔耳。<br>“一言为定。”</p>
+<hr>
+<p>转变几乎是在瞬间完成的。<br>随着药物流入血液，魔王的兔耳抖动了一下，没精神地耷拉了下去，隐藏在那一头白发之中。与之对应，魔王走下了床，站在了我的面前。<br>“不错。”<br>极具侵略性的魔素激流几乎在瞬间将我吞没，而后又被轻松地收回。我一个趔趄，扶住了旁边的椅子才勉强站稳，而魔王甚至连手指都没有动过。<br>她似乎对此相当满意，用一只手抓着我的脖子，轻松地将我提了起来。“如果本王现在捏碎你的脖子，你会后悔吗？”<br>“比起这个……”<br>我艰难地开口。<br>“呃……只有这样？虽然战斗力好像增强了，但是您的体型是不是没变？我以为您是因为被诅咒了才保持这个……瘦小的外形的。”<br>或者说贫瘠。<br>“……”<br>魔王沉默了。<br>“所以呢？你失望了吗？”<br>“没有。”我很坦诚。“我觉得个子小一点比较可爱。”</p>
+<hr>
+<p>“你要把魔王带走？”<br>机密会议室里并没有多少人，除了之前见过的黑发贴身侍卫之外，这里应该都是知道魔王秘密的心腹。即使隔着一张桌子，我也可以清晰感受到来自那位侍卫的杀意。<br>“莱拉，听他说。”坐在魔王左侧，戴着眼镜的堕天使制止了愤怒的侍卫。“你的理由是什么？”<br>“魔王陛下需要至少三个月的持续治疗才有可能彻底摆脱这个诅咒，我只带了一些小型的检测仪器，真正的治疗用仪器与配合的法阵在我的据点。”我停顿了一下，“我居住的小屋建造在灰雾森林一处魔素的‘大流’喷涌口上——你们魔族应该明白这是什么意思。我的法阵都是围绕着大流搭建的，不能把仪器搬来魔王城。”<br>“所以，魔王必须和我一起回去，呆在我的身边接受治疗。”我做出了总结。<br>“你……”<br>侍卫莱拉似乎想要反驳我，却找不到合适的理由。“万一陛下遇见危险怎么办！你能负责吗？”<br>“本王不需要他人负责。”<br>魔王终于开口了。<br>“并且，本王也无需护卫。目前战力本就紧缺，若是出调人手，难免引人注意。在本王离开的期间，本王会和佩里亚保持联系，除此之外，一切事务交由佩里亚负责。”<br>一旁的堕天使无奈地点了点头。<br>“如果三个月后本王没能治好，或者因为意外而没能回来，那就让凯斯或菲尔来继承本王的位置吧。”魔王的话很干脆。“他俩无时不刻都想杀了本王继承魔王的位置，那就让他们去争吧。”<br>“但是……”莱拉仍在做最后的挣扎。“至少让我……”<br>“莱拉，你很强大，你还能为魔族做很多事。”<br>魔王起身，拍了拍莱拉的肩膀。<br>“而一个无法战斗的魔王没有任何价值。”</p>
+<hr>
+<p>在历经了数日的奔波后，我将魔王带回了自己在森林中建造的木屋。<br>“偶尔我会和森林旁的镇民打交道。”我向魔王嘱咐道，“您对外宣称是我的助手就行。”<br>魔王携带的行李并不多，据她的说法，“一切从简”。<br>“照你所说，这种‘短效药’能持续多久，副作用又是什么？”魔王在木屋的周围巡视了一圈，回到了门口，将一团灰色的东西甩在了地上。“来的路上顺手打的。”她补充道。<br>是一只野兔的尸体。<br>“您讨厌兔子吗？”我把野兔捧了起来。尸体还残留着些许余温，柔软的耳朵摸上去和魔王的兔耳十分相似。但恢复力量之后，魔王的兔耳就隐藏在了那头白发中。<br>“本王讨厌弱者。”<br>仿佛是为了证明自己“原本的强大”，这几天的旅途中，魔王总是有意无意地向我展示她的力量。<br>“药的作用会持续到下一次诅咒发作，我也没法肯定会在什么时候。”我摆弄着带回来的仪器，顺便看了一眼魔王，“副作用很严重。在接下来的治疗过程中，长期治疗使用的魔药的毒会对您造成影响，我会尽量帮您减少痛苦。但短期的魔药发作太快，一旦药效结束，您会面对更猛烈的毒性……与痛楚。”<br>“本王……”<br>魔王停顿了片刻，而后改口道。<br>“……我愿意接受这一切。这是我该得的。”</p>
+<hr>
+<p>尽管做好了准备，一切还是发生得太过突然。<br>副作用是在夜晚爆发的。就在抵达木屋的那天晚上，在我躺下不过几小时之后，魔王的房间里传来了木床的吱呀声。当我推开房间的门时，魔王正咬着牙齿，弓着背跪在床上，手指几乎嵌进了床铺中。<br>“你发作了？”我冲向了魔王，“为什么不通知我？”<br>“……抱歉。”<br>魔王的回答十分简短，似乎拼尽了全力不让自己发出其他声音。<br>“我没想吵醒你的。”<br>我确实也没有什么对策。<br>在注射了两针麻醉剂之后，魔王的情况并没有多少好转。仿制的麻醉药在席卷全身的剧痛面前不过是杯水车薪，她仍在努力忍耐不发出喊叫声，但终究没法遮掩身体的抽动。<br>我没法知道那是怎样的痛苦，也没法帮助她。我所能做的只有在一旁束手无策地看着这一切的发生……正如之前的每一次一样。<br>而讽刺的是，她所厌恶的、带来一切麻烦的兔耳，此刻渐渐立了起来。白色柔软的兔耳随着她的身体轻轻抖动着，这意味着她在逐渐向着羸弱的兔子转变。<br>真是讽刺，兔子打败了魔王。<br>“……你可以用我的手。”我把手试探性地伸了过去。“咬或者掐，只要能分散注意力，怎样都行。”<br>就算只能分摊一点痛苦也好。我想。<br>她犹豫了一会儿，还是颤抖着将手伸了出来，搭在了我的手上。随着又一阵剧痛袭来，她的身体再次蜷成了一团，但却只是轻轻地握住了我的手。<br>甚至并非十指交缠，只是小心翼翼地把掌心贴在了我的掌心上。<br>她的嘴唇动了动。<br>“谢谢。”</p>
+<hr>
+<p>魔王比我想象中要醒得更早。<br>当我走出房门时，魔王正站在一棵大树前，将带来的轻巧佩剑收入皮质的剑鞘。树上可以看见一条清晰的砍痕，但算不上深。<br>应该是听见了我的脚步声，她的兔耳动了动，却没有回头。“现在的力量……差不多只能做到这种程度。”她粗略检查了砍痕的深度。“不过，技术并没有忘掉，用来杀死人类应该还是绰绰有余。”<br>我当然明白她说的是谁，但我对此并不在乎。“我是来通知您的，作为治疗的一部分，我需要每天对您进行例行检查。”<br>魔王一愣。“例……什么？”<br>“简单来说，每天早上我需要抽一段时间监测您的魔素水平，之后要对您的变异部位进行触诊检查。简单来说……”<br>我装作不经意地翻着手中的记录册。<br>“我需要每天早上检查您的兔耳，并记录您的反应，希望您不要像之前一样……低着头，我希望您能更加直接地告诉我您的感受。”</p>
+<hr>
+<p>魔王想逃跑。<br>对于兔子而言，这是一种再正常不过的本能。她的兔耳在空中僵了一下，本能地向一旁迈了一步。但魔王不能逃跑，魔王的一堆大道理和职责也不允许她逃跑。魔王很快意识到了自己的失态，咳嗽了两声。“只要是有助于治疗，本王……我当然愿意配合。”<br>“您愿意就好，毕竟也不是什么大不了的事。”我故作轻松地说，“这点检查对于身经百战的魔王大人来说应该是无关痛痒的事才对。”<br>魔王没有说话，但耳朵又不自觉地哆嗦了一下。真好懂。</p>
+<hr>
+<p>“来吧。”<br>坐在椅子上的魔王闭上了眼，表情仿佛即将走上刑场，连耳朵尖也紧绷了起来。<br>“您是有些紧张吗？”<br>“不……呜！”<br>就在她回答的时候，我的拇指抵上了她的耳朵根，精准地抓住了这一时的松懈。她很快意识到了自己的失态，咬着下唇，盯着墙角，努力遮盖自己异样的表现。<br>这次的手法不太一样。我从根部向上轻轻碾压着兔耳的耳廓，一边在她的耳畔故作正经地问道：“您有什么感受？我需要如实记录。”<br>明明是坐在椅子上，但魔王看起来似乎缩得更小了一些。她的头——为了能让我顺利“检查”兔耳，僵硬地保持着不动，肩膀和身体却不自觉地向里蜷缩。<br>“……没什么感觉。”<br>还在嘴硬。</p>
+<hr>
+<p>抚摸柔软的兔耳确实十分舒缓压力，只是被抚摸的那一方大概不会这样想。<br>尽管只是重复着由根部向末端的轻柔抚摸，魔王的额头上却渗出了些许汗珠。即便可以忍住不发出声音、紧绷着面部表情，两颊泛出的红色却没法憋回去。<br>当然，我手中不断颤抖的兔耳从一开始就将魔王大人的感受暴露无遗了。<br>虽然本人似乎并没有发现这一点。<br>“快要结束了。”我宽慰她道，“您的反应……很有价值，必将为之后的治疗提供不少帮助。”<br>魔王似乎小小地松了一口气，身体也稍微松懈了下来。“本王就不会因为这种检查而有什么多余的反应……呜啊！”<br>故技重施。在她松懈下来的时候，我用指甲在兔耳的内侧划出一道痕迹，还在说话的魔王没能忍住从喉咙里窜出的哀鸣。<br>“您怎么了？是我不小心伤到您了吗？”<br>“……没事。”她低声喘了一口气，“本王什么事都没有。”<br>“那今天的检查就到此结束了。”我松开了那对还在瑟瑟发抖的兔耳，关切地叮嘱了一句：“您别忘了，之后每天都要进行例行检查。”<br>魔王的表情看起来快要哭出来了。</p>
+<hr>
+<p>“所以，治疗呢？”<br>我觉得魔王的下一句话是“治疗需要摸兔耳吗？”，但她似乎把这个问题咽了回去。“考虑到您昨晚的情况，我打算明天再进行第一次治疗。”我把检测用的仪器收回了柜子里。“您有什么安排吗？想在附近逛逛吗？我今天刚好打算……”<br>“本王打算办公。”<br>从未预想过的答案。<br>“本王的部下里有个家伙能使用很方便的魔法，只要入睡就可以与他们进行沟通，这样本王就可以在梦里审阅文书了。”魔王回答得很理所当然，“所以本王要歇息了，你退下吧。”<br>“……”<br>“想和魔王呆在一起”，这种话我怎么也没法说出口。</p>
+<hr>
+<p>“怎么了？”魔王似乎意识到了些许不对劲，“你该不会是在邀请本王？”<br>“我不是……”<br>这回窘迫的人变成我了。<br>“没事，本王完全可以理解。”魔王一副恍然大悟的样子。“本王非常理解弱小的人类与部下对于本王的依赖。如果你需要本王的保护，大可以直说。”<br>这不是完全没理解吗。<br>无论如何，结果是好的。“您想与我一起去附近的镇子上逛逛吗？我需要购买一些食材与药物的原材料。”我顺势向魔王发出了邀请。<br>“没问题。”魔王披上了黑色的斗篷，压下了那对因为得意而微微摇晃的兔耳。“本王……我是你的助手对吧？我对于伪装身份可是相当有心得的。”<br>我的心里没什么底。真希望别出什么岔子。</p>
+<hr>
+<p>“魔王大人之前来过人类的城镇吗？”<br>离镇子不远处，我向魔王搭话。<br>“当然来过。本王……我又不是没常识的小孩。你大可对此放心，本王在成为魔王之前，也游历过不少大小城市。”魔王掖了掖头上的斗篷。“之后就不要叫我魔王了。”<br>“那……”<br>“怀特。本王允许你用这个名字称呼本王。”<br>我怔住了。<br>“……怎么了？”走出了几步之后，魔王好奇地回头看向呆在原地的我。<br>“没事……”我挥了挥手。“没事。您就称我为……‘医生’吧。”</p>
+<hr>
+<p>因为一个名字就掉以轻心相信魔王的我真是个笨蛋。<br>尊贵强大的魔王大人，在冲进城镇的第一步就摔在了地上。<br>随着斗篷的脱落，魔王头上的兔耳在众目睽睽之下露了出来。<br>我在一旁沉默地把魔王扶了起来。<br>“……本王……我……略有些头晕。”魔王挣扎道。<br>不。我亲眼看着魔王兴致勃勃地向前冲去，然后被城镇里凹凸不平的石砖绊倒了。<br>“您……”我叹了口气。“虽然城镇里偶尔也能看见一些魔人，但最好还是尽量隐藏身份为妙。”<br>“我明白了。”魔王的兔耳朵耷拉了下来。</p>
+<hr>
+<p>“小哥，你旁边的那个，是不是兔魔人啊？”<br>在香料的摊位前，小贩忽然指着一旁的魔王对我耳语。<br>“怎么了？她是我的助手。”我低声回应。<br>“她是小哥您买的吗？还是路上收来的？”小贩唏嘘道，“那可是白发白耳的兔魔人，您也知道吧，价格可不便宜。您趁着还没养出感情，要不要考虑卖给领主大人？听说领主大人最近正在高价求购这样的兔魔人呢。”<br>“……她是我的助手。”尽管我的耐心快要耗尽了，我还是重复了一遍这句话。“这些香料多少钱？怀特，我们准备走了。”<br>本该站着魔王的地方空无一人。<br>我的心猛地一揪。糟了。</p>
+<hr>
+<p>“所以，目标是我吗。”<br>魔王在路边的小巷中停下了脚步，望向堵在巷口的三个人。<br>领头的人并没有发话，只是摆了摆手，身旁跟着的两人就冲了上去。魔王一侧身，轻松地闪过了其中一个人的攻击，几乎在刹那间用剑鞘放倒了鲁莽扑来的二人。<br>魔王向剩下的那个人勾了勾手指。<br>“哐——”<br>尽管及时拔出剑挡下了这次凛冽的砍击，魔王的手还是被震得发麻。仅仅一次砍击，魔王就清楚地明白了力量上的差距。兔子的力量还是太过弱小了，正面的战斗对她而言极其不利。<br>好。打不过就跑。魔王很快就做出了决定。朝着对方的腰部虚晃一剑之后，魔王从对方的身旁窜了出去。对方应该不敢在大街上动手，要不然也不至于会一路跟踪到小巷里再攻击她。逃到大路上之后，对方应该就会有所收敛……<br>背后传来了一阵刺痛，随之传来的是强烈的灼烧与撕裂感。魔王一个趔趄，但还是努力站稳了脚步，只是停顿了一瞬，便继续向前跑去。<br>运气真糟糕。她想。</p>
+<hr>
+<p>当看见魔王跌跌撞撞地向我跑来时，我就意识到事情不妙了。<br>她对我比划了个手势。“撤。”<br>怎么可能。<br>在她背后跟着的那位穿着轻甲的骑士，正不紧不慢地跟在她的身后，仿佛在享受捕猎乐趣的豹子。这很明显不是我们俩能招架得住的对象，要带着负伤的魔王逃跑更是天方夜谭。<br>一旁的镇民则对此熟视无睹。<br>“这是你家的奴隶吗？”骑士在我面前停下，上下打量着我俩，饶有兴趣地摸着自己的胡茬。“管教得不太好啊，居然动手伤了我的部下。身手倒是灵巧，但野蛮的魔人敢对人类动手可不是什么好品德。万一被举报到领主大人那里……”<br>“小人真是罪该万死，愿您手下留情。”我默不作声地将魔王拉到了身后，从贴身的腰包里掏出了几块碎金，悄无声息地塞进了他的手里。“一点薄礼，不成敬意，还望您海涵。”<br>骑士掂量了一下手里的重量，又看了看在我身后的魔王。“我倒也可以睁一只眼闭一只眼吧，但是……”<br>他猛地把魔王从我身后扯了出来。<br>“这眼神真是让人看不惯。”</p>
+<hr>
+<p>兔子确实是用来让人欺负的。<br>轻轻揉搓柔软的耳朵，顺着毛发从头摸到背后，看着兔子因为放松而在掌心里软成一滩，会有想要稍稍欺负的心很正常。<br>但兔子很怕疼，所以不能下重手。<br>在骑士的手落在魔王的脸上之前，我挡在了他与魔王之间。<br>尽管用手护住了头，当这一巴掌落下时，我的头还是嗡嗡作响。骑士手上的金属护臂划过我的左脸，鲜血顺着伤口涌出，看起来颇为吓人。<br>“……您满意了吗？”<br>骑士皱着眉头，我听见他的嘴里“啧”了一声——已经有镇民开始远远地围观了。对魔人动手与对人类动手还是有区别的。<br>“……今天姑且放你一马。”他把碎金收进腰间的袋子里，意味深长地望了魔王一眼，“这可是你的主人替你遭的罪。”<br>魔王没有理会他的挑衅。她沉默地，和我互相搀扶着，离开了镇子。</p>
+<hr>
+<p>“你和他们起冲突了？你受伤了吗？”<br>离开镇子已经有一段距离了，我的头还有些昏昏沉沉的，但魔王的步伐似乎变得愈发沉重，我才意识到情况不对。<br>魔王没吭声。我才发现她的兔耳无力地耷拉着。<br>“停下。”我拦在了她的身前。“让我检查一下。”<br>极不情愿地，她含混地回答：“……背后被砍了一刀而已。”<br>“而已？”<br>我几乎要被怒气冲昏了头，一把掀开了魔王的斗篷。<br>除了横贯整个背部、触目惊心的砍痕以外，更糟糕的是伤口周围的灼伤。那家伙应该是个魔法剑士——他是故意的。尽管他明白现在的魔王根本不是他的对手，他还是在剑上附加了火焰魔法，只为了让受伤的魔王更加痛苦。<br>“你为什么要把他们引过去？”我无处可去的怒火最后落在了魔王的身上，“你不明白现在的你有多么脆弱吗？”<br>魔王没有回答，只是任由我清理她背后的伤口。在听到“脆弱”两个字时，她的身体颤了一下，兔耳和头一起垂得更低了。<br>……好像说得有些过分了。</p>
+<p><img src="/copying/nmbxd51414457-1/0.jpg" alt="图片"></p>
+<p>*观看色情参考视频*</p>
+<hr>
+<p>我大概明白为什么魔王会这样做。<br>当她意识到我们被跟踪时，第一反应是分开行动，观察对方跟踪的目标。在确认了跟踪者的目标是自己后，就与我拉开了距离，打算独自解决对方。<br>但兔子可没法独自解决跟踪者，她的思维惯性差点让她送了命。<br>这也是魔王一直保持沉默的原因。回到小屋，进行简单的清创之后，我在她的背后贴上了草药制作的敷料。大面积的伤口清创往往会疼痛难忍，但她只是乖乖地趴在床上，垂着兔耳，一声不吭，像只乖巧的兔子。<br>我叹了口气。<br>“照你这样的情况，今天的治疗计划……”<br>“正常推进。”她打断了我的话。<br>我停下了手中的工作。“但你现在还很虚弱。”<br>“我很好。”她艰难地撑着身体站了起来。“正常治疗。”<br>我明白，我拗不过她。</p>
+<hr>
+<p>我把最后一根针管推进了魔王的手背。魔王——因为背后的伤，只能侧躺着蜷在法阵与仪器环绕着的垫子上。<br>“为了减轻治疗带来的痛苦，过会儿您就会因为麻醉的效果陷入沉睡。”我轻轻叹了口气。“您觉得冷吗？要不要我去给您拿条毯子？”<br>“……四肢有些冷。”魔王的兔耳随着她的呼吸轻微地摆动着，“但是背后……很烫。”<br>我有些心痛。<br>等我把毯子拿来的时候，魔王的神志已经有些不太清晰了。我呼喊了几声她的名字，她回应得都很迟钝。这是个好机会。我把毯子披在她的身上，靠在她的身边，装作漫不经心地问她：“如果治疗失败了，您再也没法变回魔王了，您会怎么办？”<br>魔王似乎花了好一会儿才弄懂了我的意思，她挣扎着想要直起头，却屡屡失败。“我会……”在麻醉药的作用下，她已经开始有些口齿不清。“我……”<br>“我不会接受……无能的魔王。”<br>魔王几乎是拼尽全力吐出了最后几个字。<br>我的心一凉。<br>“那就请您好好休息。”我恢复了以往平静的语调，直起身，准备离开。<br>“不……”<br>我的脚步停住了。<br>魔王的手牵住了我的衣角，像是溺水的人抓住了最后一根稻草。<br>她的眼睛几乎已经睁不开了，兔耳一颤一颤的，眼角似乎闪着些许泪光。<br>“不要……走……”</p>
+<hr>
+<p>我拢住了她的手。<br>因为输液的影响，她的手指有些凉。在感受到了我的体温之后，魔王急促的呼吸渐渐变得缓和了一些。她的手指动了动，似乎想握住我的手，但在麻醉药的作用下，她能做出的反应越来越少，最后只发出了些许微弱的呜咽声。<br>“没事，没事……”我在她的身边坐下，尽可能把身体靠得离她更近了一些，“我在这里。”<br>她的呼吸慢慢趋于平稳，耷拉着的耳朵随着胸廓的上下起伏而一点一点地晃动着，眼角似乎还残留着些许泪痕。<br>看来今晚我也只能睡在这了，我开始后悔自己为什么没有准备更大的垫子。尽量保证不惊醒她，我小心翼翼地牵着她的手在她的身边躺下。<br>近得几乎可以感受到她均匀的吐息。<br>我确实还有很多想做的事，但是不要紧。我并不着急，我们的时间还很长。</p>
+<hr>
+<p>当我把木柴搬进屋门时，魔王已经醒了，正坐在桌前毫不客气地吃着我为她准备的炒蛋。<br>在抗生素和净化魔法的双重作用下，总算是没有引起大规模的全身感染，看着她恢复了精神，我也终于放下心来。但听见我进门的声响，魔王的兔耳动了动，仿佛如临大敌一般绷紧了身体。<br>还在对我昨天说的话耿耿于怀？那句话或许有点太伤人了，确实也说到了她的痛处，我多少有些后悔。<br>“今天……还要做那个吗？”她紧张地指着自己的兔耳，“耳朵检查？……你笑什么？”<br>原来是因为这个。我松了一口气。“当然要做。”<br>“来吧。”魔王一副视死如归的表情。“我准备好了。”<br>我假装在一旁的册子上写写画画，用手指轻轻碰了碰她的耳尖，魔王的身体不由得一哆嗦，闭着眼等待接下来的酷刑。但在这之后，我便只是坐在一旁，观察着她的反应。<br>过了好一会儿，她才察觉到不对劲。<br>“检查结束了。”我笑着在一旁提醒她，“您怎么了？该不会在期待什么？”<br>魔王——终于意识到发生了什么之后，一边发出了意味不明的声音，一边把头埋进了臂弯里。我依稀听见了一个“你……”字，但之后就没了下文。<br>白色的兔耳似乎都有些微微发红。我趁她还沉浸在被骗了的懊恼中，轻轻摸了一下她的左耳，被突然袭击的魔王几乎从桌旁跳了起来。<br>“怎么了？好像有个脏东西，我帮您清理一下……”我装作不解，“难道您的兔耳……”<br>“不是！”魔王捂着自己的兔耳，满脸通红地辩解道，“本王的兔耳和本王一样……强壮而又冷酷！”<br>如果那对兔耳没在发抖，或许这句话的可信度还能变得更高一些。</p>
+<hr>
+<p>“不过……”<br>魔王似乎没有听见我的话，仍侧躺在一旁闭目休息，但兔耳却竖了起来。<br>“希望您之后还是不要轻易独自行动。”<br>兔耳侧了过去，无声地表达了拒绝。<br>“因为魔族的缘故，魔人族在人类的城镇里地位很低。”我继续念叨，“再加上魔人族没有什么魔力，又……看起来比较特殊，经常会被当作商品贩卖。”<br>她睁开了一只眼睛看着我。“人类有这么讨厌魔人族吗？”<br>“不，也算不上讨厌吧，怎么说呢……”我挠了挠头，“兽耳和尾巴看起来比较……可爱？”<br>“……这种东西？可爱？”魔王撑起身来，不可思议地指着自己的兔耳。“人类的审美……真是令人胆寒。”<br>“总之，希望您务必注意好自身安全。尽可能待在我的身边，小心行事。”<br>“本王会依照自己的判断行事。”魔王把头扭了过去。<br>真是……总在奇怪的地方有着糟糕的倔脾气。</p>
+<hr>
+<p>难得过上了几天风平浪静的日子。魔王对这里的生活适应得很快，大半的时间都缩在房间里沉睡——据她说，这是在办公。偶尔会来看看我的工作，或是去屋子的周边转转，看起来就像是个普通的兔魔人少女。<br>要真的只是普通的兔魔人少女就好了。<br>每次路过屋后的大树都能看见树上多了几道砍痕，这可不是一个普通兔魔人会做的。她不甘心，我明白，尽管嘴上不说，对于那次失败她一直耿耿于怀。<br>但魔力与力量的差距也不是这几天的时间内能赶得上的。再说了，短时间内我都不想带魔王去见其他人类了，干脆就只在森林小屋里一直享受二人时光……<br>如果不发生那件事的话，本该是这样的。</p>
+<hr>
+<p>我的通讯终端突然吵翻了天。<br>不同于魔族那边使用的纯粹法力通讯，我的通讯终端只有寥寥数人能联络上。接通了通讯之后，我沉默了片刻，便开始收拾行囊。<br>“怎么了？”房间里的魔王也被这突如其来的通讯惊醒了，揉着朦胧的睡眼歪头看向我。<br>“……去镇子里找人。”我不太想告诉魔王，但在这个紧要关头上实在没有什么撒谎的空暇，只能实话实说，<br>魔王的兔耳在听到“镇子”两个字之后支棱了起来。“本王也要去。”<br>这家伙绝对是想去一雪前耻。我叹了口气。“那就一起走吧。”</p>
+<hr>
+<p>“到底是怎么回事。”<br>太阳已经开始向西方缓缓坠落，我带着魔王急切地向镇子奔去。“去找人。有个朋友的孩子走失了，她打听到这边的领主刚进了一批货，所以让我来看看。”我每说一小段就得停下来喘口气，“……不要动粗，我去和领主交涉。我和领主合作很多年了，领主会卖我这个面子的。”<br>“我找个安全的地方等你就行了？”魔王也意识到事情紧迫，表现得相当识趣。<br>我实在抽不出余力来说话，便只是点了点头。<br>“你要是跑不动可以让我背你。”这次换魔王挪揄我了。“下次要不要考虑还是买匹马？”<br>虽然不想承认，但她说的可能确实是对的。</p>
+<hr>
+<p>从领主宅邸的窗口可以隐约看见魔王的身形，她披着黑色的斗篷将自己隐藏在了一旁灌木的阴影中。整理好仪态和呼吸，我收回自己的目光，敲开了领主会客室的大门。<br>领主——这个一头金色卷发，身形略显臃肿的男人，正穿着睡袍慵懒地靠在沙发上。“贤者大人真是好久不见，上次来我这怎么没和我打声招呼？听说你最近也对魔人产生了兴趣，我这最近新进了一批货，要不要来看看？”<br>“对，那批货我全要了。”我实在没有说客气话的余力。我并不认识丢了的那个孩子，靠特征认错的概率太大了，我承担不起这个代价，不如直接全部拦下来。<br>领主看起来并不是十分惊讶。他挑了挑眉：“那可真是……好兴致，不过这批货是老城的一位官员订的，如果只是丢了一头两头，我还能睁一只眼闭一只眼；但整批货被人截了，多少有些……”<br>“下个月，所有种类的药里，你挑一种份额加倍。”我回答得很干脆。这个开价是他赚了，市场上的魔人并不是那么金贵的东西，但我的药倒出去的价格可不止这么点。<br>“嗯……”这奸商摸着下巴，仿佛还在迟疑，“这么一说，你是不是带着一只白发白耳的？你说那个是你的……助手？”</p>
+<hr>
+<p>“那个是我的所有物。”<br>我尽可能让自己的语气听起来更平静一些。“是我的东西。”<br>“那真是……失礼了。”领主挑了挑眉，“那就这样说好了。货在东边的仓库里，等会儿我让人带你们过去。”<br>我明白他这句看似不经心的“你们”所包含的意义。<br>“感谢您的协助，那我告辞了。”<br>在我即将离开会客室时，领主忽然意味深长地说：“你的脸色不太好看，我第一次见到你这样。是终于找到你想要的东西了吗？”<br>我没有回答他，只是径自推开门向外走去。<br>“那真是恭喜你。”他在我的背后低语，“无欲无求的森林贤者……是吗？”</p>
+<hr>
+<p>在佣人的带领下，我们来到了“仓库”。这是一栋不太起眼的建筑，看上去就像是一栋普通的住宅，只是窗户被木板从外侧封了起来。<br>“都在里面。”领我们来的佣人打开了大门，将一整串钥匙递给了我，向我们示意道。“您请便。”<br>门里的景象和我想象的差距不大。装食物和水的碗散落在杂乱的干草中——这是他们的床铺。大约五六个长着不同耳朵和尾巴的幼小魔人蜷缩在干草之间，他们的手被一条铁链连在了一起。<br>魔王应当是第一次见到这种画面。她的兔耳一震，但很快恢复了平静。“所以，怎么办？全带回去？”<br>“全带回去。”我仔细算了一下个数，包括最里面缩着的那只小的，总共有7人。“根据她掌握的消息，应该是在这批货里面。她本人也在向这边赶来，我们把这些孩子带回木屋就行。”<br>“不能在这直接确认吗？那个孩子叫什么名字？”<br>“没法确认。”我把钥匙收在腰间。“叫’奈拉’……你试试。”<br>魔王压低了声音，对这群小家伙厉声道：“你们谁是奈拉？”<br>她没有预料到的是，被开门的动静惊醒的孩子们，几乎每一个都迫不及待地拥了上来。“我是奈拉！”“我是奈拉！”“带我走吧！”孩子们扯着她的衣角，抱着她的腿，哭喊声和铁链碰撞的声音混成一片。魔王的兔耳摆动着，在一群小毛球的簇拥下不知所措地看向我。<br>我叹了口气。“走吧，一起来吧。”<br>背后冷不丁地传来了一个声音。<br>“要去哪？”</p>
+<hr>
+<p>我在数秒之内理解了情况：领主把我卖了。<br>高大的轻甲骑士站在仓库的门口，用身体挡住了去路。“偷人货物可不好，这是莫里勋爵订的货，我奉勋爵之名保护这批货物的安全。”他悠闲地靠在门框上。“你又是什么人？”<br>“我把这批货从领主大人手上买下了。”我向前一步，拦在了他和魔王与孩子们之间。<br>“你这样搞得我很难办啊……”他装作一副十分困扰的样子。“订好的货被人拦了，这我不好和勋爵大人交差啊。你说，这事怎么办？”<br>“你去向领主大人讨说法吧。”看样子这也不是掏钱能解决的问题了，我把手悄悄伸向了腰间带着的药剂。<br>“给你脸不要脸是吧？”骑士忽然脸色一变，一道寒光向我的喉咙劈来。紧接着是一声金属的脆响，魔王挡在我的面前，勉强招架住了他的砍击。<br>“挺能忍的嘛，我还在想你什么时候才会对我出手。”他把剑向旁边一挑，魔王则顺势向他的腰间袭去，但却被他轻松用剑防下。“技术不错，力度不行。”他嘲笑道。<br>魔王没有回应，但攻击也没有停止。她以如雨般灵巧的刺击从各个方位骚扰着对方，尽管大多数都被挡下了，仍有几次划破了骑士的皮肤。<br>“真是……像飞虫一样！”骑士愈发烦躁，忽然以右手发动了附魔——看上去是肢体强化类型。他用那只泛着蓝光的手臂以惊人的速度揪住了魔王，扼住了她的脖子。<br>“热身游戏就到此为止了。”他满意地看着柔软的兔子在自己的手里挣扎着。</p>
+<hr>
+<p>一道银光闪过，魔王的剑深深地没入了他的另一只手臂里。<br>“哈……哈……”他大口喘着气。那次攻击本来是朝着他的脖子砍去的，但他却在最后关头用手臂挡开了。“你以为我会掉以轻心吗？我……”<br>他的手忽然一松，魔王轻巧地落在了地上。<br>“确实。”魔王活动了一下脖子，甩掉了剑上的血滴。“到此为止了。”<br>魔王的左手握着的黄铜针管，此刻留在了他的手臂上。<br>那是我在出发前给她的麻醉药。<br>看样子是不需要我动手了，我把淬毒的刺针默不作声地藏回了包里。面前的大个子踉踉跄跄地摔倒在地上，魔王转过身来，把剑收回剑鞘里，满意地看着我。<br>就差把“快夸我”三个字写在脸上了。<br>“魔王大人真——帅——啊——”我拖长了声音，尽力满足她的虚荣心。她向我摆了摆手。“不必了，本王向来不需要这种夸赞。”<br>兔耳都快翘到天上去了。</p>
+<hr>
+<p>“我还以为您会对这件事表现得更愤怒一些。”<br>我和魔王正牵着这一群小家伙走在回小屋的路上。铁链已经被我们摘下了，这群小家伙看起来也没有想要逃跑的迹象。我在前面引路，魔王则在队尾看着他们，像是两个牧羊人。<br>“你指的是什么？那个脑子不太好使的骑士？”魔王走得很慢，眼睛也全在孩子们的身上。<br>“指这个。”我摇晃了一下手中的铁链。<br>她沉默了一会儿。“这是你们人类的法律与交易，我无权干涉。”<br>“这样啊……”我沉思片刻，“如果在魔族的王国，这些孩子会被怎么安置？”<br>魔王几乎是不假思索地回答：“魔族本就人口稀少，魔人族自然也被看作我们的同类。如果在都城，他们会被安置在同样由魔人族经营的收养机制……”她似乎意识到了什么，“当然，你是他们的买家，决定权在你。”<br>有几个大一些的孩子的兽耳竖了起来。<br>“等今晚的指认结束，就把剩下的孩子送去你们的王国，如何？”我装出一副头疼的样子，“我也不想在家里养这么多的小孩子，如果您能帮忙的话就太感谢了……”<br>更不想在欺负魔王的时候被小孩子看到，绝对不要。<br>魔王的眼睛亮了起来。“今晚本王就通知他们，过几天就让部下来把他们接回去。”<br>真是谢天谢地，我不由得松了一口气。</p>
+<hr>
+<p>米莉亚几乎是从小屋向我们冲了过来。“奈拉！”她大声呼喊着女儿的名字，队尾那个个头最小的圆耳朵孩子从队伍里窜了出来，向她跑去。“妈妈——”孩子拖着带着哭腔的长音，扑在了母亲的怀里。<br>作为纯血魔族，米莉亚几乎可以隐藏自己所有的魔族特征——她的外表看起来与一位身姿曼妙的人类女性无异，但从力量的角度来说，她比我和现在的魔王都强大得多。“找到了就好。”我让剩下的孩子先在我的小屋里休息。“我还在想，如果这批货里也没有，那就糟了。”<br>“辛苦你了。”米莉亚抱着女儿，抹了抹眼泪。“我差点以为这辈子都见不到她了……”<br>“也不怪你们，只是……”我想说什么，终究还是没有说出来，只是叹了口气。“以后还是要多加注意。”<br>“这些孩子也真是可怜……”她在小屋里望了一眼，目光最后落在了我们身边的魔王的身上。“他们买卖的居然还有这么大的兔魔人吗？看你身上的疤痕，应该在外漂泊了不少时间了吧……”<br>“不，那是……”<br>还没等我解释完，米莉亚的手已经抚上了魔王的头：“在人类这里的日子过得很不容易吧。”<br>魔王僵住了。我在背后朝她比划着手势：冷静，冷静！<br>“误会了，这位是我的助手，也是我的病人。”我不得不出来打圆场，“她的身上有些慢性病，正在我这配合治疗。”<br>“啊呀，那真是对不起。”米莉亚连忙收回了手，“让你见怪了。”<br>“不……没事。”魔王深吸了一口气，“我不介意这些。”<br>“不介意被人摸头吗？”我忽然见缝插针地发问。<br>“不……不是！”魔王如临大敌般地后退了两步。“我……我去照看剩下的孩子了！”</p>
+<hr>
+<p>“真是可爱。”米莉亚牵着奈拉坐在一旁，看着仓皇逃走的魔王打趣道。“我还以为你会喜欢更成熟一些的类型的。”<br>“不，虽然体型那样，她还挺成熟的……不！也不是说喜……”我被打了个措手不及。<br>“这位的来头可不小吧。”米莉亚话锋一转，“是诅咒？不，应该说是祝福吗……”<br>尽管在王国近郊隐居多年，米莉亚也未曾落下对魔药的研习。还记得刚认识她的时候，还是个扬言要成为“最强魔药师”的少女，一晃也已经过去这么多年了。<br>“瞒不过你。”我感叹道，“这位其实是魔王。”<br>“怪不得，原来是魔王……什么？你说她是魔王？”米莉亚干咳了好几声。“这几年新上台的那个？被你拐到这里来了？”<br>“是在战斗中遭到了偷袭，偷袭用的箭矢混合了毒和诅咒，如果你能帮忙的话就再好不过了。”我没有正面回答她的问题。“不瞒你说，如果不是这件事，我还打算过段时间去找你帮忙。”</p>
+<hr>
+<p>“过段时间你带着她来我这一趟吧。”米莉亚宠溺地揉着女儿的头，小家伙已经趴在她的膝盖上睡着了，圆圆的豹耳随着鼾声轻轻摇晃着。“我和奈拉都需要好好休息一段时间。”<br>我盯着她的耳朵出了神。“……我以后如果有了女儿，要不就叫米莉亚吧。你来当她的教母怎么样？”<br>米莉亚白了我一眼。“那你不就成了我的父亲了？甭想。而且你是不是想得太远了？”<br>“嘘，别说话。”我做了个噤声的手势，“我在给第三对双胞胎起名字，就快想出来了。”<br>“那你们进展到哪一步了？”<br>我略加思索。<br>“……算是牵手了吧。”<br>“还有，摸过耳朵了。”我补充道。</p>
+<hr>
+<p>“啊……”<br>我和魔王瘫倒在桌旁。<br>历经数日的辛劳，我们终于把那群小兔崽子送走了。带孩子真是太恐怖了。意识到我们不会伤害他们之后，这群小东西的胆子就大了起来。光是确保他们每个人都在该待的位置上就几乎耗掉了我所有的心力，更别说顾及魔王和治疗了。<br>魔王，和我一样，累得抬不起头来，一对兔耳也毫无生机地贴在桌面上。天知道我俩都经历了些什么，当看见接应的使者出现在门口的时候，我俩仿佛看见了天使。<br>“你知道吗？”我忽然开口，“米莉亚前几天给我带了好东西。”<br>魔王的耳朵动了动。<br>我在她的耳朵边低语：“是她亲手酿的果酒。”<br>魔王的耳朵立了起来。“……苦吗？”她抬起头。<br>我笑了笑。“要试试看吗？”</p>
+<hr>
+<p>不知米莉亚用了什么配方，果酒的口感十分柔和。魔王看起来相当中意这有着轻柔甜味和浓郁香气的饮料，最初只是小心翼翼地嘬饮，之后便开始小口地吞咽，再然后……<br>“有骰子吗？”她端着杯子靠在椅背上，朝我招了招手。“来！让你看看魔王的本事！”<br>她到底从哪学来的这些东西。<br>“我是认真的。”她忽然把酒杯砸在桌上，撑着桌子，面色严峻地盯着我。“医生……敢和我赌一赌吗？”<br>“赌什么？”我斜靠在椅子上望着她。<br>“什么都行。”魔王看起来相当自信，“你得想想，你能输给我些什么东西。”<br>我从柜子里翻出了几颗木头骰子。“来。”酒精让我的脑子也有些发热。“试试看吧。”</p>
+<hr>
+<p>魔王翻开了碗，算了算骰子的点数。<br>“是我输了。”她耸了耸肩。<br>但她似乎并不在意。她举起酒杯，一饮而尽，潇洒地向我展示空空如也的杯底。“继续。”<br>不行，这太背德了。对于一个医生而言，看着自己的病人在这里无节制地饮酒太过于违背职业道德了——她确实喝得太多了。尽管她看起来还相当镇定，举止自若，但兔耳却歪斜地耷拉着。这不是个好兆头。<br>“来。”魔王把手再次按在了碗上。<br>“……小。”我有些头疼。<br>魔王抬起了碗，笑了笑，“到你了。”<br>我叹了口气，想举起酒杯，一只手却按在了我的杯口。“不赌这个了，我们来聊聊真心话吧。”<br>我有些错愕。<br>“来吧，坦诚相待。”魔王把酒杯从我的面前挪开。“告诉我……你究竟在追寻什么？”</p>
+<hr>
+<p>我愣住了。<br>我的脑子里似乎闪过了诸多杂乱的片段。魔王并不是第一个这么问我的人，在这之前，我总能找到合适的借口。但现在，我的大脑却一片混沌。<br>“……为了制造出杀死所有人类和魔族的魔药。”我回答。“所以我需要研究你的身体。”<br>魔王并不打算罢休：“为什么？”<br>我望着魔王的眼睛。“因为他们杀死了我的恋人。”<br>魔王的眼睛里似乎闪过了一丝错愕，但她很快便将这一点情绪掩盖了起来。“不错。”她笑着说，“我喜欢这个答案。很有魄力，也很浪漫。如果你要杀死所有人类和魔族，那本王就会保护所有魔族……甚至包括人类！”<br>“继续。”她将碗再次盖在了桌上。就在她想继续摇晃时，我的手按在了她的手上。“你不该继续喝了。”<br>“大还是小？”她并没有理会我的话。<br>“大。”<br>她掀开了碗。“你赢了。你有什么想问本王的吗？”<br>“你该去休息了。”我近乎强硬地夺走了她的酒杯。“够了。”<br>“你得向本王提一个要求。”魔王顿了顿，“去休息除外。”<br>“……”<br>我的头疼的厉害。<br>有什么不过分又过分的要求能让她知难而退？我总觉得现在让她做什么她都会赌气照做，但又不能做得太过火。<br>我回忆了一遍魔族的礼仪和传统。<br>“……这样。”我深吸了一口气。“你要么去休息，要么……含住我的食指。”<br>这是魔族的传统之一，败者需要含住胜者的食指，以此向对方表示屈服。对于魔王来说这算得上是奇耻大辱。<br>我不确定她会不会因此大发雷霆，但总得试试。</p>
+<hr>
+<p>“……”<br>魔王沉默了一刹那，突然向我扑来。<br>随着一阵天旋地转，我一个踉跄摔下了椅子，后背狠狠地撞在了墙上。“你应该明白这是什么意思吧。”魔王伏在我的身上，左手按住了我的肩膀。<br>好，我已经在后悔了。<br>“你是觉得本王不敢做吗？”<br>啊……？<br>食指感到了一阵温热。我勉强抬起头，看见自己的右手已经被魔王衔在了嘴里。<br>“等，等等……”<br>魔王垂下了眼，如同传说中战败的俘虏一样，用舌头抵着我的指腹轻轻舔弄着。将舌尖缓缓从第一个指节移动到第二个指节，她看起来不太熟练，但做得相当认真。<br>食指好像快要融化了。<br>我的大脑也快要爆炸了。<br>想要再塞入第二根手指，第三根手指。想要塞进她的喉咙，看她被顶的喘不过气而咳嗽的样子……我尽力按捺着一切粗暴的冲动，喘着粗气向她发问：“……你之前，做过这个吗？”<br>听见了我的声音，魔王停下了嘴里的动作，用牙齿轻轻啮咬着我的指节。“本王从没向他人低头过。你是第一次。”<br>……第一次做成这样也太犯规了。</p>
+<hr>
+<p>“够了。”<br>我把手指从她的嘴里抽了出来，食指上还沾着她的唾液，混杂着酒精的甜香。她仍没有想要起来的迹象，继续伏在我的身上，像只悠闲的猛兽。“那轮到本王提问了。”魔王似乎已经忘掉了骰子游戏。“你曾经的恋人是什么样的人？”<br>全是让我头疼的问题，酒精在我的脑子里乱撞，我几乎抽不出思考的空闲。“……她很……强大，也很冷静。对我……很温柔。”我断断续续地吐出了几个词。头痛得像是要炸开一样，过去的记忆不断灼烧着我残存的理智。<br>“……好。”她再次低下头，握着我的手腕，叼起了我的中指。要把整根中指塞进去并不容易，她努力地吞咽着，我渐渐感觉自己的指尖触及到了她的舌根，甚至是更深处。“没必要……做到这种程度……”我几乎是从牙缝里挤出了这几个字。<br>做到这个地步，她看起来也相当不适应，左眼已经被生理性的泪水迷住，右眼则有些迷离。她没有回应我，歪向一边的兔耳抖了抖，费力地用口腔里的动作向这只中指陈述一个故事：一个战败的俘虏，正在企求对方为自己留下一条性命。<br>而我是多么想把这个故事变为现实。<br>“……呼。”把我的中指抽出来之后，她用拇指撇开嘴角的唾液，深吸了一口气。“接下来是最后一个问题。”</p>
+<hr>
+<p>最后一个问题是什么？<br>我的记忆似乎在这里断了片。当我艰难地找回了一点理智之时，眼前的景象变得截然不同。<br>我和魔王的位置调转了——魔王此刻缩在我的身下，两只手的手腕被我抓住，按在她的头顶上方。她的兔耳看起来乱糟糟的，似乎刚被人虐待过，可怜地耷拉着，随着她的身体一同瑟瑟发抖。而我的右手，此刻正在她的口腔里粗暴地探索着。我把两根手指塞了进去，感受那份温暖的挤压，在里面毫无顾虑地搅动。找到一直向后躲藏的舌头之后，我轻松地捏着她的舌头抓了出来，用食指和拇指恶意地揉捏着。也只有在此刻，她才会发出些许痛苦的呜咽声，但我对此无动于衷。<br>“给我。”我发出的声音似乎不属于我自己。<br>魔王并没有明白我是什么意思，她只是尽力将身体蜷缩得更小了一些。我这时才注意到她在哭。泪水不断从她的眼角滚落，在地面上留下了一小滩泪渍。<br>但她并没有发出抽泣声。除了被弄痛时发出的哀鸣，其他的时间她只是无声地掉着眼泪。<br>安静得像只兔子。</p>
+<hr>
+<p>“啊啊……”<br>我不该这样做的，我很清楚。但我的意识似乎在不断向着未知的领域下坠。<br>“给我……更多。”<br>我贪婪地渴求着更多的温度。我知道该怎么做。剥开她的衬衣之后，在那具伤痕累累的身体中还蕴含着更多的热量。只要把手指滑过她的小腹——就像往常在检查时做的那样——然后用手术刀沿着最满意的一条线剖开，伸入她的腹腔，就可以把手没入她的内脏之中取暖。<br>她会哭得更厉害吗？她会喊叫出声吗？和药物的副作用相比，哪个要更痛苦一些？我想象着她的反应，身体因兴奋而止不住地颤抖——我期待她的反应，甚至多于期待那柔软饱满的感受本身。痛苦但克制着的颤抖，惊慌失措的眼神，无助的泪水，这一切都是我的食粮。<br>——她会对自己的决定后悔吗？<br>……她会后悔相信我吗。</p>
+<hr>
+<p>她本就不该相信我。<br>我对她而言算是什么？“医生”吗？但从最开始，她对我而言就只是我的所有物罢了。我的实验体，我的财产，我的食物。<br>没有意识到这一点，对我报以信任，将脆弱的自己交付于我正是她的错误，所以现在的她是罪有应得。我这样告诉自己。<br>我的右手恋恋不舍地从她的口腔里抽了出来，她吃痛地咳嗽了几声，被我拉出的唾液还垂在唇角。手指的皮肤泡得有些发胀，但盘踞在我的大脑里的狂热仍未消减。该再进一步了。<br>我的手伸向了她的小腹。</p>
+<hr>
+<p>当我的手扶在她的小腹上时，陌生的触感让她打了个哆嗦。她看起来仍不太明白即将发生什么，只是微微颤抖着，柔软的兔耳垂了下去，似乎本能地想要让自己的身形缩得更小一点，以此逃过捕食者的利牙。<br>可惜并不适用于被捕食者压倒在地的场合。<br>我满意地看着她在我的身下挣扎的样子。眼泪……她的眼泪几乎没有停止过，泪珠顺着她的脸颊一路向下滚落，沾湿了她凌乱地散落在地面上的白色长发。她的喘息混合着酒的味道，甜腻地在这小小的空间里蔓延。<br>“医生……”<br>她用虚弱的声音吐出了几个字。<br>“……为什么……”<br>“因为我想吃掉你。”<br>我的语调平静而冰冷。<br>她一怔，而后，我的右手触碰着的小腹传来了更加强烈的颤抖。“不要……”她望向我抚在她的小腹上的右手，声音里带着一丝恐惧与柔软的哭腔。“对不起……不要……”<br>她的声音越来越小。</p>
+<hr>
+<p>这幅表情相当迷人。<br>我看着她的脸，有些出神。黄色的眸子在泪水的洗礼下变得略有些黯淡，大概是因为酒精的缘故，她的脸颊仍有些微微发烫。为了不让自己发出过多的声音，她再次用牙齿咬住了下唇——正如第一天夜晚时的那样。只是这次，她的眼睛垂了下去，不受控制的泪水迷住了她的睫毛。<br>我的脑子里冒出了一个荒唐的想法。<br>一个与我现在所做的事毫无关联的想法。<br>我想要一次轻微的接触。没有更多深入的交融，只是嘴唇与嘴唇的一次轻碰。纯粹的，试探性的，青涩的，柔软的。<br>我把脸俯了下去，看着她朦胧的眼神。<br>在我即将蹂躏她的身体和心灵，将她的痛苦作为食粮大快朵颐之时，这个想法忽然霸占了我的脑海。<br>我想要一个吻。</p>
+<hr>
+<p>夜晚的风吹拂过我发烫的额头，带走了些许异常的温度。在此之前被高昂的兴致压抑着的痛苦和理智此刻苦涩地流回了我的心里。<br>我清楚自己做了什么，这就是我恶劣的本性。<br>我并没有与她亲吻的资格。<br>我低下头，在她的额头小心翼翼地轻啄了一下。<br>“骗你的。”我松开了手，拭去了她眼角的泪水，“……不要哭。”<br>脱离了我的控制之后，她颤抖着把身体抱成了一团，蜷缩在墙角里。在我近乎野蛮的钳制下，她的手腕有些发青。看见她从我的身边逃走之后，我似乎松了一口气，但心里的某个地方却揪了一下。<br>我直起身，尽力稳住脚步，从房间里抓来了一条毯子。魔王似乎已经在角落里陷入了浅眠，我拿着毯子轻手轻脚地靠近她，却被她的兔耳捕捉到了声响。她的兔耳抖了抖，用恐惧的眼神望着我，却没有发出声音，只是把身体又往墙角里挤了挤。<br>糟透了。<br>无论如何，我还是拿着毯子披在了她的身上。当我俯在她的身前时，她的眼神似乎变得不太一样。<br>她缓缓开口。<br>“你的脸……？”<br>嗯？<br>一滴黑色的液体落在了她的脸上。</p>
+<p><img src="/copying/nmbxd51414457-1/1.jpg" alt="图片"></p>
+<p>示意图</p>
+<hr>
+<p>我几乎是夺门而出。<br>情况不对，这个身体本该能支撑得更久一些的。是因为剧烈的情绪波动吗？酒精的影响渐渐消散，我伏在屋外的水盆上，水面在月光下倒映出了我的面容。<br>我的脸正在开裂。<br>并非皮肤上的伤口，而是在更深层次的意义上，作为人类个体的存在方式出现了裂痕。黑色的物质从裂口里滴落水面，在裂开的缝隙下，有蓝色的微光在微微涌动。<br>那是我。那是真正的我。<br>我调整着呼吸，尽力让自己平静下来。脸上的裂痕开始渐渐修复，最后消弭无踪。水盆里的黑色液体也仿佛从未存在过一般。<br>从物理意义上来说这大概与幻象无异，但我明白这意味着什么。<br>我想起了魔王最后恐惧的眼神。<br>我又把一切都毁了。</p>
+<hr>
+<p> “……医生？”<br>魔王的声音把我拉回了现实。<br>魔王——正披着我给她的毯子站在门口。她的耳朵和头发都乱糟糟的，衣服上也留着被我拉扯的痕迹。她在看见我的时候不自觉地向门后缩了缩，看起来还有些害怕。<br>“对不起。”我深吸一口气，却迟疑着没有朝她迈出脚步。“我可能……需要一个人冷静一段时间。”<br>酒精的作用看起来似乎还没消散，魔王看着地面，眼眶里又蓄起了泪水。<br>“你要走了吗……”<br>我没想过她会问出这样的话。<br>“你突然不见了……屋子里很黑……”酒精的影响让她说话的顺序也有些颠三倒四，“我在晚上看不清，找不到油灯……说好了要治疗我的……”<br>她靠在门边蹲了下去，缩在毯子的阴影里低声啜泣着。<br>“因为我没用……你也要抛弃我了吗……”</p>
+<hr>
+<p>再怎么样也没法把现在的她丢在这里。<br>现在的魔王和刚刚游刃有余的样子判若两人，过量的酒精让她几乎无法正常行走，只能把身体倚在我的身上，扯着我的衣服，似乎生怕我再次不辞而别。当我把她扶进她自己的房间，给她掖好毯子，准备离开之时，她却轻轻拉住了我的手。<br>她没说话，只是可怜巴巴地看着我。<br>……总不能挤上她的床。我叹了口气，轻轻把她的手掰开。<br>“呜……”<br>她的手僵在了空中。</p>
+<hr>
+<p>果然在哭。<br>酒精像是打开了魔王的某个开关，即使站在门口也能听见她微弱的抽泣声。我叹了口气，敲开了房间的门。<br>“我来了。”<br>我拖着铺盖和枕头，放在了她的床的旁边。<br>“可以牵着我的手。”我把左手伸给了她。<br>她向我这边挪了挪，把手垂了下来，拉住了我的手指。<br>“不会走了吧。”她小声地问我。<br>我捏了捏她的手指，表示回应。“不会了。”</p>
+<hr>
+<p>经历了漫长而疲惫的一天，我的精神差不多也快到极限了。困意逐渐淹没了我。有些冰冷的地板，枕头不太规则的形状，指尖传来的温度，我的意识渐渐从这一切中开始抽离，向着无底的深渊下坠。<br>我看见了一个白色的身影。<br>这是第几次了？我努力地在一片狼藉的记忆里搜寻这个影子。我抬起手，看见自己的身形似乎变成了一团模糊不清的黑色。<br>我在她的身旁坐下。<br>“这次的身份是什么，‘森林贤者’？”她轻笑了一声。<br>“这次我要抢先一步杀掉所有人。”<br>“那可是件麻烦事……别累着了。照顾好自己。”她撑着头。<br>“你说过你会救我的。”我看着她。“你每次都没有完成约定。”<br>她的表情有些模糊不清。<br>“……对不起。”</p>
+<hr>
+<p>我睁开了眼睛。<br>清晨的阳光略有些刺眼，我用手挡在脸上，过了好一会儿才适应了室内的光线。我深吸了一口气，掀开了被子。<br>我才注意到了身旁的异样。<br>两只……兔耳，正伏在我的臂弯里，随着呼吸的频率上下起伏。<br>顺着兔耳向下望去，是一头柔软的白发。一团白色的东西正蜷在我的身旁……我的被窝里，安稳地沉睡着。似乎是感受到了突如其来的冷空气，她向我的怀里无意识地蹭了蹭。<br>更糟糕的是，她还抱着我的手。<br>虽然我也很想问“为什么”，但比起思考这点，我产生了一种难以遏制的冲动。她的呼吸里还带着些许酒气，晨间的阳光越过白色的发丝在她的脸上投下了一片阴影。有种奇妙的魔力驱使我抬起了另一只手……<br>然后，放在了她的头上。<br>掌心传来了温暖的触感，随着我的摩挲，柔顺的发丝在我的指缝间滑过。我屏住呼吸，轻轻揉搓着她的头顶。她似乎发出了一声满意的轻哼，把头向我的手里靠了靠。<br>我感觉自己已经没有足够的意志力去把手拿开了。这种感觉真是会让人上瘾。<br>“呜……”<br>啊。<br>魔王缓缓睁开了眼睛。<br>我俩在被窝里面面相觑。</p>
+<hr>
+<p>魔王从被子里弹射了出去。<br>“诶？诶诶？”她满脸通红地靠着墙，“发生什么了？本王昨天干了什么？”<br>……嗯？<br>“您昨晚要求我留下来。”我决定老老实实说实话。“您原本是睡在床上的，等我醒来的时候，您就在我的身边了……”<br>“然后我摸了摸您的头。”我举起双手，“对不起。”<br>“……等等，等等。”魔王扶着额头，“那个不重要……那个也很重要，但是之后再说！重要的是之前发生了什么……”<br>“所以……”<br>她咽了口唾沫。<br>“本王昨天把你睡了？”</p>
+<hr>
+<p>“？”<br>这家伙的标准到底是怎么回事。<br>“昨天晚上什么都没有发生……您误会了。”我连忙解释道。<br>“不，不是，那个，即位前本王学习过的，王室礼仪……王室礼仪……”她念叨着一些古怪的词汇，“作为王族要为自己的行为负责，如果在外过夜，就要把对方带回王宫，避免子嗣在外……”<br>“……都说了没发生过那种事了，而且我又不会生孩子。”<br>“要，要怎么做来着……暂时不能带回王宫的话……”魔王看起来陷入了混乱之中。“本王……想起来了！”<br>她深呼吸了几次，突然走上前，抬起了我的一只手。<br>“你愿意成为本王的第一个王妃吗？”</p>
+<hr>
+<p>“不要。”<br>我倒是想起来更早发生的一些事了。<br>我站了起来，捏着她的肩膀，把她推到了我的工作区域。<br>“现在，立刻，开始检查。”我黑着脸。“你知道你昨晚喝了多少吗？”<br>“啊？诶，那个……”魔王的眼神飘向一边，开始装傻。<br>“呜……？”<br>她的耳朵感受到了一阵冰凉：我正在用沾了酒精的棉花对一片皮肤消毒。<br>“诶？等等，那个是……”她的声音渐渐变小。<br>“嗯。”冰冷的针头贴在了她的耳朵上。“抽血。”</p>
+<hr>
+<p>魔王捂着自己的耳朵，可怜兮兮地坐在椅子上，任凭我对她上下其手……地检查。“之后的治疗期间，你摄入的酒精必须严格管控。”我压低了嗓音对她说。“这次的事我也有责任。接下来的三个月我会和你一起禁酒。”<br>“……好。”<br>魔王的耳朵看起来更加萎靡了。<br>“我也有问题想问你。”<br>她忽然转头看向我。<br>“你昨晚说的是真的吗？”<br>我的心头一紧——理所当然的，昨晚的事她还记得不少。我当然还记得自己那些过分的举动，还有关于“恋人”的说法。<br>……但我不愿对她撒谎。<br>“都是真的。”<br>“那……要杀死所有人类和魔族也是？”<br>“是真的。”我只能梗着脖子把昨晚的发言重复了一遍，“我讨厌所有的人类和魔族。”<br>“……”<br>她似乎想说什么，却没有开口。<br>“本王今天要回城堡一趟。”她的脸色一冷，语气忽然强硬了起来。“本王的心腹提出要定期检查本王的身体状态，这边的治疗流程暂缓。”<br>我的手在空中停顿了一刹那。<br>“没什么。只要你在为本王认真治疗，他们也能检查的出来……对吗？”魔王瞥了我一眼。<br>“我为您提供的治疗方法当然没有问题。”我的语气也变得客套而生硬。“我问心无愧。”<br>……我只对昨晚发生的事问心有愧。<br>“那本王就准备启程了。”魔王把一旁的黑色斗篷套在了身上，兔耳也再次被压在了斗篷之下。“接应的人不久就会抵达。”<br>“……那您路上注意安全。”</p>
+<hr>
+<p>月光从屋檐的缝隙里照进了屋子。就在一天前，我和魔王正为了酒和赌约而吵闹，满屋子都是骰子晃动和“我赢了”的嘈杂噪声，但此时此刻，木屋里空荡荡的。<br>我在森林里独居也有不少年头了……不如说，之前我一直都是孤身一人。但这次却不一样，我被沉闷而寂静的空气压得有些喘不过气来。<br>我应该表现得更温柔一点吗？应该用更稳妥的方式慢慢积累好感？但只要呆在魔王身边，我的头脑就会变得不太清楚。想要欺负她，但也想要让她离我更近一些。她的回应，她有趣的表情，她趴在桌上看着我的样子，我几乎要开始习惯这一切了。<br>只是和她在一起度过了一周的时间，我就觉得二人一起的时光像是呼吸般自然。<br>我靠在椅子上，望着我为她留出的房间出神。我在建造这座木屋时就规划出的这个房间，在一周前才刚刚迎来了自己的主人。<br>如果她不回来了怎么办？如果他们认为我的治疗没有效果该怎么办？那我就去王都找她吧。如果他们不允许我接触她，那就把碍事的人都处理了。投毒，传染病，暗杀，选择有很多，都不是什么麻烦的事，就像之前一样一步一步来就行了。<br>魔王会知道吗？她会知道的，我不会对她撒谎。她会生气吗？她可能会对我拔剑相向吧。就算没法赢我，也会拼死为部下与子民复仇。等到那个时候就把四肢处理掉吧，只留躯干和头就足够了，这样她也不会离开我了。<br>——但那样的话，魔王就不会抱着我的手臂了。<br>……<br>我的头伏了下去。<br>我想她了。</p>
+<hr>
+<p>“说真的，你得庆幸负责监视的人是我。”<br>金发的堕天使倚靠在沙发上，摆弄着一旁的水晶球。“如果让莱拉看到前天晚上发生的那件事，她可能会连夜赶去森林砍掉那个什么贤者的头吧。”<br>“不至于这么大惊小怪吧。”魔王有些不解。“你看，本王也没有受伤啊，最多也不过是行了几次战败礼罢了。那群老顽固留下来的糟粕礼仪，本王又不在乎。”<br>“……算了，像您这种傻子是不会懂的。”堕天使看向一旁。<br>“佩诺朵，几日不见，你是不是对本王越来越无礼了。”<br>佩诺朵像是没听见魔王的话，自顾自地拿起了一旁的观测记录。“不过，说真的，那天晚上我都准备动身了，他看起来像是真的想杀了您。”<br>“本王当时也以为自己至少会受点轻伤吧，原本打算等他真的动手了再做反击的。但事实上，就是开个玩笑嘛，从结果来看，本王毫发无损。”魔王看起来并不在意。“……不过，那时他的杀气倒是货真价实的。比起这个，他说的计划呢？你们研究得怎么样了？”</p>
+<hr>
+<p>“和我们之前的发现基本吻合。”佩诺朵递来了一份资料。“倒不如说，他会对您说实话，挺出乎我的意料的。”<br>“本王看不懂这个。”魔王把厚厚的一袋文件推开。“本王只需要知道结果，能不能阻止他？”<br>“……研究需要时间。”<br>“要多久？给我一个期限。”<br>“至少两个月。”<br>“不行。”魔王的语气十分坚决。“一个月。一个月内我必须看到成果。我清楚研究院那群家伙，不逼他们是不会拼尽全力的。”<br>佩诺朵叹了口气。“……有没有人和您说过，您可真是个糟糕的领导者。”<br>魔王笑了笑。“研究院的那群魔人，有多少是本王捞回来的？他们还欠着本王一条命呢。”<br>“……再说了，你不也还心甘情愿地跟着本王吗？”</p>
+<hr>
+<p>佩诺朵多少有些不爽。她把水晶球捧了出来。“您是不是还想知道，那天晚上之后究竟发生了什么？”<br>“对，我之前说过了，他离开之后的内容我都记不太清了。”魔王凑了上来，“你这里能查到回放吗？”<br>佩诺朵调试了一会儿水晶球，脸上浮现出了一丝意味不明的笑容。<br>“来吧。”</p>
+<hr>
+<p>镜头随着魔王的视角来到了门外。在泪水的影响下，画面并不是很清晰。画面里传来了魔王的声音：“不要……抛弃我……”<br>“呜哇哇哇哇啊啊啊啊啊啊啊啊！”<br>画面外的魔王此刻满脸通红地挡在水晶球投影出的影像前大叫。<br>“您有什么好害羞的，您洗澡的时候被我监视都不害羞，怎么这个时候开始脸红了。”佩诺朵一副阴谋得逞的样子，“还没结束呢，您慢慢看。”<br>当回放录像进行到魔王扯着贤者的衣角时，魔王已经再起不能了。“杀了我吧……”她趴在水晶球前，“本王绝对不会再乱喝酒了……”<br>“之后还有更有趣的内容哦。”佩诺朵在魔王的耳边低语。<br>靠在床边睡觉不是件好事。水晶球投影出的录像解释了晚上发生的一切：为了在睡梦中拉着贤者的手，魔王离床边靠的很近。随着一个翻身，她便连人带着被子从床上滚了下来。<br>似乎是因为感受到了冰冷的地板，魔王打了个寒战，本能地朝着更温暖的地方凑了过去——她抱着贤者的手，蹭进了对方的被窝里。<br>佩诺朵按了一下按钮，水晶球的投影随之关闭。“之后的事您也就知道了……虽然我觉得王妃那段也挺有趣的。”<br>魔王抱着自己的膝盖，面如死灰地躺在地上。</p>
+<hr>
+<p>“你说……那家伙是不是其实很讨厌本王啊。”<br>堕天使舒展了一下自己的翅膀，挑了挑眉毛。“您为什么会这么想？”<br>“你看，那家伙不是说自己之前有过恋人吗。”魔王爬了起来。<br>“第一，很强大。但是现在的本王弱得不行。”<br>佩诺朵点了点头。<br>“第二，很冷静。但是本王……做了很多看起来不太冷静的事。”<br>佩诺朵想了想，表示同意。<br>“第三，很温柔。本王……好像一直都……对他很过分……”<br>“您第一天还把他提了起来。”佩诺朵补充道。<br>“而且他还说自己讨厌所有魔族和人类……那肯定也讨厌本王吧。不如说，在这之中说不定会特别讨厌本王！”魔王抱着头又躺了下去。“但是为了研究本王而不得不忍受，杀气也能解释得通了，本王居然还问他要不要当王妃……呜啊啊啊……”<br>佩诺朵憋着笑，饶有兴趣地撑着头。“……您很在乎他是否讨厌您吗？”<br>“因为本王想让他成为部下！”魔王抬起头。“他很聪明，又很有能力，如果能把他收入麾下，肯定对我们大有好处。”<br>“就算他想杀您？”<br>“想杀本王的部下又不止他一个。”魔王耸了耸肩。<br>“讨厌您的部下也不止他一个。”佩诺朵一针见血。<br>这回轮到魔王语塞了。<br>魔王把脸埋进了臂弯里。“本王……不知道。”<br>她的声音有些发闷，“一想到他讨厌本王，本王……我就会很难受。”</p>
+<hr>
+<p>说到底，为什么要用恋人的标准来和自己做对比啊。<br>佩诺朵没把这句话说出口。她拍了拍魔王的背。“哎……我们怎么会有您这样的傻子老板。”<br>“不敬！”魔王闷声嘟囔着。<br>“我给您提一个建议。”佩诺朵低下头，“您可以亲自去问问他。”<br>“不要……绝对不要！本王都不知道该怎么回去见他了！”魔王像鸵鸟一样把头再次埋了起来。<br>“您要因为您的脸面问题而让我们丧失一位优秀的人才吗？”佩诺朵故作严肃，但魔王向来很吃这套说法。<br>果不其然，魔王抬起了头。“……该怎么问才好。”她老老实实地向对方发问。<br>“……您好像确实变了。”佩诺朵看起来心情不错，“您之前从不问我们‘怎么办’，向来都是提出你那混蛋的设想和计划，然后把一切问题扔给我们。”<br>“那个时候和现在不一样。”魔王回答得很含糊。<br>佩诺朵用手指点着下巴。<br>“您在之前似乎对一切都很有自信。但是对于这个森林贤者……您看起来相当没底嘛。”</p>
+<hr>
+<p>黄昏的天空将森林染上了一层朦胧的暖色。魔王紧皱着眉头，对照手中的地图小心地前进着。留给她的时间不多了。<br>一切都是因为两天前佩诺朵那家伙的一句话。<br>“既然这样的话，您要不要试试为他准备一件礼物？”<br>“礼物？”魔王思索片刻。“他会想要什么？财富？宝物？”<br>“唉——所以说您是傻子。”佩诺朵摆了摆手，“您和他约在什么时候回去？”<br>“两天后的晚上。”<br>“那您如果早些动身，还能多出大约半天的时间。您可以亲手为他准备礼物。”佩诺朵不知从哪个柜子里抽出了一张地图。“他所在的灰雾森林其实范围相当大。在森林的另一侧，据说在地底的魔力大流喷涌口的附近，生长着诸多珍惜的药用植物。”<br>“让本王……送他草药？”<br>“我可以给您一本图鉴，不过……”佩诺朵话锋一转，“大流的附近有不少被魔力影响的野兽，您得做好心理准备。”<br>“那自然没有问题。”魔王看起来相当自信。“本王再怎么样也不至于打不过区区野兽。”<br>“反过来说，您贵为魔王，还亲自为他取来材料，那家伙知道了肯定会被感动得不行啦。”佩诺朵用手指卷着自己的发尾。“为了招募新的部下，您愿意为此屈尊，稍稍做点小事吗？”<br>“可以。”魔王打了个响指，“本王这就准备动身。”</p>
+<hr>
+<p> 一旁的树丛突然悉悉索索地晃动了一下。魔王一惊，迅速地和树丛拉开了距离。随着风与树叶的声音渐渐停息，魔王的耳朵里捕捉到了一丝古怪的声响：似乎是某个人类的喊叫声。<br>“救……”<br>声音正来源于刚刚树丛晃动的方向。魔王迟疑了片刻，还是离开了大路，拨开树丛，向着声音的方向一路前进。<br>在森林中穿行了片刻，魔王很快找到了声音的主人：是一个披着破破烂烂斗篷的男人，被带刺的藤蔓缠在了树上。“救……命……”原本拖着长音、有气无力地喊叫着的褐发男人，在看见魔王时，眼睛亮了起来。“救命！我被这株藤蔓缠住了！你能帮我找找我的剑吗？”<br>魔王抱着手臂，打量着面前被抓住的家伙。“你是谁？怎么会来这里？”<br>“我是一位旅行者，来这里是为了找森林贤者大人配药。”男人回答得很老实。“没想到在森林里，被这株有魔力的藤蔓抓住了，剑也弄丢了……”<br>魔王拔出腰间的佩剑，刹那间砍断了几根藤蔓，但新的藤蔓很快补上了砍出的缺口。“……确实有点麻烦。”魔王把剑收回了剑鞘里。<br>“我的大剑可以一鼓作气砍断他们，但是不知道被挑飞去哪了……”男人低下了头。<br>“作为剑士居然会弄丢自己的剑，你还真是……”嘴上这么说着，魔王还是小心地在藤蔓间寻找着那把大剑。<br>旅行者的惊呼突然在她的耳边响起：“小心！”<br>魔王拔出了剑，猛地后退了几步，做好了防御的态势，三对黄色的眼睛从树丛的阴影中慢慢走了出来：是狼。感受到了它们身上夹杂着的魔力，魔王的兔耳动了动，不由得握紧了剑柄。<br>“你的力量没法和这些魔化的野兽抗衡！”旅行者在魔王的身后喊道：“快跑啊！先逃走，去旁边的城镇找援军来救我吧！”<br>“试试看吧。”<br>魔王俯下身，握着剑柄的手指动了动。<br>“顺便，本王……我可不太喜欢随便抛弃他人。”</p>
+<hr>
+<p>屠杀野兽并不是什么难事。在三头狼缩小包围圈之前，魔王已经迅速接近了左手侧的那头。锐利的轻剑没入了野狼的脖子，这头可怜的家伙甚至没来得及发出声响，就倒在了血泊里，颈动脉上的大洞不断向外冒着血泡。<br>另外的两头狼显然被眼前的画面所震慑，尾巴低垂在两腿之间，步伐里也掺入了些许迟疑。它们谨慎地绕着魔王来回徘徊，寻找着下手的机会。魔王也没有掉以轻心，整理了一下呼吸，盯着两头狼的步伐，寻找下一个破绽。<br>“……！”<br>魔王的左腿突然传来了一阵剧痛。她一低头，看见自己的腿已浸满了鲜血：刚刚那头倒在自己脚边，本该已经失去气息的狼，此刻正死死咬着自己的小腿。<br>……是魔力的浸染导致的变异。魔王倒吸了一口凉气。另外两头狼自然也不会放弃这个机会，它们几乎在同一个瞬间扑了上去，把魔王撞倒在地，用力撕咬着魔王的身体。魔王的兔耳很快染上了鲜血。<br>“你们……！”旅行者用力挣扎着，但藤蔓的尖刺只是在他的身上留下了更多的伤痕，“小兔子！”<br>“……我没事。”<br>扑在魔王身上的狼忽然没了动静。随着一声重物落地的声音，侧方的另一头狼的脑袋掉在了地上。<br>魔王将身上的狼推开，把剑从它的胸口拔了出来。“解决了。”<br>旅行者关切地望着浑身是血的魔王。“你受伤了吗？”<br>“小伤。”魔王甩了甩脸上的血。“基本是狼血。我这就救你……”<br>随着魔王自信地向前走了一步，一条藤曼突然绊住她的脚，把帅气的魔王大人吊了起来。<br>“……啊。”<br>被打掉佩剑、捆在藤蔓之中的两个人面面相觑。<br>“好巧啊。”旅行者朝魔王挥了挥手指，相当于打了招呼。“小兔子，你也被抓起来了啊。”</p>
+<hr>
+<p>“如果不动的话，这些藤蔓就不会对你造成伤害。”作为被藤蔓抓住的前辈，旅行者开始向魔王介绍被抓住的经验。“但是如果施加力量，就会遭到同等程度的反击……还是挺痛的。”<br>旅行者向对方展示了自己手臂上的几道血痕。“我的外套也是这么被划坏的，这么好的外套就被这些藤蔓糟蹋了……”<br>魔王试着动了动手臂，藤蔓上的尖刺很快抵了上来。“……所以，你有什么头绪吗？”<br>旅行者的头低了下去。“原本是有的……现在没了。要不，我们一起喊救命？”<br>“你傻啊，这里平时怎么会有人来……”魔王的声音一顿。“日落已经过去多久了？”<br>夜色已经逐渐吞没了这片森林。“差不多就在刚才吧。怎么了？”旅行者问。<br>“……我和人约定好了，我会在晚上回去。”魔王咬着嘴唇，看着一旁闪着银光的轻剑。“我得遵守约定。”<br>“你才傻啊！这种时候没遵守约定也是没办法的吧！”旅行者反击道。“不如想想怎么喊能更有穿透力……”<br>“找到了。”<br>魔王用眼神示意对方。“你看，其实就在你的旁边，但是被藤蔓埋住了。”<br>是那把大剑。不知藤蔓是否也清楚这把大型锐器带来的威胁，它把大剑也捆了起来。“还是没办法嘛！”旅行者叹气。“我们现在也没法破坏这些藤曼……”<br>“只要我拿到剑。”<br>当旅行者回头时，尖锐的刺已经在魔王的身上留下了不少血痕。随着魔王对藤蔓施加的压力，藤蔓的尖刺也渐渐膨大，愈发尖锐，其中一根几乎抵在了魔王的腰上。但魔王还在朝着地上的剑伸手。<br>“你疯了？”旅行者吸了一口气。<br>“你确定拿到大剑就行是吧？”魔王扯了扯嘴角，“要是你和我说不行，那我可是会揍你的。”<br>她猛地一发力，受到刺激而生长的尖刺划破了她的腹部，但与此同时，轻剑也被她握在了手上。她反身一剑，从上至下劈开了捆着大剑的藤蔓。“接好了！”<br>“……好。”<br>旅行者稳稳地接住了大剑。<br>“辛苦你了。”</p>
+<hr>
+<p>随着他握住剑柄，剑柄周围浮现出了咒文，火焰几乎在瞬间包裹住了大剑的剑身。沉重的巨剑被他轻松地举了起来，他只是轻轻挥动了一下，身上的藤蔓就尽数烧焦脱落。<br>“武器附魔？水平不错嘛。”魔王也被他从藤蔓中解救了出来。<br>“都是我的朋友帮忙的……比起这个，你的伤！”<br>“没事。”魔王将自己的黑色斗篷系在了腹部的伤口上。“我们去找森林贤者。他会为我治疗的。走吧，时间不多了。”<br>“说起来，还没问过你的名字呢。”旅行者将自己的大剑收回了背后的剑鞘。“我叫亚伦，是个剑士。你呢？”<br>“怀特。”魔王思考了一会儿，“现在……是森林贤者的助手。”</p>
+<hr>
+<p>谢天谢地，在我冲出去毒杀王都的所有人之前，魔王回来了。<br>“医生！”她的脚步不太稳，踉跄着走近了院子。<br>“你怎么……！”我看着她身上的伤口有些手足无措，“发生什么了？”<br>“我……”魔王似乎想说什么，但她略微思考了一会儿，话还是停在了嘴边。“我在灰雾森林北侧遇到了些受魔力侵染的野兽和植物，受了点小伤，但我救了个人。”<br>“就是这个剑士。亚伦。”她指了指自己的背后。<br>我顺着她的手指望去，看见了一位衣着破烂但面带笑容的高个子剑士正跟在她的身后。他笑着向我挥手：“你好！我是亚伦，是来找你配药……”<br>在看见他的一瞬间，我的脸色变得冰冷。<br>“还真是荣幸啊，像您这样的大人物居然会光临寒舍……”<br>我盯着他漂亮的绿色眼睛。这家伙真是仿佛时时刻刻都沐浴在阳光之下。<br>“教廷钦定的救世主，‘勇者’，亚伦大人。”</p>
+<hr>
+<p>“啊……既然这样的话，也没必要说客套话了吧，咱们也是老熟人了。”勇者亚伦挠了挠头。“那我就直接说了。教廷那边终于看不惯你啦！他们决定让我来除掉你，避免在之后对魔族的战争中节外生枝。”<br>魔王猛地睁大了眼睛。<br>“大概就是这样啦。你能不做抵抗，让我的工作轻松一点吗？”勇者大大咧咧地把手伸向了身后的大剑。<br>在他握住剑柄之前，魔王的轻剑已经抵上了他的喉咙。<br>“强化药。”魔王用自己遍体鳞伤的身体挡在了我和勇者之间。她喘着气，对我低语道。“快点给我注射，要不然对上这家伙根本没有胜算。”<br>我陷入了沉默，反倒是勇者叹了一口气。<br>“小兔子……你是不是有些太过勉强自己了？”</p>
+<hr>
+<p>我满脸阴沉地扶着魔王的肩膀，把她推向一旁。<br>“如果他真的想要讨伐我，再怎么说也不会一个人冒冒失失地闯进我的森林，教廷的大军应该早就会把这里围得水泄不通了。我认识的那个勇者可不会这么轻敌。”<br>“啊……一点都不好玩了，至少陪我演演嘛。”勇者摸了摸头，“所以我不喜欢和你这种脑子太好的家伙打交道。”<br>“比起这个，你那个称呼是什么？”我尽可能让自己的脸色不那么难看，“小兔子？”<br>“……你在意的是这个吗？”勇者的表情有些不解。“她不是只小兔子吗？个子又小，还是只兔子。”<br>我一时语塞。<br>“……不行，总之就是不行。”<br>我下意识地离魔王靠得住更近了一些。</p>
+<hr>
+<p>“不过……教廷那边坐不住了也是真的。”<br>勇者不顾还处在状况外的魔王与杀气腾腾的我，自顾自地拉出一张椅子坐了下来。“新上任的教皇急着要向女神献上点什么东西以示忠诚，看中了你这个‘异端贤者’的头，私下来找我，想用自己的身份向我施压。不过……”勇者伸了个懒腰。“他就算用教廷的名义来找我，我都不一定答应，更何况是这种私活。我就来你这里象征性逛两圈，顺便蹭点药水回去。”<br>“我不欢迎你。”我一字一顿地说。<br>“别这么冷淡嘛！好歹我们也是一起冒险过的。”勇者装出一副委屈的样子，“当年我们几个还挤在一个帐篷里过夜呢。爱莲前几天还在和我念叨你，真是个无情的男人。”<br>魔王转过头，向我投来了复杂的目光。</p>
+<hr>
+<p>头疼。<br>和面前这个男人扯上关系，是我这辈子最后悔的决定。<br>这家伙堪称是我最不擅长应对的类型：一个阳光开朗厚脸皮的混球。但这家伙的脑子又转得相当快，似乎有种诡异的直觉，总能在最短的时间找到你的痛点。<br>看他得意的样子，他终于如愿以偿地找到了我的痛点。<br>“出去。”我的态度十分强硬。没时间和这个混蛋纠缠，我还有更要紧的事没有做。“我要帮她处理伤口，你自己找个地方呆着去。”<br>勇者——出乎我意料的，并没有继续纠缠。“好，你说的对。好好帮小兔子治疗一下，她为了救我真是受了不少罪。”<br>……<br>虽然这家伙的态度很爽快，但我有种强烈的想把他就地毒杀的冲动。</p>
+<hr>
+<p>我锁紧了房间的门窗，死死拉上了窗帘。<br>“怎么了？”坐在床上的魔王有些不解，兔耳在我的眼前一摆一摆。<br>“……不用管他。”我收回了自己的目光，把魔王腰上简单包扎的布条解了下来，“该看看你这家伙又怎么乱来了。”<br>比我想象得还要糟糕一些。除了遍布四肢、较浅的划伤，在她的左腹部有一处相当深的伤口，一路延伸至腰际。<br>随着布条被扯下，凝固的血块也一并被撕开。魔王小声地吸了一口气。<br>“……是鳞藤吧。”我检查着伤口的情况。“如果不挣扎的话，是不会留下这种程度的伤口的……当时是怎么回事？”<br>“……”魔王看向一旁。“约好了。”<br>“什么？”我抬起头。<br>“约好了晚上回来。”<br>她的声音渐渐变小。</p>
+<hr>
+<p>“……唉。”<br>我没有继续问下去，只是沉默着清理她的伤口。<br>朴素的外套和布质的衬衣被藤蔓的尖刺划得七零八落、血迹斑斑。有些布料被凝固的血渍粘在了伤口上，当我小心翼翼地把它们分离开的时候，魔王的兔耳还是轻轻抖了抖。有些伤口则因为身体的活动，又开始冒出细密的血珠。<br>我拭去了额前的汗水，从一旁的柜子里摸出了一把剪刀。<br>魔王很快意识到了我想要做什么，“等等……”<br>“已经不太好脱下来了，还是用这个吧。”我低着头，小心翼翼地用剪刀把魔王的衬衣剪开。<br>“等等……”剪刀已经抵达了肚脐的位置。魔王抬起手，下意识地想要拦住我，但在经历了一番挣扎之后，她还是把手僵硬地放了下去。<br>“嗯？”我的动作停了下来。“怎么了？”<br>当我再次抬起头的时候，魔王已经把脸藏在了手臂里，两颊的绯红几乎溢到了耳朵根。<br>“……我没事。”<br>她还在故作镇定。<br>……之前在背后的伤，确实没有让魔王脱下衣服。我这才反应过来。<br>“是在……害羞吗？”</p>
+<hr>
+<p>“本王……没有。”和她所说的话相反，她的声音有些颤抖。“你继续吧。”<br>这么想来，这确实是第一次看清她的身体。<br>我的心情有些五味杂陈。<br>并不是说魔王的身体不色情。破烂的衬衣已经被我剪开了一半，平坦的小腹上装饰着漂亮的血痕，肌肉的线条一路向下延伸，岌岌可危地被同样满是划痕的裤子遮住。而在上方，随着胸腔的起伏，已经可以在零落的布片中隐约看见微微膨起的形状。<br>……但是，我不希望是在这种时候。<br>魔王在大多数情况下都很可爱。嘴硬的时候，得意地把兔耳翘起的时候，脸红的时候，在我怀里安心睡着的时候……只是和她呆在一起，似乎就能渐渐填补我内心的空缺。<br>只有一种情况例外。破破烂烂地挡在我身前的魔王，我无论如何也不想看见，这种景象只会让我感到痛苦。<br>我的动作停下了。<br>“如果你……不想让我看见身体的话，剩下的伤口就由你自己处理吧。”我把剪刀放在了一旁。“剩下的伤口也不是很严重，我会教你怎么做。”<br>魔王把手慢慢放了下来，迟疑了一会儿，还是点了点头。<br>“……好。”<br>现在还不是时候。</p>
+<hr>
+<p>当我走出房门的时候，亚伦已经在门口等待多时了。<br>“怎么样？”亚伦从屋檐的阴影里走出，那双碧绿的眼睛在月光下闪着光芒。<br>……真是让人看不惯。<br>“我处理完腹部的伤口，剩下就让她自己来了。”我拍了拍衣袖。<br>“噢……真是稀奇。你之前可不这样的吧？”亚伦故作惊讶，“之前你帮奥塔莉亚和爱莲她们治疗的时候可从没这样过。你不是说‘根本不放心你们这群家伙自己来’的吗？”<br>“又不是什么大问题。像那种兔子，就算放着不管也会自己恢复的。”我白了他一眼。<br>亚伦摸着下巴，饶有兴趣地看着我：“我还记得当时奥塔莉亚的脸都红透了，你却说什么‘在医生眼里你们没有区别’之类的话……”<br>“确实如此。”我别过头去。“我只是……累了。”<br>“奥塔莉亚还在找你。”<br>亚伦的语调忽然不再轻浮。<br>“你打算什么时候才让她进入这片森林？”<br>“……”<br>可以的话，真不想面对这些过去的问题。<br>“如果这次还找不到你……我说真的，我是真的想过帮她烧干净这片森林，把你捆起来，扔到她的面前。”亚伦轻描淡写地摸了摸背后的剑柄。“她帮我的大剑附加的烈焰魔法很好用哦？”<br>“你要烧，我也拦不住你。”我望向远方的森林——这片由我花了十余年的时间筑造的巢穴，只有获得允许的人才不会迷失其中。“不过，我会在之后狠狠讹你一笔的。”<br>亚伦收起了脸上的笑容。<br>“总有一天你要再次面对她的。”<br>我抓着脑袋，低下头去。<br>“……我知道。”</p>
+<hr>
+<p>“医生……！”<br>木屋那边突然传来了魔王的声音。<br>“怎么了？”我猛地抬头，冲上前推开了木屋的门，亚伦也快步跟在我的身后。“你没事吧。”<br>看样子，魔王已经处理完身上的伤口了。她穿上了我留下的那件宽松的上衣——我的衣服对她而言还是有些太大了。尽管她用手扯着衣摆，还是可以看见大腿上的伤痕已经被她笨拙地用纱布缠了起来……<br>等等。<br>魔王显然也被我们吓到了，她站在原地愣了半秒，喉咙里发出了古怪的呜咽声，像兔子一样地窜回了房间，只露出了两只耷拉着的兔耳。<br>“裤……裤子！”她的声音有些含混不清，“你没有给我留裤子……”<br>她的语调听起来快要哭了。<br>门很快被紧紧关上了，只留下我和亚伦像木头一样立在原地。<br>半晌之后，亚伦率先打破了沉默：“你在想什么？”<br>我看向他。<br>“如何对你进行脑部手术实现记忆清除。”</p>
+<hr>
+<p><img src="/copying/nmbxd51414457-1/2.jpg" alt="图片"></p>
+<p>(&#x3D;ﾟωﾟ)&#x3D;</p>
+<hr>
+<p>把亚伦扔在屋后的杂物间里之后，我敲开了魔王的房门。<br>魔王还没入睡。听见我进门之后，她慌慌张张地把什么东西藏了起来——是她的那把轻巧的佩剑。这把剑应当也是出自魔族的名工巧匠之手，但也很难和勇者的那把巨剑相提并论。如果真的对上了的话，大概会被轻易碾成两半吧。<br>我不确定她此时此刻在想些什么，但她的表情看起来并不轻松。<br>“在想刚刚的战斗？”<br>我拉来窗边的椅子，坐了下来。<br>她没有回应我，只是靠着墙，把头偏向一旁。<br>夜晚的风有些凉，我起身，帮她掩上了窗户。“……你刚刚是在担心我吗？”<br>“如果你死了，谁来负责本王的治疗？”她的视线落在一旁的窗棂上。<br>心口的某处轻微地揪了一下。<br>“我是不会死的。”我自己都没有意识到，我的嘴角忍不住带上了一丝笑意，“在你的眼里，我很弱小，对吧？为了以这样弱小的身体活下去，我准备了不少紧急时刻的保命手段。你可以放心。”<br>“真的？”魔王半信半疑地看着我。<br>“……但是。”<br>我语气一变。<br>“你这是第几次不顾自己的身体乱来了？”<br>魔王的兔耳立刻转向了一旁。<br>“你的这种对身体的不负责严重影响了我的治疗计划，所以……”我尽可能让自己的声音听起来更严肃一些，“我们必须设置惩罚制度。”<br>魔王的表情似乎没有变化，但她的兔耳却耷拉了下去。<br>“……惩罚？”</p>
+<hr>
+<p>我扶着墙壁，撑着床靠近了魔王。<br>魔王的兔耳一抖，本能地向后缩了缩，后背紧紧贴在了墙壁上，但语调仍在强装镇定。“……怎么，你想怎么惩罚我？”<br>我贴得更近了一些。“猜猜看？”<br>兔子的本能让她想要逃跑，魔王的自尊让她挺直了身体。“怎样都无所谓，本王不会害怕这种……”<br>她的声音随着我的靠近逐渐变小。<br>事实上，被我逼进墙角的她也没什么地方可逃。<br>我慢慢俯下身来。她的兔耳颤抖着垂了下去，紧张地闭上了眼睛，只能感受到打在她额头的鼻息。<br>我把她的兔耳用手扶住。<br>“呜！”<br>她吃痛地把身体缩了起来，捂着自己的兔耳，眼角渗出了几滴眼泪。<br>我的嘴离开了她的兔耳，她的兔耳上出现了一个不深不浅的牙印。<br>“这是第一次的警告。”我在她的耳畔缓缓地说。</p>
+<hr>
+<p>魔王显然不服气。<br>我正打算起身离开，手腕上突然传来了一阵刺痛，回过头去，魔王还是一脸严肃，眼睛里却有一丝得逞的笑意。“这是回礼。”她瞥了一眼我手腕上的牙印。<br>“……我说你啊。”<br>我微笑着把袖子拉了拉，遮住了她留下的印记。<br>“今晚还有治疗计划，你记得吗？”<br>魔王的表情凝固了。好，看来她确实完全忘记了。</p>
+<hr>
+<p>药水顺着针管渐渐流入了魔王的血管里，魔王的耳朵渐渐垂了下来。经过前一次的治疗之后，我把法阵中心的毯子换成了一张备用的床铺，塞满各类仪器的房间变得更加拥挤了。<br>趁着魔王的意识还没模糊，我操纵着仪器，装作漫不经心地说：“今天还要我陪在旁边吗？”<br>魔王低着头，似乎有些犹豫。<br>“医生，你来判断吧。如果需要观察治疗情况的话就留下，如果医生你认为没有这个必要，你去休息就行了。”<br>……这家伙在清醒的时候，死都不愿意说实话吗。</p>
+<hr>
+<p>我搬来了一张躺椅，勉强塞进了房间。<br>“前几次治疗需要在旁边观察情况比较稳妥。”我顺着她给的理由往下说，“所以这次，我还是会陪在您的身边。”<br>魔王似乎松了一口气。她调整了一下姿势，把头转向我。“既然这样，要来聊聊吗？”<br>我手上的动作停了下来。“聊什么？”<br>“比如……你是怎么认识勇者的？”魔王撑着头，“你也知道吧。上一届魔王，正是被勇者亲手杀死的。”<br>我的手抖了一下，但这点异样很快被我不动声色的遮掩了过去。<br>“你要听实话吗？”<br>“当然。”<br>“那你也得用问题来换。”我笑了笑。<br>“你想知道的事，本王知无不言。”魔王一挥手。<br>“好。”我平静地看着她的眼睛，“我和勇者是曾经的同伴。我也参与了对上一届魔王的讨伐战。”</p>
+<hr>
+<p>魔王并没有我想象中的那么惊讶。<br>“这样的话，确实说得通了……”魔王思索着，“因为上一届魔王被勇者杀死了，没法成为你的研究材料了？”<br>“……确实也有这方面的理由。”我尽量让自己表现得更平静一些，“你看起来并不生气？”<br>“本王有什么好生气的？”魔王看向我的眼神有些莫名其妙。“上届的那家伙本来就是本王的政敌。不如说，你们能这么轻松地抵达座下，就没想过其他的理由吗？”<br>……这么一说，在这之后，魔族也并没有向我们大规模宣战，这点确实也足够诡异了。<br>“我不太关心这些。”我摇了摇头。“我只关心我自己想做的事。在这件事之后，我也就和他们没有什么联系了。”<br>“为什么？”魔王饶有兴趣地看着我，“你和他的关系看起来不错。是讨厌另外几个人吗？”<br>“不是讨厌……”我的头又开始痛了起来。“怎么变成对我的追问了。该你了！”<br>“好，好。”魔王举起手来，“你想问什么？”<br>我沉默了一会儿，在脑子里组织了一下语言。<br>“喝醉的那天晚上，你说，‘不要抛弃我’……为什么？”</p>
+<hr>
+<p>魔王显然有些措手不及。“因为……因为……因为本王喝醉了！”<br>“这个回答不合格。重来。”我无情地否决了她的说法。<br>“那……因为本王那会儿脑子不清楚！”<br>“不合格。重来。”<br>“呜……”魔王把头扭向另一边。“……你真的要听吗？本王不太想提起这些事的。”<br>我竖起了耳朵。“说好了，都要说实话，我都已经把我的事告诉你了。”<br>魔王深吸了一口气。<br>“本王……我在最早的时候，从没有想过自己会成为魔王。”<br>“既没有高贵的血统，也没有家族的支撑，只是空有强大的魔力。”魔王用手指轻轻敲着床铺，“我在很长的一段时间里，都被人当作方便的武器和道具使用。一旦失去使用价值，就会被人抛弃，这是我最早学到的东西。”<br>“但是……在这之后，本王明白了，空有力量是不够的，需要依赖他人活下去才是问题所在。本王结交了那些同样怀抱不满的魔族，遇见了愿意追随本王的部下们。”魔王攥紧了手。“这不再是依赖，而是互相的帮助。如果没有他们的协助，本王是没法走到今天这一步的。也正是因为如此，为了回应他们的期待，本王绝不能倒下。”<br>“你能明白吗，医生？”</p>
+<hr>
+<p>真是滴水不漏。<br>我终于能明白自己的怒气从何而来了。对于魔王而言，不止是忽视自己的感情，她甚至能毫无芥蒂地将自己过去的痛苦作为话术的一部分。并非寻求同情，而是否定、批判过去的自己。最可怕的是，这些冠冕堂皇的说辞并非谎言，而是她真实的内心所想。痛苦是无意义的，私情是不被需要的，这位魔王为自己铸造了钢铁般的心脏。也正是因为如此，她的部下们才会被她的意志所吸引吧。<br>而她的意志也终会将她推向那条由她自己选择的绝路。一次又一次。<br>即便这次的她还仍未足够成熟，即便这次的她也遭受了足够多的苦难，她还是早早地学会了轻视并扼杀自己的情感。究竟是为什么？为什么她注定不能像个普通人一样安稳地度过余生？因为所谓的命中注定？<br>怒火几乎是在一瞬间点燃了我的大脑。我在一旁的柜子上摸索着，找到了一个小药瓶，用注射器抽出药水，不由分说地扎进了她的手臂。<br>我要撕碎这层钢铁的外皮，剖出她的心脏。</p>
+<hr>
+<p>“……医生？你在做什么！”她察觉到了些许异样，挣扎着想要抽回手臂，但那一管药水已经被我迅速地推入了她的血管。<br>“这是能让你说实话的药。”我的语气异常冰冷。“梦境链接，你们那边也有人能使用这种法术吧？我稍稍做了一些调整。你应该很快就会睡着了，我会在你的梦里找到真正的答案。”<br>“你……”魔王似乎想要抬起手阻止我，但药效已经逐渐在她的身体里蔓延。常规治疗使用的麻醉药此刻也开始生效，她的手臂很快就无力地落了下去。“你为什么觉得我在撒谎？”<br>我没有回答她，只是加快了布置新的法阵与配置秘药的速度。<br>“你在欺骗自己……你只是没有得到让自己满意的结果罢了。”<br>魔王忽然挣扎着爬了起来，紧紧抓住了我的手臂，用那双暗黄的眼睛紧盯着我的双眼。<br>“你究竟在寻找什么答案？”<br>我怔住了。<br>麻醉药和秘药的效果很快带走了她的意识，她渐渐被抽走了力气，倒在了我的怀里。刚刚的一切仿佛从未发生过。她像是个普通的兔魔人一样，安稳地在我的怀里沉睡着，兔耳轻微地颤动着。<br>我将她的身体轻轻放回床上，在自己和她的身上连上了另一套仪器。在准备好一切之后，我将装着秘药的注射器刺入了自己的手臂。<br>我牵着她的手指，意识逐渐陷入朦胧。<br>那么，让我看看真正的你吧，魔王。</p>
+<hr>
+<p>我睁开了眼睛。<br>眼前并非木屋的天花板，而是一座人类的庭院，我也并非森林贤者，而是一位人类富商——这是我预先做好的“设定”。<br>这是我的梦，也是魔王的梦。在这个梦里，魔王的记忆会回溯到她最灰暗的那段时光……被人当作道具使役的时间。结合她的记忆，我制造了这段虚假的梦境——为了解开她的伪装，找到被她藏起的恐惧与痛苦。<br>“这就是他们所说的魔族佣兵。”一旁的中间人向我指了指远方的白色身影。“你看，据说很听话的。”<br>魔王的身形比现在还要更小一些。她的穿着称不上破烂，但也足够简陋。麻布制的衬衣上打着不少补丁，防具也只有胸口的一件轻甲。但在她的身后，背着一把极不相称的重剑。<br>“……不要给我们魔族丢脸，明白了吗？”<br>带她来的男人指了指我的方向，丢下了这样一句话。<br>“如果这次的任务再失败，我们那里就没有你的位置了，你明白的吧。”<br>魔王的身体抖了抖。<br>“我明白的，我……一定会好好完成任务。”她的声音断断续续的。<br>“说个话都不利索。滚！”男人一拍她的背，把她向我的方向推了过来。<br>“您……好。”<br>她在我的面前有些手足无措。<br>“我是……怀特，负责保护您的安全……是魔族。”魔王垂着头，扯着自己的衣角，说的话也有些前言不搭后语。“我……那个……会保护您……”</p>
+<hr>
+<p>不知为何，她的白发上还沾着些许泥土。<br>我轻轻叹了口气，抬起手，想帮她撇去头上的脏污，但她却打了个哆嗦，飞快地用手护住头，朝一旁躲去。<br>我的手僵在了半空中。<br>“……啊，对，对不起。”意识到我的手并没有如期地落在她的头上，她把手颤巍巍地放了下来，“对不起……”<br>我想要说些什么，话语却卡在了喉咙里。最后，我还是放下了手。<br>“……走吧。”</p>
+<hr>
+<p>我带着魔王漫无目的地在镇子的街上闲逛。<br>魔王默不作声地跟在我的身后，警惕地观察着周围的情况……本该是这样。但这个时候的她看起来对人类的城镇并不熟悉，她的视线很快就被种种新奇的事物吸引去了。<br>小贩身上挂着的玩具，摊位上卖的水果，橱窗里的服装……她仿佛对一切都感到新颖，目光在这些寻常的景色间流连忘返。<br>“怀特？”<br>我的声音把她的注意力从玩具和水果间拉了回来。她一惊，转而再次低下了头。“对不起……对不起！我不会再到处乱看了……”<br>“不……我不是要责怪你。”我尽力安抚着这个瑟瑟发抖的小家伙。“我想去那家店吃点东西，你要来吗？”<br>她怯生生地看向我。<br>“……好。”</p>
+<hr>
+<p>这家小店的菜单算不上丰盛。我粗略地翻了翻，点了一份松饼，把菜单递给了她。“你想吃点什么？”<br>她忐忑不安地坐在我的对面，似乎不知该把手脚往哪放。“我？”她一惊，转而又把头垂了下去，“我不用……”<br>我把菜单替她翻开，小心翼翼地问道：“有没有什么喜欢的？”<br>她僵硬地看着菜单，在间隙中偷偷瞟了我一眼，又快速地把目光收回。“对不起。”她盯着自己的脚尖。“我……不认识文字……人类和魔族的都不认识。”<br>她的声音很小，像是做错了什么事。<br>“……没事。”我叹了口气。“老板，再加一份松饼。”</p>
+<hr>
+<p>“你们的组织有多大？”<br>“诶？”她被吓了一跳，绞着手吞吞吐吐地说：“很大……有二十多个人。”<br>看样子只是一群下等魔族组成的小组织罢了，毕竟高阶魔族的精英们是不屑于接人类的活的。<br>“……你的父母呢？”留给我的时间并不多，我得优先把最重要的信息问出来。<br>“不……不知道。”<br>她的头深深地垂了下去，把眼睛藏在了刘海的阴影里。<br>“首领……他们说，我被父母抛弃了。”<br>我没有问下去。<br>松饼在合适的时间被端了上来。我尝试让她转移注意力，把叉子递给了她：“尝尝这个吧。”<br>她的手向我的方向试探性地伸出了一点，我顺势将叉子塞进了她的手里，但拿着叉子的她却有些手足无措。“我……对不起。”她把叉子小心地放在一边，紧张地向我道歉，“我不会用这些……”<br>“……那你之前都是用什么吃东西的？”我感到不可思议。<br>她窘迫地扯着自己的衣角。<br>“用碗，还有手。”</p>
+<hr>
+<p>沾着透明糖浆的松饼在阳光下闪闪发亮。很明显，这种食物不太适合用手拿起来吃。<br>我切下了一块松饼，用叉子送到了她的嘴边。<br>“来，张嘴。”<br>她有些迟疑，但看见我强硬地把松饼向前递了递，她还是张开了嘴，把那块松饼吞了下去。<br>“呜……？”<br>她的眼里似乎闪烁着光芒。<br>“谢谢您……很好吃。”她抽了抽鼻子，声音有些含混不清，“我第一次吃到这样的东西……”<br>只是一块松饼而已。<br>“这些都是你的。”我忘记了自己的目的，一块块帮她把松饼切开。“我教你怎么用餐刀和叉子。”<br>“我可以把这些带回去吗？”她小心翼翼地发问，“我想带给朋友们。”<br>“朋友们？”我切松饼的手停了下来。<br>“组织里……有很多朋友们。”她难得地露出了一丝害羞的笑容。“大家对我都很好。”<br>……魔王和我提过很多次“部下”，却从未向我提过“朋友”。</p>
+<hr>
+<p>“那你……”<br>我正想继续追问，却被一声巨响打断。我的时间到了。<br>一只形体模糊的巨大的黑色魔物碾碎了房屋与街道，整个镇子都在逐渐变得支离破碎。<br>“快跑！”<br>我拉起她的手向着反方向跑去，但黑色魔物的行动速度显然比我们要快得多。即使在梦里，我的体能也没有得到多少强化，我很快就变得气喘吁吁。<br>“快……”<br>不知是绊到了什么，我摔在了地上。<br>“你快跑！”我朝着她声嘶力竭地大喊。<br>“呜……呜呜……”<br>她的恐惧显而易见：那个庞然大物再怎么看都不是她能应对的东西，这样的魔物杀死她就像是捏死一只虫子一样容易。<br>但——一个颤抖着的身影挡在了我的面前。<br>“我……”<br>她的腿止不住地发抖，站得踉踉跄跄，但她还是把身后的重剑吃力地拔了出来，向面前的庞然大物举起了剑。<br>“我……我被抛弃过……”她的说话声混合着牙齿打战的声音，“被抛弃……很可怕，很难过。”<br>“所以……”她咬紧了牙关，压低重心，用颤抖的双腿努力地把身体支撑了起来。<br>“我绝不会抛弃你。”</p>
+<hr>
+<p>在梦境的最后，会呈现那时的魔王最恐惧的东西……我是这么设置的。<br>眼前的黑色魔物唤起了我的记忆，我记得它的“原型”。魔物与拥有智慧的魔族不同，更像是自然对于世间生灵愤怒的化身。没有人知道它们从何而来，又为何要攻击视线触及的一切事物。<br>大约十四年前，一头巨大的黑色魔物袭击了王国边陲。在碾碎了数个村庄之后，魔物与王国精锐的战士们展开了持续六天的殊死搏斗。在第七天的朝阳升起时，战士们成功击溃了魔物的心脏。<br>这头魔物——在人类的记载中，被称作“黑色群峦”。<br>仅仅只是它在移动中掀起的余波都几乎能够瞬间掀翻人类的房屋，土石制的墙壁在它看来仿佛是脆弱的纸片。但魔王依然屹立在我的身前。她费力地用剑一次次挡下飞来的碎石，用颤抖的身体保护着身后的我。没有被她挡下的石子与木板的碎片，则无情地在她的身上留下一道道的伤口。<br>“为什么！”我艰难地将身体撑了起来，抓住了她的手臂。“我……不明白，你不是很害怕吗？究竟为什么要坚持到现在！”<br>“因为……”<br>她的动作越来越迟缓。<br>“……松饼，很好吃。”<br>黑色的群峦终于注意到了这个小小的身影。它只是微微抬起了自己的一只爪，一束黑色的光芒便贯穿了她的身体。<br>魔王的身体摇了摇，但仍未倒下。她尽全力转过头来，用那双含着眼泪的暗黄眸子望着我。<br>“谢谢你。”</p>
+<hr>
+<p>第二束光芒击穿了她的头。</p>
+<hr>
+<p>已经是第几次见到这样的景象了？<br>我不太记得了。我的记忆本就在一次又一次的循环往复中变得支离破碎。但这种痛楚却真实而熟悉，死死扼住了我的喉咙。<br>这里是梦？还是说，其实这里才是现实？<br>“所以。”<br>——是魔王的声音，但并不是那个柔软而胆怯的孩子。<br>“所以，只能由本王来保护你们。”<br>一袭鲜红如血的披风撕破了魔物掀起的烟尘。<br>“人类、魔族，领土、部下，将这一切贪婪地纳入自己的手中，加以庇护，并引导他们的方向，这就是本王的使命。”<br>她伸出手，黑色的魔力从她护甲的间隙中溢出，渐渐在她的手中凝结成了一把一人高的重剑。<br>“这是只能由本王完成的任务。在最后，本王必须击溃那位只能由本王打败的敌人。”<br>尽管换上了那身红黑的战袍，贯穿胸口的伤仍残留在她的身上。她的脸上依旧滴着血，但她的眼神已截然不同。<br>她把目光收了回去，专注地盯着面前如山峦般庞大的怪物。<br>“本王……不会让那时的悲剧重演。”</p>
+<hr>
+<p>那是我第一次见到“真正的魔王”。<br>她并没有像之前一样，灵巧地依靠自己的机动性与庞大的敌人周旋，而是——直直地朝着那座黑色的山峦走去。对方显然注意到了她，黑色的光束更加疯狂地不断向她发射，却都在离她数米处偏折了方向。<br>她没有进行攻击，只是继续向前迈出了步伐。<br>大地震颤的余波，沙石组成的风暴，在她的面前仿佛和煦的春风，没有什么能动摇她的脚步。黑色的魔物似乎被她的行进惹恼了。它伸出自己的一只巨爪，向着魔王压了下来。<br>落下的巨爪掀起的气浪几乎让我站不住脚，魔王的身影也很快被掀起的沙尘所吞没，但她的声音却清晰地从远处传来。<br>“你总是这么急躁……这不是件好事。”<br>我仍未看清楚发生了什么，那只巨爪就从魔物的手臂上掉落了下来。平整的切面很快喷溅出了暗红的脓血，魔物惶恐地收回了手臂，发出了雷鸣般的哀嚎。<br>而魔王仍然在向着它一步步前进，仿佛周遭的一切都与她无关，像是沉默的风暴。<br>那头山一般的魔物在这个小小的魔王面前畏缩了。野兽的本能让它开始后退，但它的后爪很快也被一闪而过的黑光斩断，像是被砍断了两只桌腿的桌子，它的身形摇晃着倒了下去，大地因此而震颤。<br>当魔王走到它的面前时，它那丑陋的脸因恐惧而扭成了一团。<br>魔王只是把手放在了它的头上。<br>“好好休息吧。”<br>与我想象的不同，她的声音平静而悲伤。<br>“本王的……第一个部下。”<br>魔物的头颅重重地落在了地上。</p>
+<hr>
+<p>魔王松开了手，黑色的魔剑转瞬间消弭在空气中。她转身看向我。“这个答案你还满意吗，医生？”<br>我不知道她在什么时候夺回了这个梦的控制权——魔王的精神力比我想得要更加强大。是在那个弱小的“她”被魔物杀死的时候？无论如何，这个魔物引发的事件与她的转变似乎有着更深层次的联系。我还需要更多的资料。<br>“如果成为本王的部下，本王就可以将你纳入本王的庇护之下。我们可以合作，也可以由本王为你指引方向。”魔王的声音听起来极具诱惑力。“要不要考虑一下，在这之后成为本王的御医？”<br>“……不。”我收起之前短暂流露出的感情，“我和您注定背道而驰。”<br>“这样啊，那还真是遗憾……”魔王摸着下巴，“不过本王是不会放弃的。那么，说实话，本王还想问你最后一个有些失礼的问题。”<br>我还没来得及作出回答，魔王就抢先发问。<br>“——你为什么一直在痛苦呢？”<br>我怔住了。<br>“本王不明白。”不同于刚刚自信的模样，魔王变得有些犹豫，“你确实在为本王尽心尽力地治疗，对吧？但本王却不知该如何回报你……本王可以感受到，但却根本没法触碰到你的痛苦。”<br>“就算我不是您的部下？”<br>“就算你不是本王的部下。”她重复道，“本王也很不爽。”<br>“……我们的关系有亲密到这种程度吗？”我有些想笑。<br>“诶？难道我们只是普通的医患关系吗？”这次轮到魔王慌神了，她的额头上渗出了些许汗珠。“我们一起救了那些孩子，一起喝酒，一起开玩笑，一起逛街……再怎么说也是那个了吧，那个！”<br>“是什么？”我面无表情地看着她。<br>她的声音小了下去。<br>“朋……朋友啊……”她底气不足地说。</p>
+<p><img src="/copying/nmbxd51414457-1/3.jpg" alt="图片"></p>
+<p>(&#x3D;ﾟωﾟ)&#x3D;来点小小兔子</p>
+<hr>
+<p>我对于魔王“朋友”的说法不算太满意，但也不至于太挑剔。像这样紧张的魔王确实很可爱。<br>“我不会告诉您的。这个答案只有您自己发现了才有意义。”<br>我当然没法告诉魔王，我所做的一切都是为了她。<br>“如果哪一天，您能找到答案的话……”我神秘地笑着，“那我就考虑一下成为您的部下吧。”<br>“真的？”在梦境里的魔王并没有兔耳，但我似乎看见不存在的兔耳竖了起来。“约好了？”<br>“约好了。”</p>
+<hr>
+<p>当我睁开眼的时候，她一如既往地蜷在我的身边。<br>等到醒来之后，她还是会生气的吧，毕竟昨晚对她做了相当过分的事。但是在这之前，她只是安静地拉着我的手指，在我的身旁沉睡着。<br>我的手从她的发丝间穿过，看着她额前落下的那根头发随着均匀的呼吸声轻轻摆动。白色长发从我的指缝间滑走，我看着她在睡梦中轻轻颤动的睫毛，有些出神。<br>如果每一天醒来都能看见这样平静的睡颜该多好。<br>我做过一次这样的梦。梦里的我们抛弃了自己的身份，隐居在不为人知的一隅。我抱着她靠坐在一块软垫上，看着她的侧脸沐浴在夕照的余晖中。她一边在我的怀里小声埋怨着，一边把身体贴得更近了一些。<br>没有必须去完成的使命，没有魔族、人类与魔物，没有血红的战袍，没有伤痛与必须替我拦下的攻击。我们之间也没有更多的交流，似乎一切话语都通过交织的手指传递给了对方。<br>一个平静、柔软而不真实的梦。<br>在苏醒之后，为了找回这个梦，我试过各式各样的药物与法术，影响精神的，操纵思维的，自我催眠与清明梦的，这次用到的秘药也是当时研究出的技术之一。当我从散落一地的药瓶与针管中惊醒，内脏与大脑仿佛搅成一团，趴在地面上干呕出黄色的胃液与胆汁之时，我想到了。<br>我要把这个梦变成现实。我必须亲手把这个梦变成现实。</p>
+<hr>
+<p>“吃早饭……”<br>当我端着盘子敲开了治疗室的门时，我还没意识到事情的严重性。<br>房间里空无一人，我在躺椅上发现了一张字条。字条上端正地用人类的文字写着一句话：“我和亚伦出去练剑了。”<br>看样子，在这之后她应该花了不少时间去学习人类的文字……不，这个不是重点。我的脑子快要被这短短的几个字烧短路了。<br>这算报复吗？不，说到底，我和她之间其实也没有建立更加明确的关系。甚至就在昨晚的梦中，她向我提出“朋友”的说法，我也没有正面回应她。<br>——啊，这么一说，我甚至连“你对我很重要”这种话都没有说出口过。倒是魔王，似乎很执着地想要让我成为部下，但除此之外，她对我的印象也只停留在朋友（存疑）上。<br>我的大脑彻底进入宕机状态。<br>冷静一下，总之，先想想回来之后该用什么方式把亚伦那个混蛋分尸吧。</p>
+<hr>
+<p>巨剑与轻剑的交锋发出了清脆的金属碰撞声。力量上的对决只持续了短短的一瞬，魔王很快轻巧地跳离了亚伦的攻击范围，亚伦则恢复了防御的架势。<br>“……那么，也差不多该进入正题了吧。”亚伦把剑收了起来。“小兔子，你想问我什么事？”<br>“关于贤者的过去。”魔王把剑放在手边，靠着一棵树就地坐了下来。<br>亚伦摸着自己的下巴。“那你打算用什么来交换呢？”<br>“看你想要什么了。”<br>“那么……就用你自己吧。”亚伦打了个响指。“先聊聊你的故事吧，小兔子。能把这位隐居的森林贤者请出来，你又是什么来头呢？”<br>“也行，我们俩也打开天窗说亮话吧。”魔王答应得很爽快。“我其实是一位高阶魔族，遭到了他人诅咒，才变成了现在这副魔人的样子。为了请他出来，我几乎倾尽家产，才换来他的同意……”<br>“你在撒谎。”<br>魔王只是略微停顿了一瞬，她脸上的表情似乎没有任何波动。“怎么了？”她转过头来，饶有兴致地问道。“你觉得哪里不对？”<br>“要是用钱能请动这位贤者，他早就富甲一方了。”似乎成功抓住了魔王的漏洞，亚伦表现得有些得意。“说吧。你给他开的价格到底是什么？”<br>魔王叹了口气。“好吧，真是没办法……用来交换的条件是我的身体。”<br>亚伦猛地咳嗽了几声。<br>“我得成为他的实验对象……你怎么了？”</p>
+<hr>
+<p>“咳……实验对象？”亚伦花了好一会儿才缓了过来，“他哪会对实验对象这么好？他对待自己的队友才像对待实验对象呢！我们当时被他拿来试药都不知道真相，缝针的时候也不会安慰我们，简直就像是没有感情的治疗魔像！”<br>“那可真是过分。”魔王在一旁同情地看着他，“不过，你们的队伍里应该有一位神官吧？为什么还会找到他呢？”<br>“小爱莲的祈祷生效很慢的啦。不知道他用的是什么法术，和那些魔药学的家伙们用的似乎又不太一样，他的手法要粗暴野蛮得多。”亚伦的脸色有些发黑，似乎是回想起了痛苦的经历，“……不过，他的治疗方法确实很有效。当我们看见他解决了蔓延在几个村子间的瘟疫时，就决定把他招入麾下了。”<br>“你说他不想要金钱，看起来也不贪图名声，那你们当时是怎么让他加入的？”魔王撑着头，“他看起来也不像是那种喊着要拯救世界的正义使者吧。”<br>不仅不想拯救世界，还扬言要杀死所有人。魔王没把这句话说出口。<br>“啊……？”亚伦挠了挠头，“我们就告诉他，我们要去杀死魔王，他二话不说就加入了。”<br>听见“杀死魔王”这个词时，魔王的耳朵轻微地颤了一下。<br>“有意思……”魔王用指节抵着自己的下巴，捉摸着亚伦的话。“那他之后为什么和你们分道扬镳了呢？”<br>“这可是个秘密。”亚伦神秘地朝魔王招手，“你过来点听。”<br>这片森林也没其他人。心里这么想着，魔王还是凑了过去。<br>“在我们好不容易击败魔王之后，那家伙居然转身就走了。当我抓住他的手臂问他的时候，你猜他怎么说？”亚伦压低了声音。<br>“他说……‘不是那个家伙’。”</p>
+<hr>
+<p>“炼成术士和魔药师之类的，我也有所耳闻。无论如何，魔王肯定是个好研究对象吧。取下魔王的头发或者角之类的，也能当魔药的原材料啊。”亚伦皱着眉头，“但那家伙居然什么都没做，就那样——径直离开了。”<br>“奇怪吧。真是个捉摸不透的男人。”亚伦还在回味当时的场景，但魔王却陷入了沉思。<br>“那么……”魔王的声音打断了亚伦的思考。<br>“如果——只是如果，如果他深陷痛苦之中，作为曾经的队友，你认为会是什么原因。”<br>亚伦看了看魔王，又看了看远方木屋的影子。他沉思了半晌，似乎明白了什么，但看了一眼魔王，又想了想木屋里的家伙，他不禁皱起了眉头。思考再三，他突然笑了笑，说：“我知道了。”<br>“你有头绪？”<br>“如果要说什么人能让他深陷痛苦……”亚伦的脸上带着爽朗的笑容。“奥塔莉亚，那一定是奥塔莉亚！”</p>
+<hr>
+<p>“亚纶呢？”<br>不知为何，回到木屋的只有魔王一个人。<br>“亚伦说什么突然有急事，让我转告你，他先回去了。”魔王看起来也有些不解。“他走得很快，但是他也没接到什么消息吧……”<br>“……真是可惜。”我不甘地叹了口气。“还打算留他吃顿饭的。”<br>这家伙居然跑了。原本还想请他去木屋的地下室看看，看来只能等下次再说了。<br>魔王并没有回应我，只是径直走进了自己的房间，空气中弥漫着尴尬的沉默。<br>“魔王大人。”我深吸了一口气。“昨天晚上的事……我非常抱歉。”<br>“为什么？”<br>魔王的反应有些出乎我的意料。<br>“作为实验对象的话，要承受这些突如其来的实验也是理所应当的吧。”</p>
+<hr>
+<p>“不……”<br>我们的关系好像更糟糕了。一阵剧烈的疼痛所侵袭再次侵袭了我的额叶。<br>“我……不是这么想的。”我说的很慢。“我并不只是把您当做实验对象看待。”<br>“哦？”魔王的耳朵动了动，但视线依旧落在她手中的轻剑上。“那么……你究竟是怎样看待本王的？”<br>“我不明白。”我并没有继续靠近她，而是将身体倚在了门框上，不知该把视线投向何处。<br>“我不知道该怎么描述这种感受，和您一起度过的时间……很愉快。”我的声音有些紧张，“我还想了解更多您的事，但我……总是会做出过激的举动。我不知道该怎样温和地和您相处。”<br>指尖传来了一丝熟悉的温度——魔王轻轻拉住了我的手。<br>“和你在一起的时候，我也很愉快。”她的声音也很轻。“这就是朋友。”<br>“和亚伦聊的时候，我就在想……你这家伙，看起来处处圆滑，实际把自己包裹得相当紧。”魔王靠在门框的另一侧，牵着我的食指。“如果可以的话，我也想更多地了解你。”<br>她追随着我的视线望向窗外。“我现在能做到的事十分有限……但至少，我可以成为一个优秀的倾听者。”<br>我垂下了头。“如果真实的我会让你失望呢？”<br>魔王微微摇晃着我的手指，眼里含着笑，轻声向我发问：“你这是不相信我吗？”</p>
+<hr>
+<p>“我……”<br>我的眼前忽然闪过了魔王那时恐惧的表情。<br>不，不止，还有更多被我遗忘的时刻。遭到背叛时难以置信的表情，被我刺穿胸口时因痛苦而紧皱的眉头，逐渐建立的信任被我踩在脚下时，那双黄色眸子里流露出的悲伤与绝望……过去的我究竟伤害过她多少次？而我又会重蹈覆辙多少遍？<br>她柔软的手指似乎变得像烙铁一样滚烫，我惊恐地甩掉了她的手。“不……”我的呼吸变得有些急促，“我不相信你。”<br>我没法相信我自己。<br>她眼睛里的光芒倏地暗了下去。<br>“……好的。”她悻悻地收回了手。“是我逾越了，对不起。”<br>……不要道歉。<br>“是我误解了你的意思……之后，我会多加注意。”她故作轻松地笑了笑，“我总被人说缺乏边界感。如果你之后觉得被冒犯了，记得像这次一样……及时提出来。”<br>“明天我要出去一趟。”她转过身去，继续保养她的那把轻剑，“今晚的治疗，你就不用辛苦陪护了。”<br>那些没说出口的话堵在我的嘴边，像是一颗发烫的铁球，在我的喉咙里灼烧。</p>
+<hr>
+<p>调试好最后的仪器，我缓缓合上了治疗室的门。<br>今天是第一次——第一次，我没有在她的身边陪着她。我并没有回到自己的房间，而是静静地在门口等待着。<br>治疗室里很快传出了响动，我在第一时间推开了治疗室的门，魔王正痛苦地扯着自己的领子，大口地喘息着。“怎么了？”我焦急地赶到床边，检查她的状态与仪器上显示的数值。<br>我当然知道发生了什么。很明显，麻醉药的剂量没有给够，这就像我预想的那样起了效果：麻醉药的用量不足会让她从疼痛中惊醒。<br>我明白这么做是错误的，但我却没法停手。我期待着她请求我留下来——哪怕只是一个小小的动作也好，我会留下来的，我会陪在她的身边无微不至地照顾她，就像之前一样。<br>魔王颤巍巍地把自己的身体撑了起来，用手砸在了床上，重得几乎要砸出血来，而后又向着一侧倒了下去，揪着自己的头发，把头按在膝盖间，从牙缝里挤出了几声凄惨的气声。<br>“我马上注射！”我用颤抖的手拿起注射器，按住她的左手，往静脉里推入足量的麻醉药。起效需要时间，她的身体绷直而后又蜷缩成一团，紧紧抓着自己的右手，在自己的手臂上留下了鲜红的血印。<br>“没事了……没事了……”我只能挤出这样苍白的话，尝试为她擦去额头上的汗。<br>她猛地甩开了我的手。<br>“我不需要！”<br>几乎是从喉咙发出的低吼。<br>我的手就这样僵在了原地。她很快便意识到了不对：“……对不起，我不是有意这样的。”她缓慢地解释着，“对不起。我没事了，你可以回去了。”<br>症状只是缓和了些许，但她仍在一个劲地喘着粗气。<br>“你回去休息吧。”<br>她重复了一遍。<br>我不知该说些什么，我只能踏着沉重的步伐离开了治疗室。<br>在关门前，我看见她低垂着兔耳，无力地把身体蜷了起来。</p>
+<hr>
+<p>该怎样阻止她离开我？<br>我不明白，我快要发狂了。我在门外听着房间里的声音渐渐趋于平静，渐渐放下心来，但一想到明早她又要再次离开我，我的心又被狠狠地揪住。<br>魔王不属于我，我清晰地明白这一点，特别是在我无情地拒绝了她之后，一切挽留的话语都变得可笑。<br>……甚至，连道歉都搞砸了。<br>我回想着手中的触感，昨晚她的话语和轻笑就像是做梦一样。<br>而我亲手将这个梦砸得粉碎。</p>
+<p><img src="/copying/nmbxd51414457-1/4.jpg" alt="图片"></p>
+<p>大晚上偷偷整点</p>
+<hr>
+<p>“这样下去的话……只能全烧了吧！”<br>扎着粉色双辫的魔导师在森林的岔路口停下。根据地上留下的标记，这已经是她第五次经过同一个地方了。她不耐烦地从腰间的皮袋里掏出一根魔杖。“这垃圾贤者……以为这种程度的法术就能困住我吗？”<br>“请问……”<br>在背后传来响动之前，魔导师的火焰已经落在了对方的脚下，拦住了对方的脚步。“哦？”魔导师一甩魔杖，在空中挽出了一道漂亮的曲线。“是只小兔子？”<br>眼前的兔魔人举起了一枚闪着光芒的褐色吊坠。“你就是奥塔莉亚吗？”<br>魔导师手指一动，对方脚下的火焰转瞬间荡然无存。“……这是亚伦的东西。”魔导师细细观察着那枚吊坠，又从头到尾把兔魔人打量了一遍。“怎么？你不会也是那小子的情妇，来向我要钱的吧？”<br>兔魔人似乎并未感到冒犯，她只是把吊坠收回自己的腰带。“亚伦告诉我，跟着吊坠感应的方向，就能找到你，只不过真没想到这么快……听说你正在寻找森林贤者，是吗？”<br>“如果是的话，我可以为你带路，找到森林贤者。”兔魔人接着说了下去。<br>“报酬呢？”奥塔莉亚微微歪头。“你想要什么。钱？附魔？宝物？”<br>兔魔人的耳朵摇了摇。她犹豫再三，吞吞吐吐地说：“我想要……”</p>
+<hr>
+<p>“想要听我讲讲贤者的故事？”<br>奥塔莉亚重新端详了一遍在前方带路的兔子：和其他的魔人不同，她的腰间别着一把轻剑，装束也轻巧而质朴，看样子是个剑士。“你和贤者认识吗？你们又是什么关系？”<br>“医生与患者的关系。”兔魔人回答得很自然，“我目前暂住在医生……森林贤者的家里，协助接受治疗。”<br>听见“暂住在家里”的时候，奥塔莉亚的嘴角抽动了一下。<br>“……哦？那你知道我是谁？为什么会想来找我？”<br>“亚伦告诉我，你是贤者最信任的伙伴。他说，你们的关系曾经很……亲密。”兔魔人小心地斟酌着用词，“贤者最近的状态不太好。我想，如果能找到你，或许能让他好起来。”<br>“亚伦那小子还挺有心的嘛……不过。”奥塔莉亚的眼神像鹰一样，“这和小兔子你又有什么关系呢？”<br>“贤者的精神状态不佳，对我的治疗过程也有影响。这两天他还配错了药的剂量。”兔魔人的语气变得冷淡，“我只希望能够快些恢复健康。”<br>“倒也说得过去，不过……”<br>奥塔莉亚忽然皱起了眉头。<br>“你耳朵上的痕迹……那个是牙印吗？“</p>
+<hr>
+<p>“让我看看！”<br>奥塔莉亚冷不丁地伸手就要去抓兔子的耳朵。白发的兔魔人猝不及防，连忙闪向一旁，却还是被摸了一下，身体不禁打了个冷战。“我也不知道他哪根神经搭错了突然要咬我！”兔魔人捂着自己的耳朵，显得有些委屈。“你们这群人都是这么喜怒无常的吗？”<br>“你不知道这是什么意思吗？”奥塔莉亚有些难以置信。<br>“什么？”兔魔人显得比她还莫名其妙，“互相咬耳朵是一种人类的礼仪吗？”<br>“……算了。”<br>奥塔莉亚把指间染上些许血液的短针不动声色地收回了袖口。<br>“不过，虽然你说要带路，我们也走了一段时间了吧，怎么还没到呢？”<br>奥塔莉亚用余光瞟了一眼路边，轻轻把一颗石子踢了过去：这是第七次经过这里。目前为止，她们还是在原地打转。<br>“你不会不认识路吧？”<br>“怎么会呢？”兔魔人似乎也有些迷茫，“我来的时候就是走的这条路啊……”<br>“要是走不出去，我们俩不会在这饿死吧。”奥塔莉亚捏着下巴，“那样的话，我就只能把小兔子你给烤了呢。活下来一个总比没有好！”<br>兔子的耳朵打了个哆嗦。“……别开这种玩笑。”兔魔人瞥了她一眼，“到时候谁能活下来还说不定……”</p>
+<hr>
+<p>地面上突然出现了一个血点。<br>兔魔人一愣，用手抹了抹嘴边，看见自己的手上变得一片鲜红。<br>“是怎……”<br>比起疼痛，更多的是意识遭到了抽离。眼前的景象被叠上了几层残影，混沌在她的大脑里蔓延。她剧烈地咳嗽了几声，鲜血淅淅沥沥地滴在了地上。“是……”她艰难地抬起头来。<br>奥塔莉亚并没有让她说完这句话。少女用魔杖轻轻点了一下兔魔人的额头，对方便陷入了昏厥。她轻松地扶住了即将倒下的兔魔人。<br>“你最后送给我们的毒还真好用。不出意外的话，她还能活一个小时，还是三十分钟？”奥塔莉亚坐在了倒下的兔魔人身边。“哎呀，这个时候如果有解药就好了，可惜我只是个对魔药学一窍不通的魔导师……”<br>森林依旧寂静无声——甚至连动物的声音都被某种事物吞没了。奥塔莉亚仿佛是在对着空气说话，她捏着兔魔人的耳朵，仔细端详牙印的形状。<br>“你真的忍心看她这样受苦，都不愿意放我们进去吗？”奥塔莉亚慢条斯理地用手梳理着那头白发。“遇上你这种家伙，她真可怜……我也真可怜！”<br>没有回应。轻薄的灰雾依然笼罩在她们的身边。<br>奥塔莉亚慢慢抬起头来，红色的眼睛死死盯着前方不存在的某处。<br>“你在看着的吧，无情而可恨的……森林贤者大人。”</p>
+<hr>
+<p>我并没有让她等待多久。<br>雾气渐渐散去，我沉默着从灰色的大雾中现身。<br>“哦？好久不见啊，贤者大人。”奥塔莉亚的脸上洋溢着甜腻的笑容，眼睛里却没有一丝笑意。<br>我对她视若无睹，从她的身边擦肩而过，低下身，抬起魔王的手腕，向她的血管中推入了一管药水。我沉默地在一旁等待着，直到她的呼吸声渐渐变得平稳，才将她横抱起，转身向雾中走去。<br>魔王的身形比我想象中的要更单薄一些。中毒带来的影响仍未完全消散，她的额头上沁出了些许汗珠，不自觉地抓紧了我的衣服。我感受到了她的动作，将她拥得更紧了一些。<br>真是可悲。只有在这种时候，我才能获得拥抱她的资格。</p>
+<hr>
+<p>魔王缓缓睁开眼睛。<br>刚刚发生的一切都还历历在目——她再次被人暗算了。但身上已经没有了刚才毒素发作的痛苦。是医生？医生呢？手脚还有些麻痹，但她还是挣扎着坐了起来。“医生？”<br>“哎呀，你醒了？”<br>穿着围裙的少女跃入了魔王的视野。<br>“刚刚真是对不起啦！如果不那样做的话，贤者大人肯定不会放我们进来的。”少女歪着脑袋笑了笑，“我会给你做好吃的，所以原谅我吧，好不好，小兔子？”<br>魔王的手在床边摸索着，很快找到了轻剑的剑柄。“你究竟想做什么？”她压低了声音。“医生呢？”<br>“我？我是来找贤者大人负责的呀。”她的声音清脆悦耳。<br>“你不要说那种会让人误解的话。”<br>我从她的背后走出。“你还好吗？有没有什么不适……”<br>“贤者大人你来啦！”<br>毫无征兆地，她突然扑在了我的身上，抱住了我的脖子。<br>“你……”<br>魔王花了点时间稳住了自己的呼吸，一字一顿地问我。<br>“你究竟对她做了什么？”<br>“我什么都没做。”<br>我举起双手，却没法摆脱粘在身上的少女。<br>“任何事，我都没有做。”<br>“贤者大人也太冷淡了吧。”少女有些不满，“你忘了吗？你可是要对人家的一生负责任的！”<br>“我从来没有说过这种话。”我努力地从她的手下逃了出来。“我们只是普通的队友关系。”<br>……魔王看待我的眼神似乎变得愈发冷淡了。<br>“真是的，我得去厨房看看啦。”奥塔莉亚鼓着嘴，似乎有些生气，“不过，没关系，奥塔莉亚会陪在你的身边的，总有一天会让你记起来的！”<br>我打了个寒战。<br>这个女人的目的并不简单。我有种非常糟糕的预感。我确实曾经做过一些不该做的事，如果知道了真相，她拥有无数个杀死我的理由，但不该是现在。<br>……或者说，正因为是现在？<br>我看见魔王垂下了头，缩回了她的被子里。奥塔莉亚——从厨房里笑意盈盈地望着我，只是眼神像是冰冷的利刃。<br>……这个家伙这么多年都没有丝毫长进吗？真是太幼稚了。</p>
+<hr>
+<p>桌上的饭菜散发出诱人的香气，但这丝毫没法消解三人之间尴尬的气氛。<br>“来，贤者大人，啊——”奥塔莉亚拿着勺子送到了我的嘴边。<br>我推开了她的手。“你到底想要做什么？”<br>“我有很多想做的事呀，不过……”她看了一眼魔王，“现在可能不太方便。”<br>魔王沉默着叉起了一块炖菜。<br>“不过，既然是你带我来的，说明你肯定也支持我们，是吧，小兔子？”奥塔莉亚做作地用我也能听见的声音在魔王的耳边说，“你能再帮我们一把吗？”<br>魔王突然从桌旁站了起来。<br>“来屋后。”她对奥塔莉亚说，“我们两个单独聊聊。”</p>
+<hr>
+<p>魔王靠在屋后的大树上，视线飘向一旁。沉默半晌，还是缓缓开了口。<br>“你……喜欢他吗？”<br>“喜欢啊！”<br>奥塔莉亚坐在一旁用来劈柴的木桩上，托着腮，用她漂亮的红色眼睛看着面前的魔王，语调轻松而真诚。<br>“那你明白他为什么痛苦吗？”<br>“嗯……”奥塔莉亚用手指抵着下巴，“之前不明白，现在可能明白了吧。”<br>“好。”魔王长长地吐了一口气。“那你能让他摆脱痛苦吗？”<br>“我做不到。”<br>魔王有些惊愕地抬起眼，目光正撞上了少女认真的眼神。<br>“但我会努力让他去直面这些。我保证。”</p>
+<hr>
+<p>“……好。”<br>像是下定了决心，魔王抬起头。<br>“我会去周围的森林逛逛，给你们留下独处的时间，希望你们能借此机会把话说清楚。之后……如果需要的话，我会尽可能减少和他的接触。但治疗的进度不能被耽搁。”<br>“谢谢你。”<br>奥塔莉亚收起了自己那副做作的笑容，向魔王低了低头。<br>“我会借这个机会……好好把话说清楚的。”</p>
+<hr>
+<p>在我的耐心被耗尽之前，奥塔莉亚出现在了门口，但只有她一个人。<br>“她呢？”我几乎是脱口而出。<br>“你说小兔子？”奥塔莉亚几乎难以掩盖脸上的笑意。“她离开啦，她说要给我们留下二人空间，让我们好好聊聊……多好啊！”<br>不对。<br>糟糕了。<br>我开始后悔没有为魔王配置一个通讯装置——为什么会忙忘了这件最重要的事呢？<br>“那么，她差不多也走远了……”<br>奥塔莉亚把门在身后锁上。<br>“我们也该干点正事了。”</p>
+<hr>
+<p>快跑。<br>我几乎是踉踉跄跄地跌进了治疗室，把门死死地锁上。我明白木制的房间门抵挡不住她，但就算多争取一秒也好。用来防身的道具？对于把前代魔王的亲卫军烧得连灰都不剩的魔导师，同时也是曾与我朝夕相处的队友来说，几乎毫无作用。<br>“啊……”<br>门后传来了她的声音。<br>“在这里，是吧？”<br>一缕火焰像是有生命的动物一般从门缝里钻了进来，在刹那间吞噬了我的左手小臂。剧烈的疼痛很快通过神经牢牢扼住了我的大脑。但这不是最大的问题——我的左手，在她精准且恐怖的火焰魔法下，只剩下了光秃秃的一节黑色。<br>不行。不行不行不行。我的头上止不住地冒汗，顾不得背后追逐的奥塔莉亚，扭开了隐藏在书架背后的机关，随着地板传来的轰鸣声，治疗室的地上出现了一架向下的阶梯。<br>绝对在魔王回来之前要治好。绝对不能让魔王发现。绝对不能让魔王发现这里。绝对不能让魔王发现我的真面目。<br>我踉跄着冲向了地下——我真正的研究室。</p>
+<hr>
+<p>“……真是壮观啊。”<br>奥塔莉亚悠闲地跟在我的身后，仔细地观摩着我的杰作。<br>随着打开的铁门一路前进，各式各样的肢体与器官整齐地排列在冷库的两侧。手，大肠与小肠，胃，心脏，肝，肾……这些替换部件被打上标签，分门别类地保存在玻璃制的密封容器中。<br>这是我的心血，也是绝不能被魔王发现的秘密。<br>我顾不得发出感慨的她，用仅剩的一只手翻找着用来替换的部件。她不会杀我的。但如果被魔王看见少了一只手，接下来再像之前一样替换上新的，一定会被发现——必须在她回来之前把手换上。一定要这么做。<br>奥塔莉亚似乎非常享受这个时刻，她像只猫一样半倚在门旁。“这样的话，一切就都解释得清了。贤者大人……你还真是会说谎呀。”<br>我没有回头。<br>“——小兔子，你可以进来啦。”<br>……<br>——啊。<br>我捂着自己的手，朝身后望去。<br>白色的，柔软的兔子，正站在门的那一边，用难以置信的目光望着我。</p>
+<hr>
+<p>不要。<br>我张了张嘴，却什么都没有说出来。<br>对。我只是个一味延长着自己的生命，苟活着的怪物。也是用这些培育出的肢体与器官勉强拼凑的，“散装”的人类。<br>我想把一切都告诉她。快逃走吧，迟早有一天你也会被走向扭曲的我所杀害。我想朝她大喊：就这么抛下我吧！不要再看向我丑陋的模样。<br>但我却没有将这一切说出口的勇气。<br>“啊……啊啊……”<br>我有太多想说的话，喉咙里却只发出了没有意义的音节。<br>我在期待着什么？或许，如果她能扭头逃走，自此彻底离开我的身边，我也能获得些许解脱吧。<br>但——魔王，从腰间抽出了剑。</p>
+<hr>
+<p>“快跑。”<br>白色的兔子在刹那间扼住了奥塔莉亚的脖子，将轻剑架在对方的喉咙上。<br>“趁现在。”她咬牙，“把短效药带过来！”<br>“……啊。”<br>奥塔莉亚收起了那副笑容，却丝毫没有表现出被胁迫的慌乱。瞥了一眼身后的兔子，又望向我。<br>“这就是你一直在寻找的东西吗？”<br>她淡然地笑了笑。“确实……很迷人。”<br>“不要废话。”魔王把剑抵得更紧了一些。<br>“不过今天还是我们的二人时间，就不把可爱的小兔子拉下水了吧。”奥塔莉亚看向我，“我今天已经玩得很满足啦，接下来就只剩下一个愿望了。只要满足了我的这个愿望，我就会离开你的美好生活了。怎么样，贤者大人？”<br>她顿了顿，“或者说……‘流浪者’？”<br>我的心一沉。我明白她的意思：刚刚这段把我逼向绝路的表演，也成功应证了她的猜想。<br>我缓缓走向奥塔莉亚：“所以，你究竟想要什么？”<br>奥塔莉亚嘟着嘴撒娇道：“你明明知道的嘛！人家想要那个啦，那个。我们遇见的那天，你送出去的那颗药。”<br>“……好。”<br>在魔王诧异的目光中，我把她的剑推开。<br>“我们去湖边吧。在这里不方便。”<br>“那么……小兔子，不好意思，再见啦。”<br>奥塔莉亚灵巧地从魔王的钳制中溜了出来，将她向里一推。“关门吧。”她向我吐了吐舌头，“别让小兔子看见不好的东西。”<br>我顺势将研究室的大门关上。“我设置了定时开启，您……先在里面休息一会儿。”在关门前，我对着茫然而愤怒的魔王说，“抱歉。”<br>这件事确实与魔王无关。<br>“放我出……”<br>魔王的声音被无情的铁门吞没。</p>
+<hr>
+<p>奥塔莉亚的心情很好。她一边哼着歌，一边轻快地跟在我的身后。“好期待呀，马上就可以实现我的愿望啦。”<br>我沉默不语。<br>“怎么了，你不替我开心吗？”奥塔莉亚凑了上来，“真是的，我们关系曾经那么好，到头来，你怎么这么冷酷无情，而且……”<br>她的话语在一瞬间变得冰冷。<br>“这都是你一手造成的啊。”<br>良久，我终于开口。“你还有别的选择。”<br>“没有哦。”奥塔莉亚轻轻歪头，“从十四年前的那个时候起，就没有了。”</p>
+<hr>
+<p>十四年前，人类边陲的某个无名小镇。一个身披破布的怪人敲开了一间民房的大门。<br>怪人走路一瘸一拐的——他有一只木腿。在他左腿的膝盖下光秃秃的，取而代之的是捆在膝盖上的一根木杆。他扶着门框，慢悠悠地问：“你们佣兵团出租魔人吗？”<br>暂住于此的佣兵团的质量看起来层次不齐：有人类，有魔族，还混杂着几个年龄不大的小鬼。领头的络腮胡子撑在门边，挡住了怪人的视线。“你想做什么？”他的鼻孔喘着粗气，空气中弥漫着劣质酒精的味道。<br>“我要拿来做实验。”怪人的声音平淡无奇，仿佛在叙述一件稀松平常的事，“我有一种药，可以强化魔人的能力，但被强化的魔人大概率会暴走，丧失理智，然后丢掉性命。”<br>络腮胡子和屋里的人沉默了一会儿，转而发出一阵哄笑。<br>“你还挺诚实！”他拍了拍怪人的肩膀，“可惜，我们虽然接活，但我们从不卖魔人！”<br>怪人像一块破布一样被扔出了门外。<br>这种事并不少见。怪人艰难地爬起来，靠在墙边，拍掉自己身上的尘土。回头却刚好看见一位少女正在门边看着自己：那是一只狐耳的兽人。漂亮的粉色长发搭配着红色的眼睛，确实算得上是个可爱的孩子。但最重要的是那纯白色的狐耳——那是贵族血脉的证明。魔族中的贵族几乎不会与人类通婚，所以拥有贵族血脉的魔人格外珍贵。<br>少女正看着怪人出神。意识到怪人也注意到自己之后，她对着怪人吐了吐舌头，把头缩了回去。<br>那是我们的第一次相遇。</p>
+<hr>
+<p>第二次相遇的时候，怪人本不该出现在那里。<br>惨叫声与刀刃碰撞的声音灌满了怪人的耳朵。怪人躲在厨房的角落里，尝试让自己不那么显眼。真是倒霉。难得发现了一条线索，回到这里的时候，这个小佣兵团却被人在夜里袭击了，自己也被莫名其妙地卷进了这场屠杀。<br>显而易见的，是为了那个白色狐耳的魔人。她的身价太高了，那群商人怎么可能让这样的一颗宝石流落在小小的佣兵团中。<br>然后……尴尬地，怪人和一个浑身是伤的孩子相遇了。<br>他还记得这个留着黑色短发的女孩。第一天的时候，她和那个狐耳的魔人站在一起。女孩也认出了他。女孩央求他：救救我的朋友们吧，求你了。<br>我没有办法。怪人说着缩回了桌子底下。我打不过那群人，我甚至没法保护我自己。<br>“你可以让魔人变强，是吗？”<br>怪人抬起头。<br>“我可以当你的实验材料。”女孩拨开自己乱糟糟的短发，露出了两只刚刚露头的羊角。“给我力量吧。我会解决他们，你趁乱去屋后的茅草堆里找到我的两个朋友，带着他们逃走。这样，你也能活下来。”<br>“求你了。”</p>
+<hr>
+<p>怪人只在茅草堆里找到了一个孩子。<br>是那个狐耳的孩子。她哭得满脸泪痕，扯着怪人的裤脚，说，自己的朋友们还活着，她要把他们带走。<br>怪人没有理会她。他强硬地扯着女孩的手，将她拖离了那间满地狼藉的屋子。<br>女孩一路哭喊着，撕咬着怪人的手，在她的手中甚至燃起了些许火花，往怪人的手上烧去。幸好那间屋子已经陷入了混乱，羊角的孩子做得很好，没人听到屋后的动静。怪人似乎感受不到痛觉，烫伤几乎遍布了整个手臂却还浑然不知，他只是沉默着离开了这个无名的小镇。<br>而后，灾厄降临了。<br>怪人没有料到，那孩子是个好材料。黑色的影子从民房开始渐渐向外膨胀，直至最后蔓延为黑色的山峦。正如人类之后为她取的名字，“黑色群峦”。<br>那只魔物哭泣着，怒吼着，将人类和房屋一起碾碎，视线所及的一切都被她的利爪所摧毁。<br>“啊……啊啊……”<br>呆在原地的女孩忽然哭着向魔物伸出手去。<br>“贝尔……”她抽噎着，“贝尔……你要去哪儿……”</p>
+<hr>
+<p>“我恨你。”<br>怪人没有理会她，只是往自己的手上缠着绷带。<br>“我恨你！”女孩对着他吼叫道，“为什么，为什么每次都只有我一个人活下来！为什么不让我和大家一起死掉，那还更幸福一些！”<br>火上的汤锅凯斯咕噜咕噜地冒泡，怪人从简陋的锅里盛出一碗内容物不明的汤水。“要喝汤吗？”<br>“不喝！”<br>嘴上这么说着，经过了一天的奔波，孩子早就又渴又饿。她咬着干裂的嘴唇，把头扭向一旁。<br>怪人把汤碗放在了一边，为自己又盛了一碗，就着汤啃起了干巴巴的面包。<br>“你叫什么。”<br>“奥缇……奥塔莉亚！”女孩在营火旁的朽木上一屁股坐下，鼓着腮帮子看着怪人。“那你叫什么？”<br>怪人咬了一口面包。“你就叫我……‘流浪者’吧。”</p>
+<hr>
+<p>和一般的魔人不同，大概是血统的缘故，奥塔莉亚从小就展现出了惊人的魔力量。在流浪者的指导下，她很快就学会了定向点燃火焰的方式。<br>“这样下去的话，你会变得越来越强的吧。”流浪者看着少女手中的火苗，若有所思。“得给你找个好老师……”<br>“那有什么用。”少女赌气地别过头去。“就算我变强了，死去的人也不会回来了……”<br>“有可能。”<br>少女一愣。<br>“据说这一代的魔王掌握着生与死的技术……”流浪者摸着下巴，“如果能打败魔王，说不定就能把这种禁术问出来哦？到时候结合你的魔力量，没有什么是做不到的。”<br>少女的眼中第一次闪出了光芒，她摇晃着流浪者的衣角：“真的吗？”<br>“……或许吧。”流浪者的眼神心虚地飘向一旁，“我也只是听说……”<br>“好，那我一定要打败魔王！”少女攥紧了自己的拳头。<br>“在打败魔王之前，要先保护好自己。”<br>流浪者从身后掏出了一条缎带——那是他之前去市集特意买的。他将缎带系在少女的头上，用一个蝴蝶结遮住了那双刺眼的狐耳。<br>他拍了拍少女的头。<br>“要……好好活下去。”</p>
+<hr>
+<p>第三次见面时，奥塔莉亚并没有认出我。<br>我的装束与身体都已经焕然一新。现在的我，是被他们从森林中请出的“森林贤者”。尽管如此，她似乎还是察觉到了什么。在某一次的治疗结束之后，奥塔利亚忽然问我：“贤者，你曾经见过一个瘸腿的怪人吗？”<br>我茫然地摇了摇头。“瘸腿？怪人？”<br>“不，没什么……”少女摆了摆手。“那是……一个怪人罢了。”<br>奥塔莉亚此刻已经可以将自己的身份隐藏得很好了，她的那双狐耳被魔法隐藏在了头顶的缎带之下。即便是一同旅行的爱莲与亚伦，也没有注意到她的真实身份。<br>……那条缎带。在那次谈话之后，我才第一次意识到，那是我当初留给她的缎带。<br>我后知后觉地开始恐慌。<br>我做了错事，很多错事。</p>
+<hr>
+<p>那算不上是一个完美的结局。<br>在确认前代魔王并不是我所寻找的魔王后，我近乎万念俱灰。我把其余的三个人留在原地，扭头离开了大殿。<br>然后，我听见了背后传来的声音。<br>“你知道复活的魔法，对吧？”<br>那是奥塔莉亚的声音。<br>糟透了。<br>奄奄一息的前代魔王先是惊讶，而后笑了起来：“哈……复活的魔法……你是三岁小孩吗？居然还认为能复活……”<br>前代魔王的话被硬生生地打断了。奥塔莉亚在他的腹部烧了一个大洞。<br>“你知道复活的魔法，对吧？”她重复道。<br>“什么复活的魔法！我听都没听过！”前代魔王在她的耳畔喊叫，“别做梦了，你这个幼稚的……”<br>前代魔王的左腿被烧成了齑粉。<br>“你知道复活的魔法，对吧？”奥塔莉亚的声音几乎毫无波动。<br>“我不知道！怎么可能复活啊！”前代魔王的声音近乎怒吼。<br>灼烧的酷刑持续到了他生命的最后一刻。<br>“啊……如果不是这样的话……”<br>奥塔莉亚对着已经成为一堆黑灰的前代魔王自言自语。<br>爱莲想要上前说些什么，却被亚伦拦住了。<br>奥塔莉亚跪了下去。<br>“那我活到现在的意义……究竟是什么？”</p>
+<hr>
+<p>清冷的月色为湖面镀上了一层银光。奥塔莉亚坐在岸旁，任凭微凉的夜风吹拂过自己的长发。<br>“十四年啊……真是漫长呢。”她把头靠在自己的膝盖上，“我想他们了。”<br>“如果你不逃跑的话，本来还能更快一些。”她扭头望向我，“你还真是个胆小鬼。”<br>我没法回应她。<br>“吃了这个，就会变得像贝尔一样吗？”她摸出那颗我递给她的药剂，“这真的不是糖果吗？看起来真漂亮。”<br>“我不会在这种时候撒谎。”<br>“那我就能体会到贝尔当时的痛苦了吧……真好。”她笑盈盈地望着我，“这样的话，那些赎不完的罪也能被我一起带走啦。”<br>“不过，到时候不会误伤到你吧。”她像是想到了什么，捂住了嘴，“那可不好。”<br>我看着她的眼睛。“我会负起责任，为你做好善后工作，也会见证到最后一刻。”<br>她的眼睛弯成了月牙，这一次是真正的笑容。她取下了头上的缎带，系在了我的手上。<br>“那么，再见了。”</p>
+<hr>
+<p>人类为何要放弃生命？<br>罪恶感，痛苦，这些我当然可以明白，但我却无法理解。现在的奥塔莉亚具有无可比拟的强大魔力，也获得了国王赐予她的爵位，她却一心只想找回最初的噩梦。<br>是因为我曾经给予她虚假的希望吗？<br>我目送着她一步步走入湖中，散开的粉色的长发渐渐被蔚蓝的湖水吞没。<br>我曾经拯救过很多人类。但这一次，在我的自暴自弃与明哲保身之下，奥塔莉亚是我救下的第一个人。但我现在不禁开始怀疑自己：我真的拯救了她吗？<br>“……你根本不了解人类与他们的爱，只是在模仿他们的行动。”<br>某个人似乎这么评价过我。<br>“只是一头……无爱的野兽。”</p>
+<hr>
+<p>奥塔莉亚的身体开始逐渐发生转变。<br>她的身上披上了一层闪着光芒的银色毛皮，身后的尾巴渐渐膨大，依稀可以看见周围跃动着的火花。她的头——已经变成了狐形的兽首，向着湖底的更深处前进。她的体型渐渐变得巨大，身旁的火花也开始逐渐变得暴躁，但她仍然努力将身体压入了湖中，用以压制即将暴走的魔力。<br>在某些时代，这个转变的现象被人类加以研究，并称之为灾变。而我的药物只是诱发了这个过程。<br>灾变是欲望的体现，是智能种回归自然的象征。<br>而这只银色的巨兽，承担着转变的痛苦与理智的丧失，最后仅存的欲望，是将自己推向死亡。</p>
+<hr>
+<p>一道黑色的影子划过天空。<br>紧接着，震耳欲聋的呼啸声与掀起的气浪几乎让我站不稳脚步。黑色的影子逐渐逼近湖面，像是刀刃一般在湖面上划开一道痕迹，而后精准地撞在了巨兽的身上。<br>巨兽惨叫着，从湖中央被那一团黑色的影子一路朝着我的方向顶向岸边，银白色的庞然大物几乎从我的身旁擦过，倒在了湖边的树林中。<br>我看看见了一袭火红的披风。是她。<br>魔王不知何时换上了那身鲜血染就的战袍，她收起了背后漆黑双翼，平稳地落在了地面上，手握魔剑，一步一步地向着巨兽走去。<br>——她使用了我留给她的应急短效药。<br>“停手，不要伤害她！”我企图拦在巨兽之前。“她只是想……”<br>“只是想杀死自己吗？”<br>我第一次听见魔王用这样的语调说话。她在极力压抑着自己的情绪，但怒火几乎要化为实体从她的身旁弥漫开来。<br>“本王知道，你们之间有过很多恩怨……但这次与你无关。”魔王没有看向我，而是望向了我身后的巨兽。“这是本王与她之间的事。”<br>巨兽身旁的空气开始躁动起来。皮毛上擦出的火焰的温度让她焦躁不安，她急于想要回到湖里，回到那一片冰冷且宁静的水域中，深潜进湖水之中，让自己的心灵也重归平静。<br>但现在，在她与湖水之间，存在一个障碍。<br>她不明白。她无法明白。她咆哮着，将自己的痛苦与愤怒一股脑地倾泻在面前的那个小小的生物上。<br>魔王举起了剑。<br>“来吧。”</p>
+<hr>
+<p>空气在高温下逐渐变得扭曲。<br>一个又一个高浓度的魔力弹悄无声息地发射到了魔王的身边，而后迅速膨胀炸成一团巨大的火焰，一声声的爆鸣追随着魔王在空中飞行的身影。即便是魔族，正面吃下这种程度的的攻击也难免会受伤，魔王尽可能地躲避着空中的魔力弹，但对方的攻击似乎丝毫没有减慢速度的迹象。<br>对于普通的魔导师来说，可能需要花费相当长的时间才能制造出这种纯度的魔力聚合体。即便是奥塔莉亚，也很少使用这种大量消耗魔力的技术。但现在的她宛若自然之灵，魔力源源不断地涌入她那巨大的身体，她肆无忌惮地朝着对方宣泄怒火，以最简单朴实的方式轰炸着这个拦在她面前的东西。<br>只要停下就立刻会被击中。对方没有留给魔王任何喘息的机会。<br>每当魔王尝试接近巨兽，数个魔力弹就会精准地拦截在魔王的前方。随着火球再一次炸开，巨兽发出了不耐烦的嘶吼声。魔王在她的眼里就像是只烦人的飞虫，难以杀死，却也难以摆脱。<br>巨兽决定快些了结这一切。<br>与她展现出的怒火不同，魔王的战斗方式并不急躁。她小心地躲避着巨兽制造出的火球，不断寻找接近巨兽的方法。似乎是在寻找喘息的时机，巨兽的攻击似乎出现了片刻空隙，魔王顺势与巨兽的躯体快速拉近了距离。就在魔王寻找斩击的时机之时，却忽然意识到情况有些不对。<br>数个巨型魔力弹不知何时已经将她团团包围。<br>下一秒，魔王的身影被没有缝隙的大范围爆炸所吞没。</p>
+<hr>
+<p>魔王并没有如巨兽所想的那样从空中坠落。<br>就在下一个瞬间，一个手握巨剑的人影从爆炸的焰球中冲了出来。在魔剑的剑身上，原本一直紧闭的那只眼睛此刻已经缓缓睁开。魔王的身上有不少烧灼的痕迹，但她的眼神没有丝毫的动摇。<br>“……足够了。”<br>魔剑的眼睛闪过一道光芒。<br>……她是从什么时候开始窃取巨兽的魔力的？<br>如果对手是正经的魔导师，应该很快就能察觉到这把魔剑窃取魔力的原理，而后避免使用开放性的魔法，防止自己的魔力过度外溢，转而使用封闭性高、封装完整的术式。但对于丝毫不在乎自己魔力储量的巨兽来说，几乎不会察觉到，伴随着每一次的攻击，这些被大肆浪费的魔力中有一部分被某种手段窃走了。<br>也正是因为如此，魔王才能勉强承受住刚刚的爆炸。<br>“——尝尝你自己的焦躁吧。”<br>巨兽曾使用过的火焰从魔剑的眼睛中喷涌而出，随着魔剑一起被深深刺入了巨兽的胸口。但一切仍未结束，随着魔力的再次注入，剑身在巨兽的体内引发了第二次的爆炸，巨兽发出了一声痛苦的闷哼，疯狂地在魔王的身边制造了更多的魔力弹。但她仍未来得及引爆它们，魔王自身的魔力就已经顺着魔剑的剑柄再次注入她的身体。<br>这次不是高温与灼烧。黑色的魔力在瞬间将她的内脏搅成一团。<br>“呜……”<br>巨兽发出了最后的叹息，如山一般倒在了湖边，在湖面上掀起了一阵涟漪。</p>
+<p><img src="/copying/nmbxd51414457-1/5.jpg" alt="图片"></p>
+<hr>
+<p>巨兽的身体开始渐渐消散，分解，回归自然。<br>但魔王仍旧没有停下。她用魔剑费力地撕开巨兽的胸口，剖开她的胸腔，似乎在寻找什么。<br>一束粉色的头发从内脏的残骸中露了出来。<br>魔王一愣，小心翼翼地顺着发束向内继续寻找。紧接着是手臂，头，而后是整个身体……赤身裸体、鲜血淋漓的少女被她从魔兽的内脏中挖掘了出来。魔王将自己的披风取下，裹在了少女的身上，但少女却紧闭着双眼，迟迟没有回应。<br>“奥塔……”魔王的声音兀然地止住。她顿了顿，再次开口：“奥缇，小奥缇，醒醒。”<br>“……为什么。”<br>少女睁开了眼睛，却没有看向魔王，而是无神地望向天空。<br>“我只是想要赎罪而已，你到底为什么……”<br>她忽然像是想到了什么似的，身体一震。<br>“你刚刚……那个名字……你称呼我为什么？”</p>
+<hr>
+<p>“你的赎罪已经完成了。”<br>魔王将剑收了起来，她环视着周围巨兽的残骸。“你已经化身过一次魔兽，而后又被人杀死过一次了。你还有什么没赎的罪吗？本王可以帮……”<br>她没有想到的是，赤身裸体的少女披着她的披风，揪住了她的领子。<br>“——这算什么啊？”少女对着魔王歇斯底里地怒吼着，“你也太过傲慢了吧？凭什么？凭什么由你来决定我能不能赎罪？你哪来的资格多管闲事？”<br>“我明明……连活下去的意义都没有了啊！”<br>她吼叫的声音近乎沙哑。<br>“本王赐予你意义。”<br>魔王平静地看着她。<br>“接下来的日子，就为本王而活吧。你想做什么都行，但你要为本王活下去。”<br>奥塔莉亚的眼神惊愕得有些呆滞。<br>“……为什么？”<br>魔王的眼睛垂了下去。<br>“你只需要……活着，就足够了。本王不愿看见你的死亡。”<br>魔王深吸了一口气。“……奥缇，求你了。”<br>“……”<br>奥塔莉亚忽然抓住了魔王的肩膀，端详着她那双暗黄的眼睛。<br>“怀特……”她喃喃道，“怀特……你还活着……是你……”</p>
+<hr>
+<p>奥塔莉亚一直不明白蛋糕是从哪长出来的。<br>但不要紧，佣人们每天都会为她端上新的蛋糕。厚重的巧克力挞，甜蜜的玛德琳，可露丽与蒙布朗，奥塔莉亚不需要明白它们是从哪来的，她只需要穿着漂亮的长裙，与妈妈一起坐在花园里，一边品着红茶，一边看着蝴蝶在灌木间飞舞，一边将那些小巧的甜品送入口中。<br>但渐渐地，妈妈变得不爱去花园了，只是躺在二层的卧室遥望花园里的奥塔莉亚。爸爸的眉头开始被阴云笼罩，再之后，妈妈消失了。桌上的蛋糕没有减少，但家里的一切似乎都变得黯淡枯槁。<br>再之后，蛋糕渐渐离开了奥塔莉亚的生活。她开始学着吃有些硬的面包，佣人们渐渐消失了，餐桌上的肉排也变得越来越小。但奥塔莉亚不在乎。因为爸爸还陪在她的身边，还有慈祥的老管家、温柔的女仆姐姐和有些坏脾气的厨娘。厨娘虽然总是骂骂咧咧的，却总是会为她多做一个布丁。奥塔莉亚喜欢他们。<br>再之后，他们都倒下了。<br>血，到处都是血。老管家拿着猎枪留在了客厅里，女仆姐姐把她和父亲推上了楼梯，厨娘接住了从窗户爬下的她，父亲的尸体紧接着被人从窗口推了下来。<br>厨娘把她藏在了木桶里，拿着厨刀冲了出去。</p>
+<hr>
+<p>“老爹，咱们这么做不太好吧……”<br>个头矮小的青年跟在魔族的身后，心惊胆战地跨过地上的尸体。“据说到最后，大城市来的那些教会特使也没在这家人的房子里发现私通魔族的踪迹，那他们不是挺冤的吗？我们在这里搜刮他们的东西，不会被冤魂缠上吧……”<br>“怕个屁，又不是我们干的。这些钱放在这也没人要，我们到时候拿了东西，帮他们把尸体埋了，这不是好事一件，互惠互利嘛。”为首的魔族胡子拉碴，头上的羊角昭示着他的身份。“尽管拿！拿完了最后留几个人，和我一起把他们埋了。”<br>“要不要咱们还是先把这些处理了？”青年小声地对首领说，“小贝尔，还有您前几天捡来的那个小崽子，他们跟着呢……”<br>“干嘛？”首领点了一根烟，挑了挑眉毛。“当佣兵的，还能怕这个？我的活儿总有一天要交到我闺女手里的，让她睁大眼睛，给我好好看清楚了。”<br>他吐了一个烟圈。<br>“——魔族和魔人，究竟要面对什么。”</p>
+<hr>
+<p>两个小小的孩子，手牵着手，穿过鲜血与尸体。<br>“为什么？”<br>跟在后面的白发少女向黑发少女提问。“他们明明都是人类吧？”<br>“人类也会杀人类，魔族也会杀魔族。”<br>黑发的少女冷静地绕过灌木旁摔得血肉模糊的成年男性。“那边……让他们负责吧。怀特，我带你去厨房找点好吃的，怎么样。”<br>“好……”<br>被她称作怀特的白发少女紧张地攥着对方的手。“谢谢你，贝尔。”</p>
+<hr>
+<p>推开半掩着的厨房门，一具女性的尸体把两个孩子都吓了一跳，怀特几乎在第一时间窜到了贝尔的身后。“……别怕！”贝尔握着怀特的手，“只是死人而已。”<br>两个孩子小心翼翼地跨过女性的尸体，在厨房里四处翻箱倒柜，寻找剩下的食物。“怀特，你看！”贝尔忽然发出了兴奋的喊声，“这个黄黄的，是他们说的布丁吧。这个还能吃吗，真想尝尝看……”<br>“呜啊！”<br>怀特的方向传来一声惊呼。<br>“怎么了？”<br>贝尔连忙放下手中已有些变质的布丁，朝声音的方向赶去。<br>怀特坐在地上，指着角落里的木桶。“那，那个……”<br>一颗沾着灰的，粉色的脑袋，从倒下的木桶里露了出来。<br>贝尔试探性地向前走了一步。“这是……”<br>“不要过来！”<br>从桶里滚出来的孩子尖叫道。粉发的女孩哆哆嗦嗦地爬了起来，拿着一把剔骨用的小刀，涕泪横流地冲着她们喊叫：“你们不要过来！快走！要不然我就把你们都杀了！”<br>“你干嘛！我们又不是坏人！”贝尔呲着牙，用手臂拦着发抖的怀特。<br>“我不管，你们快走！”粉发的孩子抹了一把眼泪。“我要……留在这里！留在这里，爸爸，大家，他们总会回来找我的……”<br>大人们应该已经听到这里的动静了。贝尔冷静地思考着。只要等待，等着大人们来处理……<br>“不要……”<br>贝尔没有想到的是，怀特已经慢慢走到了女孩的面前。<br>“怀特！你在做什么，快回来！”贝尔尝试拉住白发的孩子。“她有刀！”<br>“不要害怕。”<br>怀特向粉发女孩伸出手去，但她自己的手也在抖个不停。<br>“不要靠近我！”对方胡乱地挥动着手中的小刀，“不要过来……”<br>粉发女孩的面前落下了几滴鲜血。<br>——怀特的手上，多出了一道血淋淋的口子。<br>“啊……啊啊……”粉发的女孩显然也被吓到了，她手中的刀子掉落在一旁。“我不是……不要……”<br>“……没事了。”<br>她被什么温暖的东西拥住了。<br>怀特小心地抱着她，用另一只手轻轻拍着她的背。“没事了，没事了……”<br>“呜……呜呜……”<br>她靠在怀特的肩头哭了出来。</p>
+<p><img src="/copying/nmbxd51414457-1/6.jpg" alt="图片"></p>
+<hr>
+<p>那是一段如梦幻泡影般的日子。<br>“小奥缇——”<br>贝尔抱住了粉发的少女，“你也太厉害啦！”<br>贝尔说，原先的名字太难读了，为了方便，她为奥塔莉亚取了这个名字。<br>对于三个孩子来说，跟在佣兵团的背后四处游荡的几年，是一段无忧无虑的时光，<br>在村子里暂住的时候，她们就在满是尘土的街道上飞跑，偷摘村人田里的瓜果，吃得满嘴汁水。在野外驻扎的时候，她们就四处挖掘森林里的野果与野薯，再让奥缇用火焰魔法将它们烤熟……<br>但在城镇里的时候，老爹不允许他们离开租住的房子。<br>“听好了，你们几个小崽子，绝对不能乱跑出去。”每次进入大些的城镇，老爹都会粗声粗气地交代她们。“尤其是你，奥缇。”<br>老爹从不告诉她们为什么。<br>“因为人类会吃人！”跟在老爹身旁的普沙——一个人类青年，张牙舞爪地告诉她们。<br>“你就不吃人。”贝尔撅着嘴，“村子里的那些人也不吃人。<br>“那是因为他们不知道你们能吃。”<br>普沙意味深长地说。</p>
+<hr>
+<p>在奥缇的印象里，怀特总是有些怯生生的。<br>她总是缩在贝尔的身后。不像贝尔一样从容大方，也不像奥缇一样娇蛮霸道，怀特总是拘谨地瑟缩着，奥缇不明白她的胆子为什么这么小。<br>“怀特其实很强的！”<br>贝尔总是这么对她说。<br>她不明白怀特为什么强。贝尔不在时，怀特就会缩在她的身边，揪着她的袖子，似乎生怕她突然离开。即使在三个孩子之中，怀特的个子也是最小的。奥缇看着她身后那把与身形不符的巨剑，不由得想：她真的会挥剑吗？<br>直到那一次，她看见了怀特战斗的方式。<br>尽管那些贵族大人们之间摩擦不断，但佣兵团也有接不到活的时候。为了节约旅费，他们会驻扎在森林里，偶尔打些野兽，补贴资金。<br>但就在那天，一头饿极了的野熊闻到了没有掩埋的内脏香气，悄悄袭击了营地。那时的孩子们正围在一起烤着树木上落下的松塔。松子在火中烤出的焦香吸引了野熊的注意，它调转步伐，向着孩子们的方向前进。<br>奥缇最早发现了这头庞然大物，她尖叫着向对方扔出火苗，但那微弱的热度只能用来点燃干燥的松枝，根本没法烧穿野兽的皮毛。贝尔抱着她向后跑，怀特则留在了原地，背对着她们，挡在了野熊的跟前。<br>“怀特她……”奥缇伸出手去。<br>“没事。”贝尔安抚着她，“相信她。”</p>
+<hr>
+<p>野熊像人一样站了起来，用全身的力气朝娇小的白发少女扑了下来。<br>少女拔出了剑。<br>那把比她还高的巨剑在她的手中仿佛是用纸做的玩具剑，她毫不拖泥带水地朝野熊砍去。随着刀锋落下，野熊的肚子被她从中间生生剖开，污血随之喷溅在她的身上。野熊哀嚎着，却没法阻止破碎的内脏从肚子的裂口流出。它的爪子朝着怀特挥去，想对这个小个子做出最后的报复，挥舞的爪子却在片刻间飞了出去。<br>奥缇甚至没有看清最后那一刀的轨迹。<br>……这就是真正魔族的实力。<br>“怎么了？”普沙匆忙地赶了过来。“噢……幸好怀特和你们在一起。”<br>老爹跟在他的背后姗姗来迟。“没必要担心。我早就说了，怀特那小子，以后绝对会成为一个大人物。”<br>“那以后我才不当佣兵团头子，我要当怀特的部下！”<br>贝尔跑了过去，拉住了怀特血迹斑斑的手。“我们去当大人物！”<br>“嘿你个不孝女！”老爹见状就要踹贝尔的屁股，“你不继承你老爹的人脉和位置了？”<br>“我才不要！”贝尔对他做着鬼脸。<br>“你给我等着！”老爹撸起了袖子，贝尔则从他的手臂下面一溜烟钻了出去。<br>闹腾的父女俩渐渐跑远了，怀特看向了一旁的奥缇。<br>“……你会怕我吗？”<br>她低着头，看着衣服上的血污，声音夹杂着些许颤抖。<br>奥缇没有立刻回答她，只是走向了她，帮她理了理被弄乱的领子。<br>“——怎么会呢。”<br>奥缇抱住了那个站在血污中不知所措的孩子。</p>
+<hr>
+<p>奥缇没法理解这一切。<br>到处都是血，枪声，刀剑碰撞的声音，她仿佛回到了多年前的那一天。在那一天，她失去了第一个家，而现在，她又要失去第二个。<br>普沙把她和贝尔护送到了后门。“小奥缇，像你这样的贵族魔人……很珍贵。”他一边咳着血，一边推着两个孩子的背。“一旦被人抓到，就会被当成高价的商品拿去贩卖，所以，千万不能落到人类的手里……要把自己藏好了！”<br>“……是因为我吗？”<br>奥缇似乎明白了什么，她用带着泪光的眼睛木讷地望着普沙。<br>“大家的死……我父亲的死……原来都是因为我吗？”<br>“不是的！”普沙按住了少女的肩膀，他在少女的耳边郑重地说：“小奥缇……咳咳，你听好了，不要认为这些祸端都是因你而起，是人类的贪欲把我们逼到了这一步……你没有错，你没有伤害任何人！”<br>“走吧！”他猛地推了一把两个孩子。“不要回头！”</p>
+<hr>
+<p>“怀特，去找她们！”<br>老爹身上的皮甲已经被鲜血染透了——有敌人的，也有他自己的。一旁的怀特仍不打算停下手中的剑。“去找她们！”老爹朝她吼着。<br>“我不能把您……”怀特挥剑的动作已经有些吃力。<br>“你在担心我？”老爹瞪了她一眼。“我还没那么老呢，小子！贝尔她们更需要你！我可不放心普沙那个小矮子。”<br>怀特没有继续说下去。她将剑收了回去，调转方向，朝后门奔去。</p>
+<hr>
+<p>贝尔一直没有来。<br>怀特握着剑，和奥缇藏在屋后的草垛里。原本和贝尔说好三人一起躲藏在这的，但贝尔却不知去了哪里。怀特有些坐不住，但放心不下身旁哭哭啼啼的奥缇，只能沉住气继续等下去。<br>草垛外忽然响起了脚步声，掺杂着盔甲碰撞的声音。怀特的精神不由得紧绷了起来，她小心地屏住呼吸，但脚步声似乎离得越来越近，有什么似乎在挑动草垛最外层的麦秆。<br>怀特明白，她没有别的选择。<br>“藏好自己，等我回来。”<br>她对奥缇低声说。<br>下一刻，她的巨剑穿过了那个倒霉士兵的身体。她从草垛里跳了出来，突破了几个士兵的包围，引诱他们朝另一个方向跑去。</p>
+<hr>
+<p>没有看见贝尔，也没有看见奥缇。<br>怀特几乎要喘不过气来。在好不容易处理了数个士兵之后，回到草垛的她发现奥缇不知去了哪儿。在这之后，她又被几个士兵追上，逼进了墙角里。她尽力调整着呼吸，再次举起了剑。<br>——首先要活下去。活下去之后，才能履行自己的职责。<br>然后，灾厄降临了。<br>巨大的魔兽碾平了房屋，在她的面前嘶吼着。魔兽踏过了自己面前的士兵，却忽视了自己，如山一般的身体跨过了怀特，碾压着建筑物和蚂蚁一般的人类，不知向着何处前行。<br>魔兽在城镇间移动着，发出了低沉的轰鸣，像是在哭号，像是在歌唱。<br>……啊。<br>泪水从怀特的眼角滚落，一滴，又一滴。<br>是贝尔。</p>
+<hr>
+<p>“……在那之后，我就流落在各个佣兵团之间。”<br>魔王坐在床边，看着床上陷入沉睡的奥塔莉亚。“再之后，就是我成为魔王的故事了……下次再说吧。”<br>我再次检查了一遍仪器，确保奥塔莉亚的生命体征无恙。“我还挺想听的。”我靠在墙上，“这么一看，我对您的了解也还是太少了。”<br>“我说完我的了，你说说你的？”魔王抬了抬头，用眼神指向我的左手。<br>“……我培育了很多……自己的肢体与器官。”<br>我老实坦白。<br>“为了活下去，在受到致命伤害时，我可以用一些药剂强行维持自己的体征，然后用这些备用的器官替换自己受损的部分。这就是我和你说过的底牌之一。”<br>“是你自己的？不是那种……其他人的？”<br>“其他人的会产生排异反应，怎么能用！……算了，你们也不懂这个。”我扶着额头。“用其他人的效率也太差了。要杀很多人，还要保持尸体新鲜，对于我这样的非战斗人员来说太累了。这种说法，你能接受吗？”<br>“你说的很有道理。”魔王摸着下巴，“和我想的也差不多。”<br>“……你不害怕吗？”<br>“为什么要害怕？”魔王有些不解。<br>“不会觉得有点……呃，奇怪吗？”我斟酌着用词。<br>“确实是有点奇怪……”魔王略加思考。<br>从她的嘴里说出来果然还是有些伤人。</p>
+<p>“不过，以本王看来，现在的你也没做什么过分的事吧。”魔王撑着头说。“……除了小奥缇这次。虽然是她拜托你的，你也得担一半的责任，懂吗。”<br>我选择认命。<br>“……好。”</p>
+<hr>
+<p>“兔耳朵……副作用……”<br>奥塔莉亚和魔王已经聊了一上午了，而我则成为了被排挤的那一方，只有在做饭的间隙才能在门口听一耳朵。<br>“知道我是魔王之后，作为前勇者小队的成员，有没有想过要杀我？”魔王的声音从门后传了过来。<br>不，我也是前勇者小队的成员啊？<br>“你都说了，你来赐予我活着的意义，那我究竟是先杀了你还是先自杀呢？逻辑都会产生冲突的啦。”奥塔莉亚的声音里带着笑意。<br>不，明明是我先来的？<br>……好像真的是她先来的。<br>这么一想，奥塔莉亚和魔王的感情确实深得多。她们是儿时旧友，事隔多年又突然出现在魔王的生活里，既有过去的牵绊，也有不同的新鲜感……<br>而我只是刚刚被魔王承认为朋友罢了。<br>我的额头上开始冒出细密的冷汗。<br>“贤者，你在吗？”<br>奥塔莉亚的声音吓了我一跳。我等了一会儿才装作自然地推开门：“怎么了？”<br>“我有件事想和你商量一下……”奥塔莉亚清了清嗓子，“关于魔王这次的副作用对策，与之后的治疗计划。”</p>
+<hr>
+<p>“对于短效药带来的副作用，你并没有更好的处理方式……对么？”<br>奥塔莉亚一上来就切中了我的痛点。<br>“……如果提前进行全身麻醉，或许可以一试，但我并不知道具体的发作时间……”<br>“你知道么，有种法术可以让人短暂地失去意识。”奥塔莉亚抱着手臂，“我认识一位专精催眠术的魔导师。如果我们动作够快的话，或许能在发作前赶到那里。”<br>“时间来得及吗？”我沉下脸。<br>“现在魔王可不是小兔子，我们俩的移动速度是很快的。”<br>……对，魔王现在是可以飞行的。<br>我愈发觉得自己的底气不足。<br>“那么……之后呢？”我做出了些许让步，“你会负责把魔王送回来吗？”<br>她看着我的器械，欲言又止。“……那要看魔王自己的态度了。”<br>我回想起了那天晚上魔王痛苦的样子。<br>沉思许久，我用有些无力的声音回答道：“好。”</p>
+<hr>
+<p>“有些累了吗？”<br>“……不，我没事。”<br>奥塔莉亚注意到，魔王飞行的速度已经渐渐降了下来。短效药看起来并不能完全释放魔王的能力，随着时间的流逝，药物的效果也在不断减弱。<br>“来我这吧。”奥塔莉亚向她招手。<br>以火焰驱动的战车还能再容下一个人。魔王没有犹豫多久，收起翅膀，落在了奥塔莉亚的身旁，倚靠着她的身体，就像很多年前那样。<br>“你没有对我的计划提出意见呢。”奥塔莉亚稍稍调整了战车的能量供给。“为什么？”<br>“你的计划很合理。”魔王在她的肩头闭目休息着。“我没有反对的理由。”<br>战车的速度渐渐放缓，二人身旁凛冽的寒风也慢慢变得柔和。<br>“并不是合理就是正确的。”奥塔利亚的话随着晚风拂过魔王的耳畔。“你啊……总是考虑‘合理性’多于考虑自己的感受，这么多年过去了，真是一点没变。”<br>“说说关于你们的事吧。”魔王岔开了话题。“你……为什么要让我看见他的秘密？”<br>奥塔莉亚微微歪头。<br>“因为有趣啊。”<br>她感到魔王的头离开了自己的肩膀。<br>“——什么？”</p>
+<hr>
+<p>“当我们一起讨伐前代魔王的时候……那家伙永远都是一副样子。”<br>奥塔莉亚的目光投向了更远的地方。<br>“最初还会和我们装装样子，表面上彬彬有礼，实际根本不在乎我们的死活，只在乎我们能不能把他带去魔王那里。”<br>“……虽然他看起来很惜命，每当我们发生战斗就会躲得远远的，但我总觉得他似乎也不在乎自己的死活，只是在维持一个完整的皮囊而已……很奇怪，对吧？”奥塔莉亚吐了吐舌头，“实际上，我的直觉还挺准的。为了保证我们的战斗力，在接近魔王城的时候，他不得不在战场上进行急救，也有几次差点被敌人杀死。那个时候，爱莲都快急死了，亚伦也到处为他寻找医生，连我都忍不住为他揪心，只有他自己……只有他自己看起来不在乎。”<br>“浑浑噩噩的。”奥塔莉亚回想着当时的场景，“就像是把自己的人生垂吊在一条细丝上，而这条细丝也即将断裂。”<br>“就在几天前的时候，你也不太在乎自己的生命。”魔王冷不丁地插了一句。<br>“我很在乎自己的生命的！差别很大的啦。”奥塔莉亚的语气很轻松，似乎并不在意，“我对自己可是有着强烈的恨意的！尽管我也爱自己的生命，但恨意要更胜一筹。就算是现在我也还是恨着自己噢？但那个时候，那位贤者和我完全不一样。”<br>“——既不仇恨，也谈不上爱。他就是那种无趣的家伙啦。”<br>“……不过，现在有些不一样了。”<br>奥塔莉亚望着冰冷的夜空。<br>“恐惧而不知所措……那是我第一次见到他露出这样的表情，真是……太棒了。”奥塔莉亚露出了甜美的微笑，“那种原本像白纸一样无趣的家伙，居然会变成现在这样，你对他使用过什么魔法？”<br>“……我不知道。”<br>魔王的视线垂了下去。<br>“我只是觉得……看见他的那副样子，我有些……难受。”<br>“——”<br>奥塔莉亚收起了脸上的笑容。<br>“所以说，你和我们俩不是一类人啊。”<br>她一把搂住了魔王的肩膀。<br>“——所以我才不想让你呆在他的身边啊。”奥塔莉亚拖着长音。“我清楚的啦，超清楚的。像小怀特这样的人呆在他的身边，迟早有一天会被他利用你的负罪感吃干抹净的！”<br>“吃，吃干……”魔王打了个哆嗦，“他真的有那种……吃人的爱好吗？”<br>“……又不是那个意义上的！我说，魔族的心智发育也要比魔人晚一些吗？还是说小怀特你还是和十多年前一样是个笨蛋？”<br>“之前确实有过啊……”魔王有些委屈。“那天晚上，他确实趴在我的身上说要吃掉我……我都以为要被杀了。”<br>“——啊。”<br>奥塔莉亚的眼神冷了下来。<br>“我改主意了。果然还是回去把他杀了吧。”</p>
+<hr>
+<p>“……不管怎样，那家伙确实很在意你。”奥塔莉亚搂着魔王，“虽然我也很想知道是为什么……不过问你估计也问不出来。”<br>“他会……在意我吗？”魔王把身体缩了缩。<br>“当然啦！用你做人质的时候，那家伙想都没想就老老实实听我说的做了，完全是被你迷得神魂颠倒了嘛。他啊，一会儿没看到你都会慌了神，和你分开了这么久，这会儿估计一边喊着‘魔王大人’一边打算跳湖自尽……”<br>奥塔莉亚忽然意识到，魔王渐渐没了声音，她只是心事重重地靠在自己的身上。<br>……真是弄巧成拙了。<br>奥塔莉亚叹了口气。“很在意吗？”<br>“不。”魔王闭上眼睛。<br>“对我也不能说实话？”<br>“呜……”魔王显然陷入了纠结之中。<br>战车的火焰渐渐熄灭，奥塔莉亚操纵着战车落在了地面上。她转头向魔王发问：“想回去吗？”<br>魔王没有回应，也没有动弹。<br>“——唉，走啦！真是的！”奥塔莉亚推着魔王的肩膀，“都说了，多考虑一点自己的感受啦！还有力气飞回去吗？要我送你吗？”<br>魔王缓缓展开了翅膀，飞上了天空。“奥缇……”她犹豫地转身，望着奥塔莉亚。<br>“走啦！我都要生气了！”奥塔莉亚一副气鼓鼓的样子，“下次和那家伙一起坐马车来找我，听到没有！”<br>“……还有。”<br>奥塔莉亚的声音忽然严肃了起来。<br>“保护好自己，保持警惕。那家伙的本质没有这么简单。”<br>魔王朝她点了点头。<br>“好。”</p>
+<p><img src="/copying/nmbxd51414457-1/7.jpg" alt="图片"></p>
+<p>( ›´ω&#96;‹ )施工中+剧情预告<br>（真的会有这种剧情吗）</p>
+<hr>
+<p>我看着一望无际的湖面出神。<br>耳边很安静，星光在湖面上落下点点痕迹。夜晚的风稍微有些冷，我把外套拉得更紧了一些，在岸边找了一块平整的草地，坐了下来。<br>睡不着。我伸出手，任由微凉的风拂过自己有些发冷的手指。我无论如何也没法忍受空无一人的木屋，逃也似地离开了自己的房间，不知不觉就走到了森林中央的湖边。一旁的森林还有不少被破坏的痕迹，不少树木被压得歪斜折断——这是她俩前几天的杰作。<br>……我又在想她了。<br>没救了，完蛋了。感觉自己好像被某种邪恶实验改造成了“没有某人就活不下去的体质”，接下来就会被迫面对某些糟糕的剧情……倒是希望如此。我躺了下去，靠在岸边的石头上，背后传来一阵凉意。<br>想抱住一些温暖的东西。</p>
+<hr>
+<p>脑子里有过不少疯狂的想法，但它们都被我一个个掐灭了。说到底，该怎么样让魔王的视线在我的身上多停留一会儿呢？<br>有没有影响感情的魔法？或是能让人坠入爱河的魔药？去请教米利亚有用吗？我的脑子有些昏昏沉沉。我原本只是想要陪在她的身边，但……她总是会离开我。我跟不上她的步伐，我没法阻止她。<br>想要把她留在身边，但不能捆起来、锁住或是囚禁，不能用那些过激的方法。我想不出来，大脑疼得快要爆炸了。<br>……要么想想办法成为大厨，捆住她的胃试试？<br>怎么想都不太行。<br>这些乱七八糟的古怪烦恼让我对周围的感知能力降低了不少。直到呼啸声接近了我的身后，我才后知后觉地回过头去。<br>下一个瞬间，我的背后传来一阵闷痛，有什么东西狠狠地撞在了我的背上，把我从岸边一路撞向浅滩。我被压在了浅滩上，冰冷的湖水瞬间没过了我的身体与鼻子，不由得呛了一口水。为了呼吸到新鲜空气，我勉强撑起身子，还没来得及看清袭击者是谁，就被人摇晃着肩膀喊道：“不要想不开啊！再想不开也不要跳湖啊！”<br>我终于看清了这颗白色的炮弹是什么。是魔王。<br>“什么……咳咳……想不开……”我咳嗽着，尝试坐起身子，“我只是来湖边散散心。”<br>“……唔。”<br>魔王有些尴尬，她从我的身上爬了起来。“对不起，我以为你……会很难过……然后就……”她的声音说着说着就小了下去，耳根微微有些发红。“……对不起，是我自作多情了，我只是回来看一眼。”<br>她的衣服与头发也被湖水浸湿了。她有些狼狈地甩了甩身上的水，站了起来，转身就想逃走。<br>“我很难过。”<br>她的脚步停下了。<br>“没法呆在魔王大人的身边，我会有些失落。一想到你可能不会回来了，我就会……很难过。”<br>我没有站起来或是追上她，只是坐在浅滩上，任由冰冷的湖水浸过我的大腿与脚踝。<br>……我好像领悟到了什么。<br>魔王转过身来，向我伸出了手。<br>“不要难过。”<br>她咬着自己的下唇，微微蹙着眉头，眼神却没有与我交会，而是望向了一旁的湖水。<br>“我不想……看见你痛苦的样子。”<br>我望向她的眼神充满了失落，但我差点没掩饰住自己嘴角的笑意。<br>我意识到了。<br>她的共情，我的痛苦，这就是将她捆在身边最好的手段。</p>
+<hr>
+<p>*与本篇无关的黑化IF线</p>
+<p><img src="/copying/nmbxd51414457-1/8.jpg" alt="图片"><br><img src="/copying/nmbxd51414457-1/9.jpg" alt="图片"><br><img src="/copying/nmbxd51414457-1/10.jpg" alt="图片"><br><img src="/copying/nmbxd51414457-1/11.jpg" alt="图片"><br><img src="/copying/nmbxd51414457-1/12.jpg" alt="图片"></p>
+<p>(;´ヮ`)7用一张之前的改图收尾吧 继续码主线了……</p>
+<hr>
+<p>“……先不说这个。”我忽然想到了什么，慌慌张张地站了起来，“短效药的药效还没结束……对吧？我得快点回去帮你配药。”<br>“越快越好吗？”魔王朝我招了招手，“那你过来一点。”<br>“什……”<br>——我被魔王横抱了起来。<br>“让你走过去的话，速度太慢了。”她展开了背后的翅膀。“我还能勉强支撑一会儿。”<br>“等等，如果你在空中……”我的话音还未落地，她就扇动翅膀飞了起来。<br>“我会离地近一点的。”她看上去倒是并不担心，“以防万一，这样就算摔下去了，也不至于摔得太惨。”</p>
+<p>我僵硬地躺在魔王的怀里，感受夜风在我的背上留下的寒意。<br>……这是不是传说中的逆公主抱。我想起在刚遇见奥塔莉亚时，我也是这样抱起昏迷不醒的魔王。在当时我绝对没想过会出现这样的景象。绝对没有。<br>我俩都还湿漉漉的。魔王并没有穿着那件战袍，而是在出行时换上了便服，现在那件轻薄的衬衣正紧贴在她的胸口，月光勾勒出了她锁骨的形状，与锁骨之下的两团有些贫瘠的隆起。<br>……不过，这样就很可爱了。<br>魔王用余光看着我。“怎么了？”<br>我扭过头去。“不，没什么。”<br>被水浸湿的衣服在夜风中多少有些寒冷，而魔族的体温从肌肤相贴的地方传递了过来，而我的脸好像有些发烧。<br>“你……着凉了吗？”魔王察觉到了些许异样，“刚刚在湖边吹风吹的？”<br>“没有！我很好……我是医生，这些我比你懂得多！”我慌张地辩解道。<br>“唔……”<br>魔王突然低下头，把额头贴在了我的额头上。<br>“好像有点烫啊，回去之后你也吃点药吧。”她加快了翅膀扇动的频率。“就算是医生，也要注意自己的身体。”<br>完全是帮倒忙。我的脸烫得更厉害了。</p>
+<hr>
+<p>谢天谢地，魔王安全地在木屋前着陆了，<br>但她的情况看起来并不乐观。她喘着粗气，被我搀扶着才勉强走进了木屋。“把身体擦干，去换一身干燥的衣服，然后等着我。”我翻出了一条足够大的浴巾——这是我逛了不少集市才淘到的东西——塞在了她的手里，将她推进了自己的房间。“我去配药，等一会儿就好！”<br>湿漉漉的衣服贴在身上，带走了身体的不少温度。我的牙齿冻得打战，手上的工作却不能停下来。快一点，再快一点，要不然……<br>地板上传来了一阵震动。我的身体一颤，抓着注射器和药瓶就冲了出去。</p>
+<p>“呜……”<br>魔王痛苦地在房间的角落蜷缩成了一团。<br>就像是兔子一样，她本能地把自己藏在了角落里——两只兔耳重新出现在她的头上，只是和湿淋淋的头发一起没精神地耷拉着。<br>她把身体裹在浴巾里，死死地扯着浴巾的边缘。<br>……等等。<br>我瞥见了一旁散落在地的湿衣物，和床上还没来得及换上的干净衣服。<br>这意味着现在的魔王……<br>魔王听见了我的声音。她抬起头，似乎想要说些什么，但又被下一阵疼痛把话堵了回去。<br>她用带着泪的眼睛望着我。</p>
+<p>我蹲了下去，小心翼翼地朝她伸出手，“可以把手递给我吗？”<br>她犹豫了一会儿，把颤抖着的左手放在了我的手上。<br>我把最大剂量的麻醉药送入了她的血管。我只能祈祷注射进去的药物快些起效。<br>“能站起来吗？”我试探性地扶住她的手。<br>她抓着我的手腕，尝试把身体撑起来，但腿很快又脱力地跪了下去。她仍不服输，撑着地面想要再次站起来，却在一阵席卷全身的疼痛的袭击下再次倒了下去。<br>“啊……啊啊……”<br>她的手紧紧地握成了拳头，砸在地板上。是因为疼痛，还是因为不甘心？<br>……看这个情况，现在的她甚至没法自己回到床上。<br>我没法对她置之不顾。</p>
+<hr>
+<p>“我……想试试把您抱到床上，可以吗？”<br>我小心地询问她的意见。<br>虽然也可以让魔王一个人在墙角里睡一晚上……但我不能忍受，我至少得做点什么力所能及的事。魔王缓缓闭上眼，咬着嘴唇，点了点头。<br>我寻找着一个合适的姿势。只是搀扶没法让魔王站起来，背着就更加不靠谱。横抱的角度不太合适，好在魔王的个子并不大，我把手伸向她的背后，一只手托着她的臀部，一只手揽住她的肩膀。“能用手勾住我的脖子吗？”<br>她勉强抬起手臂，搭在了我的肩膀上，顺势把身体的重心靠在了我的身上。我小心翼翼地按着她身上的浴巾，把她抱了起来。<br>目前为止还没有什么问题，除了我俩之间只有一条薄薄的浴巾以外。<br>她的呼吸吹拂在我的耳垂上，带来些许异样的温度。</p>
+<hr>
+<p>就快要成功了。<br>墙角离床的距离并没有那么遥远，但我的精神一直紧绷着，时时刻刻注意着我抱着她的动作是否太重，同时还要按住岌岌可危的浴巾。即便如此，只要一低头，还是能看见锁骨下微妙的……所以不能低头！我僵硬地看着前方，一步步地向床边挪去。<br>胜利在望。我俯下身体，尽可能轻柔地把魔王放在床上，把手从她的身下抽开。<br>但她的手却没有松开。似乎又一阵疼痛正在缓慢袭来，她的眉头紧锁，施加在我肩膀上的力度又加大了一些。<br>一直保持着这个俯下身的别扭姿势，我的腰和腿都有些发酸了。“可以松手……”<br>她的手忽然发力，我的身体一下子失去了平衡，和她一起倒在了床上。<br>“等等……”<br>意识到现在的状况之后，我的心跳漏跳了一拍。<br>魔王正趴在我的身上。<br>“……”<br>她紧紧地抓着我的肩膀，用额头抵着我的胸口，痛苦地喘息着，喉咙里发出了压抑的低吼。<br>像是只野兽。</p>
+<hr>
+<p>魔王很强。<br>与奥塔莉亚的战斗让我亲眼见证了这一点。短效药并没有完全解放魔王的力量，即便如此，在与魔兽的战斗中，她还是展现出了压倒性的强大。<br>或者说，魔王曾经很强。<br>长着兔耳的魔王只能达到锻炼过的普通人类的水平。现在的她，就像是被囚禁在兔子躯体中的一头狮子。<br>她本该表现得更加不满，本该充满了不甘、痛苦与无处可去的愤怒，埋怨着，叫嚣着，朝着身边的一切发泄自己的怒火。<br>但是……什么都没有。<br>在我们相处的时间里，什么都没有。<br>她只是平静地承受了这一切，吞下所有的不甘，咽下所有的愤怒，忍耐所有的痛苦，甚至是羞耻与尊严都可以为所谓“使命”让步。她只是咬着牙，拼尽全力压抑自己的一切。<br>——就像现在这样。<br>我长长地叹了一口气。<br>“……可以咬我。”<br>魔王有些惊讶地抬起头来。<br>“分担痛苦，解气，怎样都好。”我扶着她的脸。“你得发泄出来。”<br>她的眼中带着迟疑。但片刻之后，下一阵疼痛不由分说地袭击了她。她把头埋了下去，一阵刺痛从我的肩膀传来。<br>并不是几天前那个玩笑式的牙印，她的牙齿深深没入了我的皮肤。她的手也抓得更紧了一些，颤抖与她的体温一同从我的肩膀传来。“……没事，这样很好。没事。”我尽可能让自己看起来和平时一样，用手轻轻拍着她的背。<br>过了一会儿，她的背由紧绷渐渐变得松弛，牙齿也离开了我的肩膀。<br>我正打算查看伤口的情况，她的嘴却再次贴了上去。我的身体一颤，正打算做好再次被咬的心理准备，却感受到伤口处传来了柔软的触感。<br>——她正在轻轻舔舐着我的伤口，像一头小兽。<br>我听见了她微弱的道歉声。<br>“对不起。”</p>
+<hr>
+<p>似乎过了许久，魔王终于恢复了平静。她靠着我的手，缩在那一条单薄的浴巾里，陷入了沉睡。<br>虽然很想就这么睡去，但我还有很多事没做。我为魔王披上一条薄毯，从床上悄悄起身，把被扯得乱七八糟的、湿透了的上衣脱了下来。<br>肩膀上的伤口果然出血了，我对着工作室的水银镜端详着那个咬痕。很完美，我有些舍不得包扎。虽然在大多数情况下，它会被我的衣服遮住，但即使看不见，魔王也会记得的。<br>——这份愧疚，她会一直记得。没有比这更好的事了。</p>
+<hr>
+<p>我做梦的次数并不多，这是我第一次梦见魔王。<br>就像数小时前的那样，梦里的她趴在我的身上，身上只披着一件单薄的浴巾。她的耳朵轻轻抖动着，小心翼翼地望着我。<br>……这幅景象还真是难以忘却。<br>因为是做梦，所以做得更无所忌惮一点也没关系吧。我环抱着她，把脸埋在她的头发里，感受柔软的兔耳拂过我的脸颊。作为回应，她用脸轻轻蹭着我的颈窝，鼻息吹在我的锁骨上，有些发痒。<br>……说实话，我一直在思考这个问题，魔王似乎并没有完全展露兔魔人的特质。我腾出一只手来揉捏着她的兔耳，作为回应，她发出了一声满意的轻哼，蹭在我身上的脸颊的温度渐渐提升。<br>不过，也就到此为止了。即使在梦中的这个“魔王”，也只是红着脸在我的身上茫然地轻蹭。对她而言，这种行为大概就已经是极限了。在这之后的知识？大概是没有的。我想了想醉酒那晚她的反应与举动，有些头疼。<br>强制性或者侵略性的做法肯定不行。除了兔耳之外，还有什么别的……<br>我的目光朝更远的地方望去。<br>……我想起来了，还有尾巴。</p>
+<hr>
+<p>我试探性地向她的腰后摸去。<br>反正是在梦里，我不断说服自己。而且只是摸一摸尾巴而已，又没有做出什么其他无礼的事。猫魔人和不少低阶的魔族都会把自己的尾巴露在外面，偶尔被人摸一摸也没什么大不了的……吧。<br>“……呜啊！”<br>我的手指刚触及那团毛茸茸的东西，怀里的魔王就发出了一声惊呼。还没等她反应过来，我就开始用手指探索这条尾巴。最初摸上去的感觉是一小团，实际上似乎是卷起来的一条，我用手指拽着尾巴尖轻轻向外拉，尝试用手上的感觉丈量尾巴的长度。大约有半个手掌那么长？我不太确定。我虽然也很满意这个贴在一起的姿势，但这样抱在一起确实很难看清尾巴的情况，只能凭感觉摸索。<br>“呜……呜呜……”<br>魔王的表情明显变得有些奇怪，她开始变得局促不安，似乎想要挣脱我的怀抱，却被我的另一只手钳制着。她不解地望着我，脸上带着些许迷惑与窘迫，被我抱着的身体也开始微微颤抖。<br>反正是在梦里，稍微粗暴一点应该也没问题。我这么想着，摸索到了尾巴的根部，用指甲在尾巴根处轻轻一掐。<br>魔王的身体猛地打了个哆嗦。她发出了一声小小的哀鸣。<br>像是从捕食者的手下逃走的兔子一样，她尽全力从我的怀抱里挣脱开来，缩在了房间的角落里，扯着自己的浴巾，用惊恐的眼神望着我。<br>“……弄疼你了吗？”我从床上坐了起来。<br>……总觉得这个反应不太对劲。虽然确实是魔王会做出的反应，但似乎有些……太真实了。<br>真实到不像是个梦。<br>确实是在做梦，这点我还是不会弄错的。违和感来源于面前的魔王——她所做出的反应真实得过了头。<br>我慢慢向她靠近，她把身体缩得更小了一些，脸上的潮红仍未褪去，但泪水却在她的眼眶里打转。<br>“不要……”</p>
+<hr>
+<p>不过，很有欺负的价值。<br>我在她的身前蹲下，尽可能用缓和的语气向她发问：“不喜欢痛吗？”<br>她噙着泪，点了点头。<br>“那……温柔一点就没问题了，对吧？”<br>当她打算再次逃跑的时候已经晚了。我已经拦在了她的身前，把她堵在了角落里。“这次我会更小心一点的。”我微笑着把手探向了她的背后。<br>“呜……！”<br>她本能地想要逃离我的手，却只能向前扑进我的怀里。毛绒绒的尾巴很快就再次被我捏在了手里。“让我看看……刚才是这里吗？”我用指腹按着她的尾巴根。<br>我对她的反应十分满意：怀里抱着的身体一下子绷紧了，她无助地望着我，掉着眼泪在我的怀里挣扎着。<br>“这才刚刚开始呢。”我在她的耳边轻声说道。<br>“呜……”<br>肩膀上忽然传来一阵疼痛，我不由得一缩手。怀里的魔王忽然在我的面前消失了，只留下了一个浅浅的牙印。<br>……就留在我昨晚被咬的位置。<br>我摸着那个牙印，若有所思。<br>我好像有些明白现在的状况了。</p>
+<hr>
+<p>“魔王大人，昨晚睡得好吗？”<br>刚刚推开自己房间的门的魔王被门口的我吓了一跳，不自觉地向后一缩。“还……还不错，怎么了？”<br>“我只是来确认一下……您怎么了？”<br>魔王谨慎地与我拉开了距离，背靠着墙，仿佛是在害怕什么。“我……没有问题！”<br>虽然这样一惊一乍的样子也很可爱，但如果真的如我所想的那样，这件事还挺严重的。我试探性地提问：“你昨天晚上……有没有做一些奇怪的梦？”<br>魔王的身体一颤。“……没有啊，很，很正常……”<br>好，那应该八九不离十了。<br>“你还记得我之前对你使用过的，用来连接梦境的秘药吗？”我叹了口气，“如果你昨晚梦见了我……和我梦见了一样的内容的话，可能是那时留下的后遗症，我们两个的梦境又被连在一起了。如果不好好处理，这件事可能会变得很麻烦，希望你能说实话。”<br>“……等等。”魔王一脸不可置信的样子，“所以昨天晚上我梦见的那个……真的是你？”<br>我点了点头。</p>
+<hr>
+<p>“你最近用过类似的魔法吗？”<br>“昨天晚上，本王原本和魔王城那边约好了，原本打算在梦里处理文件的……”魔王一副恍然大悟的样子，“难道是因为这个？”<br>“我并没有继续使用秘药或是施术，可能是魔王城那边负责连接的魔法师在处理的时候犯了点错误吧，比如想都没想就使用‘接入最近频道’的命令……”我思索着。<br>“频……频道？”<br>“不……没什么，忘了它吧。”我摆了摆手，“我不清楚你们法术的原理，但原本应该把你的梦境连接到魔王城那边的某人，由他向你转述待处理的工作与文件，对吧？但实际上却连接到了我的梦里。如果要处理的话，最好能和你们那边的魔法师沟通一下，我也把我的秘药和法阵给他看看，方便他校准和调整。”我叹了口气，“……总之，这件事至少有一半是我的问题，给您带来了各式各样的困扰，真是非常抱歉。”<br>“看样子，得把那个家伙喊过来一趟了……”魔王摸着下巴，略加思考。“本王过会儿和他们联系一下，把负责使用梦境连接的那个家伙叫过来。”<br>“不过，我还有一个问题想问。”<br>“怎么？”魔王下意识地回应道。<br>“昨晚在梦里的……确实是你，对吧？”我故作平淡地发问。<br>“……包括最开始的时候？”</p>
+<hr>
+<p>大概过了数十秒，魔王才意识到我指的是什么，她的脸迅速涨得通红，从喉咙里发出了一连串意味不明的喊声。<br>“呜哇啊啊啊啊啊啊啊——”<br>她语无伦次地解释着：“本王以为是在做梦……本王又不知道……”但很快，她就意识到了自己的失误。“本王不记得了！什么都不记得了！”她的耳朵摆动着，用手臂捂住脸，在凳子上缩了起来。<br>“具体是哪一部分不记得了？”我还想继续使坏，“是从摸耳朵的部分，还是趴在我身上的部分？”<br>“呜……”<br>她的耳朵耷拉了下去，脸已经红到了耳朵根，声音也哆哆嗦嗦的。“本王……不知道……”<br>再欺负下去，她可能真的要哭了。<br>“没事，我只是问问。”我打算放她一马。“您如果不记得就算了。”<br>“本王要去联系他们了！”<br>她像只兔子一样逃回了自己的房间。<br>……不过，那个尾巴的手感可真好啊。我回味着梦中的感受，想象着那团毛绒绒的样子。<br>得想想办法摸到真的。</p>
+<hr>
+<p>《差异》</p>
+<p><img src="/copying/nmbxd51414457-1/13.jpg" alt="图片"></p>
+<hr>
+<p>“不出意外的话，负责调整术式的魔法师明天就能到了。”<br>餐桌上的魔王似乎还是对我有所忌惮，警觉地与我拉开了距离。“……总之，在他处理之后，应该就不会出现之前的情况了。”<br>……只是在梦里捏了一下尾巴而已，现在的魔王每当看见我都仿佛如临大敌。果然还是有点操之过急了吗？尽管在例行的治疗中，魔王依旧很配合，但她平日里总是躲着我的样子多少让我有些难过。如果能像游戏一样显示魔王的好感度就好了，我在心里暗暗叹了口气。<br>说到底，我没法确定魔王的感情。<br>对于魔王来说，我是特别的吗？还是说，魔王对待其他人也是这样的？这种想法总会让我的心口一揪。对于她来说，我究竟算是什么？只是……“朋友”？<br>而现在，我甚至成为了“令她警惕的朋友”。<br>怎么看都不是个好兆头。<br>“……你怎么了？”<br>魔王拿着叉子的手停了下来。“你看上去不太好。”<br>……有这么明显吗？我快速地整理好自己的表情。“没事，我挺好的。”<br>“没事……就好。”魔王用叉子抵着嘴唇，有些疑惑地看着我，“明天你可能要忙上一阵子了，可以的话，希望你能‘处理’一下那家伙。不出意外的话，他肯定会来缠着本王的，到时候就需要你的帮助了，比如……带他出去走走，之类的。本王明天想休息一会儿。”<br>“——缠着您？”<br>我的微笑凝固在了脸上。<br>“是啊，那家伙相当烦人。”魔王面露难色，“但我又不好当面拒绝他……”<br>“没问题。”我的脸上带着僵硬的微笑。“我会帮您……好好处理他的。”</p>
+<hr>
+<p>“魔——王大人啊啊啊啊啊——”<br>一个灰色的身影从空中滚了下来。<br>我在灰雾森林中施加了严密的干扰魔法，即使是以飞行的方式接近森林，没有我的允许，也没法找到木屋的踪迹。这个倒霉蛋看样子在空中迷路了许久，直到刚刚，我才短暂地对他解除了伪装，让这个家伙终于狼狈地在屋前迫降。<br>当然，这只是个小小的见面礼而已。<br>魔王听见了屋外的动静，探出头来。“这么久了，你这家伙怎么飞得还是这么烂。”<br>灰色的家伙听见了魔王的声音，翻了个身。“魔王大人——对不起——”他抱着一个皮制的大包裹朝着魔王喊道。“我会修好的！所以……能不能让佩诺朵不要扣我的工资？”<br>“……这种事又不是本王能决定的。”魔王不被察觉地叹了口气。“你也知道，财政方面都是她说了算。”<br>“那下个月的限定涂装曜·机神亚伦岂不是要离我而去了！”灰发的少年把头倒向一旁，眼角流下了泪水。“机神亚伦……我的机神亚伦……”<br>“你要是上个月不买夏日泳装爱莲雕像就有钱了！”魔王扶着额头，“……不，说到底，少买点木头小人吧！你的巢里都要装不下了！”<br>“您自己不也买过焰之魔导师和森林贤……”<br>魔王突然冲了过来，用一记重拳打断了他的话。<br>“好好干活，少废话，我要去工作了。”魔王指着他的鼻子，“……不要说多余的话，懂吗？”<br>……总觉得比我下手还要狠一些。</p>
+<hr>
+<p>地上的灰发少年垂头丧气地爬了起来。“可以让我看看你用的法阵吗？”<br>他从包里掏出一块黑色的绒布，又掏出了数块精炼后的魔导石，按照一定的规律码在绒布上。他的手按在其中的一块魔导石上，稍稍注入法力，魔导石便渐渐散发出微弱的荧光，在绒布上映照出不同的图案。<br>“让我看看……是哪个接口出了问题……”<br>他对照着我的笔记埋头工作了起来。我坐在一旁，饶有兴趣地看着他操作的方式。“说起来，我该怎么称呼你呢？”<br>“叫我格鲁米就好啦。”他摇晃着尾巴，“你呢？”<br>“他们没告诉你我的名字？”<br>“就算在王都，魔王的病都是绝对机密。你的身份和居住地自然也只有寥寥数人知道，我也是昨晚才刚刚得知了你的所在地，还不知道你是谁呢。”格鲁米摆弄着手中的魔导石。“你也不用告诉我真名，代称就行了。”<br>……这么说来，他并不知道我就是“森林贤者”。我会想起他刚刚的话，情况似乎变得有趣了起来。<br>“……医生，你就叫我医生吧。”</p>
+<hr>
+<p>“在你们那里也很流行‘勇者传说’吗？”我忽然发问，“明明是魔族？”<br>在我和亚伦他们打败了前代魔王之后，教会适时地将我们的经历整理再创作成了故事与画本，用以宣传教会和人类的功绩，而我也不情不愿地成为了他们笔下的“角色”之一。<br>虽然经过了不少的修改，我们几个的形象都几乎面目全非，还被商人们制成了不同的雕像对外贩卖……据说在孩子与成年人之间都成为了新的风潮。<br>尽管我也曾见过类似的商业模式，但我还是搞不懂，到底是谁在为这些木头小人买单。<br>……看样子，眼前就有一个。<br>“虽然官方是禁止的，但私下有不少家伙专门从人类的王国向魔族领地倒卖这个哦。”他解释道，目光却不曾离开手中的石头，“不得不承认，你们人类确实做的挺酷的。在《勇者传说·光与暗的终焉》里，开着‘日耀机甲’击败巨型魔神的勇者的插图真是很帅……”<br>……他们到底写了些什么啊。<br>“啊……机神亚伦……”又想起了自己被克扣的工资，格鲁米失落地扑在了桌上。<br>“……所以，除了工资的事，你还有别的事要找魔王吗？”我不着痕迹地发问。<br>“当然有啊！”他直起身子。<br>我的眉头不自觉地皱了起来。“……是什么？”<br>格鲁米看起来并没有注意到我微妙的表情变化，他兴致勃勃地从包里掏了一个盒子出来。<br>“当然是玩游戏啊！”</p>
+<hr>
+<p>“你看，这是我们魔族自己创作的《魔神冒险谭》，是根据初代魔王的冒险经历制作的游戏。”格鲁米看起来完全忘了自己的工作，他把铁盒里的纸牌、地图、册子和人偶一件件掏了出来，码在桌上。“你看，制作精良，内容有趣，我这可是买的二十周年限定铁盒装……啊，不过。”他用遗憾的眼光望着我，“像你这样的人类，估计都没法理解游戏的规则吧。”<br>“这个桌上游戏……”我平静地回答他，“我玩过啊。”<br>还是二十年前的版本。<br>为了弄清楚魔族的文化，分析这些坊间的传说也是资料收集的一部分。魔族为桌上游戏编写的这些半真半假的传说确实很有意思……不过，我并没有真正和他人一起玩过就是了。<br>“——你玩过？”<br>他一把握住了我的手，眼睛里似乎冒出了光芒。<br>“我在王都里根本找不到愿意和我一起玩这个的人……魔王也总是说没时间，很久没和我一起玩了。你可以陪我玩一局《魔神冒险谭》吗？”<br>“可以是可以，不过……”我话锋一转，“你打算用什么来交换呢？”<br>“唔……你想要什么？”他陷入了纠结，“如果是我最宝贵的东西来换的话……”<br>他一副忍痛割爱的样子。“……万圣节版本的奥塔莉亚雕像？”<br>这家伙也太想找人一起玩游戏了吧。<br>“不用了。我只需要你和我聊聊魔王的故事就行。”<br>“这也太简单了！”他一摆手，“放心，等会儿我就给你呈现超级视听效果加倍版本-我与魔王相遇的故事。”<br>“……哦？”<br>我掂量着毒杀一个成年魔族需要的剂量。<br>“那我还真是期待了。”</p>
+<hr>
+<p>“……到最后，初代的魔王成功建立了属于魔族的王国。”<br>终于结束了，我不禁捏了一把汗。这次游戏经历实在算不上一帆风顺，我俩扮演的初代魔王和魔将利用话术欺骗了人类的首领，避免了战斗，又通过商贸成功建立了一众根据地，却差点被骰子摇出的结果双双淹死在自家的护城河里。<br>“结束了……”格鲁米捂着脸，靠在椅背上。“真是一场恢弘的史诗……”<br>在护城河里与螃蟹搏斗真的算得上史诗吗？我还是没把这句话问出来。“说起来，你的工作做完了吗？”我不禁吐槽道。<br>“啊，我现在就在调试梦境啊。”他放下手。<br>我忽然意识到了什么，猛地推开门，门外并不是熟悉的森林，而是……一整片空白。<br>“……是什么时候？”<br>我甚至没有意识到自己是何时被他扯入梦境的。<br>“差不多是魔王刚刚离开的时候吧？”他伸了个懒腰，“你想，在老板面前摸鱼毕竟不太好对吧？而且我也需要调查一下你的梦境的各项参数。没有事先和你说明，抱歉啦。”<br>“但我甚至没有感觉到你使用了魔法……？等等，格鲁米，格鲁米……”我终于从记忆的深处挖出了这个名字，“……黄昏巨龙格鲁米？”<br>那是传说中沉眠于北方大地的恶龙，它的吼声拥有操控人心的力量。但它已经销声匿迹数百年之久了。<br>格鲁米看起来有些不好意思。“哎呀……自从被魔王挖出来之后，很久没有人喊过这个名字了。”<br>在我们俩的前方忽然出现了一块画布，画布中的图像缓慢变化着，逐渐开始播放一段影像。<br>“总之，为了感谢刚刚的游戏……”格鲁米用手控制着画布中的影像，“我就把我所知道的魔王都展示给你看看吧。”</p>
+<hr>
+<p>一个浑身是血的影子突兀地跌进了画面。视角的主人显然也被吓了一跳，随着镜头的不断抖动，画面那头传来了一个熟悉的声音：“……不要怕，我只是来这个洞窟里歇一会儿的。”<br>“不是来讨伐我的？”画面里传来了格鲁米的声音。<br>“啊？”白色的身影愣住了，“你会说话？”<br>“……那个时候的魔王还不是魔王呢。”画面外的格鲁米补充道，“她还是魔王手下的三魔将之一。这个时候还真是巧合啊，刚好……”<br>我捂住了他的嘴。“嘘，继续放。”<br>时间轮转，当画面切换到下一个镜头时，山洞外飘进来的树叶已经开始发黄，魔王坐在巨龙的面前，对着一个小小的棋盘看得出神。<br>“动不动跑来我这下棋，你们魔族没有自己的工作要做的吗？”巨龙抱怨着，用它巨大的爪尖轻轻推了推棋子。<br>“有啊，但总有想要逃避的时刻……对吧？”魔王叹了口气。“说起来，你不好奇外面发生了什么吗？”<br>“我完全不关心。”巨龙用爪子把自己的头埋了起来。“我只要继续在山洞里睡下去就行了。”<br>魔王装作若无其事地问道。<br>“那你想看书吗？”<br>当画面再一次切换时，巨龙的山洞里已经堆满了各式各样的书籍。“《魔神冒险谭》也太棒了！”巨龙用爪尖小心地拾起了一本书。“初代魔王和部下的冒险故事，真是令人向往……”<br>“……你喜欢就好。”<br>就算是我也能看出来，画面里的魔王没有什么精神。很明显，巨龙也察觉到了这一点。“你看起来不太对劲。”<br>“……我刚刚杀死了我的一位部下。”<br>镜头明显抖了抖，巨龙爪尖里捏着的书本掉在了地上。“为什么？”<br>“因为她做了错事。”魔王的头低了下去，她的眼睛藏在了阴影里。“她欺骗了我。”<br>巨龙的声音有些颤抖。“这种事，你做过很多次吗？”<br>“……是的。”<br>魔王坦率地承认了。“在这之后，我还会做更多次。”<br>巨龙捏着书本的一角，把书拎了起来。<br>“在外面的世界……必须做这种事吗？”<br>“不。”<br>魔王忽然夺走了巨龙手中的书本。<br>“你不需要承担这一切，只有我，只有我必须承担这些责任。”她指着《魔神冒险谭》的封面，对巨龙说。“因为我将成为魔王。我……注定要成为魔王。”</p>
+<hr>
+<p>我的心里有些五味杂陈。<br>格鲁米却在此时不凑巧地跳了出来：“提醒一下，注意，之后是重要片段！”<br>我把他的头按了下去。“安静。”<br>画面里还是只有魔王，不过这时的魔王看起来轻松得多。她正拿着《魔神冒险谭》的游戏手册琢磨着，巨龙则用它的爪子摆弄着那张小小的地图。<br>山洞外突然传来的巨响把两个人都吓了一跳。魔王还没来得及反应过来，就被几根发光的圣枪钉在了披风上。<br>“……所以，你每次说‘有重要的事情要做’‘要去寻找新的部下’，指的就是在这下棋看书摸鱼？”<br>一个泛着神圣光芒的身影出现在洞口。<br>——我认识她，是那个魔王身边的堕天使，佩诺朵。<br>“不……不是，佩诺朵，你听我解释……”<br>第三根圣枪钉在了魔王的脸旁，魔王识相地闭了嘴。<br>这个用圣枪威胁自己上司兼未来魔王的堕天使转头看向了巨龙，画面再次开始颤抖。<br>“我，我只是一条休眠中的龙，现在我要回去睡觉了……”巨龙转过头去。<br>他苍白的解释显然没起什么作用。这条令人胆寒的巨龙，被娇小的堕天使揪着脖子拖出了洞穴。<br>“我说，你这家伙……”<br>一身纯白的堕天使扇着翅膀，扶着巨龙的头，认真地注视着那双金色的龙瞳。<br>“差不多也该看看外面的世界了吧？”<br>画面在此刻被定格，不知为何，周围泛起了一圈粉色的泡泡。<br>一旁的格鲁米深情地念起了旁白：“这就是我和世界第一美丽的佩诺朵小姐命中注定的相遇时刻。”<br>“不，我完全不关心。”我把他的头再次按了下去。“还有关于魔王的内容吗？没有我就不看了。”</p>
+<hr>
+<p>“有，有的啦！”<br>格鲁米紧张地翻找着画布上的影像。“在之后应该就是她成为魔王之后的事了……你看！”<br>画面中的魔王面色严峻，她手握着魔剑，紧紧盯着对面的某人。一旁的格鲁米想要喊出“魔王大人加油”，还没说完就被魔王的侍卫莱拉捂住了嘴。<br>“对面的那个家伙……是谁？”我问格鲁米，“谁会想要公然挑战魔王？”<br>“魔族世世代代都是一群崇尚武力的家伙。最早的时候，任何魔族都有权力挑战现任魔王，为了减少无意义的乱战与损伤，现在的魔族仿照初代魔王，设立了魔将制度。”格鲁米解释道，“经过重重选拔而最后被选为魔将的三人，不仅仅是魔王最锋利的武器，也是魔王的候选者。他们拥有挑战魔王的权力。”<br>“你说过……现在的魔王，曾经就是魔将？”<br>“对。挑战魔王成功的魔将即可成为下一代魔王。但因为前代魔王死于人类之手，魔将中的一员——也就是现在的魔王大人，与另外两人达成了协议。她与魔将芙洛达成了交易，又靠武力赢过了魔将艾德伍斯，最后坐上了魔王的位置。”<br>“但是在这之后，剩下的两位魔将依旧拥有挑战魔王的权力。”格鲁米用下巴指了指画面，“对面的<br>那家伙，就是不服输的坏东西，艾德伍斯。”</p>
+<hr>
+<p>实际上，在讨伐魔王的过程中，我们并不是从正面进入王城的。为了避免战斗，我们的行动方针其实更接近于针对魔王的刺杀。不过，我们也没有和任何一位魔将正面战斗——这么看来，芙洛和怀特应该是事先达成了协议，有意避开了我们，但艾德伍斯却不知所踪。<br>艾德伍斯算是在人类面前露面最多的一位魔将了，这个身形彪悍、面色凶恶的男人看起来才更符合人类对于“魔族”或是“魔王”的印象。但即便如此，在战斗中，这头恶熊还是被魔王压了一头。我甚至没有看清战斗是怎么结束的，艾德伍斯那巨大的身躯已经被魔王狠狠砸在了场地的正中央。一旁的格鲁米发出了一声“好耶”的欢呼声。<br>“据说艾德伍斯才是前代魔王选出的继承人。”格鲁米对我解释道。“所以这家伙一直对魔王怀抱不满，经常尝试挑战魔王，不过没有一次能赢过魔王。”<br>“……所以，魔王现在的情况应该也是对他保密的？”我的神经不由得紧绷起来。<br>“那肯定的！不如说，最需要提防的就是那个家伙了。”格鲁米愤愤地说，“要是他知道魔王变弱了，肯定会第一时间冲过来杀掉魔王！那家伙可不会追求什么‘堂堂正正获胜’。”</p>
+<hr>
+<p>“你这么讨厌他？”<br>“那是因为……”<br>画布上的影像很快诉说了原因：魁梧高大的艾德伍斯像提着一只小鸡一样把小个子的格鲁米提了起来。“真不知道像你这样的家伙是怎么混进魔王城的。”他嗤笑了一声。<br>……如果他知道自己手中提着的是被称为“始祖巨龙”之一的黄昏巨龙，不知道会作何感想。<br>“你不反抗吗？”我有些好奇。<br>“不要。”他回答得斩钉截铁，“我是不会参与任何战斗的，连魔王也不能命令我战斗。”<br>他的身份确实也给予了他说这话的底气，作为“龙”还真是自由。这位少年实际的年龄估计至少有数千岁，但他还真是表里如一，倚仗着自己龙族的身份，过着随心所欲的生活，天真得像是温室里的花朵。<br>“他是直属于魔王大人的催眠术士。”<br>画布里忽然传来了凌厉的女声，娇小的堕天使推开了艾德伍斯的手，把被捏着的格鲁米救了下来。那双冰冷的蓝色眼睛盯着艾德伍斯的动作。“希望您对自己的同僚保持最基础的尊重，艾德伍斯大人。”<br>“超——帅气的吧，佩诺朵大人！”格鲁米对着画布张开双臂。<br>“可以跳过吗？”我无视了他热情的介绍，“快进到下一个魔王片段，谢谢。”</p>
+<hr>
+<p>“……在这之后，魔王大人就很少来找我了。”<br>格鲁米看起来有些苦恼。“我再找找吧……”<br>屏幕上闪过无数模糊的人影，有的是在王座上正襟危坐的模样，有的是率领军队出征的背影，有的是伏案工作的身形。在格鲁米留下的景象中，魔王渐渐变得遥不可及。<br>“应该还有一次的……”格鲁米挠着头，“找到了，在这里！”<br>画面中的魔王被格鲁米拉住了肩膀。“从上次征战回来之后，您是不是都没休息过一次？”<br>“有什么事？”在看见了格鲁米的脸之后，魔王放松了下来。“所以本王正要去寝宫休息……”她打了个哈欠，满脸憔悴。<br>“人类写的勇者冒险故事发售了！您不看看吗？”格鲁米从身后掏出来了一本书，“您看！《勇者传说》！我特意去买了首发版！”<br>“本王没有这个时间……”看着格鲁米的脸，魔王犹豫了一会儿。<br>“就看一章好不好？”格鲁米小心地发问。“真的很精彩！”<br>“……那就一章。”魔王抽走了格鲁米手中的书，“本王就在睡前看一章。”</p>
+<hr>
+<p>魔王顶着黑眼圈，把书拍在了格鲁米的桌上。<br>“看完了？”<br>“……看完了。”魔王低下头，懊悔地说，“用小说让本王睡不着觉……这就是人类的阴谋吗？”<br>“怎么样？精彩吧？”格鲁米得意地把书收了起来，“你……您最喜欢哪个角色？果然是强大的勇者亚伦对吧？还是烧穿一切的焰之魔导师奥塔莉亚？”<br>“当然是森林贤者啊。”<br>魔王不假思索地回答。<br>“果……啊？”<br>“怎么了，很奇怪吗？”<br>“贤者那家伙……不是几乎没有什么亮眼表现吗？”格鲁米表现得有些不可置信。“他就只是在后方支援而已吧？他甚至没有上过几次战场……”<br>“但是，他让他们都活着回去了。”魔王顶着那对黑眼圈，认真地看着格鲁米。<br>格鲁米一时语塞。<br>“你知道这次教廷为什么能大肆宣传他们的功绩吗？”魔王翻看着面前这本精美的出版物。“历史上也有过不少次，教廷为了刺杀魔王而组建的别动队……‘勇者小队’。但组建这样的小队一直颇受争议，一方面，是破坏和平，败坏两族关系；另一方面，是这样的小队几乎必定有去无回。能够完成任务的小队就屈指可数，能够活着回去的更是只有寥寥数人，而他们在回归故里之后也大多重病缠身。”<br>“那……那不就是派人来送死吗？”格鲁米有些无法接受，“那也太残忍了。”<br>“——但是，这次却不一样。这次的行动在当时得到了我们的默许，之后魔族内的舆论风向也由我一手压了下去。而且，最重要的是，作为代表的四人……”<br>魔王翻到了书的尾页，那里面夹着一张纪念胜利的插画，画中的勇者小队看上去一派和睦。<br>“他们全都活了下来，四肢健全地回到了家乡。”</p>
+<hr>
+<p>“不……虽然这么说，但神官爱莲小姐也有帮忙的吧？”格鲁米还在寻找着理由，“应该是用了治愈魔法之类的吧？咻地一下就可以治好的那种。”<br>“要真有那么好用的魔法，我们也不至于在与魔兽的战争中损失这么多人了。”魔王白了他一眼，“神官在队伍里最主要的作用，是替代教廷来监视小队情况，同时确保小队成员的信仰与忠诚，相当于是教廷安插在各个队伍里的耳目与喉舌……这你都不知道？”<br>“不，不要说了。”格鲁米捂着脸，“但是爱莲小姐……爱莲小姐她那么好……怎么会……”<br>“最多只能起到加快恢复速度的作用吧。主要还是那个贤者的功劳。”魔王陷入了沉思，“他究竟是用了什么样的方法，能让他们都活下来呢……”<br>“……本王也想拥有啊，能让部下们完好无损地活着回来的能力。”<br>“这么一说，您完全就是想要他的能力而已吧！”格鲁米还有些不服气，“那又不是喜欢贤者这个人物！”<br>“人物的话……本王当然也喜、喜欢啊！”魔王忽然意识到自己在说什么，话到嘴边变得有些结巴。“贤者这个人物，也是很有人格魅力的吧！”<br>“那您究竟喜欢哪点啊！”<br>“哪点……哪点……”魔王低下头去，“你看，他明明很弱，也很贪生怕死，结果到最后对战雪狼的时候还是冲上了战场为亚伦紧急包扎……而且，他嘴上说着‘不在乎其他人’，实际上在奥塔莉亚被史莱姆女皇击败的那段，他在奥塔莉亚的身边看护了一天一夜没闭眼……”<br>……为什么教廷的书里连这种东西都记录下来了。我有一种想要把所有的《勇者传说》都销毁掉的冲动。好羞耻，好想死。<br>“你看，这么一看的话，还是有……有点可爱的吧，有点心口不一的那种感觉。”魔王结结巴巴地比划着。<br>“而且这么一想的话……这家伙，其实还挺温柔的吧？”<br>……魔王大人，只是被我的表象所蒙蔽了。<br>“魔王大人，完全是被那家伙的表象所蒙蔽了啊！”画面里的格鲁米朝魔王大喊道。<br>我揍了画面外的格鲁米一拳。<br>“……干嘛？你有病啊！”格鲁米委屈地捂着脸。<br>“没什么。”我甩了甩手，“不小心的。”<br>“信你就有鬼了啊！”</p>
+<hr>
+<p>“我一直搞不懂为什么魔王大人这么痴迷森林贤者这个角色。”格鲁米摇了摇头，“她还托我买过不少森林贤者的雕像和绘画，不过好在相比起勇者他们的雕像，贤者的东西都没那么贵……”<br>不知为何，我的心中有种悲凉感。<br>“我这次还特意帮她带了周年限定版本的森林贤者雕像呢……我在城内找了不少关系才帮她抢到的。”<br>等等。<br>“……格鲁米，你想要20年前的初版铁盒装《魔神冒险谭》吗？”<br>格鲁米的眼神几乎都直了。“你……你难道收藏了那样的珍宝？”<br>我神秘地朝他挥了挥手。“我们来做个交易吧。”</p>
+<p>“你俩调试好了？”<br>等我们从桌上醒来的时候，魔王已经在一旁等候多时了。“没事吧？怎么花了这么长的时间。”<br>“……没事，格鲁米拉着我玩了一盘游戏。”我朝格鲁米使了个眼色。<br>“对，我们还聊了一会儿。”格鲁米心领神会。“医生说他要送给我一个礼物。”<br>“你们相处得不错就好。”魔王松了一口气。“格鲁米这家伙确实是有点烦人……”<br>“我才没有！”格鲁米有些委屈。“我过会儿就走，你满意了吧！”<br>魔王搓了搓格鲁米那头乱糟糟的灰发，把他向外一推。“走吧！你可以回巢里睡大觉去了。”</p>
+<hr>
+<p>“感觉如何？”<br>送走格鲁米之后，木屋已被厚重的夜色所笼罩，魔王靠在窗边，若无其事地望着窗外的月色。<br>“感觉？还不赖吧。”我坐在她的身旁，回想起下午那一片混沌的梦中遭遇，一时不知该如何概括。<br>“和那家伙呆在一起，挺放松的吧。”她歪着头，从刘海的缝隙中看着我，“我看你的表情轻松了不少。”<br>“……有吗？”<br>我无意识地用手摸了摸自己的脸。看样子最近的表情管理确实有些糟糕。<br>“奥塔莉亚那件事之后，你看起来总是……很紧张。”魔王的眉间有些许担忧，“怎么样？和那种毫无心机的笨蛋相处一会儿，有没有觉得轻松了一些？”<br>格鲁米那家伙，烦是真的有点烦。不过，回想起那段乱七八糟的游戏经历，我的嘴角不自觉地向上勾了勾。<br>“果然是吧。”魔王看样子有些得意。<br>“……对了，魔王大人。”我有些神秘地说，“他最后给您留了个礼物，让我转交给您，据说是您之前托他买的……”<br>“是什么？”魔王还没意识到即将发生什么。<br>我把那个“周年限定版本森林贤者雕像”从背后拿了出来，举在一旁。<br>我笑着向她发问：“您觉得，这个和我，哪个更像您心目中的贤者呢？”</p>
+<hr>
+<p>魔王先是一愣，而后，她像是明白了什么似的，兔耳颤抖着，睁大了眼睛。“等……等等……格鲁米那个家伙……他说了什么多余的话……”<br>“也没有什么别的，就是您对于《勇者传说》中贤者的看法之类的。”我看着手中木制的玩偶，“还有您很喜欢森林贤者，收藏了很多森林贤者的雕像……什么的，都不是什么重要的事。”<br>“我，我没有……”她的脸一下子涨红了，伸手就要来抢我手中的雕像，“把那个给我！”<br>我仗着自己的身高，把雕像伸过了她的头顶。“你得先告诉我，你是怎么看待‘贤者’……又是怎么看待‘医生’的？”<br>“我……我……”<br>她拼尽全力向着雕像伸出手去——坏消息是，虽然她要比我矮得多，但她的力气比我大一些。我一时之间失去了平衡，从椅子上摔了下去。<br>当我缓过来的时候，魔王再次趴在了我的身上，只是这次，一心想要抢到雕像的她抓着我的手臂，和我面对着面，鼻尖几乎要碰在一起。<br>“……”<br>毕竟之前已经来过了一次，我的反应不至于那么大。但对于魔王来说，这是她在清醒状态之下第一次和我靠得这么近。<br>魔王宕机了。<br>“……您有些压着我了。”我尝试提醒她。<br>虽然我对这个状态其实相当满意，但还是魔王的反应更有意思。<br>过了一小会儿，她才有了反应。她的脸渐渐变得通红，紧紧闭上了眼睛，身体也开始不断颤抖。“……对，对不起……”她哆嗦着把身体撑了起来，“我不是……我……”<br>她一把抢过我手中的雕像，窜上了自己的床，把头埋在了毯子里，像只鸵鸟。</p>
+<hr>
+<p>“……谢谢你。”<br>在我离开她的房间前，我忽然转身，对缩在毯子里的魔王说。<br>“你能这样看我，我……还是有些开心的，谢谢。”<br>我轻轻帮她关上了门。今晚就到此为止吧。<br>……好戏要等到梦中开始。<br>我看着手中的小瓶子，若有所思。<br>“还有一个条件。”当我与格鲁米交易时，我向他提出了额外的要求。“能不能在今晚，把我的梦再次和魔王连在一起？”<br>“你要做什么？”格鲁米警觉了起来。<br>“我有很重要的事要做。”<br>当然是要趁这个最后的机会在梦里做点坏事。<br>“涉及到魔王大人的安全，我不能轻易答应你……”格鲁米摇了摇头。<br>“二十年前的铁盒版《魔神冒险谭》？”<br>“好……好吧！”格鲁米一咬牙，“我会给你留下一个后门的。之后，我会为你留下一管血液，喝下它，今晚你就能再次梦见魔王了。”<br>我看着手中的一小瓶龙血若有所思。这东西确实比我的秘药要纯粹得多，达成的连接应该也比之前那次要更加稳定。<br>虽然沉溺于梦境之中不太好，但这是来之不易的最后一次机会了。我躺在床上，打开了血瓶的盖子，一饮而尽。</p>
+<hr>
+<p>*在医生和格鲁米醒来前发生的事</p>
+<p><img src="/copying/nmbxd51414457-1/14.jpg" alt="图片"><br><img src="/copying/nmbxd51414457-1/15.jpg" alt="图片"><br><img src="/copying/nmbxd51414457-1/16.jpg" alt="图片"></p>
+<hr>
+<p>我并不是魔王想象中的那个森林贤者。一定不是。<br>事到如今，我已经做了太多过分的事了。在镇子里的表现，醉酒那次粗暴的举动与对她的威胁，与奥塔利亚之间不负责任而糟糕的关系，还有地下的实验室与我扭曲的存在方式……<br>在她面前，我总是没法隐藏那个真实而丑陋的自己。<br>这与她想象中的那个“温柔的森林贤者”一定相去甚远吧，我想。<br>既然如此，那就干脆从头来过吧。我的手指在魔导石间飞舞，尽全力改写格鲁米留下的梦境。这一次，我要让魔王忘记我。时间回到我们相遇之前，在她的梦境里，我是一直跟在她身旁，效力于魔族的医者。是那个嘴角永远带着微笑，完美而尽职的，真正的“森林贤者”。<br>我深吸了一口气，躺在了床上。困意和疲惫逐渐侵袭了我的大脑。<br>……这样的话，魔王就能更加坦率地面对我了吧。<br>只要戴上这副……名为“森林贤者”的面具。</p>
+<hr>
+<p>“希望您没有忘记，今天是检查的日子。”我用温和的声音在魔王的耳畔低语道。<br>为了防止我的样貌在梦中勾起魔王的回忆，我戴上了一副化妆舞会式的假面。不过，这样小小的装扮并不会影响魔王对我的信任。“本王当然没有忘记。”魔王揉了揉自己的太阳穴，放下了手中的文件。“走吧，去你那里。”<br>这座虚构的“贤者之间”也与我那座寒酸的小木屋截然不同。房间的吊顶上垂下了各类稀奇的魔法植物，没有了那些我自己制作的、粗糙而冰冷的金属仪器，取而代之的是盛开的花草与藤蔓编织的桌台，嵌在古木里的架子上摆放着大大小小的魔药瓶，还有些看起来花里胡哨的蒸馏管道。这是我所设计的，符合大众对于“森林贤者”印象的场景——尽管在这种看起来就消毒条件不达标的地方动手术简直就是一场噩梦，但反正这也只是个梦而已，我安慰自己。<br>……总之，看起来要尽量神棍一点，不能再是之前那种冰冷的形象了。我告诉自己。<br>不知为何，魔王也对“贤者之间”的这幅景象有些惊愕。我在她的耳旁暗示：“怎么了？您之前来过很多次了。”<br>“没……没事。”她有些不安地躺上了那架由藤蔓编织成的躺椅。<br>“放松。”我拍着她的肩膀，安抚着她紧张的身体。“您今天好像有些紧张……是因为最近有些过度劳累了吗？”<br>“或许吧……”她忽然皱起了眉头，“这是什么味道？”<br>一阵暧昧的香气在小小的房间里弥漫开来。“这是有助于安神的熏香。”我把颇有异域风情的铜制香炉放在一旁。“您之前说过很喜欢这个味道……您不记得了？”<br>“喜……喜欢吗……”<br>“它也可以让您的感受变得……更加灵敏。”我在她的耳边悄声说，“有助于在接下来的按摩环节中更好地放松您的身体。”<br>梦中虚构的“熏香”当然没法影响魔王，重要的是言语带来的暗示。现在的魔王完全信任我所说的话，她的身体也是如此。<br>或许是我的吐息靠得太近，魔王的耳廓开始微微发红。“……可以开始了吗？”她的语调有些不稳。<br>“那我就……失礼了。”</p>
+<hr>
+<p>从领结开始，再之后是那件笔挺的外套和长裤，我一点点解开了魔王的衣物，将它们挂在一旁的架子上。相比起她在森林里穿着的便服，她在王城中的装扮要繁复得多。当我把腰封卸下，她身上的衣物终于只剩下了单薄的裤子与绸制的短衣。<br>“……还要继续吗？”她紧张地看着我的手再次落到了她的腰间。<br>“我想检查一下上次战斗之后您腿上的伤痕，可以吗？”我微笑着向她征求意见。<br>她的喉咙动了动。“……好。”<br>我小心地将她最后的内衬长裤脱了下来，她那双覆着大大小小疤痕的腿裸露在了我的视线之下。她尽可能地拉着短衣的下摆，但还是可以看见一件朴素的白色短裤在下摆间若隐若现。<br>“……唔。”她意识到了自己下意识的动作，缓缓松开了拉着下摆的手。“对不起，影响到你了。”<br>尽管她努力让自己看起来更镇定一些，额头上细密的汗珠却出卖了她。<br>“您忘了吗？这条伤疤还是由我帮您缝起来的。”我的手指有意无意地拂过一条新添的伤口。“您只需要把身体交给我就行了……一如既往。”<br>当我的手指触碰到她的皮肤时，她的腿轻轻颤了一下。“我会信任你的。”她似乎也在说服自己，“……森林贤者。”</p>
+<hr>
+<p>“现在，请您把手和腿都放平。”<br>魔王顺从地照做了。我把手伸向藤椅的下方，按下了什么东西。<br>组成藤椅的藤蔓忽然像是被注入了生命力一样开始缓慢蠕动，魔王被身下的动静惊得一跳：“怎、怎么回事？”<br>在她逃离之前，数条藤蔓已经爬上了她的四肢，缠着她的手腕和脚踝，把她牢牢捆在了藤椅上。“这是起到稳固作用的魔法装置。”我微笑着解释，“避免您在接下来的检查过程中有什么不合适的举动。”<br>“我之前有过吗？”<br>“……您之前差点杀了我。”我开始编造谎言，“毕竟我只是个普通的人类，承受不住您的轻轻一击……希望您能谅解我的无礼之举。”<br>“对不起……”魔王的眼中多了些许愧疚，“那就这样吧。本王也不会被几根小小的藤蔓吓住。”<br>还在逞强。她的身体明明已经在微微颤抖了。<br>我拿出了一瓶墨绿的药膏，在她的面前晃了晃。“那我就先为您上药。”</p>
+<hr>
+<p>我将药膏均匀地涂抹在魔王腿上几处新添的伤口上，一边有意无意地用余光瞥着魔王的反应。些许绯红已经悄悄爬上了魔王的耳根，她紧张地看着我手上的动作，看着我用食指与中指沾着绿色的药膏在她的皮肤上画着圈。<br>……不过，这些细小的伤口也太多了。<br>“我不是说过了吗。”我叹了口气，“希望您多在意一下自己的身体……”<br>“这也不是本王能决定的……”魔王小声地嘟囔着。<br>我的手在她的膝盖上停下了。一条划伤从她的大腿正面一路延伸向大腿内侧。“……您是怎么伤到这里的。”我指着这条伤痕。<br>“……好像是箭伤吧，可能是前几天强行穿过箭雨的那次，还是有一两根落网之鱼没拦下来啊。”她努力回忆着。<br>“您真的有在注意自己的身体吗？”我一时忘了自己的目的，莫名的怒火冲上头脑。“就算是魔族……你难道不会感到疼痛吗？”<br>“本王的躯体早就宛如钢铁，自然不会感到疼痛。”她的语气中也有些许恼怒。<br>“是吗？”<br>我带着微笑，按了一下藤椅，捆绑着她的脚踝的藤蔓开始将她的双腿缓缓分开。“……那我继续为您涂药，也希望您不要有太大的反应。”<br>在我的手碰到她的腿之前，她的双腿已经开始发抖了。上衣的下摆勉强遮住了她的短裤，但这样的姿势已经足以把她的脸烧得通红。“本王……不会有什么反应的。”她赌气地看向一旁，尽可能压抑着自己想要逃走的本能。<br>我的手指顺着那条划伤一路向上爬，慢慢滑向她的大腿内侧。伤口上已经结了痂，我用拇指轻轻按着那层痂壳。“不会感到疼痛……是吗？”<br>我在手指上施加了一点力度，魔王的身体立刻颤了一下——大腿内侧的微妙位置比我想象的还要更加敏感一些。她深呼吸了几次，尝试稳住自己的气息，回答道：“……不痛。”<br>“这样呢？”<br>我用指甲轻轻撬起了痂壳的一角。<br>……这已经不能称得上是治疗了，但我却没法让自己停下。<br>森林贤者是不会做出这种事的吧。<br>大腿内侧的伤口被人强行揭开了一角，魔王痛得抽了一口气。被捆绑的手脚加深了她的恐惧，她似乎一时想以蛮力挣脱，却又顾及着我最初说的话，停下了自己的动作。现在的她已经无暇回复我了。她咬着嘴唇，尽力压抑着自己的声音。<br>这种死不认输的态度还真是让人火大。</p>
+<hr>
+<p>伤口的痂壳下是刚刚愈合的软肉，我的手指在伤口的旁边停住了。<br>……如果用指甲狠狠掐进去的话，会很痛的吧。魔王会忍不住呻吟出声吗？她会哭出来吗？<br>一种诡异的冲动不断推动着我前往更加无可救药的境地。<br>这不对，我知道。但在这里发生的一切，伤口和“治疗”都是虚假的，只有我和魔王的感受是真实的，这些伤口也不会被魔王带回现实。我为自己糟糕的行为寻找理由。我只是……看不惯魔王的做法。<br>……不，我只是想要看见她崩溃而已。<br>被逼到绝路上的可怜模样，理智的线绷断的那一刹那，我想要看见这样的魔王。<br>如果……只是这样的话，应该还有别的做法。我深呼吸了一次，把手从她的腿上缓缓挪开。不使用这些……过分的做法，应该还是有更加温柔的方法的。<br>更加温柔的方法……<br>我真的明白该怎样温柔地对待她吗？</p>
+<p>我抚平了那条伤口上的痂壳，从一旁的架子上拿下另一瓶药水，小心翼翼地为她抹上。<br>魔王被冰冷的药水刺激得身体一抖。“不要怕。”我轻轻安抚着她，“这是用来清理伤口的药水，可能会有些疼。”<br>她咬着嘴唇，微微颤抖的睫毛上沾着些许泪水——她只是忍着没让它们落下来。我用拇指轻轻拭去她眼角的泪水。“已经没事了。”我轻声说，“……对不起，接下来不会再发生这种事了。”<br>“没……关系。”她的身体看起来放松了一些，“本王没有在害怕。本王相信你的治疗方案。”<br>……因为是“森林贤者”吗？<br>喉咙里泛起了一丝苦涩。</p>
+<p><img src="/copying/nmbxd51414457-1/17.jpg" alt="图片"></p>
+<hr>
+<p>“那么，请允许我帮您舒缓一下躯体的疲惫。”<br>我揉捏着她的肩膀与手臂，在我的按摩下，她紧张的身体终于渐渐放松了下来。香薰的味道越来越浓，几乎充斥了整个空间，魔王的眼神也逐渐变得有些迷离。“我好像……有些困了……”她的声音愈发微弱。<br>我从背后扶住了魔王的肩膀，在她的耳旁细语：“需要我将您送回寝宫吗？”<br>“……不用了。”她努力抬起沉重的眼皮，“本王自己回去就行。”<br>“是因为不能被我看见寝宫里的东西吗？”<br>我的呼吸吹拂着她的耳朵。<br>“一些……关于森林贤者的东西？”<br>“不，不是……”她一惊，但清醒的意识已经被熏香剥离了大半。“本王……我……没有……”<br>“喜欢‘温柔’的‘森林贤者’……对吗？”<br>我抚摸着她的头，感受到她在我的手里微弱地挣扎着。<br>“不……没有……”<br>她的身体在我的手中颤抖着。尽管意识已经不太清晰，她还是别扭地低下头去。<br>“你一直在期待这种事的，对吧？”<br>我轻轻咬了咬她的耳垂。<br>“被‘森林贤者’温柔地欺负……会是怎样的感觉呢？”</p>
+<hr>
+<p>“不要……欺负……”<br>魔王的声音掺杂进了一丝哭腔。我抱着她的肩膀，亲昵地靠在她的脸旁。“没关系，你很快就会开始喜欢的。”<br>捆绑着她的藤蔓开始渐渐顺着她的肢体向上探索。腿上的藤蔓从脚踝开始，绕过她的小腿，一路抵达膝盖，直至把她的大腿肉勒出了漂亮的痕迹。上肢的藤蔓则不断向肩膀与胸口逼近。<br>“呜……”<br>她看着那些蠢蠢欲动的藤蔓却束手无策，只能把头靠在我的手臂上寻求一丝慰藉，一阵阵颤抖从她的身上传来。<br>“为什么……”<br>她望向我，眼角的泪水不断滚落。<br>“您是怎么看待我的呢？您不喜欢我吗？”我搂着她，愉快地说，“您不希望这样吗？”<br>“我……”<br>她把头扭向了另一侧。<br>“我……不明白。你甚至不愿用面具下的真面目来问我这个问题吗……‘医生’？”<br>我的身体像是被人从头到脚泼了一盆冰水。我的动作，和那些乱动的藤蔓，都僵硬地停了下来。<br>“……你又是怎么看待我的呢？”<br>她的声音渐渐低了下去。<br>“实验品，或是……有趣的玩物吗？”<br>她应当会生气吧，不如说，她理应愤怒。但在她的声音中，我只听见了……悲伤。<br>“……你可以这样看待我，如果这也是你的条件之一，我……我能够接受，但是……”<br>她的眼泪又止不住地掉了下来。<br>“不要……欺骗我……”</p>
+<p><img src="/copying/nmbxd51414457-1/18.jpg" alt="图片"></p>
+<hr>
+<p>大脑痛得要炸开了。<br>该怎么办？该怎么回答？如果她从一开始就看穿了我的伪装的话，这一切就变成了我劣质的独角戏，为了欺骗她而上演的恶毒剧目。如果是这样的话，我究竟……做了些什么啊。<br>明明不是这样的。怎么可能只把她看作玩物？但假面之下的我的所作所为，如她所说的一模一样。<br>……我究竟为什么要做这样的事？<br>戴上这副假面的原因……是因为……<br>我剧烈地喘息着，从频临破碎的理智中寻找那个最初的想法。<br>披上这层拙劣的伪装，只有在这层虚伪的面具之下才有可能发生的奇迹。<br>我想要听她说出……“喜欢你”。</p>
+<p>我没有注意到她是怎么挣脱的。<br>在我僵在原地时，她从我的脸上取下了面具。<br>像是取走了积木塔底层的最后一根支柱，周围的景象在转瞬间更迭，虚假的贤者之间与魔王城渐渐破碎，取而代之的是……我的回忆。那些碎裂、残缺的印象从我们的身旁飞驰而过，随着记忆的抽离，我的意识也愈发模糊。<br>现在，这个梦正在驶向我更深层次的意识中。<br>我在最后一刻终于意识到了这一点：从我接下龙血的那一刻起，陷阱就已经布下。<br>“……抱歉了。”<br>在我的意识彻底消失前，我听见了魔王的声音。<br>“让本王稍稍窥探你的秘密吧。”</p>
+<hr>
+<p>雨。<br>无止尽的，黑色的雨。<br>细密的雨点不断落在魔王的身上，稍稍冷却了她发烫的身体。在进入医生深层意识的裂口之前，她只来得及抓起一件外套就冲了进来。身体的控制权正在逐渐回到自己手里，呼吸也渐渐恢复了平静。她用手背靠在自己的脸上，脸颊还残留着些许贤者留下的温度。<br>虽然很对不起他，但为了让他崩溃而露出破绽，必须要说出那样的话。<br>但……果然还是有些过分。<br>自己说的那些话是真心的吗？魔王自己也有些搞不明白。从理性的角度来说，贤者……或者是医生，只是和她达成了交易而已。对于已经确立的交易，她向来没有什么意见，更不会在意另一方对于自己的看法。<br>她没有理由愤怒，更没有理由悲伤。<br>但在最后感受到的痛苦确是真实的。自己所喊出的那句话，究竟是谎言，还是真心所想？<br>魔王晃了晃头，尝试把这些繁杂的思绪从自己的脑海中赶出去。<br>……有一件事，至少，有一件事她确实撒了谎。<br>被医生从背后抱住的时候，非常……温暖。甚至让她在一瞬间有些贪图这份温度，想要就这样倚靠在他的颈边沉沉睡去。<br>——尽管仅仅只是片刻间的想法，但如果在当时陷入沉睡，相当于把自己的身体全权交付于医生。这真是相当危险，魔王有些后怕。她从未犯过如此严重的错误。<br>绵密的小雨渐渐淋得她的身体有些发冷了，她咬了咬牙，继续向前走去。</p>
+<hr>
+<p><img src="/copying/nmbxd51414457-1/19.jpg" alt="图片"></p>
+<p>如果轻信了医生就会走向R18 BadEnd的魔王<br>(;´ヮ&#96;)7一定要保持警惕呢，魔王大人……</p>
+<hr>
+<p>脚下的路逐渐变得越来越窄，不知不觉，魔王渐渐走入了一道峡谷之中。头顶黑色的细雨从未停息，两旁漆黑的绝壁则不断向她逼近。但在岩缝之间，始终留下了一条一人宽的道路以供前行。<br>耳边依旧只有细密的雨声。魔王沉默着，小心地向前探索。<br>“救……”<br>身后突然传来了一个细小的声音。魔王一惊，转过头去，另一个方向却又传来了相似但不相同的呼喊声。<br>“救救……”<br>一只黑色的手搭在了她的腿上。<br>她猛地一甩，但那只半透明的手臂就像是黏附在了她的身上。随之而来的是更多的哀嚎和黑色的手臂，各式各样不同声线的“救救我”灌满了她的双耳，一只只手臂拖住了她的双腿和双手。她的脚步变得愈发沉重，黑色的手臂开始爬上了她的肩膀，在她的耳旁哭诉：“救救我，我还有两个孩子……”“救救我，我不想死在这里！”“救救我，呜呜，好痛……”<br>她这才意识到，两旁漆黑的绝壁正是由它们所组成——遥不见顶的绝壁上是一张张扭曲而挤压着的脸，它们不断地向她伸出手，像是抓住了最后的救命稻草一般，乞求她的帮助。<br>但脚下的路还远没走到尽头。<br>她稳住了气息，背着那数不尽的黑色手臂，艰难却坚定地继续向前迈步。<br>“为什么……你为什么不管我们！”<br>某一只黑色手臂忽然发了狂似的扯住了她的头发。<br>“你不是……‘救世主’吗！”<br>话音未落，那只黑色手臂就被斩成了两段。<br>魔王把剑收入鞘中。<br>“你们大概是认错人了。”她甚至没有回头，“很可惜，我不是。我不在乎能不能救你们，我更不会为了没能做到的事而后悔。”<br>像是听懂了她说的话，黑色的手臂渐渐缩了回去。魔王望了一眼绝壁之上的灰色天空，轻轻叹了一口气，继续向前走去。</p>
+<hr>
+<p>魔王不知自己走了多久。<br>耳旁的哭号听得她的耳朵都要起茧了。医生那家伙平时做梦都是这样的吗？想到这，有什么东西像是哽在了她的喉咙里。<br>她终于望见了路的终点。<br>在一切的终点，是两个模糊的人影。<br>她加快了自己的步伐。背对着她的那个身影渐渐变得清晰：她认出来了，尽管穿着古怪，但那是医生。医生握着一把黑色的器械，反射出了些许金属的冰冷光泽。他像是没有听见魔王的声音，愣在原地。<br>而靠坐在墙边的那个白色的人影却面目模糊，无论如何努力，魔王都没法分辨出对方的面容和性别。他……或者是她，浑身上下几乎没有一处完好的地方，身上的衣物被鲜血染透，左腹则被人开了一个恐怖的豁口，豁口旁边依稀有燃烧的痕迹，被烧断的肠子和内脏就这样流了出来。<br>从它的身上感受不到气息。那个身影确实已经死去了。<br>“啊……啊啊……”<br>医生的步伐有些不稳。他的身体摇晃着，走上前去。<br>“你没有……遵守约定。”<br>魔王看不清他脸上的表情。<br>“下一次……下一次……我会再次找到你的，作为失信的惩罚，我会报复你的。”<br>他把手中黑色的器械塞入了嘴里。<br>“这就是……我对你的诅咒。”<br>下一秒，他的头顶崩裂开了鲜红的血花，白色与红粉交加的浆体飞溅了一地。<br>魔王几乎是在同一时间冲了上去，扶住了他的身体，徒劳地按着他的伤口，嘶吼的声音近乎破音：“你疯了吗？你在做什么？”<br>没有意义。怀中的身体渐渐失去了支撑，倒在了她的臂弯里。止不住的血从他的口鼻中流出，他的眼睛早已阖上。<br>他的眼角还残留着泪痕。<br>这是梦。魔王对自己说，尽可能让自己狂跳而抽痛不已的心脏平静下来。<br>但这也是他过去的记忆，曾经发生过的“真实”。<br>魔王垂下头去，把自己的额头贴在他的头上。</p>
+<hr>
+<p>身旁的景色忽然开始变得扭曲而不断颤动，脚下的大地也开始微微震动，魔王紧抱着医生的身体，眉头一皱，警惕着身边的情况。<br>但问题并不出在周围。怀中医生的身体忽然开始蠢动，在魔王做出反应之前，一双黑色的手臂从医生的胸口破膛而出，猛地把魔王按在了地上。医生的身体渐渐融化，一头由黑色的流体组成的怪物从他的身体中爬出。怪物的形体不断变化着，在它的身躯中隐隐能看见些许蓝色的微光，黑色的液体从它的身上滴落，在魔王的脸上留下了星星点点的痕迹。<br>它没有发出声音，只是用半液态的身体慢慢吞噬了魔王，魔王的手脚很快被它固定在自己的身体之中。它的手——或者说，是类似手的东西，扼住了魔王的喉咙。<br>但魔王没有挣扎。她甚至没有发出任何声音。<br>怪物在魔王脖子上的手越收越紧，魔王的呼吸愈发急促且困难，却没有做出任何反应，只是平静地望着对方，坐以待毙。怪物终于变得无法忍耐了，它低沉地说：“……你打算就这样下去吗？”<br>——是医生的声音。<br>是我的声音。我正是那个怪物。<br>“这算是窥探别人隐私所要付出的代价吧？”身下的魔王笑了笑。<br>“在梦中死去也会很痛的。”我仍旧没有松开手。<br>她的眼里闪过一丝落寞。“是……吗。”<br>我愣了几秒钟，猜到了她的意思。“……我不是说刚才的事，那个只是我的回忆而已！我现在是在威胁你！”我松开了她的脖子，用流体组成的手摇晃着她的肩膀，“你听懂了吗？”<br>“——我听懂了。”<br>趁着我一时的松懈，魔王挣脱了我的钳制，她把自己的手抽了出来，然后……<br>抱住了那个巨大的黑色液体怪物。<br>抱住了我。</p>
+<p><img src="/copying/nmbxd51414457-1/20.jpg" alt="图片"></p>
+<hr>
+<p>“——啊。”<br>我身上的黑色液体渐渐脱落，露出了隐藏在其中的，属于人类的身体。<br>我的头靠在她的肩膀上，却没有反抱回去的勇气。<br>“你听说过毒蛇公主的故事吗？”<br>魔王靠在我的耳边缓缓说道。<br>我茫然地摇了摇头。<br>“据说，有一位美丽的人类公主，因为没有遵循高塔的礼仪，被某个魔法师变成了一条毒蛇，需要有人类愿意亲吻她，她才能变回原样。”<br>魔王的脸靠在我的脖子上，她的头发蹭的我有些发痒。<br>“她害怕自己的毒牙会伤到他人，把自己锁在了房间里。”魔王慢慢地讲着故事，“但邻国的王子却敲开了房间的门。王子捧起了她细长的身体，恭敬地吻了下去。”<br>“但魔法师是个骗子。她的毒牙划破了王子的嘴唇，王子倒了下去，而她也并未变回原样。她后悔万分地在王子的身旁流泪，但王子却告诉她：‘美丽的公主啊，请你不要流泪……’”<br>“‘无论你变成什么模样，我都愿意为你献上自己的生命。’”<br>魔王挽住我的脖子，把头凑了上去。我的额头上传来了一阵轻微而柔软的触感。<br>“噩梦该结束了，我的‘毒蛇公主’。”</p>
+<hr>
+<p>情况不太对劲。<br>从今天早上开始，情况就不太对劲。<br>我一直清楚自己对魔王有着非同寻常的执念，也确实能在欺负魔王的过程中体会到快感与乐趣，但……在昨晚的那件事之后，有什么东西好像发生了微妙的改变。<br>“……我说，医生。”<br>魔王看着靠着墙边挪动的我。<br>“你是不是在躲着我？”<br>“没……没有的事。”<br>我快速蹿进了研究室。<br>只要靠近魔王，我就会变得局促不安。除此之外还有不少症状：呼吸急促，出汗，心跳加快，我望着仪器上不断飙升的心率，擦了擦汗。<br>这不是最糟糕的，更糟糕的是，我变得没法控制自己的表情，再也没法像之前一样在她面前保持从容的微笑，大脑也变成了一片浆糊。<br>甚至只是想到她，胸腔就被突突跳动的心脏撞得发痛。<br>……这是什么新型的疾病，还是我所不知道的怪毒？<br>“医生！”<br>魔王的声音从门外传来。<br>“今天的检查还没做呢。”<br>“啊……好的，我过会儿就来。”<br>完蛋了。看着自己略微发抖的手，我第一次产生了这样的想法。</p>
+<hr>
+<p>魔王的身体确实很色情。<br>覆盖着疤痕的小腹有着分明的肌肉线条，大概是因为放松的缘故，摸上去的手感却很柔软。但是，我在做检查的时候并没有思考过这些问题。抛去神棍式的“占卜”、“熏香按摩”不谈，在检查与治疗过程中对患者产生非分之想无论如何都逾越了我的职业道德操守。感谢我的职业道德，在检查的过程中，我还能保持冷静。<br>……除了最后这项。<br>“是不是还要检查一下兔耳？”魔王的兔耳动了动。<br>不，这项检查从最开始就是骗人的。我只是想要捏捏魔王的兔耳，看她因为敏感的兔耳被人触碰而做出的种种有趣反应。再怎么说这也称不上是“检查”或者“治疗”，我的“职业操守护盾”也就到此为止了。<br>说到底，这本来就是充满邪念的行为，真是对不起。<br>就……就摸一下，像上次一样糊弄过去就行。我在心里默念。就摸一下，真的就只摸一下。<br>“那我……开始检查了。”<br>手指在触碰到兔耳的刹那仿佛被吸住了。<br>柔软的皮毛在我的指腹来回摩擦，这种感觉几乎让人上瘾。我也不明白这对兔耳为什么突然有了这么大的魔力，让我没法停下手中的动作。<br>魔王的反应却没有之前那么激烈。她还是闭着眼，咬着嘴唇，但看起来明显比前几次镇定得多。“……怎么样，我这次没有乱动了吧。”她睁开了一只眼睛看着我，“我也在锻炼自己的定力。”<br>但这次缺乏定力的人是我。<br>我把脸凑了上去，深吸了一口气。<br>——毛绒绒的，兔子的味道。<br>魔王确实每天都在洗澡，能闻见些许肥皂的气味，但更多是淡淡的兔子味道。对于肉食动物而言，这或许就是食物的香气。我觉得自己在刹那间理解了肉食动物的感受。好想吃掉。<br>“医生……怎么了？”<br>没法松手。做不到。我的意志力没法让自己把手松开。我的脸凑在魔王的兔耳旁，感受到脸上的温度在渐渐升高。<br>“医生？”</p>
+<hr>
+<p>我的手腕被魔王抓住了。<br>“等……？！”<br>我很快意识到了一个悲哀的事实：即便长出了兔耳，魔王的力气依旧比我大。我还没反应过来，就被她扣住了手腕按在了墙上。<br>“不要动。”<br>……吸兔耳是这么大的罪过吗！<br>我开始后悔自己没有好好锻炼身体。魔王身上的肌肉和疤痕不是摆着好看的。要擒住像我这样缺乏锻炼的普通医生，对她而言易如反掌。<br>之前屈从于我的治疗的魔王给予了我太多错觉，以至于当我真的被魔王按在墙上的时候，一时之间大脑只剩下一片空白。<br>诶？<br>“……医生。”<br>她的脸离我越来越近。<br>“你真的生病了吧？”<br>啊，是以为我生病了吗？我松了一口气，但魔王的脸还在继续逼近。“……可能是有些累吧？”我把脸扭向一旁，挤出了一个僵硬的笑容。“也不用把我抓起来吧，我自己去找些药……”<br>“撒谎。”<br>太近了……太近了！<br>就像上次一样，她把额头贴在了我滚烫的额头上。<br>我的心几乎要跳出嗓子眼了。<br>“这也太烫了……”她并没有立刻离开，而是保持着这个姿势，气息随着说话的声音吹拂在我的脸上，“你发烧了。”<br>“怎怎怎么会呢！”我无力地辩解道，“总之先放开我……”<br>她放开了我的手腕，但却依旧把我逼在墙边。我尝试向左侧逃走，卖出的步子却仿佛踩在了棉花上，身体摇晃着失去了重心。魔王眼疾手快地用身体把我拦了下来。<br>我虚弱地倒在了魔王的怀里。<br>一切都找到了原因。心跳过速，发烧，意识混乱，这是过度使用梦境连接的后遗症之一。外加上还以人类的身躯喝了纯度极高的龙血，我的大脑承受的压力已经快要抵达极限了。<br>简而言之，我确实生病了。<br>……但这可是倒在了魔王的怀里！<br>我身体的重量完全压在了她的身上，脖子蹭着她的发丝，胸口相贴的部分隐约可以感受到柔软的触感……好想就这样溺死在她的怀抱里。<br>这也是后遗症之一吗？<br>“我可能……确实生病了。”我老老实实地靠在魔王身上，喘着气，“可以扶着我回床上吗？”<br>魔王的兔耳朵竖了起来。<br>“没问题，本王最擅长照顾人了。”<br>……说实话，我有种不好的预感。</p>
+<hr>
+<p>![图片]21(.jpg)</p>
+<p>ᕕ( ᐛ )ᕗ</p>
+<p><img src="/copying/nmbxd51414457-1/22.jpg" alt="图片"></p>
+<p>( ´∀&#96;)不务正业爽画中</p>
+<hr>
+<p>我有些意外，魔王其实还挺会照顾人的。<br>在我的指导下，她帮我找来了输液袋和支架，以及用以舒缓神经的药物。她小心地扶着我，帮我在床后的靠背垫上枕头。等待我为自己插上针头之后，再慢慢扶着我的身体再次躺下。<br>湿毛巾的温度恰到好处，热水和药物就摆在我触手可及的地方。她坐在我的身旁，用右手托着我那只因为输液而有些发凉的左手，些许温度从她的手掌里渐渐流向了我冰冷的手指。<br>我看着她翻阅着手中的书籍，欲言又止。<br>“怎么了？”<br>她察觉到了我细微的动作，“有什么不舒服的地方吗？”<br>“……关于昨晚的事。”<br>我的另一只手不自觉地捏紧了被角，“你没有什么想问我的吗？”<br>倒下的人影，自杀的景象，诡异的雨与峡谷，我的深层意识确实不是什么美好的地方，她理应有不少疑问才对。<br>“当然有不少问题……但我并不想问你。”她的指尖划过书页。<br>“……为什么？”<br>“如果你没有主动告诉我，证明现在还不是谈这件事的时机。即便我问了，也只是在强迫你罢了。在这些话题上……我不太希望这样做。”她漫不经心地翻动着书页，“如果你没有什么想告诉我的话，那就算了。”<br>“噢……我倒是有想对你说的话。”<br>她像是想起了什么似的，把书合上，放在了一旁。<br>“是什么？”我有些紧张。<br>她用手挑开了我的侧发，端详着我发烫的脸和在天花板游离的目光。<br>“不要再伤害自己了，好吗？”<br>一旁的监测仪上，我的心电图宛若脱缰的野马。</p>
+<hr>
+<p>……不行，这样下去，完全是我单方面被魔王击坠了。即使是在生病中，也不能这样一直丢人。<br>“魔王大人。”我看着她的手，“您能满足我的一个愿望吗？”<br>“怎么了？”魔王关切地望向我，“想吃东西了吗，还是？”<br>“可以把你的手递给我吗？”<br>她没什么戒心地把右手递了过来，平放在了我插着枕头的左手旁。<br>手指因为输液的缘故变得冰凉而僵硬，我努力地抬起左手，把手指按照次序放入了她的指缝间，而后用力握紧。<br>我们两人的手就这样十指交叉地连在了一起。<br>魔王的脸上闪过一丝惊讶，但很快恢复了常态。“……是又有些冷了吗？”<br>“不是。”<br>我决定在这之后将这一切解释为“病中的胡话”。<br>我深吸了一口气，把头扭了过去，望着墙壁说：“因为我想牵着你的手。”<br>脸快要烧起来了。魔王只是茫然地被我抓着手，被我冰冷的手指掠夺着手掌的热量。我的额头上渐渐渗出了汗水，我不止一次地想要松开手，对她说“开玩笑的”，但我还是把这句话憋了回去。<br>“……是，是吗……”<br>左手的手背传来了一阵柔软的触觉。像我所做的一样，魔王也握住了我的手。<br>我略微转过头，用余光偷偷瞄着魔王的表情。<br>——她望着另一个方向，脸上也泛起一阵绯红。<br>“如果是为了取暖的话……没问题。”<br>“不是。”我对着墙壁反驳道，“我只是想牵着你的手，仅此而已。”<br>羞耻得快要死了，心脏跳得仿佛即将冲破我的胸膛。我的手略有些发抖，但还是紧紧地握住了她的手。<br>“……对不起，是我误解了。”她的声音不再像之前一样平稳。“不，不过，我要去准备午饭……”<br>“可以陪着我吗。”<br>我的声音低了下去。<br>“你不会……抛下我的吧？”<br>事已至此，我也已经不明白自己为什么会说出这些话了。眼皮沉重得像是灌了铅，舌头仿佛已经不受大脑的控制。脑海里的想法只剩下一个：我只想要继续牵着魔王的手，就这样不再松开。<br>“……不会的。”<br>她捏了捏我的手作为回应。<br>“我在这。我一直在这。”</p>
+<hr>
+<pre><code>ᕕ( ᐛ )ᕗ打包了一下能发的和不能发的插图扔P站了
+神秘ID101358856
+</code></pre>
+<hr>
+<p>当我缓缓睁开双眼时，魔王的脸就在咫尺之外。她认真地观察着睡梦中的我。意识到我渐渐苏醒之后，她像只受惊的兔子一样跳开，却没能如愿以偿地逃走，而是在离我大约半米处的地方生硬地停了下来。<br>——我俩的手还牵在一起。<br>“那个……我……”<br>她挠了挠脸颊，若无其事地坐在一旁的椅子上。“我来检查一下你的情况。”<br>“你……没有离开过吗？”<br>“离开过一次，回来的时候发现你……很难受。”她的眼睛垂了下去，“在这之后就没有过了。”<br>她的嘴唇有些干涸。看样子没怎么喝水。<br>我用右手支撑着自己的身体坐了起来，“那你晚上睡在哪了？”<br>她的头扭向一旁，指了指我身旁那块有些皱的床单。<br>……我确实是睡得太死了。<br>我们的手并没有握得很很紧，二人的手指只是松松垮垮地交会在一起，但对于魔王而言，这比任何镣铐都要管用。<br>心底泛上了一丝把她囚禁在自己身边的……快感。<br>不，之后绝对不能再做出这种事了。我慌忙松开了她的手：“你饿了吧？橱柜里还有些面包，陶壶里应该还剩着水……”我恨不得立刻爬起身去做饭，但一阵眩晕再次袭来，我的身体晃了晃，再次扑在了床上。<br>她扶住了我的身子，帮我再次把被子掖好。<br>“我来做饭吧。”她似乎还有些许犹豫，“我会……凭印象……尽力的。”</p>
+<hr>
+<p>不祥的预感在这应验了。<br>魔王做的菜……并非无法入口，只是确实有些简陋。食材确实都用清水煮熟了，但用来调味的只有些许盐巴。<br>“……对不起。”魔王用叉子扒拉着盆里的肉块。“我只会做这个。”<br>“谢谢你。”<br>我的头还有些晕乎乎的，后遗症仍未结束，我决定在事后将自己的一切行为解释为“生病带来的影响”，渐渐变得大胆了起来。<br>“魔王大人，你能在我的身边照顾我，还能为我做饭，我……”我靠在桌上，略有些口齿不清，“很开心。”<br>总之都是生病的原因。我不断催眠自己。<br>我期待着魔王因为被夸而有些脸红，或是像之前一样露出得意的模样，说着“因为是本王嘛”之类的话，也多少能让我找回一丝熟悉感。<br>但魔王却握住了我的手腕。<br>“只要是为了你的安全，这点小事不足挂齿。”魔王有些愧疚地看着桌上的食物，“我……不是医生，也不大会做饭，我只知道昨晚的你看起来真的很糟糕，但我却束手无策。我……”<br>她叹了一口气。<br>“我希望你不要忽视自己的健康，医生。”<br>……这是什么，直球大赛吗？<br>这就像是我把自己的病当作简陋的战壕，向魔王扔出了一个炸药包，以为可以通过拙劣的装病炸出魔王有些害羞的样子，没想到魔王还给我的是一发洲际巡航导弹。<br>而发射导弹的本人对此毫无意识。<br>输了，输得透彻。我脸上的肌肉抽搐着，忍不住自己的笑意，又因为尴尬而紧咬嘴唇、皱起眉头。心脏在胸膛里乱跳，这种身体上的反应再怎么说也没法用“后遗症的影响”说服自己了。<br>总之得想办法先溜。我低下头，尽可能掩饰住自己奇怪的表情，“……我还有些头晕，就先回去休息了。”我放下了筷子，“……你不用跟来，总之不用跟来！我没事！我自己可以！”<br>“……”<br>魔王张了张嘴，似乎想说什么，但她抬起的手终究还是放了下来。“我……明白了。”<br>她的眸子里蒙上了一层阴沉。<br>“……不！我不是这个意思，我……”我才是大脑即将宕机的那一方，我在转瞬间明白了魔王在想什么，而后陷入了僵局：她以为我想摆脱她。<br>“我刚好要回王城一趟。”她站了起来，默默收拾着桌上的餐具。“你可以，一个人……好好休息。”<br>……不要用这种落寞的眼神啊。<br>我还没来得及挽留她，她已经抢先一步关上了木屋的门。</p>
+<hr>
+<p>“……情况大概就是这样。”<br>堕天使佩诺朵用手指摩挲着水晶球的表面，若有所思。“这么看的话……事情似乎变得更有意思了。您是怎么看的？”<br>“本王的几个猜想，刚刚已经告诉你了。至于后续的验证和调查就交给你们了。”魔王翻阅着一沓厚重的资料，“目前推进中的项目……我想想，让盖尔曼来牵头吧。他之前就是做大源梯度分析的吧？让他挑几个人去做一下这块的调查，就按照我刚刚说的那个方向来。”<br>“但是盖尔曼被调去了一个……私人项目。”佩诺朵有些欲言又止。<br>“私人项目？谁？把我的皇家研究员借走，谁有这么大的胆子？”魔王的眉头聚着些许愠怒。<br>“魔将艾德伍斯。”<br>“……”魔王沉默了片刻，“把盖尔曼给我捞回来。”<br>“好。”佩诺朵拾起那支泛着蓝光的蘸水笔，在一旁的卷轴上写写画画，卷轴上的字迹几秒后便消弭无踪。她将卷轴和笔收了起来。“不过，我想问您的不是这个……”<br>她的手指轻巧地点了点水晶球。“您怎么看待这位贤者……或者说，‘医生’？”</p>
+<hr>
+<p>魔王沉思半晌。<br>“他很强。”魔王一脸严肃，“有着卓越的能力和坚韧的精神，如果能成为我们的助力，会为我们的计划增添不少胜算。”<br>“还有呢？”佩诺朵挑了挑眉毛。<br>“……还有，那家伙背负着沉重的负罪感和痛苦。”魔王轻轻叹了一口气。<br>“还有呢？”<br>“还有……”<br>魔王把头埋进了臂弯里。<br>“那家伙果然是讨厌本王了吧。”<br>“……噗。”<br>佩诺朵捂着嘴，还是没有憋住笑。<br>“你笑什么！本王已经很努力了啊！”魔王抱着头对幸灾乐祸的堕天使大喊，“本王非常努力地想要和他搞好关系啊！结果他还是让本王离他远一点……”<br>“那您怎么看待……牵手那件事？”佩诺朵忍着笑，像是研究什么奇异生物一样试探着魔王的态度。<br>“虽然当时本王有些误解了……但现在看来，应该还是因为那个吧。”魔王一本正经地思考着，“害怕本王趁他不备去调查他的实验室，所以要让本王留在身边，这也是他不信任本王的表现……”<br>“噗哈哈哈哈哈……”<br>堕天使在狂笑。魔王一脸迷惑。<br>“……那您还说，您在梦里给他讲了个……什么故事？然后还亲了他的额头？”佩诺朵有些笑得上气不接下气。<br>“不要提醒我啊啊啊啊啊啊啊啊——！”<br>魔王抱着头在地上打滚。<br>“不是很帅吗！那种机会很少见的吧！本王一直都想做一次那种人类的王子一样的动作！”她挣扎着向佩诺朵解释，“那个时候我还以为他对我的态度改观了，我还以为我们是朋友了！没想到他醒来之后就一直对本王很冷淡……是觉得本王很过分吗……”<br>“本王……要怎么回去见他啊……”<br>笑归笑，看着一脸阴郁的魔王，佩诺朵咳嗽了几声。“这样，您要不要去问问他的朋友或是熟人，让他们和您一起猜猜，他究竟在想什么？”<br>“找……谁？”魔王抬起头来。<br>“这不是有个现成的人选吗？”佩诺朵从手边抽出一份文件来，指着上面的照片。“焰之魔导师，奥塔莉亚。”</p>
+<hr>
+<p>“我说，你这小子居然会有事找我，可真是够稀奇的……”粗壮的男人摘下了头上的斗篷，推开了木屋的门。“怎么了？难不成现任魔王看上了你的美色，明天就要派兵攻打这里，要把你掳回去当后宫？”<br>我倒真的希望是这样。<br>就算是亚伦，也被面无血色地趴在桌上的我吓了一跳。“……你这什么情况？被人夺舍了？”<br>“……亚伦，你结交过不少女人，对吧？”我抬起眼皮望着这个粗鲁的来客。<br>“是啊，怎么了。”他大咧咧地在桌旁坐下，不等我招呼就自顾自地拿起装水的碗牛饮，<br>“告诉我。”我扯着他破烂的披风，“怎么让女人在最短的时间里为你沦陷？”<br>亚伦一口水喷了出来。<br>“什么？”他咳嗽了两声，“女人相关的问题？你？谁能把你变成这样……”他仿佛意识到了什么，环视了一圈，故作神秘地问道：“难道是……那只小兔子？”<br>“不要废话。”我并没有多少耐心，“快，告诉我，你的秘诀是什么？”<br>“我的秘诀？”他摸着下巴的胡茬，略加思索，“我的秘诀，就是往街道中间一站，自然就有一群女人找上来了。”<br>把他叫来的我真是个蠢蛋。我甚至没有力气去对他发火。“……你走吧，我不想看见你了。”<br>“诶——别这么无情嘛。”他像一块狗皮膏药一样赖着不走，“我可是很感兴趣的呢，你居然喜欢那个款的？是你喜欢那种身材？还是喜欢兔魔人？这可太稀奇了，居然有人能让我们的贤者大人这样魂牵梦萦？”<br>“……我只是对她的身体感兴趣而已。为了施行我的计划，必须让她被我迷得神魂颠倒才行。”我心虚地扭头。<br>“哦——？”他拖长了声音，换了一个角度观察着我的表情，“那你喜欢她吗？”<br>“……当然……没有。”<br>我拿着水杯的手抖得像筛糠。</p>
+<hr>
+<p><img src="/copying/nmbxd51414457-1/23.jpg" alt="图片"></p>
+<p>(&#x3D;ﾟωﾟ)&#x3D;1000回复感谢！<br>( ﾟдﾟ)不知不觉就1000回复了呢……文也有9万多字了，刚开始连载的时候完全没想到自己能坚持写到现在<br>ﾟ(つд&#96;ﾟ)真的很感谢每一位留下回复的肥肥，你们的回复为懒癌拖延症的我提供了莫大的动力</p>
+<p><img src="/copying/nmbxd51414457-1/24.jpg" alt="图片"></p>
+<p>|∀&#96; )另一个版本</p>
+<hr>
+<p>“好，咳嗯。”亚伦装模做样地清了清嗓子，“你这种症状是什么时候开始的？上次来的时候我也没见你这样啊。”<br>“差不多几天前吧……”我突然猛烈地咳嗽了两声，“不对，为什么变成你在拷问我了！”<br>亚伦故作正经地说：“你看，我也算是个恋爱大师了，对吧？我总得搞清楚事情的来龙去脉才能帮你提出建议嘛。”<br>我狐疑地望着这个不靠谱的家伙。“你指的来龙去脉具体是什么？”<br>“唉，不是……”亚伦挠了挠下巴，“你不会没谈过恋爱吧？那大概的流程总记得吧？”<br>“我当然谈过……”<br>在脱口而出的同时，我的大脑却像是冻住了。<br>……我……当然……有过这样的经历。<br>但是那些回忆，那些一同度过的时间，那些被我视作存活意义的宝物，已经随着不断磨损的精神而逐渐消弭无踪。<br>只剩下了面目模糊的身影与来不及握住的手，还有她每一次死去的景象，深深地烙印在我的大脑中。<br>我甚至记不起她的样子。<br>“我……”我低下头，“我记不清了。”</p>
+<hr>
+<p>“哎呀——”亚伦显然误解了我的意思。“好……行吧，那我就当你没谈过，没问题吧？其实这个事很简单的，来来回回也就那么几个套路。我问你，她对你感兴趣吗？”<br>“应该……吧？”<br>虽然我觉得是对我的药和医疗技术更感兴趣。<br>亚伦故作神秘地摇了摇手指。“是肯定，她对你的经历可是相当感兴趣。既然如此，第一步就已经达成了，要诱导她的好奇心，慢慢让她自己来了解你。第二步，她现在关心你吗？”<br>我磨磨蹭蹭地憋出了两个字：“……关心。”<br>“那第二步也成了……不对，那你现在这个要死要活的样子是干什么？”<br>“她以为我讨厌她……然后失落地回去了。”<br>我尽力克制着自己的情绪。<br>亚伦用莫名其妙的眼神看着我：“……那她还会回来吗？”<br>“……会，但是……”<br>“这不就结了！你这不都快到手了吗？还问个屁啊！”亚伦拍了一下我的肩膀。<br>“哪里快到手了啊！这不是快要完蛋了！”<br>“呼……”亚伦深吸一口气，“我先不管你的智力到底是在什么的影响下变成了这样，你先自己理一理，她为什么失落？”<br>“因为……她以为我讨厌她？”<br>“那为什么她会因为你讨厌你而失落？”<br>我沉思半晌。<br>“因为……她想把我招去她的麾下？”<br>亚伦猛地咳嗽了几声，差点没被刚喝下的水呛死。</p>
+<hr>
+<p><img src="/copying/nmbxd51414457-1/25.jpg" alt="图片"></p>
+<p>挤上床了的小兔子(&#x3D;ﾟωﾟ)&#x3D;</p>
+<hr>
+<p>“既然已经到这个进度了，我倒是有个办法……可以让她变得离不开你。”亚伦摸着下巴，“不过，这个方法……有些恶劣。”<br>“是什么？”<br>亚伦忽然收起了那副讨打的笑容，他面色冷峻地对我说：“伤害她。”<br>我握着水杯的手一颤。“什么？”<br>“先让她对你产生兴趣，令她沉迷于你，这两步你已经做到了。接下来就是隔绝她的一切人际交际，让她的身边只留下你一个人。然后，就是伤害她，贬低她，再向她吐露虚假的爱意，把她拉回身边。”<br>亚伦用手指摆弄着一小节树枝。“当然不能投入真心，对她的态度要摇摆不定。毕竟你的目的很简单：控制她，然后获得她的身体。不断重复这个过程，直到最后……”<br>“她的人格就会在一点点地被你摧毁。”<br>树枝在他的手中应声而断。<br>“你想这么做吗？不过我觉得你这种家伙肯定做不出这种……”<br>“……我。”<br>我的声音颤抖着。<br>“我好像……一直在对她做着……这样的事……”<br>把她圈养在身边，用摇摆不定的态度对她展露好感而又推开，伤害她，又理所应当地享受着她的宽容，乞求她留在自己的身边。<br>亚伦难以置信地看着我：“你……？”<br>“我不是故意的，我……”我的右手抓着自己的头发。<br>亚伦的眼神变得冰冷。<br>“我不想要毁掉她……但是我忍不住去伤害她……”我的呼吸变得急促，“但我不想再看见她受伤……我该怎么办？”我抓着亚伦的袖子，“亚伦，告诉我，我该怎么办？”<br>“放她走吧。”<br>亚伦无情地为我宣判了死刑。<br>“……如果你真的不想再看见她受伤的话。”</p>
+<hr>
+<p>心脏痛得快要炸开了。<br>尽管亚伦已经早早离开，但他的话依然在我的耳边萦绕不去。奥塔莉亚那边会有比我更好的解决方案吗？或者说，从最开始，或许我就不该将魔王留在自己的身边？<br>我看着镜子里的自己，随着我局促的呼吸，脸上的痕迹再次渐渐裂开，似乎昭示着我扭曲的本质。<br>明明……好不容易……<br>“……医生？”<br>——是魔王。<br>在一个最不恰巧的时刻，魔王推开了木屋的门。</p>
+<hr>
+<p>“……你还好吗？”<br>她小心翼翼地靠近了我。我没有点亮木屋里的灯，只有月光越过窗棂倾泻在地面上。<br>我弓着背，俯在镜子前，没有回应她的声音。<br>“医生？”她伸出手，想要拍拍我的肩膀。<br>在她的手触及我之前，我触电般地打了个哆嗦，向一旁避开了她的手。<br>“……您回来了。”<br>她看上去对此始料未及——无论是我回避的动作，还是生疏的称呼。她的手在空中犹豫地停下，但还是关切地询问道：“你之前的病……”<br>“我很好。”<br>我重新找回了自己的那个标准而没有温度的微笑。<br>“感谢您的关心。另外，我有一件事想和您商量一下。”<br>她把手缓缓收了回去，在桌边端正地坐下，恢复到了“魔王”应有的姿态。“你说。”<br>“我认为，在最近的这段时间里，我们之间或许缺乏一些……距离感。作为平民，与您这样尊贵的王族走得太近，显然有失体统。据说你们王城内部也存在不少纷争，我也不希望被卷入你们魔族之间的争斗。所以……”<br>我张了张嘴，却发不出声音，最后的这句话卡在我的喉咙里，无论怎样也吐不出来。历经几番挣扎，我努力控制住自己颤栗的牙齿和不听话的舌头，说出了这句话。<br>“……我希望能与您保持一定的距离，希望您能暂时离开一段时间。这之后的治疗方案，我会寻找新的替代方案。”</p>
+<hr>
+<p>空气与时间仿佛一同凝固，只有些许树叶摩擦的声音传入我的耳廓。<br>仿佛度过了数个世纪的时间之后，魔王的声音打破了这份长久的沉默。<br>“本王……认可你的理由。”<br>那双暗黄色的眼睛直视着我，我却没有与她对上目光的勇气。<br>“你的顾虑并非没有来由，本王的存在确实也为你带来了不少问题和隐患。但本王的治疗进度不可耽搁，既然你提出了这样的请求，就必须尽快找到替代的治疗方案。”<br>我的心随着她的话一点点冷了下去。<br>“不过，唐突地提出这种要求，本王也有所不满。作为交换，本王需要你提供这段时间内常规治疗使用的药物，本王会让王城的医师尝试分析，并进行治疗。以及提供足量的短效药，以备不时之需。”<br>魔王向我伸出手来。“这个条件不算过分吧？”<br>“我会为您准备短效药，不过……恕我直言，我并不认为王城的治疗能够起效。”<br>我的态度也逐渐变得冷硬。<br>“你把东西交给本王即可。”魔王丝毫不打算让步。“拿到药品之后，如你所愿，本王今晚就会离开。”<br>我没有回答她，只是转身走进了研究室。<br>“等等。”魔王忽然叫住了我，“……还有最后一件事。”<br>我能听见她沉稳的呼吸声似乎混入了些许急促的节奏。<br>“……本王还要向你讨要一个东西。”<br>我回过头去。“是什么？”<br>她的脸低了下去，双眼藏在了刘海打下的阴影中，我看不清她的表情。<br>“——那个拥抱。”<br>我只看得见她的嘴唇翕动。<br>“那天晚上，本王交给你的……那个拥抱。”她的声音掺杂着些许颤抖，“把它还回来。我们就此两清。”</p>
+<div class="fold"><div class="fold_hider"><div class="close hider_title">点击显示&#x2F;隐藏</p>
+</div></div><div class="fold_content">
+<pre><code>/)　/)
+c(　╹^╹)σ[F5]
+</code></pre>
+<p>想看女仆装魔王满脸通红地从背后抱住一脸呆样的贤者( ´ρ`)</p>
+
+</div></div><link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC&display=swap" rel="stylesheet">
+
+<p><img src="/copying/nmbxd51414457-1/26.jpg" alt="图片"></p>
+<p>( ›´ω`‹ )不太会画这个动作真是抱歉……</p>
+<p><img src="/copying/nmbxd51414457-1/27.jpg" alt="图片"></p>
+<p>补一个女仆装(;´ヮ&#96;)7</p>
+<hr>
+<p>那个拥抱。<br>温暖、柔软而用力的那个拥抱。<br>我并不知道究竟需要多大的勇气才能把那样的怪物拥入怀中，也不知道她究竟下了多大的决心才向我伸出了手。那个拥抱，那些温柔的、宽慰的话，那个落在额头的小心翼翼的吻，这一切都不在她的责任范围之内。不管是出于对我的同情，还是想要进一步获得我的信任，这都是她的额外付出。<br>但现在，我打算将她拒之门外。对于她而言，这无疑是一种耻辱。所以这位无情且精明的魔王，将自己的愤懑隐藏在冷酷的表情之下，以这种方法向我宣告收回自己的投资、讨回她的尊严。<br>合情合理。<br>只要抱回去，我俩就互不相欠了。以一个拥抱还一个拥抱，不管这一切听起来有多么荒唐，这也只不过是一次冰冷的交易罢了。<br>月亮似乎被几片乌云遮蔽了，投射下的月光也愈发黯淡，但好在我还能勉强辨认出魔王的位置。我挪动步子，慢慢走上前去，对着她张开了手臂。<br>拥抱——说到底，也只是一个简单的动作。剥去文化赋予它的含义，剩下的也不过是手臂与身体在一瞬之间的相贴罢了。没什么大不了的。我告诉自己。<br>我的手僵硬地拢住了魔王的身体，却并没有抱上去。<br>“我们就此两清。”<br>魔王的话萦绕在我的耳边，仿佛一股无形的阻力推开了我的手，阻止我完成这个生硬的拥抱。<br>我明明还不想……就此和魔王分道扬镳。<br>……绝对不要。怎么可能靠这么两句话和一个拥抱就可以“两清”。<br>但这样的做法对于魔王来说应该是最好的结果吧，或许她早已对我厌烦。我咬着牙，不断说服着自己，尝试拥抱魔王。这个原本令我无比向往的动作在此刻却成为了苦刑，只是碰触到魔王的身体都令我感到心如刀绞。<br>似乎是那片遮蔽月亮的乌云终于被吹散了。当我正打算僵硬地拥抱她的时候，月光再次照进了这座木屋。这次，在极近的距离下，我终于看清了她的脸——<br>是泪水。<br>和她镇定的语调不同，泪水在她的眼眶里打转。她的身体微微颤抖着，似乎废了不少力气才将那些豆大的泪珠忍在眼眶里，兔耳也萎靡地贴在头顶。她等待着我接下来的动作，像是在等待一项酷刑。<br>为什么。<br>脑浆快要沸腾了，心脏像是被人生生撕裂一般疼痛。<br>我不想看见这样的魔王。<br>我手足无措地想要帮她拭去眼角的泪水，手指在即将碰到她时，又像是被烫着了一样缩了回来。<br>“对不起。”我的声音苍白而无力，“……不要哭。”</p>
+<p><img src="/copying/nmbxd51414457-1/28.jpg" alt="图片"></p>
+<hr>
+<p>我的手颤抖着放了下来。<br>“我做不到。”<br>她显然没有料到我的反应。“为什么？你连最后……拥抱一下本王，都做不到吗？”<br>我没有回答她，只是转身走进了研究室，把惊愕且失落的她留在了原地。<br>“是……吗……”<br>身后传来了她微弱到几乎不可闻的声音。我在门口停下了脚步，用余光瞥着她的样子：魔王像是失去了最后的力气，在桌旁蜷缩了起来，把头埋进了臂弯里，伏在桌前的身体似乎在轻轻抽动着。<br>我无法回应她的期待。我转过头去，沉默地走进了研究室。</p>
+<hr>
+<p>“这些是说好的药品。”<br>我把一个藤编的手提箱放在了桌上。“您要检查一下吗？”<br>“……不用了。”<br>在我准备药品时，魔王已经整理好了表情，现在的她看上去和最开始见面时一样镇定自若，只是眉宇间透露出些许难以掩盖的疲惫，以及……她的眼圈仍有些微微发红。<br>“本王……累了。”她伸手接过箱子，不动声色地用披风盖住了还沾着水痕的、皱巴巴的衣袖。“那么，本王就动身了。”<br>“等等。”<br>在她即将踏出门口的时候，我忽然叫住了她。<br>她的脚步停了下来，却没有回头。“还有什么事吗？”<br>我三步并作两步地追了上去，拦在了她的面前，把一个金属制的小盒子塞在了她的手里。“这是我制作的魔素驱动通信器。这个道具内置了魔导石用以提供魔力，即使是没有魔力的人也可以使用这上面绑定的高阶通讯魔法……”我快速地向她说明着，“可以用这个随时联系我。然后，还有一件事……”<br>我深吸了一口气，双手扶住她的肩膀，把脸凑了上去。<br>嘴唇上传来了从未体会过的柔软质感。心脏几乎漏跳了一拍。<br>不过，只是一瞬。嘴唇的触碰只持续了短短一刹那，我就匆匆抬起了脸，后退了几步。<br>魔王还愣在原地，像块木头。<br>“……这样。”我尽力稳住自己狂跳的心脏，用手背掩住自己快要烧起来的脸，“这样的话，就更算不清了吧？别痴心妄想了，我们俩之间是永远不可能两清的。”<br>过了好一会儿，呆若木鸡的魔王才慢慢有了反应。她的脸渐渐涨得通红，泪水再次涌上了她的眼角，喉咙里发出了微小的呜咽声。<br>“呜……”<br>她没有回应我的话，只是掉着眼泪，转身消失在了茂密的森林里。</p>
+<hr>
+<p>“奥塔莉亚大人。”<br>一位披着斗篷的白发少女在佣人的带领下走进了大门。<br>坐在书桌前的奥塔莉亚挥了挥手，示意让佣人离开。待到佣人将门合上，奥塔莉亚才缓缓开口：“您托人带给我的计划书，我已经确认过了。这次来，还是聊聊上次提到的计划吗？”<br>来者并没有开口，只是沉默地在一旁坐下。<br>“……是哪里出了什么问题吗？”奥塔莉亚的神经紧绷了起来。“你的王城那边？还是女神教的动向？”<br>来者还是没有说话。奥塔莉亚看不清她斗篷下的表情。<br>“奥缇……我……”<br>白发的魔王缓缓取下了自己的斗篷，她的兔耳萎靡地贴在头顶。<br>她的声音里带着些许抽噎：“我被……我被医生赶出来了……”</p>
+<p><img src="/copying/nmbxd51414457-1/29.jpg" alt="图片"></p>
+<hr>
+<p>奥塔莉亚在魔王的身边坐下，小心地牵着魔王的手。“……所以，到底是怎么回事？”<br>魔王抓着她的手指，尽力撇去眼角的泪水，让自己看起来不那么失态。这是奥塔莉亚第一次看见魔王露出这样的表情。战斗时沐浴着鲜血的身姿，拥抱她时那平和温柔的语调，会谈时从容不迫的姿态，这些模样她都见识过，但她还没见过这样的魔王。<br>……就像是回到了十多年前，变回了那个小小的“怀特”。<br>“他说，不愿意让我呆在他的身边……那个拥抱，他也不打算还给我……”魔王有些上气不接下气，吐出的话语也断断续续的。“离开之前……第一次……第一次的……被……”<br>奥塔莉亚的脖子上青筋暴起。<br>“被夺走了……”魔王的身体轻轻颤抖着。<br>“……怀特。”<br>奥塔莉亚把魔王的手放在了自己的胸前，朝她笑了笑。<br>“你觉得把贤者做成几分熟比较好？”</p>
+<hr>
+<p>“……所以，他的理由是，你们的距离太近了？”<br>魔王点了点头。“是我没有说清楚……”<br>“那家伙根本不可能怕死……这肯定是漂亮的表面话。”奥塔莉亚摇了摇头，“奇怪……为什么呢？”<br>“我也明白他是在说谎。那么，真正的理由……大概是讨厌我了吧。”魔王的声音越来越小。<br>“不可能的啦。”奥塔莉亚摇了摇头，“就我对他的了解和观察，那家伙……等等。”像是想到了什么似的，奥塔莉亚摇了摇魔王的手，“之前呢？之前发生过什么事吗？”<br>“之前……”魔王开始搜索自己的回忆，“他想依靠药物和法术入侵我的梦境，但被我和同伴阻止了。反向入侵之后，我看到了他的回忆。”<br>“那些黑色的怨魂，你之前提到过。”奥塔莉亚回想起了之前传来的密信。“在我和他相处的过程中，医生并没有杀过人。你提到的那几个例子，我也没有什么印象。在这之后呢？”<br>魔王把头扭向一旁，“……我拥抱了他，说了一些很傻的话，让他不要自责……之类的。”<br>“……”<br>奥塔莉亚撑着头陷入了沉思。<br>“我在想，有没有一种可能……”她缓缓开口，“那个家伙并不是讨厌你，而是……”<br>“……在害羞呢？”</p>
+<hr>
+<p>“害……害羞？”<br>魔王的眼里满是疑惑。<br>“为什么？害羞？”魔王能理解这个词的意思，却没法将这个词与“医生”联系在一起。<br>“简单来说，贤者那家伙，超——不习惯与人相处的啦。”奥塔莉亚叹了口气，思绪飘回了数年前一同讨伐前代魔王的时候。“最开始的时候看起来文质彬彬，实际上相处久了之后才发现，这家伙一点人情味都没有……和流浪者时期那会儿简直一模一样。我也是那个时候开始怀疑他的身份的。”<br>“没有人情味……”魔王回想起自己对于医生的印象，总觉得有些微妙的不同。<br>“然后啊，那家伙也根本不懂得如何应对他人的善意。”奥塔莉亚想起了那个一瘸一拐的流浪者，心情有些复杂，“那时的队伍对他而言确实算是地狱吧……不知何为边界的我，热情过头的亚伦，太过天真的爱莲，被我们裹挟的他天天摆着一副臭脸。”<br>“当我们尝试与他走得更近一些的时候……他就会逃走。”<br>奥塔莉亚想起了那时的画面。尽职的队医背着他的包裹，沉默地走在队伍的末尾，与他们突兀地拉开了一段距离。<br>“最开始的时候我们也觉得很奇怪啦。我都想找个理由冲上去对他发火呢！”奥塔莉亚有些气鼓鼓地挥着拳头，“不过，后来亚伦制止了我。他说，那家伙……说不定是在害羞。”<br>“贤者那家伙，大概只会信任自己。不被理解，也不希望被理解，他就是依靠着这种方式独自活了下来。”奥塔莉亚的手指在桌上轻轻点了点，“所以，他人的善意会让他变得有些手足无措吧。”<br>“……”魔王的眼神变得有些黯淡，她轻轻靠在奥塔利亚的身上。“在这之前，他究竟度过了……”<br>“你现在操心这种事也没意义啦。说不定那家伙根本没什么黑暗的过去，只是天生就是这样的臭屁性格呢！”奥塔莉亚摇了摇魔王，“……总之，他的拒绝可能只是他不知该如何应对你的善意罢了。虽然表面上装得那么决绝，那家伙现在说不定正缩在被子里哭呢……肯定是这样！”<br>“那……我该怎么做？我该回去吗。”魔王一想到那座木屋，身体又止不住地微微发抖，“……我不想再被他赶出来了。”<br>“当然不是！那家伙这次做的也太过分了。他现在肯定后悔得不行，正在思考补救的方法呢。你什么都不用做，他自己就回来找你的。”奥塔莉亚把魔王揽入怀中，“总之，你现在就休息一段时间吧，比如在我的领地好好放松一下。”<br>魔王似乎想起了什么。“这个。”她在怀中摸索着，掏出了一个小小的金属盒子。“他说，这个是通讯用的道具。”<br>“都专门做到这一步了，这家伙之后肯定会想办法联系你的。”奥塔莉亚把盒子拿在手中，粗略地检查了一遍。“这个技术……他的技艺好像又精进不少嘛。”<br>魔王眼中的阴郁仍未散去。“那……如果他真的来找我了，我该怎样与他相处呢？”<br>奥塔莉亚把盒子推回了魔王的手里。<br>“保持现在的样子就可以了。”奥塔莉亚的嘴角勾起了一抹坏笑，“去吧，魔王大人，用你的直率把这家伙打到丢盔弃甲。”</p>
+<hr>
+<p>“……不过，话说回来。”<br>奥塔莉亚忽然想起了些什么。<br>“你最开始说的那个‘第一次’是怎么一回事？”<br>魔王的头又垂了下去，抖了抖兔耳，“我当时很生气，也很难过，就让他把梦里的那个拥抱还回来，我们就自此互不相欠了。结果他不仅拒绝把拥抱还给我，而且……而且……”<br>一抹绯红爬上了魔王的脸颊，她委屈地低着头，撑着自己的膝盖，一副又快要哭出来的样子。<br>“他……亲了我。”魔王的头更低了，“他说，这样我们两个之间就再也算不清了……”<br>“咔嚓”。<br>木制座椅一侧的扶手在奥塔莉亚的手中应声而碎。<br>魔王并没有注意到一旁的声响，她自顾自地小声说了下去：“那是我的……第一次……”<br>“总之。”奥塔莉亚拉着魔王的手，笑着站了起来。<br>“我们现在就去把那个混蛋和他的破森林一起烧成灰吧？”<br>“冷静啊奥缇——！”</p>
+<hr>
+<p>格鲁米今天的心情很好。<br>毕竟今天是全新的勇者亚纶超·魔神形态拼装可动人偶的发售日。为了抢到这次的人偶，他不惜提前向那位堕天使预支了工资，不辞辛苦连夜飞到了人类的领地，一大早就蹲在门口的长队里等待开门。<br>一切都很完美，除了……<br>“……格鲁米。”<br>他的手腕忽然被某个人抓住了，一只手捂住了他的嘴，在他反应过来之前把他拖进了一旁的巷子。“嘘——”<br>“呜呜呜呜呜呜呜？”<br>格鲁米回想着自己的装扮：尾巴缠在了腰上，用帽子把角遮住，自己应该不会被认出是魔族才对。那自己怎么会被人类挟持？他挣扎着，想要看清背后的人究竟是谁。<br>“看。”<br>一个木盒递到了自己的眼前。<br>木盒上画着黑化勇者与焰之魔导师战斗的画面——是仍未发售的拼装可动人偶。他顾不得挟持自己的人，把盒子抢了过来。“你是怎么……？”<br>“不要声张，我借助了一点关系给你拿来的。”身后的人扶着他的肩膀把他转了过来，“比起这个，我有非常重要的事需要让你帮忙……”<br>“你是……魔王大人的医生？”格鲁米忽然想起了什么，“那个，上次那件事，我必须听从魔王大人的指令……对不起！”<br>“那种事已经无关紧要了！”我抓着他的肩膀。“是关于魔王的事。告诉我，怎样做才能让魔王……开心？”</p>
+<hr>
+<p>两个男人在小巷里窃窃私语看上去显然不太对劲，我在酒馆的角落里找了个位置，点了两杯软饮，满面愁容地望着面前这头傻呵呵地抱着盒子的魔龙。“我说，你很熟悉魔王，对吧？”<br>“那当然。”格鲁米收起了脸上的笑容，“我和魔王的关系可不一般。”<br>“那你熟悉魔王的喜好吗？”<br>格鲁米刚想回答，又有些警戒地改口道：“你为什么想知道这个？”<br>“我……”<br>我长长地叹了一口气。<br>“我做了……一些很过分的事，现在，我想尝试补救。”<br>“你，你做了什么？对那个魔王？”格鲁米看起来有些不可置信，“你不会趁着魔王大人虚弱的时候对她做了什么不对劲的事吧！”他的眉头蹙了起来，把木盒放在了桌上，“如果真是这样，那我可不会饶过你。”<br>“我不是那种趁人之危的家伙！”<br>回想了一遍自己做过的事，我有些心虚。<br>“总的来说，基本没有，而且重点不是因为那种事！”我含糊地回答道，“重点是心灵上的！我可能不小心伤了魔王大人的心。”<br>“哈？你做了什么？”格鲁米皱着眉，“你在魔王的面前宣誓效忠女神教了？”<br>“出于一些原因……我对魔王说，我不想和她走的太近。”我按着自己的额头，“……相当于是把她赶出森林了吧。然后她……很沮丧地离开了。”<br>“……”<br>“看招，愤怒的恶龙重拳！”<br>一个拳头砸在了我的脸上。<br>不过，或许是这家伙本来就没有多少力气，力道不算重。<br>“你有病啊？”我捂着脸，莫名其妙地看着他。<br>“……我说。”格鲁米忽然一脸严肃地望着我，“你小子，是不是喜欢上魔王大人了啊？”<br>突如其来被这个笨蛋说中了我的想法，我有些不知所措。我把视线心虚地移开：“不，这种事……”<br>格鲁米摇了摇手指：“你瞒不过我的。饱阅各类恋爱小说的我，早就已经是恋爱大师了。”<br>后半句话让他的可信度瞬间减少了大半。</p>
+<hr>
+<p>“没关系！虽然魔王大人看上你这种小角色的概率很渺茫，但作为一同玩过《魔神冒险谭》的同伴，我可以给你提供一定程度的帮助。另外，我也很欣赏你这种知难而上的勇气。”格鲁米显然没注意到我怀疑的目光，“不过，前提是，你得老老实实告诉我实话。龙最讨厌撒谎的家伙。”<br>不知是否与他的法术或是天赋有关，这条龙的话像是有种奇妙的魔力。尽管看起来相当不靠谱，我还是缓缓开了口。<br>“也不是喜欢，就是……接触到魔王的时候，心情变得有点微妙。”<br>“心里有些痒痒的感觉……很奇怪。和她相处的时候，不自觉地会变得很紧张。”<br>我原本以为这也不过是执念的残渣而已，但这次与之前那些扭曲的想法截然不同，就像是在我的心中萌生了些许颜色古怪的枝芽。在这新芽的映衬下，那些扭曲而盛开着的黑色欲望显得有些黯淡失色。亦或者说，这些欲望正在被这株萌发的新芽汲取养分，甚至……化为自己的一部分。<br>这或许不是个好兆头。这株古怪的新芽或许会逐渐成长为更加疯狂的形状。我不禁有些胆寒。<br>“那不就是喜欢吗。”<br>格鲁米的声音打断了我的思路。“这种不承认自己感情的情况也是暗恋的初期症状，我很了解的。你要做的第一件事，就是正视自己的感情。”<br>“……你说得这么头头是道，你自己有过恋爱经验吗？”我忍不住吐槽道。<br>“我……有过喜欢他人的经验！你看，我就很坦诚，我到现在依旧非常喜欢佩诺朵大人！”他的脸有点红，但还是装作一副无所谓的样子。<br>“那你告白了吗？”<br>“……时机还不够成熟！”他大声辩解道。<br>我捶了一下他的头，“你这不是完全没有比我好到哪里去吗！”</p>
+<hr>
+<p>虽然现在我感觉自己像个大傻子一样，但我还是在心里安慰自己，不管怎样，从魔王身边的人下手这个思路是没有错的，只是找到了错误的人选而已。<br>和他相处久了，总觉得自己的智商也在不断下降……这就是远古巨龙的能力吗。<br>“我说你真是粗暴！”格鲁米捂着头嘟囔着，“如果你自己都不能确认自己的感情的话，当然会伤害到魔王了。在她看来，你就只是个喜怒无常的混蛋而已。”<br>“……跳过这一步。”我撑着额头，“我现在需要知道怎么补偿魔王，为我自己之前做过的那些混账事还债。”<br>“啊……”格鲁米思考着。“虽然我想说玩桌游，但这也太不浪漫了。让我来帮你想想……”<br>那真是谢谢你还有最基本的自知之明啊。<br>“我想到了！”他忽然一拍桌子，“雪山小镇的浪漫约会，怎么样！”<br>“建在莫里雪山半山腰的小镇普罗诺亚，这是我们魔族领地里的旅游胜地。因为处于国境线不远处，所以也有不少人类前来旅游或者经商。你与魔王大人一起，在享受小镇与雪山风光之后，在夕阳的见证下，送上精心准备的谢罪礼物……至少能让魔王大人对你的态度有所改观吧。”<br>总觉得不太靠谱。<br>“照你这样说，我该用什么理由？”<br>“魔王大人一直没什么时间休息。你就说，想要为几天前的事道歉，约她一同去普罗诺亚散散心。”格鲁米拍着胸脯，“至于具体的行程就交给我了，魔族的领地我还是很熟悉的，我会帮你规划好的。至于礼物，你就要自己想想办法了。不过，到时候我会偷偷跟去帮你出谋划策的。”<br>我有些狐疑：“你为什么要做到这种程度？”<br>“那是因为这么好玩的事……咳咳，不是。”他咳嗽了两声，“因为你的态度很诚恳嘛，送的东西也到位……不错！作为魔王麾下的巨龙，我暂时认可你了，追求者！”<br>“……不过。”<br>他的脸色忽然一沉，金色的龙瞳紧盯着我。<br>“如果让我发现你对魔王有任何不利的行为，我不会饶过你的。”</p>
+<hr>
+<p>根据通讯器的定位，尽管没有第一时间回到魔王城，魔王现在身处奥塔莉亚的领土中。不出意外的话，现在的她应该处在奥塔莉亚的保护之下。有奥塔莉亚呆在她的身边，应该不会遇见什么危险情况。考虑到王城中潜藏的危险，某种意义上来说，留在奥塔莉亚的身边甚至比魔王城还要安全一些。<br>……不过，奥塔莉亚啊。<br>我的脊背上攀上了些许凉意。<br>邀请魔王自己来……肯定不行，再怎么说都得由我亲自去接她才是。只是如果亲自前往奥塔莉亚的领土，就得做好直面奥塔莉亚的准备。<br>算了。只是被做成烤串而已，这种程度的觉悟我还是有的。<br>最大的问题还是如何面对魔王。和这件事相比，奥塔莉亚暴虐的火魔法简直不值一提。<br>我看着手中的通讯器有些出神。<br>“首先，你光对我说是没有用的。”<br>格鲁米的话仿佛还回荡在我的耳边。<br>“邀请也好，道歉也罢，有些话你必须亲自说出口。”他一本正经地说，“你还在顾虑。如果暴露自己的内心，就有可能遭受到他人的攻击，有这种恐惧是很正常的，我自己也经历过这样的时刻。”<br>巨龙的瞳孔里几乎映照不出一丝杂质，那双澄澈的金色眼睛微微眯了起来，盯着他。<br>“……但是，从另一个角度来说，无法对她暴露本心的你，并没有真正的相信她。”<br>我……并没有信任魔王吗。<br>“你仍在害怕。你伤害了她很多次，是因为你在害怕被她伤害。”<br>我甩了甩头，尝试让他的话离开我的脑子，而后，按下了通讯器的开关。</p>
+<hr>
+<p>镶嵌在通讯器上的玻璃珠闪了闪：这意味着接通了。<br>我试探性地对着它发问：“……魔王大人？”<br>经历了短暂的沉默之后，通讯器的那头传来了魔王的声音：“医生？”<br>握着通讯器的手臂肌肉不自觉地抽动了一下。<br>“您这几天身体状况还好吗？”我不动声色地发问。<br>“没有什么不适。”<br>魔王的声音比我想象的要更加冷硬。<br>该进入正题了。我用另一只手握着自己拿着通讯器的手腕，尝试让不断颤抖的自己冷静下来。<br>“冒昧地问问您，您现在在哪？”我尽可能让自己的语调保持平稳。“我有些话……想要当面告诉您。”<br>通讯器的那头似乎犹豫了一会儿。“……我在普兰谢尔郡。”她回答道。<br>“我会雇佣马车尽快赶来。大约三天，我会在三天内抵达普兰谢尔郡。”压下自己略有些急促的呼吸。“请您……等等我，我会来找您的。”<br>魔王并没有继续询问理由。她只是平淡地回复我：“好。还有什么别的事吗？”<br>我把通讯器按在额头，稍稍平复了一下心情。<br>“……还有。”<br>我把通讯器放回了嘴边，低声道。<br>“对不起。我会向您证明我的诚意。”</p>
+<hr>
+<p>“怎么样？”<br>奥塔莉亚懒散地靠在魔王的身边。“你看，我说中了吧，那家伙肯定坐不住的。”<br>得亏这个通讯器没法传输画面，奥塔莉亚不禁这么想。尽管放下了通讯器，魔王仍然僵直地坐在原地，冷汗从她的额头上渗出，身体颤抖的幅度也越来越大。<br>“他……他真的要亲自来找我了……怎怎怎怎么办啊小奥缇！”<br>魔王，慌得不行。<br>“我我我我要怎么面对他……”魔王抱住了自己的膝盖，“当时都说得那么决绝了，我该用什么态度对待他才好……还有最后那个！那、那个……那个……”<br>她捂着脸缩了起来，兔耳不断颤动着。“呜……呜啊……”<br>奥塔莉亚轻抚着魔王的肩膀，等她逐渐平静下来，才缓缓开口道：“如果实在不愿意的话，让我去应对他也可以的哦？我倒是……做好了各类准备呢。”<br>魔王把头抬了起来，靠在了奥塔莉亚的肩头。她的呼吸略微缓和了一些，神情复杂地望着手中的通讯器。<br>“我还是……必须自己面对他。”</p>
+<hr>
+<p>会面的地点定在奥塔莉亚宅邸的会客室里。出乎我意料的，奥塔莉亚并没有对我做出什么多余的举动。她只是把我领到了会客室的门口。“虽然我也有话想要问你……”她在门口驻足，“不过，还是先交给魔王吧。”<br>我的喉咙动了动，摒住了呼吸，推开了会客室的大门。<br>魔王——尽管只是端坐在会客室中央的椅子上，身上穿的也只是朴素的便衣，我却有一瞬间仿佛看见了王座之间的景象。如同初见时的那样，她面色冷峻地望着我，用暗黄的眸子将我从头到脚审视了一遍。<br>只是这次，她的眼神里多了几丝复杂的情绪。<br>她微微抬手，向我示意：“坐吧。”<br>我拉过一把椅子，在她的对面坐下，拿出了那套早就准备好的说辞：“魔王大人，首先让我为之前的事道歉……”<br>“客套话就免了。”<br>在我把默念了好几遍的一整套话术倒出来之前，她抢先打断了我的话。<br>“本王关心的事只有一件：你这次来找本王，应当是有求于本王吧。”<br>真是一针见血。<br>“……是的。”我回答道，“我希望……”<br>在我把话说出口之前，她做了一个停止的手势。<br>“你清楚自己在做什么，是吗？”魔王架起了腿，十指交叉着放在了自己的腿上。“就在几天前，你的行为……你的违约行为，也就是拒不为本王提供治疗的举动，惹怒了本王。在这种情况下，你还想要对本王提出条件，那你也应当做好了付出代价的准备，对吧？”<br>“对。”<br>我摊开手。“您想要从我这里获得什么？”<br>魔王对我伸出了两根手指。<br>“你有——两个选择。”<br>“其一，像本王宣誓忠诚，加入本王的麾下，成为魔族的贤者。作为交换，之前你的违约行为可以一笔勾销，本王也会倾听你的请求。”<br>我脸上的肌肉微微抽动了一下。“这一点……就像我之前的回答一样，恕我难以从命。”<br>魔王像是早就料到了我的反应一般，并未表现得过多惊讶。她伸出了第二根手指。<br>“其二，和本王战斗并且战胜本王。如果你能战胜本王，平息本王的怒火，本王也可以倾听你的请求。”<br>我仍未反应过来，魔王的轻剑已经抵上了我的喉咙。<br>“那么。”魔王动了动手腕，轻剑在我的颈侧留下了一道轻微的血痕。她的眼睛半眯着，像是一头端详猎物的狮子。“你的回答是，第二种？”</p>
+<hr>
+<p>会客室并不是个适合动手的地方，但身体已经先一步做出了反应。三根金属针从袖口落入了手中，朝着魔王的手臂飞去——落空了。魔王的反应很快，她的注意力甚至没有被这小小的动作所吸引，只是自然地将手臂一转，轻剑再次稳稳地架在了我的脖子上。<br>我摸向腰间的另一只手迟疑了。即便处在兔魔人的诅咒之下，魔王的记忆与技巧还是属于她自己的。尽管能够看清魔王的动作，这具身体却迟钝、脆弱而缓慢，正面对上魔王没有任何胜算，她想要赢过我易如反掌。<br>我明白她的意思：这种如同猫玩弄老鼠一般的行为并不是她有什么恶劣的爱好，而是让我意识到希望有多么渺茫。这道选择题看似有两个选项，实则只有一个。在我向她屈服，选择成为她的部下之前，她都不会停手。<br>对我而言，成为她的部下并不是什么无法忍受的事。只是这次，我并不想以这种身份留在她的身边协助她——就像之前的数次一样。<br>那么……得想想别的办法。<br>我抬起手，握住了魔王的剑刃。<br>“我有话想要告诉您。”<br>魔王的剑没有动作——只要她轻轻一动，锋利的剑刃就会在我的手掌上留下痕迹。她的脸色沉了下去：“在这种时刻？你是瞧不起本王和这场战斗吗？”<br>“正是因为在这种时刻。”<br>我握着剑刃一步步向她逼近，掌心传来一阵刺痛，鲜血顺着指缝一点点滴落在地上。她本能地后退了一步，但又像是想起了什么，咬着牙站定了脚步。<br>“我必须告诉您……我的心意。”</p>
+<hr>
+<p>“在我看来，你要解决的问题有两个。”<br>格鲁米掰着自己的手指。“首先，你要弄懂魔王为什么生气。而后，你要弄懂魔王想要听到什么。”<br>“在我的记忆里，魔王大人几乎没有因自己而愤怒过，所以这一点，我也很难为你提供什么参考。当你明白了第一个问题，第二个问题的答案也就呼之欲出了。”<br>“那魔王大人会因为什么事而愤怒？”<br>格鲁米沉默了一会儿。<br>“背叛和欺骗。”<br>背叛和欺骗。<br>离开魔王……是一种背叛和欺骗吗？<br>我想起了醉酒那晚说过的话。在她哭着说“不要抛下我”的时候，我的回答是……<br>“不会的。”<br>……率先背弃诺言的人是我。<br>那么，既然如此……<br>“在和您相处的过程中，我逐渐弄清楚了自己的想法。”<br>剑刃在手中划出的伤口越来越大。<br>“我不会成为您的助力或是您的部下，治疗的交易内容不会发生改变。但是，从我个人的立场出发，我希望……”<br>心脏的跳动声清晰地顺着骨骼传递到了我的耳蜗中。我闭上眼，整理好自己的思绪，再次望向了魔王，直视着那对黄色的眸子。<br>“我希望留在您的身旁，见证到最后一刻。”</p>
+<hr>
+<p>“所以。”我握着剑身，将剑尖慢慢移到了自己心脏的位置，继续逼近魔王。“我向您宣誓，只要您允许，我会一直陪伴着您，直到最后。如果我违背了誓约，您拥有处决我的权利。”<br>剑尖慢慢没入了我的胸口。<br>魔王扶住了我的手腕，制止了我的动作。“本王明白你的意思了。”她的语气依旧镇定，但她的手却有些微微发抖。<br>她盯着我手上不断滴下的血液，缓缓开口。<br>“但是，为什么？”<br>……我没有想过她会问出这样的问题。<br>“是……是因为……”<br>我一下子慌了神，刚刚的从容不迫转瞬间荡然无存。“这个……这个问题我可以之后回答您吗？我需要一些时间准备一下……”<br>太可疑了，我对于自己的表现感到绝望。刚刚的一番真诚演说建立起的可信度在此刻崩塌，我在脑海里痛斥着没用的自己。两颊有些发热，我的目光不受控制地移向一旁：“我……”<br>“……算了。”<br>出乎我的意料，魔王并没有深究。<br>“你的想法和诚意，本王已经明白了。”她把我握着剑刃的手掰开，将染血的剑抽了回去。“让奥塔莉亚带你去找府邸里的药物和佣人吧，把伤口好好处理一下。至于你的请求，等包扎好之后再和本王详细说明。”<br>“等等。”我不顾手上的伤痛，用带血的手握住了魔王的手腕，“您能允许我……留在您的身边吗？”<br>魔王把头扭了过去。“本王……会考虑一下的。”<br>心中像是一块石头落了地，我松开了魔王的手腕，长舒了一口气。“好的，感谢您的宽宏大度。”<br>尽管已经做好了最坏的打算，但没有被拒绝真是太好了。<br>“……快去吧。本王要一个人小憩一会儿。”<br>魔王她背对着我，将轻剑收回了剑鞘。<br>“等奥塔莉亚处理好你的事之后，让她来找我。本王有事与她商讨。”</p>
+<hr>
+<p>“没想到你还真的下手了。”<br>奥塔莉亚推开了会议室的门。“都只是皮外伤，已经处理好了。我让那家伙在楼下等着了。不过……既然能活着走出这里，看样子也算合格了吧。他说了些什么？”<br>魔王没有回应她，只是背对着门口，眺望着窗外的景象。<br>“……我说？”奥塔莉亚背着手跳到了魔王的前方，“这么神秘？连我都不能知道吗？”<br>“他说……”<br>魔王僵硬地转过头来。<br>“他他他说想一直……一直陪伴在我身边……”<br>魔王的脸一直红到了耳朵尖，她结结巴巴地向奥塔莉亚发问。<br>“这，这是什么意思啊……”<br>魔王，被击沉了。<br>“所以，你因为太害羞结果攻击了他？”奥塔莉亚有些无奈地望着在椅子上缩成一团的魔王。“稍微有些丢脸啊，魔王大人。”<br>“没，没有！那是他自己干的。”魔王小声地争辩着，“他握着我的剑说什么向我宣誓……”<br>“这家伙，从哪学来的这种话。”奥塔莉亚鼓起了腮帮子，“说实话，我都怀疑是不是亚伦教了他什么用来蒙骗女孩子的话术。”<br>“什么？”魔王颤抖着抬起头来，仿佛被人从头泼了一盆冷水，“可能……可能是骗我的吗……”<br>“不是啦！”奥塔莉亚连忙安抚这只受惊的小兔子，“虽然我还有些不信任他，不过在这种事上，他应该不会撒谎才对。”末了，她又有些凶狠地补上了一句：“他要真敢这样玩弄你的感情，我一定把他烧得连骨头渣都不剩。”<br>魔王再次低下了头，绞着手指，颤巍巍地说：“他问我能不能允许他留在我的身边，我，我还没有回答他……”<br>“为什么不允许？反正答应了对你也没有什么坏处，多一个小跟班呗。”奥塔莉亚挥了挥拳头，“他说只是跟着，对吧？他要是敢做多余的事，就狠狠地揍他！”<br>魔王低垂着头，用手背贴着自己的脸，尝试让滚烫的脸颊稍稍冷却一些。<br>“那，那我就允许他……”<br>“嗯？”奥塔莉亚好奇地凑了上去，“小怀特，你是不是在笑啊？”<br>“什么……哪有！”<br>魔王捂着嘴，尝试遮掩住自己忍不住上扬的嘴角。<br>“哎呀，看样子你很高兴吗，魔，王，大，人？”奥塔莉亚捧着脸打趣道，“多了个跟屁虫有这么开心吗？”<br>“没，没有！本王一点都不……”魔王把整个脸藏进了臂弯里，“本王……本王才不在乎！”<br>欺负魔王确实很好玩，尽管很不愿意承认这一点，但奥塔莉亚觉得自己隐约能与某个混蛋达成微妙的共识了。<br>“——我很开心噢。”<br>奥塔莉亚忽然伸出手，环抱住了魔王。就像很多年前那样，她把头靠在了对方的身上。<br>“我已经很久没有看见你笑了，小怀特。”</p>
+<hr>
+<p><img src="/copying/nmbxd51414457-1/30.jpg" alt="图片"></p>
+<p>(;´ヮ&#96;)7说起来，最近都没有什么机会色魔王了，医生的精神状况太安定了，得想办法搞点黑化if</p>
+<hr>
+<p>“所以……”魔王咳嗽了两声，“只要不会妨碍本王，本王允许你留在本王的身旁。”<br>说这话的魔王总是忍不住看向我那只被纱布裹着的手。<br>“感谢您。”我抬起自己的手，“另外，我的伤并无大碍，您不用太过在意。”<br>“好。”魔王生硬地把目光挪开，“你的请求是什么？说来听听吧。”<br>“是……”<br>尽管已经在心中排练了无数次，突如其来的紧张还是让我说出的话有些磕磕巴巴。<br>“我希望和您一同去一趟普罗诺亚，我有些重要的事……要办，可能会再耽误几天治疗的进度。那里是魔族的领地，所以希望您能陪在我的身边。”<br>我没敢直视魔王，却无意间看见了一旁奥塔莉亚的脸。奥塔莉亚一脸“那你怎么不去找亚伦那家伙闲得要死”的复杂表情，但她最后还是没说出来。<br>“不是什么大事。”魔王挥了挥手，“本王答应你。这种事本王还是做得到的。”<br>“不胜荣幸。”我松了一口气。“那么，我已经准备好了马车……”<br>一旁的奥塔莉亚瞪着我，我似乎能听见她无声的怒吼：“你小子也太快了吧？”<br>“那，那本王……”<br>“等等。”<br>奥塔莉亚还是开了口。<br>“还有一件事。”</p>
+<hr>
+<p>“虽然你大概不会告诉我，不过我还是要问。那天晚上你给我的那种诱导灾变的药，究竟是什么原理？”<br>“魔人血脉中的不稳定让他们的身上更容易发生灾变。我只是尝试加速了这个过程。”我斟酌着可以透露的情报。<br>“问题是……在这之后，会发生什么？”奥塔莉亚紧盯着我。“我在这之前从没见过有人可以从灾变中生还。”<br>我察觉到了些许不对。“你是指，在你的身上发生了什么？”<br>“……魔力。”<br>奥塔莉亚压低了声音，<br>“仿佛身处大流之中，源源不断的魔力……连接到了我的身上。”<br>——不愧是天才魔导师。尽管在理解上还有些许偏差，但她在这短短的时间内敏锐地发现了自己身上发生的变化。我瞄了一眼魔王的表情，她看起来并不惊讶。如果没猜错，她们应该早在我到来之前就已经通过气了。<br>只是这次，她选择在魔王面前公开这件事，自然也有她的意图。<br>“对于剩下的细节，我无可奉告。”言多必失，我选择闭上了嘴。<br>“我不会强迫你，我只需要你回答一个问题。”<br>魔王缓缓开口。<br>“这种技术，不会被其他任何人使用，对吗？”<br>我向魔王微微低头。<br>“我可以向您保证，不会。”</p>
+<hr>
+<p>“好。不谈这些事了。”<br>魔王清了清嗓子。“总之，你也确实需要一些休息的时间。不算来去的路程，本王可以让你休息一整周，也可以……在，在你的身边，保护你一整周。”<br>……居然能有一整周，这比我预想得要更加宽裕。<br>我原以为魔王会因耽误治疗进程而更加急躁，但看起来，她似乎并不那么排斥这趟旅行。<br>“……所以。”魔王的声音渐渐变小，“你也要牢记……自己说的话。”<br>我愣了半刻，而后郑重地看着她，说：“我一定会信守诺言的。”<br>“所——以——说——”<br>一旁的奥塔莉亚终于忍不住开口。<br>“你们两个差不多得了！要走就快走，烦死了！”</p>
+<hr>
+<p>马车上的气氛比我想象得要更加尴尬。<br>魔王靠在窗边，遥望着窗外的风景，而我则坐在对面，不知该把目光投向何处。短短几天内发生了太多的事，让我和她都有些难以消化。以及，最重要的——我们还并未适应这种全新的关系。<br>不论如何，我于魔王至少不再是简单的医患关系了，也很难用“朋友”简单概括。这算是一种进步吗？当我反应过来之时，才意识到这段关系似乎与我想象中的不太一样。<br>这真的是正确的发展路线吗？<br>我拿不准。<br>但至少有一点是好的——魔王回到我的身边了，或者说，我回到了魔王的身边。尽管奥塔莉亚可以确保魔王的安全，但分别的日子让我时时刻刻如坐针毡。但现在，即便治疗结束，我也获得了留在魔王身边的理由。这令我感到安心。<br>——就算只是在一旁看着魔王，对我而言，就已经足够了。<br>……但不能这样一直尴尬下去，我绞尽脑汁地寻找新的话题。聊聊天气？太俗套了。问问在奥塔莉亚领地里的见闻？会被拿来和无趣的森林生活做对比吗？额头上不禁渗出了几滴汗珠，我尽可能在脑海里搜刮着合适的话题。要不，问问魔王关于雪山的话题？如果魔王自己都没去过该怎么办……<br>“……魔王大人。”<br>我的嘴比我的思绪要更快一步。<br>“我可以摸摸您的兔耳吗？”</p>
+<hr>
+<p>……<br>等等。<br>等等，我说了什么？<br>我在内心里无声地喊叫。哈哈，这下完蛋了。<br>我正想要做出些许补救，就看见魔王的头低了下去。“……是因为身体检查，之类的？”她的脸朝着车座的另一侧，让我难以看清她的表情。“那，来吧。”<br>“……不是。”<br>我义正严辞地回答道。<br>“是因为魔王大人的兔耳很可爱。非常柔软，毛茸茸的手感也很好。所以，请原谅我的无礼，我很想再摸一摸——你的兔耳。”<br>这次是真心话。<br>……当然，也是本着必死的决心说出来的真心话。<br>我闭上眼，屏息等待着魔王将怒火宣泄在我的身上。<br>车厢里的沉默仿佛要将人溺毙。<br>“……”<br>“可，可以。”<br>嗯？<br>我并没有像预想中的那样被魔王扔下马车。<br>魔王……有些迟疑地在马车里摇摇晃晃地站了起来，坐在了我的身旁，靠得离我更近了一些。<br>她朝着我微微低下了头，一对白色的兔耳在我的眼前摇晃。<br>一句微弱到几乎听不见的话语夹杂在车轱辘的颠簸声中传进了我的耳朵。<br>“……轻一点。”</p>
+<hr>
+<p>在这之前，魔王并没有拒绝过我的摸兔耳的请求。一次都没有。<br>对她来说，只要是有利于“治疗”……或者说，有利于她恢复力量的行为，都可以被允许。只不过，对于她而言，每一次的抚摸都像是在遭受酷刑。紧皱着眉头，咬着嘴唇，她总是表现得过于紧张而不适。<br>但这次不太一样。<br>魔王依旧紧闭着双眼，脸色却比之前缓和得多。她的兔耳在我的面前轻轻颤动着，紧张地等待着我下一步的动作。<br>……而且，这次并不是为了“治疗”。<br>我的喉咙动了动，把手轻轻放了上去。<br>熟悉的触感从指尖一路传向我的大脑。还是一样让人上瘾的温度，细密的绒毛拂过我的掌心，娇弱的软骨附和着我的手指动作，乖顺地改变了形状。<br>非常……美味，正如之前的每一次一样。只是这次，我尽力克制着自己的冲动，让手上的动作再轻柔一些，尽可能让敏感的兔耳不受到伤害。<br>“嗯……”<br>魔王的喉咙里发出了一声我从未听过的轻哼。<br>“……咳！”魔王显然也注意到了从自己喉咙中不小心逸出的声音，生硬咳嗽了两声，尝试把之前的声音掩盖过去。“满，满意了吗……”</p>
+<hr>
+<p>问出口时，她才意识到自己说的话似乎有些怪怪的，声音越来越小，最后还是把剩下的话吞进了肚子里。<br>……不如说，现在说些什么都不太合适。那位魔王大人正坐在我的身边，低着头，只因为我提出的无礼理由，任凭我抚摸着她的兔耳。赶车的车夫并没有注意到车厢里正在发生怎样不可告人的秘密，如果这副摸样被人知道了，魔王大人怕是要颜面扫地了。<br>想到这里，我多少有点想使坏的心。我把手指放在了嘴边，在她的耳边悄声说：“魔王大人，最好不要发出太大的声音。”我朝她使了个眼色，看了看车夫的方向。<br>魔王的身体不由得颤抖了起来，她紧张地捂住了自己的嘴，小心翼翼地调整着自己的呼吸，却丝毫没有想到要埋怨我这个始作俑者。兔耳仍旧被我虚握在手中，我趁她不注意，朝她的耳朵根轻轻吹了口气。<br>“呜……”<br>一声闷哼从她被捂着的嘴里传了出来。魔王用头抵着我的肩膀，后背上下起伏着，小声地喘着气。兔耳内部对她而言还是有些太过刺激了，我用脸蹭着她的兔耳前端，决定今天还是先放她一马。<br>“……我满足了。”我轻轻放开了她那对可怜的兔耳。“真是……不胜感激。”<br>“小……小事。”魔王用手挡着自己的嘴，藉此半掩着脸，与我重新拉开了距离。“只是这种程度的事就能让你满意的话，对我而言不过是举手之劳罢了。”<br>我正想回话，却被一阵突如其来的颠簸打断了。魔王及时抓住了马车的扶手，但我却被颠簸的惯性甩向了车厢的另一侧——<br>我撞进了魔王的怀里。<br>与之前不同的是，这次，我的大脑也宕机了。<br>靠得太近了，魔王的脸近在咫尺。魔王脸上的潮红仍未褪去，刚刚被我揉捏的兔耳此刻也有些萎靡，与之前不同的是，兔耳的末端似乎因充血而泛出了些许粉色。我与魔王的呼吸暧昧地交缠在一起，望着面前呆楞着的魔王，我忽然产生了一种不该有的冲动。<br>想要再认真地品尝一次……魔王的嘴唇。<br>像是着了魔一样，我把脸缓慢地俯了下去。<br>魔王渐渐意识到了我想要做些什么。她似乎想要向一旁逃离，身体却因为刚刚的冲击而不受控制。无可奈何的她发出了微小的呜咽声，像鸵鸟一样闭上了眼睛。<br>“哎呀，真是抱歉……两位大人没事吧？”<br>车夫掀开了车厢的帘子。“刚刚不知撞到了什么，你们没受伤吧？”<br>“没……没有。”<br>我坐在座椅的一侧，尴尬地整理着自己的衣服，而魔王则缩在另一侧，把头僵硬地扭向窗外。“谢谢你的关心，不过，我们没事，继续赶路吧。”<br>我瞥了一眼缩在座位角落里的魔王。<br>……大概，没事吧。</p>
+<hr>
+<p><img src="/copying/nmbxd51414457-1/31.jpg" alt="图片"></p>
+<p>( ›´ω<code>‹ )原本想要晚上憋一更的，结果憋到现在也没写出来，真是非常抱歉…… (;´ヮ</code>)7整理了一下设定和接下来的剧情，发觉自己对这部分的知识积累还是不太够用，只能临时抱佛脚补充设定……总之，明天一定有，今天先请个假，果咩纳塞<br>（总之抓一只魔王来和我一起谢罪）</p>
+<hr>
+<p>清爽的冷风拂过我的脸颊，普罗诺亚这几天的天气干燥而晴朗。这座雪山下的小镇比我想象中要热闹得多，往来的货车与商人络绎不绝。<br>“这里是我们魔族的盐都。”<br>魔王提着皮质的行李箱走下了马车。方才在车上的时候，我俩就已经披上了更加保暖的外套。怕冷的我早早备好了厚实的毛皮大衣，好在普罗诺亚并没有想象中那么寒冷，魔王则披上了暗色的风衣与围巾。<br>“那座雪山下就是富饶的盐矿。”她遥指着鳞次栉比的建筑物的尽头。澄澈蓝天的映衬下，洁白的雪山高耸入云。“因为与人类签订的贸易协议，这里能见到不少人类商人，镇子里也有不少人类定居。当然，魔人自然也很常见。”<br>“你对这里很了解嘛。之前来过这里吗？”我跟在魔王的身侧。<br>“对自己的领地了如指掌是最基础的事吧。”魔王的神色没有多少改变，兔耳却得意地摇晃起来，“这里是贸易重镇，我还是来视察过好几次的。不过，以游览为目的……倒是第一次。”<br>“可惜……没有下雪。”末了，她像是自言自语般喃喃道。<br>“嗯？”我敏锐地捕捉到了魔王微小的失落，“想看下雪吗？”<br>“当……当然的吧！来了雪山肯定会想要看下雪啊。”魔王望着晴朗的天空，有些无奈。“王城很少会下雪……怎么，难道你不期待吗？”<br>“灰雾森林每年都会下雪哦。是和这里截然不同的，朦胧柔软的雪。”我装作不经意地说，“虽然没有山上的温度这么低，但过一阵子，也快要下今年的第一场雪了。”<br>“……真的？”<br>我瞥向魔王，正巧碰上了她偷偷观察我的目光。她慌慌张张地转向一旁。“我倒是不在乎这种小事。不过，既然治疗的时间还长，那本王就小小期待一下吧。”<br>“……等等。”<br>天气虽然晴朗，但冷风依旧不断掠夺着身体的热量。我担忧地望着魔王被吹得有些发红的兔耳。<br>“你的兔耳……不冷吗？”</p>
+<hr>
+<p>“……”<br>魔王的兔耳在寒风中瑟瑟发抖。<br>“这也没有办法吧。”她执拗地继续向前走去，“本王不至于连这点寒冷都没法忍受。”<br>“……失礼了。”<br>我从身后掏出了什么，讯速地套在了魔王的头上。<br>“什，什么……？！”<br>魔王下意识地把头上的东西取了下来，“这是……？”<br>那是一顶白色的绒帽。与众不同的是，绒帽上还有两只绒布制成的耳朵。<br>“我出发前准备的。”我有些紧张地观察着她的反应，“不过，没想到和你的服装不太搭……所以我一直没拿出来，怕你不喜欢。”<br>一路上看着魔王深灰的风衣和黑色的围巾，又看了看自己准备的白色兔耳绒帽，我实在没有把它拿出来的勇气。<br>“……好。”<br>当我抬起头的时候，魔王已经把绒帽戴回了头上。她的兔耳垂了下去，被绒帽包裹了起来，取而代之的是两只短短的绒布兔耳立在她的头顶。“这样就行了吧？”她指着自己头顶的这对“新兔耳”。<br>毛茸茸的兔耳帽子和她的衣着毫不搭调，但是……<br>“很可爱。”<br>……不自觉地，我把这句话说出口了。<br>“嗯？”魔王似乎没有听清我的话。<br>“不！没什么……”我捂着自己的嘴，尝试掩盖那一瞬的失态，“还……喜欢吗？”<br>“很暖和。”<br>她的脸朝向一旁，手却扯住了我的袖口。<br>“……谢谢。“</p>
+<hr>
+<p>“……所以，只剩下单人间了？”<br>老板娘看着我，我看着魔王，魔王蹙着眉头看着旅馆墙上的记号。格鲁米为我提供的信息没有出错，这段时间并不是旅游旺季，但似乎正巧碰上商人们进货的日子，结伴而行的商团几乎占据了整个旅馆。<br>“我们的床不算小。”老板娘的眼神在我和魔王之间来回扫视，小心翼翼地猜测着我们的关系。“两位，要不……？”<br>老板娘多少也察觉到了一丝微妙的气息：如果关系足够亲密，我们也不至于犹豫这么久。<br>“我可以睡在地上。”我试探着魔王的态度。<br>“本店可以提供额外的被褥。”老板娘的脑子转得很快。<br>“……行了。”魔王用手按着额头，叹了口气。“就这样吧。”<br>预付了两天的房费之后，在老板娘的带领下，我们打开了这间单人客房的门。出乎意料的是，客房比我想得要更宽敞。客房的墙壁由原木搭建而成，缝隙里严严实实地塞上了干苔藓，将寒风隔绝在外。地上铺着厚重的毛毯，盖着绒毯的大床旁边甚至有一把木质的摇椅。老板娘替我们点燃了壁炉，木炭的噼啪声与温暖的空气很快占据了整间屋子。<br>“还需要一人份的被褥，是吧？”老板娘利索地整理好床铺，不知为何，并没有朝着我，而是向魔王发问。<br>我正想回答她，魔王却抢在我之前开了口：“不需要了，你去忙吧。”<br>“好嘞！”老板娘拍了拍床铺上的被子，意味深长地笑了笑，“两位好好休息。”<br>说罢，她便带上了门。</p>
+<hr>
+<p>“魔王大人，你说不需要被褥？”<br>突如其来的冲击让我紧张得有些顺不直舌头，但不知为何，魔王却依旧镇定自若。“肯定不能让你睡在地上，对吧？”魔王坐在摇椅上望着我，“我会很愧疚的。”<br>“我，我不在意……”我看着那张大床，几乎要拦不住大脑里脱缰的想象。“那，那晚上……”<br>从严格意义上来说，我也不是第一次与魔王同床共枕了。出于一些“意外”，或者是“治疗需求”，我已经经历过不少这样的时刻，但却没有哪次像现在这样慌张，不知所措，又有些……期待。<br>“所以，我会在一旁为你守夜。”<br>……啊？<br>魔王从行李中掏出了自己的剑，抱在怀里。“我明白的，作为一个人类，来到魔族的领地会感到紧张不安是人之常情，这也是你请求本王与你同行的原因，对吧？”<br>魔王躺在摇椅上，微笑着朝我摆了摆手。“如你所愿，我会守卫你的安全，放心入睡吧。”</p>
+<hr>
+<p>如果说，在几分钟前，我脑子里的小人还在四处泼洒香槟以庆祝阶段性胜利，现在脑内想象中我正在用香槟的瓶子砸自己的头。<br>“当然不行！”我几乎是脱口而出，“怎么可以让你睡在躺椅上？”<br>“我不会入睡。”魔王纠正了我的说法。“我会在一旁看守。”<br>“那怎么撑得住？”我反驳道。<br>“只是一周不睡而已，还是很轻松的。”魔王对我的反应感到有些奇怪，“又不是需要不眠不休地血战七天，算不上什么难事。”<br>“……那你的精神不会变得越来越差吗？”<br>“你不会看出来的。”魔王似乎还有些得意。<br>……又是这种丝毫不在意自己的态度，一阵无名火冲上心头。<br>“你就不能多善待一些自己的身体吗？”我强忍着话语中的怒气。<br>对于我的怒火，魔王有些莫名其妙：“我当然很爱惜自己的身体。但身体和职责相比，肯定是职责更加重要啊。”<br>“职责……职责……那好。”我组织着自己的语言，“魔王大人会倾听我的请求，对吧？那我的请求是……”<br>我指着那张温暖的大床。<br>“我需要和魔王大人一同入睡才能安心，可以吗？”</p>
+<hr>
+<p>在说出口的那一刹那，我后悔了。<br>……怎么想都有点太过分了。如果找不到别的理由，这不就只是单纯的骚扰吗。<br>“……总之，你晚上必须得正常睡觉，要不然我的良心过不去，没法安心入睡的。”我咳嗽了两声，“我就……睡在地上吧。我去找老板娘要一床毯子……”<br>“不行。”<br>魔王伸手抓住了我的衣服下摆。<br>“要睡就一起睡。”<br>虽然不明白为什么，但我看得出来，魔王在赌气。“让你睡在地上，本王的心里就能过得去了吗？要么一起睡地板，要么一起……睡床。”说到这里，她的声音还是小了下去，但依然气鼓鼓地看着我。<br>我回想起了那天早上醒来时怀里抱着的魔王。<br>“……不行！要是我在睡梦中对您做出无礼的行为该怎么办！”我拼命摇头，仿佛自己才是那个被逼迫上床的黄花大闺女。<br>“与其担心这种事，倒不如想想晚上怎么不被睡梦中的我踢下床吧。”魔王朝我吐了吐舌头，提着箱子躲进了衣帽间，“我可不觉得你的力气会比我大。”<br>又不是那种意义上的无礼！我在内心无声怒吼着。</p>
+<hr>
+<p>事情看样子已经没有辩驳的余地了。我叹了口气，脱下身上厚重的外套，折叠了几次，放在床的一侧，就算是我的枕头。<br>总之，必须保持……心平气和。我做了几次深呼吸，按捺住自己的心跳。只是和魔王睡在一起而已，也不是第一次了。就像之前几次一样，没什么值得紧张的，只是把魔王当成病人……<br>……不，说到底，对我而言，现在的魔王到底算是什么？<br>最初的时候，我对她的看法很单纯。我只是在她的身上寻找往日的残象罢了。过去曾经历过的爱与恨都只剩下了破碎的残渣，于是我把她当作有趣的玩物，一厢情愿地将她的身影与某个已逝的幻影重叠在一起。<br>而她……在我看来，只是一只被拿来做实验的可怜兔子。<br>我没想到的是，这只实验用的白兔从笼子里跳了出来，用温热的脸颊蹭着我的手，在我的身上嗅闻着，想要弄清楚我的想法与过去。<br>这是一种……古怪的感受。兔子似乎不再是兔子，她在我的眼中渐渐变幻成人类的模样。她会笑，会恼怒，会疑惑，她会握着我的手腕告诉我：我想更多地了解你。<br>我是从那个时候开始……变得不再“正常”的吗？</p>
+<hr>
+<p>“我……我换好了。”<br>魔王从衣帽间探出头来。不知为何，她看起来似乎不太对劲。<br>“我也……准备好了。”我心情复杂地看着床铺，尽可能让自己的头脑里只剩下一片平静的海面，不去思考其他任何事。<br>“那……那就……”<br>一袭轻飘飘的白色映入眼帘。<br>不同于往常的衬衣，魔王身上的是一件缎面的睡裙，纯白的裙摆上没有过多的装饰，只有一圈朴素的荷叶边。魔王的手臂上裹着蓬松的纱袖，紧张地抓着自己的裙摆。<br>“会不会很奇怪？”<br>方才赌气的样子荡然无存，白色的兔耳垂了下去，她拘谨地望着地面。“出发前，奥塔莉亚执意为我准备的，我不知道会是这样……”<br>我明白，这里面承载了奥塔莉亚的心意。我在内心无声地对她表示感谢。谢谢你，小奥缇。<br>“很合适。”<br>魔王的肩膀放松了下来，她装作不经意地坐在了床边。“总……总之，好好休息吧，明天你还有事要办，对吧？”<br>真的能好好休息吗。我的脑海里只剩下了摇摆的兔耳和轻飘飘的睡裙。</p>
+<hr>
+<p> “……你先休息吧，我看一会儿资料再睡。”我装模作样地从藤编的手提箱里掏出了几册书籍，坐在了躺椅上，遥望着窗外沉入夜色的雪山，尽可能把兔耳和乱七八糟的想象赶出自己的大脑。<br>再次回头时，魔王已经钻进了被子里，把自己包裹得严严实实的，只露了半个头出来，望着我的背影，一对兔耳乖巧地伏在枕头上。看来那身轻薄的睡衣并不太保暖。<br>“医生，平时休息的时候会做些什么呢？”<br>我没预料到她会问出这样的问题。<br>“照看森林里的药草田，修正研究笔记……之类的？”我绞尽脑汁地思考着。<br>“这不还是在工作吗。”魔王显然对这个答案不太满意。“你就没有休息的时候吗？”<br>“休息的时候……”<br>我指着窗外澄澈的夜空。“我偶尔会看看星星哦。”<br>“你会占星术？”魔王抬起了头，“那你也会预言之类的吗？”<br>“那倒是不会。”我笑了笑，“只是兴趣。我最多只会记录一下位置。”<br>“我听闻有些善于航海的人类能够绘制星图，以此在海上找到方向。”魔王歪了歪头。<br>“有些相似吧。你知道夜晚的时候，所有的星星都在绕着一颗不动的星旋转吗？”我指着窗外的星空。<br>“我知道，是帝星对吗？那些占星术士教过本王。”<br>“对。”我合上手中的书。“但在大约一千年前，帝星还不是‘帝星’。”<br>“帝星也会改变位置吗？”魔王好奇地撑着脸。“那星图和那群占星术士的书不是全要重写？”<br>“现在的帝星实际上也不是完全没有运动，只是它动得太缓慢了。”透过窗玻璃，夜空的星光有些模糊。“再过数千年，它会渐渐离开这个位置，把帝位禅让给下一颗星星。”<br>“……不过，实际上，大多数星星并不会移动。只不过是视野短暂浅薄的我们对它们的解读罢了。”我用指节无意识地轻轻敲着窗棂，“你听说过阿拉莎和尼塔的传说吗？在人类与魔族还无法通婚的年代，这对跨越种族的恋人被魔王处决，变成了天上的星星，却仍在向着对方不停奔赴。”<br>“我听过这段故事。据说和数百年前的记录相比，现在这两颗星星已经离得越来越近了。魔族与人类啊……”魔王似乎意识到了什么，缩回了被子里，小声地问我：“那……他们俩，最后会相见的吧？”<br>“——不会。”<br>“那两颗星星之间有着无法逾越的遥远距离，只是从我们的视角看，它们的轨迹刚好重叠在一起……罢了。”<br>“也就是说，它们只是擦肩而过。”<br>魔王的眼神有些许黯淡。<br>“不过，没碰上也是件好事吧。”我意识到了魔王的失落，尝试安慰魔王，“如果真的碰上了，可能会……大爆炸？两颗星星都会粉身碎骨的，或者一颗吞噬另一颗……”<br>魔王看起来更失落了。</p>
+<hr>
+<p>“不，说到底……星星和人之间没有什么太大的关联。”<br>我在床边坐下，苍白地安慰着魔王。“‘阿拉莎’与‘尼塔’……只不过是我们为它们强行安上的意义罢了。”<br>魔王干脆翻了个身，仿佛没有听见我的话。<br>“我不知道这些话会让你不开心。”我单膝跪在床上，尝试靠近魔王，“我该做些什么来赔罪呢？”<br>魔王扭过头来看着我。<br>“……把手，拿过来。”<br>“诶？”<br>在我反应过来之前，魔王猝不及防地扯住了我的手腕。我失去了撑在床上的支点，倒在了魔王的身边。<br>“我说你再怎么想要拖延……也差不多该上床了吧。”<br>魔王转过身来，握着我的手腕，看起来多少有些生气。“你不会想要趁我睡着了就自己打地铺吧？”<br>被猜中了。<br>聊些无趣的东西就能让魔王睡着，也能时时刻刻试探魔王的意识是否还清醒，就像麻醉时通过与患者聊天来判断麻醉程度一样。但目前看来，关于星星的话题反而让魔王更生气了。<br>“那……总得先把我的手松开吧？”我有些无奈。“至少让我把外套脱了……”<br>“哼。”<br>魔王盯着我把外套和鞋子脱去，眼疾手快地再次抓住了我的手腕，像是生怕我跑了似的。<br>我缓慢地在床沿躺下，枕着自己的衣服，看着魔王像抓着犯人一样握着我的手。“这下可以放开了吧？”<br>“……万一你晚上跑了怎么办。”<br>魔王小声嘟囔着。<br>“不会的。”我叹了口气，“我都向你宣誓过了，‘不会离开你的身边’……”<br>我那只被魔王抓住的手忽然僵住了。<br>——魔王大人，握着我的手，放在了自己的脸旁，用脸颊轻轻蹭着我的掌心。<br>“……说好了。”她的视线飘向一旁，脸上的表情还有些气鼓鼓的，睫毛上却沾着些许水滴。“不会擦肩而过，不会大爆炸，也不会离开我。”<br>“好，好。”我尽可能安慰着她，“我们毕竟不是星星，就算离得这么近，也不会因为对方的引力而发生质量转移……”<br>总觉得这个形容好像有点色情。算了，她应该不会明白的。<br>“……那，那我睡了。”<br>魔王松开了我的手腕，把我的手推了回去，抱着自己的身体，耷拉着兔耳，缩得更小了一些。<br>“晚安。”</p>
+<hr>
+<p>魔王的呼吸渐渐变得缓慢而平稳。她缩在厚重的绒毯下，缩在那一身洁白的缎面睡裙里，枕在自己的手臂上，陷入了沉睡。<br>我端详着魔王安静的睡颜，把手轻轻放在她的面前，感受着她均匀而温暖的鼻息从我的指缝间穿过。<br>恋人……吗。<br>再次回味咀嚼这个词时，我才后知后觉地感到一丝雀跃与兴奋，但这短暂的喜悦很快就被更大的失落所吞没。魔王越是小心翼翼地在我面前展露自己的感情，我……越是没法回应她的好意。<br>——我没有回应她的资格。<br>如果我不在乎魔王，这一切或许还能更轻松一些。就像亚伦说的那样，用花言巧语让她沉沦，顺理成章地把她吃掉。但现在，仅仅只是向她伸出手，沉重的负罪感就压得我近乎喘不过气。<br>只是留在她的身边……就足够了。<br>我的手在她的嘴唇前停顿了片刻，最后挪向了她的兔耳，捏了捏她的耳尖，合上了双眼。</p>
+<hr>
+<p>我没有做过什么好梦。尽管能够清晰地意识到自己身处梦中，但那片灰暗的天空，漆黑的绝壁，无止境的、黑色的雨，这样的景象我几乎要看得生厌了。当我意识到自己再度陷入梦境之时，不由得在心里叹了口气。又是疲惫的一晚。<br>……不，这次的梦，似乎和之前不太一样。眼前是更加古老的建筑，我的视角似乎站得很高，有不少村民围着我叫喊着什么，脚下似乎传来了一股热流。<br>好像是火。<br>——我想起来了了。在出发前，格鲁米曾经告诉过我他的计划。<br>“当你们抵达的那天晚上，我会再次把你们的梦连接起来。这次是由你进入魔王的梦，也就是说，你没有干预这个梦的权限，但你可以借此机会了解到魔王大人对你的想法，明白了吗？”<br>“……魔王会知道吗？”<br>“我会帮你向魔王保密。”格鲁米把手指放在嘴边。“放心！这是我的业务范围。”<br>……他的业务范围还包括把人送上烤架吗？<br>耳鸣渐渐消散，我逐渐听清了村民们的吼叫声：“去死吧！”“魔女！”“魔女阿拉莎！”<br>等等。<br>我低下头，看着自己的身体。胸口没有长出奇怪的东西，感受了一下，该有的东西也还在，但是……我的身上穿着一条粗布制的裙子。<br>等等！<br>我才意识到自己动弹不得。手脚似乎都被捆在了木架上，脚底的火焰不断向上延烧，热流逐渐变为了烧灼感。<br>“私通魔族的魔女！”一块石头砸在了我的身上。<br>……对，我想起来了，这是真实的历史。<br>阿拉莎的事遭到了同乡告发，柔弱的女人被愤怒的村民绑上了火刑架。尼塔对阿拉莎遭遇的一切一无所知——对于像他这样的贵族而言，与某个人类女子共度的夜晚不过是又一件风流逸事。直到听闻阿拉莎的死讯，他才流下了几滴后悔的眼泪。<br>改编后的传说自然不会留下如此残酷的片段，不过现在的我无心关注传说与故事……<br>魔王，去哪了？</p>
+<hr>
+<p>风声。<br>最初只是耳旁的一阵微风，但在下一个瞬间，狂风席卷了整个刑场，我的裙摆像饱满的风帆一般被吹得鼓起，脚下的火焰转瞬间消弭无踪，巨大的黑色双翼挡在了我的身前，一袭血红的披风在风中猎猎。<br>原典里可没有这段剧情。<br>手脚上绑着的绳子被几道利刃割断，在我与大地亲密接触之前，一双手稳稳地接住了我。<br>——是魔王。<br>我看了一眼她的胸口，不太好判断；又看了一眼她的脖子，松了一口气。<br>……是女性的魔王。<br>“阿拉莎，我来接你了。”<br>看来，在魔王的梦里，她就是“尼塔”。<br>她用冰冷的眼神俯瞰着如鸟兽散的村民，但当她望向我时，眼神已变得平和而亲昵。她把我放了下来，如绅士一般牵起了我的手，低下了头：“亲爱的阿拉莎，你愿意和我一起走吗？”<br>……可恶。<br>面前的“尼塔”甚至比我这个“阿拉莎”还要矮上一截，但却比任何小说或是戏剧中的尼塔要更加充满魅力。没有一个阿拉莎能拒绝这样的邀请。<br>而且，那也是魔王。在魔王的梦中，在她的潜意识里，现在的我们是铁板钉钉的“恋人”。无论是因为睡前的故事还是什么别的原因，现在的我们被“阿拉莎”与“尼塔”的关系捆在了一起……<br>这意味着，尽管只是在短暂的梦中，我们的关系或许还可以……更进一步。<br>尽管只是梦中的泡影。<br>“……好的。”<br>我的嘴角微微上扬。</p>
+<hr>
+<p>历经了短暂的飞行之后，魔王在一座华贵宅邸的露台缓缓降落，收起了自己的翅膀。还未等我反应过来，我就被她放在了屋内的柔软大床上。<br>真不知道她是从哪学的，难道是格鲁米那家伙说的“恋爱小说”吗。<br>我躺在床上，等了半天却没等来魔王的下一步动作。转过头去，魔王正站在窗边，遥望着远方。<br>……魔王大人，是把恋爱小说中共赴巫山的情节全部跳过了吗？<br>“尼塔……”我尝试让魔王意识到自己的床上还有个人。<br>“阿拉莎，我知道你想要说什么。”魔王神色凝重，“这片广袤的天地居然容不下一对普通的恋人……就算是为了你，我亲爱的阿拉莎，我必须成为魔王，改写这腐朽的一切。”<br>魔王……算了。确实是魔王会说出来的话。<br>“让我们先忘掉这一切吧。”我尝试着进入角色，“至少现在……我们还拥有彼此。”<br>“阿拉莎。”魔王转过身来，在床边坐下，搂住了我的肩膀。“如果没有你……我真不知道该怎么办。”<br>她手上的力度加大了一些。“所以……不要再离开我了。”<br>心脏的某处揪了一下。<br>“总之……”我整理了一下情绪，清了清嗓子“我们……差不多也该做些，只有恋人之间会做的事了吧？”<br>魔王的身体一怔。“当，当然。”她表情复杂地松开了抱着我的手，“恋人之间的事……我明白的！我可是有不少风流韵事的尼塔……”<br>这种话不适合当着恋人的面说出口吧。不断强调着这个不适合自己的设定，魔王看样子是真的慌了神。“那么……我会尽可能配合您的。”我半躺在床上，向她发出了邀请。<br>娇小的魔王犹豫着，脱去了身上的外袍，俯身跨坐在了我的身上。<br>她的脸有些微微发红，小心地观察着我的表情，对上了眼神之后，又不自觉地将目光移向别处。<br>“那就……失礼了。”</p>
+<hr>
+<p>首先是亲吻。<br>魔王用手撑着床头，慢慢把脸凑了上来。<br>说不紧张肯定是假的。白色的发丝垂在我的脸上，魔王的脸近在咫尺。情况和那时马车上的情形十分相似，只是这次两人的位置发生了逆转：现在，魔王才是进攻的那一方。<br>我闭上了眼睛。<br>“唔……？！”<br>嘴唇上的柔软只持续了一刹那，紧接着是一阵刺痛，一股铁锈味在口腔里弥漫开来。魔王也发出了一声小小的惊呼，紧张地抬起头来。<br>——魔王的牙齿磕在了我的嘴唇上。<br>……看得出来，魔王过去的经验算是一片空白。浪漫的气氛瞬间少了大半，我回味着那一瞬间的柔软触感，多少有些惋惜。<br>“对不起……”<br>她满怀愧疚地检查了我的伤口，失落地把头垂了下去。<br>我脸上带着些许愠怒——当然，是装出来的。“想好该怎么赔偿我了吗，‘尼塔大人’？”<br>“唔……”<br>魔王那副陷入困境的表情真是让人看不腻。</p>
+<hr>
+<p>像是下定了决心一般，她忽然抬起头，扶住了我的脸，再次把脸凑了上去。<br>我还未来得及作出反应，唇瓣上就传来了某种湿润的触觉——魔王捧着我的脸，用柔软的舌尖小心地舔舐着我的嘴唇。<br>……就像她咬伤我的那天一样，对她而言，这大概是她展露歉意的方式。<br>但如果只是怀抱歉意而做出这种事，多少有些太过分了。<br>我的舌头猝不及防地缠上了魔王的舌尖。<br>“呜？！”<br>魔王触电一般向后退去，满脸通红地捂住了自己的嘴，像只受惊的小鹿。<br>“你真的明白该怎么做吗？”<br>我赌气似的把头扭向一旁。“还是说……你看不上像我这样的人类呢？”<br>“我……不是……”<br>好像欺负得有些过头，魔王的眼泪似乎又要掉下来了。<br>但我还不打算停手。我整了整自己的衣服，有些忧郁地叹了口气：“如果你对我丧失了兴趣的话……那我也只能离开了。”<br>“离开”，这个字眼成功拨动了魔王脑内绷紧的那根弦，魔王彻底慌了神。“不！不是的，不要走……”她狼狈地想要抓住我的手腕，却又在我失望的眼神下把手缩了回去。<br>某种异样的快感逐渐在心底蔓延。<br>我满意地舔了舔嘴唇上的伤口。那么，你会怎么做呢，魔王大人？</p>
+<hr>
+<p>“我……我……”<br>魔王急得快要哭出来了。虽然那天晚上在我身上茫然地轻蹭也很可爱，但果然，除此之外她几乎一窍不通。就算继续将她逼上绝路，估计也问不出来什么了。<br>出于我的立场，我并不打算主动对她动手。我在心里无声地叹了口气，决定用一个简单的拥抱来结束这次不成功的“同床共枕”。<br>“我……”<br>魔王再次握住了我的手腕。<br>她还是打算强行将我留下吗？我没有挣脱，而是乖乖任她摆布。我自然也是希望留在魔王身边的，不如说，我倒希望她的态度偶尔能更加强硬一些。<br>但接下来发生的一切完全超出了我的预料。<br>魔王抬起了我的手，而后……<br>把我的手掌放在了自己的胸脯上。<br>——很软。<br>就算隔着几层衣物也能感受得到那微微膨起的小小一团棉花，形状刚好能被我的手掌整个拢住。与之同时传来的是颤抖——魔王的身体开始不住地发抖。<br>“这样……是恋人之间会做的事，对，对吧？”<br>她的声音也颤颤巍巍的，眼里含着泪，望着我的手臂。<br>对她而言，从这里开始就是完全的未知了。她只是凭借一星半点的知识，将自己身体最脆弱的部分之一送进了我的手里。<br>她应当会相当恐惧吧。那脆弱而柔软的一团被我包裹在了掌心里，接下来发生的一切她都无法预料。<br>——但她还是想要让我留下来。<br>“真的要这样吗？”<br>我的手掌没有动作。我在尝试维持自己最后的理智。<br>“我的动作可能会变得有些粗暴，我不确定能否控制住自己……”我也不明白自己究竟是在威胁还是在试探，“可能会弄疼你的。”<br>魔王的身体抖得更厉害了，我能听见她的牙齿相互碰撞的微小声音。她用无助的目光望着我的眼睛，又看了看我的手，咬着嘴唇，像是下定决心一般闭上了眼睛。<br>“……嗯。”</p>
+<hr>
+<p>我并不讨厌那些有着傲人身材的女性，也并不讨厌那些挺起的胸膛和饱满的曲线。与之相比，魔王的身体要干练得多。那些记录着赫赫战功的疤痕几乎随处可见，胸膛上也几乎没有脂肪的堆积，掩盖在层层宽松的衣物之下。<br>但——现在，她把那唯一算得上是柔软的部分送进了我的手中。<br>极力的压抑之下，我的呼吸变得有些断断续续。魔王已经被我反身压在了身下，她的右手还颤巍巍地搭在我的手腕上，左手已经被我按在了床上。掌心传来的触感，看着魔王噙着泪的双眼，我的身体不受控制地有了反应，仅剩的理智像一根绷紧的细线，艰难地阻止我向着更深处坠落。<br>尽管隔着数层布料，也能感受到那不同寻常的触觉。与身体上的其他部位都不一样，手指上的触感有些太过柔软了，只要微微施力，指尖就会轻易地陷进去，像是陷进了森林里的一捧初雪。<br>魔王对我的触探做出了回应，她的脸泛起了浅淡的红晕，但身体的颤抖却并未停下。我的一举一动都会加剧她的恐慌，我深知这一点。<br>衣服还是太麻烦了。<br>我尽可能控制住自己急迫的心情，慢慢剥开了魔王的外衣。她的喘息声混入了一丝惊恐，如抽丝剥茧般，她的身上很快只剩下了一层薄薄的内衬。她没有挣扎，只是用委屈的眼神望着我，而后又受惊般地收回了目光。<br>那就……这样吧。<br>我没有继续探索她那微微敞开的领口与隐约可见的锁骨，而是隔着一层单薄的衬衣，把手掌再次覆了上去。</p>
+<hr>
+<p>手上的力度不由得加大了一些。<br>动作渐渐由抚摸转为了有些粗暴的揉捏，我满意地感受着那柔弱的一团在我手掌的施虐下变换着形状。魔王的呼吸随着我的动作变得愈发急促，喉咙里传出了些许幼兽般的喘声，泪水积在她的眼角岌岌可危。<br>掌心里忽然传来了些许异样的感觉，一颗软珠渐渐挺立了起来，随着我手掌的动作被一同上下搓揉。原本陷在柔若无物的棉花中的软珠因为充血而变得有些发硬，另一侧被我冷落的一团也逐渐撑起了单薄的衣物，隐约可以看见白色布料下的一点粉色凸起。<br>魔王的身体……有反应了。<br>我用掌腹专注地摩挲着那凸起的一点，感受着那软珠在我的手心里变得愈发饱满。和身体的表现不同，魔王可怜兮兮地用泪眼望着我，眼神也变得有些迷离。“那里……很奇怪……”<br>“……发情了呢。”<br>“呜……？”<br>神智模糊不清的魔王似乎不太理解我的说法。<br>我坏心眼地在手上使了点力度，用指甲在那团软肉的顶端掐了一下。<br>“呜！”<br>魔王的身体因为这突如其来的刺激跳了一下，她的精神清醒了些许，眼泪倏地掉了下来。“疼……”她牵着我的衣袖泪眼婆娑地呢喃着，“医生……好疼……”<br>“想起我是谁了？”我的指腹慢条斯理地围着那一点绕着圈，“魔王大人？”<br>她愣了一会儿，整个脸转瞬间涨得通红。“医……医生……”她用手遮住自己的脸，却没法从我的身下逃脱，“我……不是……”<br>那颗发硬的软肉在我的手指间被肆意揉捏着，魔王的身体随之绷紧。我不顾她凄惨的哀鸣声，加重了手上的力道。“你还挺喜欢的吧？这种粗暴的方式。”我俯在她的耳边，用牙齿厮磨着她的耳垂，牙缝间漏出的喘息也越来越粗重。<br>“差不多……也该进入到下一步了吧？”</p>
+<hr>
+<p>“下一步……要做什么……”<br>魔王用微弱的声音向我发问。<br>胸前的那团柔软总算摆脱了我的手掌，那层单薄的衬衣下大概已经有了不少红痕。魔王颤抖着看着我的手指落在了她的胸口，指尖从她的锁骨一路向下，跨过她的胸骨，越过胸腔，划过腹部与肚脐，最后落在了她的小腹上。<br>“从这里……再往下。”我的食指与中指在她的小腹上来回按压着。“把这里用刀剖开，撑开耻骨联合，没有麻药，没有止痛剂，狠狠撞进小腹之下那个器官的最深处——差不多是这样的过程。”<br>小腹的触感不及方才的那么柔软，但把手指按进去的体验也不错，更加令人愉快的是小腹深处传来的轻微抽动——不论她如何表现，身体的反应是不争的事实。<br>但魔王确实被我的说法唬住了。她垂着泪眼，看着我手上肆无忌惮的动作，把身体向后缩了缩。“会……很痛吗？”<br>“不知道魔王大人会不会痛得昏过去呢。”我的语调轻松得像是在叙述森林里的风景，“不过就算这样，身体也会有反应的吧。我会尽量在你失去意识之前把你送上顶端的。”<br>我的恐吓奏效得很快。魔王惊恐地将身体蜷成了小小一团，缓慢地向后挪动。<br>“不要……”如果这个时候的魔王还有兔耳，大抵已经没精神地垂了下去。她抱着自己的膝盖，打着哆嗦，眼泪止不住地掉在了床单上。“不要做这种事，好可怕……”<br>……这么说来，我多少也有些意识到了。在魔王的眼神里，比起欲望，更多的是恐慌。<br>“所以，你是不想做吗？”<br>我的目光变得冰冷，脸上的笑容刹那间消弭无踪。“魔王大人……真的很过分。不过既然这样的话，我也不会强迫您。那我就告辞了。”<br>说实话，身体其实发热得厉害。我尽可能掩饰住自己的异样，从床上慢慢直起身，装作打算离开的样子。<br>在我即将踏出房间之时，身后传来了一声呼唤。<br>“不要。”<br>那是带着哭腔的，哽咽着的声音。<br>“我……会去做的。”从她的脸边不断落下的眼泪洇湿了一片床单。“不要走……不要走。”<br>这还真是个方便的把柄。看样子，就算要求她做一些更过分的事，她也会全盘答应吧。比如，让魔王大人屈尊跪在地上做一些更加丧失尊严的事。我想象着魔王一边掉着眼泪，一边笨拙地舔舐的样子，感觉自己的大脑快要爆炸了。<br>……但是。<br>但是现在，在她的眼里，只剩下恐惧了。<br>我明白的。我从最开始就明白，这不是爱。</p>
+<hr>
+<p>我确实也不该奢望更多。<br>这一次与本能的斗争比之前还要更加困难。只是一不留神，我的理智就差点彻底沦陷。魔王眼中的恐惧让我的头脑清醒许多，我深呼吸了一次，缓缓靠近了她。<br>到目前为止，对她而言，这依旧只是一场有些古怪的梦吧。我尽可能压下自己想要付诸实践的冲动，在她的身旁坐下，为她披上了外套。“——不会那样做的。已经没事了。”<br>魔王还沉浸在方才的恐慌之中，她小心翼翼地看向我：“不用……剖开……之类的吗？”<br>“那只是在……测试你。而且，现在还不是时候。”我尽可能无视来自心底无声的叫嚣。“……至少，我不想用这种方式强迫你。”<br>“我，我做的不好吗？”她的身体再次颤抖了起来。<br>“你已经很努力……”<br>在我的话脱口而出之前，魔王忽然握住了我的手掌，再次放在了自己的胸前。<br>“我……会做得更好的。”她一脸视死如归的模样，轻轻抽噎着，“所以，不要放弃我……”<br>……看样子，现在的她还需要更多的安慰。<br>尽管我还不打算在这里做到最后，但只是让她安心应该没有问题，至少要让她在醒来之后不再惶惶不安。<br>“那……我们换个姿势吧。”</p>
+<hr>
+<p>我靠坐在床头，从背后环抱着魔王。<br>“为什么会这么害怕被人抛弃呢？”我的头靠在她的肩膀上，在她的耳旁轻声低语。<br>魔王的身体还在微微颤抖，她显然还没能冷静下来。“是因为小时候……”<br>又是那一套熟悉的话术。<br>“——还是有其他理由的吧。”<br>魔王的头低了下去。<br>“……我已经不想再失去了。”<br>“其他人……我明白其他人想要什么，所以我可以把他们留在身边。”她的声音还有些断断续续，“但我不明白……医生，究竟想要什么。”<br>“我……我抓不住医生。”她轻轻扯着我的袖子，“我不知道该做些什么留下你，也不知道你会在什么时候突然消失。”<br>我用手指卷着她的发丝。<br>“但，为什么是我？”<br>魔王的脸再次泛上了一阵潮红，她在我的怀里缩了起来。“我，我不知道。”<br>“这个答案我不满意。”<br>“呜……”魔王苦恼着，她的话语变得有些吞吞吐吐，“医生对待我的方式很特别……有的时候很奇怪，但其实很温柔。”<br>大概也只有在梦里，魔王才能如此坦率吧。<br>“还有。”<br>她像是想起了什么似的。<br>“……很痛苦。”<br>“让人不由自主地想要靠近。”她牵住了我的小指，“我想要安慰……想要帮助医生，但每次靠近，都意识到自己的想法有多么拙劣而渺小。”<br>——不是的。<br>我想要告诉魔王，她的尝试与善意绝不是没有意义的，但抵达嘴边的却是另一句话：<br>“但是，如果要在世界与我之间抉择……你还是会选择这个世界，对吗？”</p>
+<hr>
+<p>这个问题我似乎已经问过很多次了。<br>每次得到的都是相同的答案，但每次我都会不死心地再次发问。我明白，魔王，或者说“她”在这件事上绝不会撒谎。尽管过往的记忆已被冲刷得褪色了大半，但深陷肉中的木刺总能让人一直耿耿于怀。<br>片刻的愣神之后，她用沉重却斩钉截铁的声音回答了我：<br>“……是。”<br>和我预想的一模一样。<br>不如说，这几乎成为了我确认她的身份的证明。如果她回答“不是”，如果她不是这样的混蛋，我或许还不会因她而沦陷吧。某些记忆似乎正在逐渐复苏，新的木刺再次打进了我的心脏，有些疼痛，但我却又松了口气。<br>“你会失望吗？”她并没有回头。<br>失望——肯定是有的。不过都已经这么多次了，我差不多也算认清现实了。<br>“只是有些不甘心。”<br>我的手悄悄抚上了魔王的胸口。<br>“为了让未来的冷酷魔王决定牺牲我去拯救世界之后，能够变得更加后悔……”我舔了舔她的耳垂，“我决定让现在的你多尝到些甜头。”</p>
+<hr>
+<p>我捧住了她胸前的两团。<br>“要，要做什么？”怀里魔王的身体轻颤了一下，“还要继续那个吗？”<br>“用更温柔的做法。只是抚摸，可以吗？”<br>我的手没有动作，静静等待着她的回应。<br>“不……不脱掉可以吗？”她低头看了一眼自己单薄的衬衣。<br>“隔着衣服也没关系。”<br>她看着我的双手，又扭头望了我一眼，向我的怀里又缩了缩。<br>“医生想要这么做的话……”她低下头去，“可……可以。”<br>我的双手随着她的话音拢住了那两座小小的山丘。<br>“唔……”<br>和刚刚将魔王压制在身下的姿势不同，这个姿势的好处是，本能地向后退缩的魔王也只能缩进我的怀里。随着我的抚摸，她的肩膀向我的身上靠了靠，唇边溢出了微小的喘息声。<br>总之，尽可能让她不要害怕吧。我的脸靠在她的头发上，嗅着她的味道。<br>——让她认为这只是一次旖旎的梦。</p>
+<hr>
+<p>“这里，是陷下去的呢。”<br>我用手指碰了碰顶端。经历了刚刚的一番恐吓，她身体里的热流大抵已经消散了大半，顶端的那两点也不再发硬凸出，而是藏了回去。隔着一层衬衣，没法用视觉判断位置，我只能尽力借助触感寻找顶端的那两点。随着我的寻觅，怀中魔王的身体也变得不安分了起来。<br>“从小……就是这样的。”魔王的声音有些委屈。<br>“没关系。只要稍微刺激一下……”<br>……虽然强行扯出来也可以，但我还是摇了摇头，打消了这股冲动。我的中指耐心地来回摩挲着微微鼓起的那块区域，随着魔王的喘息声变得愈发粗重，中指渐渐触碰到了一颗有些发硬的东西，另一侧的一颗则是顶住了我的掌心。<br>魔王显然注意到了身体上的异样——凸出的那两颗要比别处的皮肤更加敏感。她本能地想要逃离我的双手，却被我牢牢钳制在怀里。<br>她的喉咙里传出了断断续续、无可奈何的呜咽声。<br>我的手指只是轻轻扫过顶端，魔王的身体便如同触电一般抖了一下。<br>“不太舒服？”<br>她用带泪的眼睛看向我，点了点头。<br>她的身体确实有些太敏感了。我谨慎地再次碰了碰，她忍不住抓紧了我的衣袖。“那里，胀起来了……”她的声音里夹杂着喘息，“很难受……”<br>这个时候只要手上稍稍用力，怀中的魔王应该就会痛得掉眼泪了。我稍稍调整了一会儿自己的呼吸——只是一不注意，我那糟糕的嗜虐欲望又开始发作。<br>现在魔王对这件事的恐惧大过一切。就算是为了以后做铺垫，至少要让她收获些许正面的体验才行。<br>“没事的。”我腾出了一只手放在她的头上，揉着她的头发，安抚她的情绪。“不要紧张……我在这，没事的。”<br>另一只手则留在她的胸前，用指腹在顶端的周围打着圈。她还没完全适应我的触摸，首先要让她对触摸这个动作脱敏。魔王的身体还是很紧张，但她的情绪确实渐渐稳定了下来。她的眼角里确实蓄着泪水，但她也在极力忍耐自己的反应和声音。<br>“发出声音也没关系的。”我把脸靠在她的颈侧，“我想知道你的反应，也好控制手上的轻重。”<br>她依然拘谨地咬着嘴唇，但喉咙里开始发出微弱的闷哼。我的中指偶尔蜻蜓点水般地蹭过顶端，她发出的声音便会更大一些。当我的另一只手从她的头上放下，冷不丁地触碰了另一侧的顶端时，她的喉咙里传出了我从未听过的、柔软的声线。<br>“呜？”<br>她也被自己发出的声音吓了一跳，不禁捂住了嘴，而后迷茫地转过头来：“医生，刚刚……？”<br>我靠在她的耳边低语道。<br>“……你开始喜欢这个了。”</p>
+<div class="fold"><div class="fold_hider"><div class="close hider_title">点击显示&#x2F;隐藏</p>
+</div></div><div class="fold_content">
+<p>&#x2F;&#x2F;近期插图和魔王内陷乳说明图：101709228<br>( ›´ω&#96;‹ )怕碎冰冰就不发图了</p>
+
+</div></div><link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC&display=swap" rel="stylesheet">
+
+<hr>
+<p>中指开始轻柔地玩弄她胸口小小的凸起，充血的两颗软珠被我的手指来回拨弄。魔王喘着粗气，扯着我的袖子，在我的怀里不安分地扭动着身体。她渐渐变得没法忍住自己的声音，唇齿间漏出了更多不堪的呜咽声。<br>“为什么……”在我停下的片刻，她轻喘着向我发问，“医生，为什么要做这种事……”<br>“因为……这正是你所希望的。”<br>我的话让她有些愣神。<br>“这是你的梦，一切发展都会如你所愿。”我在她的耳边轻声说道，“魔王大人……一直想要被医生做这种事，对吗？”<br>魔王的脸转瞬间变得通红，她狼狈地辩解着：“不、不是的……我……”<br>“我知道该怎么做。”我在她的耳旁继续蛊惑着她，“因为我明白你想要什么。”<br>“我……”她捂住了自己烧得滚烫的脸，“我……”<br>“不用压抑自己的感受也没关系。说出自己的真心话也没有问题。”我像是伊甸园里诱导人类吞下禁果的毒蛇，在她的耳边嘶嘶吐着信子，“因为是在梦中……稍微肆无忌惮一点也可以的。”<br>“真，真心话……”她的眼神早已变得迷离。<br>“比如……”<br>我加快了手上的动作。<br>“喜欢这个么？”<br>随着我的动作，她的身体猛地绷紧，紧接着无力地倚靠在我的肩膀上。<br>“喜欢……”<br>她的嘴唇微动，声音夹杂着些许抽噎，暗黄的双眼有些无助地望着我，手轻轻扯着我的衣服。<br>“医生……喜欢……”<br>……<br>——好可爱。<br>理智的线几欲绷断，我几乎是靠着最后的意志力支撑着自己的理性。希望醒来之后不要发现自己弄脏了床单，我在内心默默祈祷着。<br>“那么……魔王，还想要我做些什么呢？”我举起了双手，声音也不受控制地有些颤抖。<br>她缓了好一会儿才重新找回正常呼吸的节奏。她的声音还有些断断续续的：“想要……”<br>我咽了口唾沫。<br>“想要……摸，摸头……”<br>她捂着脸，缩成了一团。<br>……这家伙，原来一直觊觎的是这个吗？<br>我轻轻叹了口气，抱着她的肩膀，揉搓着那一头白色的长发。“知道了，我会摸到你满意为止的。”<br>她的身体彻底放松了下来，安心地闭上了眼睛，靠在我的怀里。像是回应我的动作一般，她用头笨拙地在我的身上蹭了蹭。“医生……最喜欢了……”<br>唔啊。<br>手上的动作僵硬地停了下来，为了掩盖自己的失态，我把滚烫的脸扭向一旁。<br>坦率的魔王杀伤力也太大了。</p>
+<p><img src="/copying/nmbxd51414457-1/32.jpg" alt="图片"><br><img src="/copying/nmbxd51414457-1/33.jpg" alt="图片"></p>
+
+      </section>
+       
+    
+    
+  <div class="nav-container">
+    <!-- reverse left and right to put prev and next in a more logic postition -->
+    
+      <a class="nav-left" href="/copying/nmbxd51414457-2/" target="_blank">
+        <span class="nav-arrow">← </span>
+        
+          《兔耳魔王》(二)
+        
+      </a>
+    
+    
+      <a class="nav-right" href="/copy/huanleegao114/" target="_blank">
+        
+          《Rain.》
+        
+        <span class="nav-arrow"> →</span>
+      </a>
+    
+  </div>
+
+    
+      <div class="advertisement">
+        <p> 广告：快速学习 Crash Course十分钟速成课 <a target="_blank" rel="noopener" href="https://crashcourse.club/">字幕组网站</a></p>
+      </div>
+    
+    
+      <div id="waline"></div>
+
+<link href="https://cdn.bootcdn.net/ajax/libs/waline/2.15.5/waline.min.css" rel="stylesheet">
+<script src="//cdn.bootcdn.net/ajax/libs/waline/2.15.5/waline.min.js"></script>
+<script defer src="/js/waline-qqavatar.js"></script>
+<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/waline/2.14.9/waline.min.js"></script>-->
+<!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/waline/2.14.9/waline.min.css">-->
+
+<script>
+  // 中文默认
+  const locale = {
+    nick: '昵称',
+    nickError: '昵称不能少于3个英文字符或2个中文汉字',
+    mail: '邮箱(可用QQ邮箱获取头像)',
+    mailError: '请填写正确的邮件地址',
+    link: '网址',
+    optional: '可选',
+    placeholder: '' || '说、什么8 \n\n可使用QQ邮箱获取QQ头像，或在gravatar.com注册后使用邮箱绑定头像 \n支持Markdown语法：*斜体*, **粗体**, \# - ###### 1-6级标题, *** 或 --- = 水平分割线, ~~删除线~~, > 引用内容, `代码块`, 1. 序号列表, * 无序列表, ^上角标^, ~下角标~, <br> = 空行, [链接文字](链接地址), ![图片名称](图片地址.png), ',
+    sofa: '来发评论吧~',
+    submit: '提交',
+    like: '喜欢',
+    cancelLike: '取消喜欢',
+    reply: '回复',
+    cancelReply: '取消回复',
+    comment: '评论',
+    refresh: '刷新',
+    more: '加载更多...',
+    preview: '预览',
+    emoji: '表情',
+    uploadImage: '上传图片',
+    seconds: '秒前',
+    minutes: '分钟前',
+    hours: '小时前',
+    days: '天前',
+    now: '刚刚',
+    uploading: '正在上传',
+    login: '登录',
+    logout: '退出',
+    admin: '博主',
+    sticky: '置顶',
+    word: '字',
+    wordHint: '评论字数应在 $0 到 $1 字之间！\n当前字数：$2',
+    anonymous: '匿名',
+    level0: '潜水',
+    level1: '冒泡',
+    level2: '吐槽',
+    level3: '活跃',
+    level4: '话痨',
+    level5: '传说',
+    gif: '表情包',
+    gifSearchPlaceholder: '搜索表情包',
+    profile: '个人资料',
+    approved: '通过',
+    waiting: '待审核',
+    spam: '垃圾',
+    unsticky: '取消置顶',
+    oldest: '按倒序',
+    latest: '按正序',
+    hottest: '按热度',
+    reactionTitle: '你认为这篇文章怎么样？',
+  };
+
+  Waline.init({
+    el: "#waline",
+    serverURL: "waline.voiiu.com",
+    appId: "" || "M2JD6yGQhefhH2O0aSjFfclc-MdYXbMMI",
+    appKey: "" || "arEPHdbMnKwMjQgiWsLgw34N",
+    path:  "" || window.location.pathname,  // window.location.pathname.replace(/\/$/,''),
+    login: "disable",  // 'enable' || 'disable' || 'force'
+    avatarCDN: "https://gravatar.loli.top/avatar/",
+    //avatar: '',
+    placeholder: "",
+    pageSize: 10,
+    meta: ["nick", "mail"],
+    requiredMeta: [""],
+    pageview: "true" && "true",
+    emoji: [
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/tieba",
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/weibo",
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/qq",
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/alus",
+      "https://testingcf.jsdelivr.net/gh/Saidosi/azuki-emoji-for-waline@1.0/azukisan",
+      "https://testingcf.jsdelivr.net/gh/norevi/blob-emoji-for-waline@2.0/blobs-gif",
+    ],
+    locale,
+  });
+
+  $('.wl-actions').append("<a href=https://emoji.zhuochi.org target=_blank id=wl-emoji-wrapper><img src=/images/emoji.png class=wl-action id=wl-emoji></a>")
+
+  //// Clean TEXTAREA 
+  //$(".wl-cards").change(function () {
+  //  alert('changed')
+    //('#wl-edit').html("")
+  //})
+  
+  //! Not functional
+  //$(".primary .wl-btn").click(function () {
+    //document.getElementsByClassName('wl-num')[0].innerHTML ++
+  //})
+</script>
+    
+    
+    
+      <div class="qrcode" id="qr-box">
+    <img id="share-qrcode" class="qrcode-image" src=""/>
+    <div class="qrcode-notice">保存二维码，分享此文章</div>
+</div>
+
+<!--<script type="text/javascript" src="/js/qrious.min.js"></script>-->
+<script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/qrious/4.0.2/qrious.min.js" ></script>
+<script>
+    // qrcode
+    let qr = new QRious({
+        background: '#F0FFFF',
+        backgroundAlpha: 1,
+        foreground: '#0096FF',
+        foregroundAlpha: 0.8,
+        level: 'L',
+        mime: "image/gif",
+        padding: null, // pixels
+        size: 100,
+        element: document.getElementById('share-qrcode'),
+        value: document.location.href,
+    })
+
+    $("#share-qrcode").click(function () {
+        let img = document.getElementById('share-qrcode')
+        let imgurl = img.src
+        let a = document.createElement('a')
+        let down_event = new MouseEvent('click')
+        a.download = '《兔耳魔王》(一)-CloudPool浊池'
+        a.href = imgurl
+        a.dispatchEvent(down_event)
+    })
+</script>
+
+
+    
+  </article>
+</main>
+
+<script>
+    (function () {
+      var url = "https://zhuochi.org/copying/nmbxd51414457-1/";
+      var banner = "";
+      if (banner !== "" && banner !== "undefined" && banner !== "null") {
+        $("#article-banner").css({
+          "background-image": "url(" + banner + ")",
+        });
+      } else {
+        $("#article-banner").geopattern(url);
+      }
+      $(".header").removeClass("fixed-header");
+    })();
+  </script>
+
+<script>
+  // error image
+  $(".markdown-content img").on("error", function () {
+    $(this).attr("src", "/images/error.png");
+    $(this).css({cursor: "default",});
+  });
+</script>
+ 
+    <aside class="sidebar">
+  <span class="scroll-top fa fa-arrow-up"></span>
+  <span class="fa fa-share-alt share-icon">
+    <span class="list-icon">
+      
+        <a href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=https://zhuochi.org/copying/nmbxd51414457-1/index.html&title=《兔耳魔王》(一)&pics=https://zhuochi.org/images/logo.svg&desc=作者：X岛匿名版 - 2Z0lxI0&summary=CloudPool浊池是由年轻人管理的博客" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659969569042" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1231"><path d="M1023.210667 395.690667c-2.005333-6.08-7.381333-10.410667-13.781333-10.944l-347.114667-29.802667L526.634667 33.984C524.117333 28.096 518.4 24.256 512 24.256s-12.181333 3.861333-14.677333 9.749333l-135.616 320.938667L14.570667 384.746667c-6.357333 0.533333-11.797333 4.864-13.781333 10.944-1.941333 6.101333-0.106667 12.778667 4.714667 16.96l263.338667 228.138667L189.888 980.16c-1.429333 6.208 1.002667 12.757333 6.122667 16.512 5.205333 3.733333 12.117333 4.010667 17.642667 0.682667L512 817.450667l298.282667 179.946667c2.581333 1.557333 5.418667 2.346667 8.32 2.346667 3.221333 0 6.528-1.002667 9.344-3.008 5.162667-3.84 7.594667-10.368 6.122667-16.576l-62.442667-268.352c26.730667-13.482667 56.277333-36.245333 56.277333-36.245333s-116.864 57.066667-536.341333 29.205333L595.626667 484.437333c0 0-11.968-18.581333-392.981333-31.872-25.408-0.917333 310.677333-63.722667 558.933333-10.645333L456.298667 660.906667c0 0 122.453333 18.197333 307.328 16.085333l-8.448-36.181333 263.36-228.16C1023.381333 408.469333 1025.216 401.792 1023.210667 395.690667z" p-id="1232" fill="#04b2f1"></path></svg>
+        </a> 
+      
+      
+        <a href="https://service.weibo.com/share/share.php?url=https://zhuochi.org/copying/nmbxd51414457-1/index.html&title=《兔耳魔王》(一)&pic=https://zhuochi.org/images/logo.svg&summary=作者：X岛匿名版 - 2Z0lxI0" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659970330786" class="icon" viewBox="0 0 1138 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="3639" fill="#04b2f1"><path d="M914.432 518.144q27.648 21.504 38.912 51.712t9.216 62.976-14.336 65.536-31.744 59.392q-34.816 48.128-78.848 81.92t-91.136 56.32-94.72 35.328-89.6 18.944-75.264 7.68-51.712 1.536-49.152-2.56-68.096-10.24-78.336-21.504-79.872-36.352-74.24-55.296-59.904-78.848q-16.384-29.696-22.016-63.488t-5.632-86.016q0-22.528 7.68-51.2t27.136-63.488 53.248-75.776 86.016-90.112q51.2-48.128 105.984-85.504t117.248-57.856q28.672-10.24 63.488-11.264t57.344 11.264q10.24 11.264 19.456 23.04t12.288 29.184q3.072 14.336 0.512 27.648t-5.632 26.624-5.12 25.6 2.048 22.528q17.408 2.048 33.792-1.536t31.744-9.216 31.232-11.776 33.28-9.216q27.648-5.12 54.784-4.608t49.152 7.68 36.352 22.016 17.408 38.4q2.048 14.336-2.048 26.624t-8.704 23.04-7.168 22.016 1.536 23.552q3.072 7.168 14.848 13.312t27.136 12.288 32.256 13.312 29.184 16.384zM656.384 836.608q26.624-16.384 53.76-45.056t44.032-64 18.944-75.776-20.48-81.408q-19.456-33.792-47.616-57.344t-62.976-37.376-74.24-19.968-80.384-6.144q-78.848 0-139.776 16.384t-105.472 43.008-72.192 60.416-38.912 68.608q-11.264 33.792-6.656 67.072t20.992 62.976 42.496 53.248 57.856 37.888q58.368 25.6 119.296 32.256t116.224 0.512 100.864-21.504 74.24-33.792zM522.24 513.024q20.48 8.192 38.912 18.432t32.768 27.648q10.24 12.288 17.92 30.72t10.752 39.424 1.536 42.496-9.728 38.912q-8.192 18.432-19.968 37.376t-28.672 35.328-40.448 29.184-57.344 18.944q-61.44 11.264-117.76-11.264t-88.064-74.752q-12.288-39.936-13.312-70.656t16.384-66.56q13.312-27.648 40.448-51.712t62.464-38.912 75.264-17.408 78.848 12.8zM359.424 764.928q37.888 3.072 57.856-18.432t21.504-48.128-15.36-47.616-52.736-16.896q-27.648 3.072-43.008 23.552t-17.408 43.52 9.728 42.496 39.424 21.504zM778.24 6.144q74.752 0 139.776 19.968t113.664 57.856 76.288 92.16 27.648 122.88q0 33.792-16.384 50.688t-35.328 17.408-35.328-14.336-16.384-45.568q0-40.96-22.528-77.824t-59.392-64.512-84.48-43.52-96.768-15.872q-31.744 0-47.104-15.36t-14.336-34.304 18.944-34.304 51.712-15.36zM778.24 169.984q95.232 0 144.384 48.64t49.152 146.944q0 30.72-10.24 43.52t-22.528 11.264-22.528-14.848-10.24-35.84q0-60.416-34.816-96.256t-93.184-35.84q-19.456 0-28.672-10.752t-9.216-23.04 9.728-23.04 28.16-10.752z" p-id="3640"></path></svg>
+        </a>
+      
+      
+        <a href="https://www.douban.com/recommend/?url=https://zhuochi.org/copying/nmbxd51414457-1/index.html&title=《兔耳魔王》(一)&pic=https://zhuochi.org/images/logo.svg&summary=作者：X岛匿名版 - 2Z0lxI0" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659970941550" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1055"><path d="M88 72.9h848v95.5H88z" p-id="1056" fill="#04b2f1"></path><path d="M88 72.9h848v95.5H88zM862.3 641.5V268H161.7v373.5h700.6zM263.4 363.4h498.4v182.5H263.4V363.4z" p-id="1057" fill="#04b2f1"></path><path d="M862.3 641.5V268H161.7v373.5h700.6zM263.4 363.4h498.4v182.5H263.4V363.4zM710.8 856.7c30.5-46.7 59.3-100.8 85.9-162.2l-102-37.2c-26.5 72.8-57.4 139.4-92.5 199.4H424.9c-29.4-77.8-62.6-144.3-99.8-199.4l-93.8 37.2c38.6 58 69.9 111.9 93.8 162.2H64v94.5h896v-94.5H710.8z" p-id="1058" fill="#04b2f1"></path><path d="M710.8 856.7c30.5-46.7 59.3-100.8 85.9-162.2l-102-37.2c-26.5 72.8-57.4 139.4-92.5 199.4H424.9c-29.4-77.8-62.6-144.3-99.8-199.4l-93.8 37.2c38.6 58 69.9 111.9 93.8 162.2H64v94.5h896v-94.5H710.8z" p-id="1059" fill="#04b2f1"></path></svg>
+        </a>
+      
+      
+        <a href="http://tieba.baidu.com/f/commit/share/openShareApi?url=https://zhuochi.org/copying/nmbxd51414457-1/index.html&title=《兔耳魔王》(一)&pic=https://zhuochi.org/images/logo.svg&desc=作者：X岛匿名版 - 2Z0lxI0" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659968685554" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1659"><path d="M1024 862.826667a161.152 161.152 0 0 1-161.173333 161.173333h-701.632a161.152 161.152 0 0 1-161.173334-161.173333v-701.632a161.194667 161.194667 0 0 1 161.173334-161.173334h701.632a161.194667 161.194667 0 0 1 161.173333 161.173334v701.632z" fill="#04b2f1" p-id="1660"></path><path d="M828.842667 250.261333h-173.461334v-36.522666a17.066667 17.066667 0 0 0-17.066666-17.066667h-41.941334a17.045333 17.045333 0 0 0-17.045333 17.066667v263.296h-24.896a17.066667 17.066667 0 0 0-17.045333 17.066666V810.218667a17.066667 17.066667 0 0 0 17.045333 17.088h257.365333a17.066667 17.066667 0 0 0 17.066667-17.088v-58.986667h-0.256v-198.144h0.256v-58.986667a17.066667 17.066667 0 0 0-17.066667-17.066666H655.381333v-150.72h173.461334a17.066667 17.066667 0 0 0 17.066666-17.066667v-41.941333a17.066667 17.066667 0 0 0-17.066666-17.045334z m-93.376 302.848c9.429333 0 17.045333 7.637333 17.045333 17.066667v164.010667a17.066667 17.066667 0 0 1-17.045333 17.066666h-104.981334a17.045333 17.045333 0 0 1-17.045333-17.066666v-164.010667a17.066667 17.066667 0 0 1 17.045333-17.066667h104.981334zM197.909333 657.408h41.941334a17.088 17.088 0 0 0 17.088-17.088v-358.741333h174.528v358.741333a17.066667 17.066667 0 0 0 17.045333 17.088h41.941333a17.088 17.088 0 0 0 17.088-17.088v-417.749333c0-9.408-7.658667-17.066667-17.088-17.066667h-292.522666a17.066667 17.066667 0 0 0-17.045334 17.066667v417.749333a17.024 17.024 0 0 0 17.024 17.088z" fill="#FFFFFF" p-id="1661"></path><path d="M492.970667 739.2v-0.170667a110.656 110.656 0 0 1-110.656-110.656h-0.106667v-296.042666a17.066667 17.066667 0 0 0-17.066667-17.045334h-41.941333a17.045333 17.045333 0 0 0-17.045333 17.045334v296.042666h-0.362667a110.677333 110.677333 0 0 1-110.677333 110.656v0.170667a17.045333 17.045333 0 0 0-17.045334 17.066667v42.112a17.066667 17.066667 0 0 0 17.045334 17.066666 186.602667 186.602667 0 0 0 148.928-74.176 186.624 186.624 0 0 0 148.928 74.176 17.045333 17.045333 0 0 0 17.045333-17.066666v-42.112a17.024 17.024 0 0 0-17.045333-17.066667z" fill="#FFFFFF" p-id="1662"></path><path d="M865.450667 873.685333c17.664-3.797333 15.253333-24.896 14.741333-29.504-0.874667-7.125333-9.237333-19.541333-20.586667-18.581333-14.293333 1.28-16.362667 21.930667-16.362666 21.930667-1.962667 9.557333 4.608 29.952 22.208 26.154666z m18.752 36.693334c-0.533333 1.493333-1.664 5.290667-0.682667 8.597333 1.962667 7.402667 8.405333 7.744 8.405333 7.744h9.258667v-22.613333h-9.898667a10.837333 10.837333 0 0 0-7.082666 6.272z m14.037333-72.085334c9.749333 0 17.621333-11.221333 17.621333-25.109333 0-13.866667-7.872-25.088-17.621333-25.088-9.728 0-17.642667 11.221333-17.642667 25.088 0 13.888 7.893333 25.109333 17.642667 25.109333z m41.984 1.664c13.034667 1.706667 21.418667-12.202667 23.082667-22.762666 1.706667-10.538667-6.698667-22.762667-15.936-24.853334-9.258667-2.112-20.778667 12.672-21.845334 22.357334-1.258667 11.797333 1.685333 23.573333 14.698667 25.258666z m31.936 61.973334s-20.16-15.594667-31.936-32.448c-15.957333-24.874667-38.634667-14.762667-46.208-2.112-7.552 12.650667-19.328 20.629333-20.992 22.741333-1.685333 2.090667-24.362667 14.336-19.328 36.672 5.034667 22.336 22.72 21.909333 22.72 21.909333s13.013333 1.28 28.138667-2.112c15.104-3.349333 28.117333 0.832 28.117333 0.832s35.306667 11.818667 44.970667-10.944c9.621333-22.72-5.482667-34.538667-5.482667-34.538666z m-60.394667 33.877333h-22.954666c-9.92-1.984-13.866667-8.746667-14.357334-9.898667-0.490667-1.173333-3.306667-6.613333-1.813333-15.850666 4.288-13.866667 16.490667-14.848 16.490667-14.848h12.224v-15.04l10.410666 0.149333v55.488z m42.752-0.170667h-26.410666c-10.24-2.624-10.709333-9.92-10.709334-9.92v-29.205333l10.709334-0.170667v26.261334c0.64 2.794667 4.117333 3.306667 4.117333 3.306666h10.88v-29.397333h11.413333v39.125333z m37.376-77.994666c0-5.034667-4.181333-20.224-19.733333-20.224-15.552 0-17.642667 14.336-17.642667 24.469333 0 9.685333 0.810667 23.189333 20.16 22.741333 19.328-0.426667 17.216-21.909333 17.216-26.986666z" fill="#FFFFFF" p-id="1663"></path></svg>
+        </a>
+      
+      
+        <a href="https://connect.qq.com/widget/shareqq/index.html?url=https://zhuochi.org/copying/nmbxd51414457-1/index.html&title=《兔耳魔王》(一)&pic=https://zhuochi.org/images/logo.svg&desc=作者：X岛匿名版 - 2Z0lxI0&summary=CloudPool浊池是由年轻人管理的博客" aria-hidden="true" target="_blank">
+        <svg t="1659969969936" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2714"><path d="M866.991 707.772c0 0-25.341 69.55-71.877 132.071 0 0 83.050 28.439 76.137 102.196 0 0 2.709 82.331-177.613 76.685 0 0-126.817-9.898-164.88-63.85h-33.53c-38.018 54.006-164.834 63.85-164.834 63.85-180.431 5.7-177.556-76.685-177.556-76.685-7.025-73.756 76.081-102.196 76.081-102.196-46.475-62.519-71.875-132.071-71.875-132.071-112.759 183.141-101.477-25.567-101.477-25.567 21.141-123.495 109.949-204.384 109.949-204.384-12.677-112.157 33.805-132.078 33.805-132.078 9.68-346.979 306.473-340.887 312.675-340.722 6.249-0.163 302.931-6.256 312.72 340.723 0 0 46.538 19.866 33.812 132.078 0 0 88.751 80.89 109.886 204.384 0.055-0.001 11.285 208.707-101.421 25.566v0 0z" p-id="2715" fill="#04b2f1"></path></svg>
+        </a>
+      
+    </span>
+  </span>
+</aside>
+    <footer class="app-footer">
+  <p class="copyright">
+    Copyright &copy; 2017 - 2023, CloudPool浊池, zhuochi.org︱voiiu.com, All Rights Reserved<br/>
+    本站为基于<a href="https://hexo.io" target="_blank">Hexo</a>的静态博客，<span id="busuanzi_container_site_pv">总访问量 <span id="busuanzi_value_site_pv"></span> 次</span><!--，来自 <span id="busuanzi_value_site_uv"></span> 个 IP--><br/>
+    主题源自 <a target="_blank" rel="noopener" href="https://github.com/yanm1ng/hexo-theme-vexo">Vexo</a> by yanm1ng，感谢 <a target="_blank" rel="noopener" href="https://github.com/MoePlayer/APlayer">APlayer</a> by DIYgod，感谢 <a target="_blank" rel="noopener" href="https://github.com/stevenjoezhang/live2d-widget">Live2D Widget</a> by stevenjoezhang & <a target="_blank" rel="noopener" href="https://github.com/xiazeyu/live2d-widget-models">live2d-widget-models</a> by xiazeyu
+  </p>
+</footer>
+
+<script>
+  function async(u, c) {
+    var d = document, t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0];
+    o.src = u;
+    if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+    s.parentNode.insertBefore(o, s);
+  }
+</script>
+
+<script src="/js/script.js"></script>
+ <!--无法移至head.js中，原因不明-->
+<script type="text/javascript" src="/js/busuanzi.min.js" async></script>
+
+
+  </body>
+</html>

@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta http-equiv="Access-Control-Allow-Origin" content="*">
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport" />
+  <meta name="description" content="CloudPool浊池是由年轻人管理的博客">
+  <meta name="keyword" content="浊池, CloudPool, CloudPool浊池">
+  
+  <link rel="shortcut icon" type="image/ico" href="/images/cloudpool-favicon.ico">
+  
+  <title>
+    
+      《捕光人》
+    
+  </title>
+  <!-- CSS -->
+  <!--<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/6.4.0/css/all.min.css" />-->
+  <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />-->
+  <!--<link href="https://cdn.staticfile.org/nprogress/0.2.0/nprogress.min.css" rel="stylesheet"/>-->
+  <link href="https://cdn.bootcdn.net/ajax/libs/nprogress/0.2.0/nprogress.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/aplayer/1.10.1/APlayer.min.css"/>
+  
+<link rel="stylesheet" href="/css/style.css">
+
+
+  <!-- JS -->
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/geopattern/1.2.3/js/geopattern.min.js"></script>
+  <!--<script type="text/javascript" src="https://cdn.staticfile.org/nprogress/0.2.0/nprogress.min.js"></script>-->
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/nprogress/0.2.0/nprogress.min.js"></script>
+  
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+            <span class="search-icon">
+                <i class="fa fa-search"></i>
+            </span>
+            <div class="search-input-container">
+                <input autocomplete="off" autocapitalize="off" maxlength="80"
+                    placeholder="Anything...  今天想看什么w" spellcheck="false"
+                    type="" class="search-input">
+            </div>
+            <span class="popup-btn-go">
+                <i class="fa-solid fa-arrow-circle-right"></i>
+            </span>
+            <span class="popup-btn-close">
+                <i class="fa-solid fa-circle-xmark"></i>
+            </span>
+        </div>
+        <div id="search-result" class="search-result-container">
+            <div id="no-result" class="no-result">
+                <i class="fa-solid fa-spinner fa-pulse fa-5x fa-fw"></i>
+            </div>
+        </div>
+    </div>
+</div>
+  <link rel="prefetch" href="/search.xml" crossorigin="anonymous"> 
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Popup Window
+      let isfetched = false;
+      let datas;
+      let isXml = true;
+      // Search DB path
+      let searchPath = 'search.xml'; //CONFIG.search.path
+      if (searchPath.length === 0) {
+        searchPath = 'search.xml';
+      } else if (searchPath.endsWith('json')) {
+        isXml = false;
+      }
+      const input = document.querySelector('.search-input');
+      const resultContent = document.getElementById('search-result');
+
+      const getIndexByWord = (word, text, caseSensitive) => {
+        if ('false' == false) { // CONFIG.localsearch.unescape = false
+          let div = document.createElement('div');
+          div.innerText = word;
+          word = div.innerHTML;
+        }
+        let wordLen = word.length;
+        if (wordLen === 0) return [];
+        let startPosition = 0;
+        let position = [];
+        let index = [];
+        if (!caseSensitive) {
+          text = text.toLowerCase();
+          word = word.toLowerCase();
+        }
+        while ((position = text.indexOf(word, startPosition)) > -1) {
+          index.push({ position, word });
+          startPosition = position + wordLen;
+        }
+        return index;
+      };
+
+      // Merge hits into slices
+      const mergeIntoSlice = (start, end, index, searchText) => {
+        let item = index[index.length - 1];
+        let { position, word } = item;
+        let hits = [];
+        let searchTextCountInSlice = 0;
+        while (position + word.length <= end && index.length !== 0) {
+          if (word === searchText) {
+            searchTextCountInSlice++;
+          }
+          hits.push({
+            position,
+            length: word.length
+          });
+          let wordEnd = position + word.length;
+
+          // Move to next position of hit
+          index.pop();
+          while (index.length !== 0) {
+            item = index[index.length - 1];
+            position = item.position;
+            word = item.word;
+            if (wordEnd > position) {
+              index.pop();
+            } else {
+              break;
+            }
+          }
+        }
+        return {
+          hits,
+          start,
+          end,
+          searchTextCount: searchTextCountInSlice
+        };
+      };
+
+      // Highlight title and content
+      const highlightKeyword = (text, slice) => {
+        let result = '';
+        let prevEnd = slice.start;
+        slice.hits.forEach(hit => {
+          result += text.substring(prevEnd, hit.position);
+          let end = hit.position + hit.length;
+          result += `<b class="search-keyword">${text.substring(hit.position, end)}</b>`;
+          prevEnd = end;
+        });
+        result += text.substring(prevEnd, slice.end);
+        return result;
+      };
+
+      const inputEventFunction = () => {
+        if (!isfetched) return;
+        let searchText = input.value.trim().toLowerCase();
+        let keywords = searchText.split(/[-\s]+/);
+        if (keywords.length > 1) {
+          keywords.push(searchText);
+        }
+        let resultItems = [];
+        if (searchText.length > 0) {
+          // Perform local searching
+          datas.forEach(({ title, content, url }) => {
+            let titleInLowerCase = title.toLowerCase();
+            let contentInLowerCase = content.toLowerCase();
+            let indexOfTitle = [];
+            let indexOfContent = [];
+            let searchTextCount = 0;
+            keywords.forEach(keyword => {
+              indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+              indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+            });
+
+            // Show search results
+            if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+              let hitCount = indexOfTitle.length + indexOfContent.length;
+              // Sort index by position of keyword
+              [indexOfTitle, indexOfContent].forEach(index => {
+                index.sort((itemLeft, itemRight) => {
+                  if (itemRight.position !== itemLeft.position) {
+                    return itemRight.position - itemLeft.position;
+                  }
+                  return itemLeft.word.length - itemRight.word.length;
+                });
+              });
+
+              let slicesOfTitle = [];
+              if (indexOfTitle.length !== 0) {
+                let tmp = mergeIntoSlice(0, title.length, indexOfTitle, searchText);
+                searchTextCount += tmp.searchTextCountInSlice;
+                slicesOfTitle.push(tmp);
+              }
+
+              let slicesOfContent = [];
+              while (indexOfContent.length !== 0) {
+                let item = indexOfContent[indexOfContent.length - 1];
+                let { position, word } = item;
+                // Cut out 100 characters
+                let start = position - 20;
+                let end = position + 80;
+                if (start < 0) {
+                  start = 0;
+                }
+                if (end < position + word.length) {
+                  end = position + word.length;
+                }
+                if (end > content.length) {
+                  end = content.length;
+                }
+                let tmp = mergeIntoSlice(start, end, indexOfContent, searchText);
+                searchTextCount += tmp.searchTextCountInSlice;
+                slicesOfContent.push(tmp);
+              }
+
+              // Sort slices in content by search text's count and hits' count
+              slicesOfContent.sort((sliceLeft, sliceRight) => {
+                if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                  return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                  return sliceRight.hits.length - sliceLeft.hits.length;
+                }
+                return sliceLeft.start - sliceRight.start;
+              });
+
+              // Select top N slices in content
+              let upperBound = parseInt('1', 10); // CONFIG.localsearch.top_n_per_article: 1
+              if (upperBound >= 0) {
+                slicesOfContent = slicesOfContent.slice(0, upperBound);
+              }
+
+              let resultItem = '';
+
+              if (slicesOfTitle.length !== 0) {
+                resultItem += `<li class="search-result-element"><a href="${url}" class="search-result-title" target="_blank">${highlightKeyword(title, slicesOfTitle[0])}</a>`;
+              } else {
+                resultItem += `<li class="search-result-element"><a href="${url}" class="search-result-title" target="_blank">${title}</a>`;
+              }
+
+              slicesOfContent.forEach(slice => {
+                resultItem += `<a href="${url}" target="_blank"><p class="search-result">${highlightKeyword(content, slice)}...</p></a>`;
+              });
+
+              resultItem += '</li>';
+              resultItems.push({
+                item: resultItem,
+                id: resultItems.length,
+                hitCount,
+                searchTextCount
+              });
+            }
+          });
+        }
+        if (keywords.length === 1 && keywords[0] === '') {
+          resultContent.innerHTML = '<div id="no-result"><i class="fa-sharp fa-regular fa-circle-check fa-5x"></i></div>';
+        } else if (resultItems.length === 0) {
+          resultContent.innerHTML = '<div id="no-result"><i class="fa-regular fa-face-frown-open fa-5x"></i></div>';
+        } else {
+          resultItems.sort((resultLeft, resultRight) => {
+            if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+              return resultRight.searchTextCount - resultLeft.searchTextCount;
+            } else if (resultLeft.hitCount !== resultRight.hitCount) {
+              return resultRight.hitCount - resultLeft.hitCount;
+            }
+            return resultRight.id - resultLeft.id;
+          });
+          resultContent.innerHTML = `<ul class="search-result-list">${resultItems.map(result => result.item).join('')}</ul>`;
+          window.pjax && window.pjax.refresh(resultContent);
+        }
+      };
+
+      const fetchData = () => {
+        fetch('/' + searchPath) // CONFIG.root = ''
+          .then(response => response.text())
+          .then(res => {
+            // Get the contents from search data
+            isfetched = true;
+            datas = isXml ? [...new DOMParser().parseFromString(res, 'text/xml').querySelectorAll('entry')].map(element => {
+              return {
+                title: element.querySelector('title').textContent,
+                content: element.querySelector('content').textContent,
+                url: element.querySelector('url').textContent
+              };
+            }) : JSON.parse(res);
+            // Only match articles with not empty titles
+            datas = datas.filter(data => data.title).map(data => {
+              data.title = data.title.trim();
+              data.content = data.content ? data.content.trim().replace(/<[^>]+>/g, '') : '';
+              data.url = decodeURIComponent(data.url).replace(/\/{2,}/g, '/');
+              return data;
+            });
+            // Remove loading animation
+            document.getElementById('no-result').innerHTML = '<i class="fa-sharp fa-regular fa-circle-check fa-5x"></i></i>';
+            inputEventFunction();
+          });
+      };
+
+      if (false) { // CONFIG.localsearch.preload: false
+        fetchData();
+      }
+
+      if ('auto' === 'auto') { // CONFIG.localsearch.trigger: 'auto' / 'manual'
+        input.addEventListener('input', inputEventFunction);
+      } else {
+        document.querySelector('.search-icon').addEventListener('click', inputEventFunction);
+        input.addEventListener('keypress', event => {
+          if (event.key === 'Enter') {
+            inputEventFunction();
+          }
+        });
+      }
+
+      // Handle and trigger popup window
+      document.querySelectorAll('.popup-trigger').forEach(element => {
+        element.addEventListener('click', () => {
+          document.body.style.overflow = 'hidden';
+          document.querySelector('.search-pop-overlay').classList.add('search-active');
+          input.focus();
+          if (!isfetched) fetchData();
+        });
+      });
+
+      // Monitor main search box
+      const onPopupClose = () => {
+        document.body.style.overflow = '';
+        document.querySelector('.search-pop-overlay').classList.remove('search-active');
+      };
+
+      document.querySelector('.search-pop-overlay').addEventListener('click', event => {
+        if (event.target === document.querySelector('.search-pop-overlay')) {
+          onPopupClose();
+        }
+      });
+      document.querySelector('.popup-btn-close').addEventListener('click', onPopupClose);
+      window.addEventListener('pjax:success', onPopupClose);
+      window.addEventListener('keyup', event => {
+        if (event.key === 'Escape') {
+          onPopupClose();
+        }
+      });
+
+      // PageJumper button
+      let onJumpPage = () => {
+        window.location = window.location.origin + '/' + input.value
+      };
+      document.querySelector('.popup-btn-go').addEventListener('click', onJumpPage);
+      document.querySelector('.search-input').addEventListener('keydown', event => {
+        if (event.keyCode === 13) {
+          onJumpPage();
+          return;
+        }
+      });
+      
+      // Search Preload
+      let head = document.head || document.getElementsByTagName('head')[0];
+      let searchlink = document.createElement('link');
+        searchlink.rel="search";
+        searchlink.href="/search.xml";
+        searchlink.crossOrigin="anonymous";
+      head.appendChild(searchlink);
+    });
+  </script>
+
+  <!--
+<script src="/js/local-search.js"></script>
+--> 
+
+  <script src="/live2d-widget/autoload.js"></script>
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/aplayer/1.10.1/APlayer.min.js"></script>
+  <!-- Fonts -->
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+  <body>
+    <header class="header fixed-header">
+  <nav class="header-container">
+    <a class="home-link" href="/">
+      <img class="logo" src="/images/logo.png" alt="logo"/>
+      <span class="eng_mark">CloudPool</span><span class="chn_mark">浊池</span>
+    </a>
+    <ul class="right-list">
+      
+        <li class="list-item">
+          
+            <a href="/" class="item-link">主页</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/categories/" class="item-link">分类</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/tags/" class="item-link">标签</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/archive/" class="item-link">归档</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/mag/" class="item-link">网刊</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/one/" class="item-link">一言</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a target="_blank" rel="noopener" href="//pan.zhuochi.org/CloudShare/" class="item-link">网盘</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="//<emoji>" class="item-link">( ^ω^)</a>
+          
+        </li>
+      
+      
+        <li class="list-item">
+    <a role="button" class="item-link popup-trigger">
+        <i class="fa fa-search fa-fw"></i>
+    </a>
+</li>
+      
+    </ul>
+    <div class="menu">
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+    </div>
+    <div class="menu-mask">
+      <ul class="menu-list">
+        
+          <li class="menu-item">
+            
+              <a href="/" class="menu-link">主页</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/categories/" class="menu-link">分类</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/tags/" class="menu-link">标签</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/archive/" class="menu-link">归档</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/mag/" class="menu-link">网刊</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/one/" class="menu-link">一言</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a target="_blank" rel="noopener" href="//pan.zhuochi.org/CloudShare/" class="menu-link">网盘</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="//<emoji>" class="menu-link">( ^ω^)</a>
+            
+          </li>
+        
+        
+          <li class="menu-item">
+    <a role="button" class="item-link popup-trigger">
+        <i class="fa fa-search fa-fw"></i>
+    </a>
+</li>
+        
+      </ul>
+    </div>
+  </nav>
+</header>
+
+    <div id="article-banner">
+  <h2 class="post-title">《捕光人》</h2>
+  
+   
+    <p class="post-date">2022-09-01</p>
+  
+  <div class="arrow-down">
+    <a href="javascript:;"></a>
+  </div>
+</div>
+
+<main class="app-body flex-box">
+  <article class="post-article">
+    
+      <div class="front-parent" id="front-parent">
+  <div class="front-child" id="front-fontsize">
+    <label class="front-label" for="fontsize-range">字体大小</label>
+    <input type="range" min="50" max="200" id="fontsize-slider" step="1" value="100" />
+    <span id="fontsize-value"></span>
+  </div>
+
+  <div class="front-child" id="front-fontselector">
+    <label class="front-label" for="font-select">更换字体</label>
+    <select name="font" id="font">
+      <option value="default">默认</option>
+      <option value="heiti">黑体</option>
+      <option value="light-heiti">黑体（细体）</option>
+      <option value="lighter-heiti">黑体（极细）</option>
+      <option value="songti">宋体</option>
+      <option value="light-songti">宋体（细体）</option>
+      <option value="kaiti">楷体</option>
+      <option value="fangsong">仿宋</option>
+    </select>
+  </div>
+
+  <div class="front-child" id="front-indent">
+    <label class="front-label" for="TextIndent">段首缩进</label>
+    <input type="checkbox" id="indent-checkbox" name="text-indent" value="" />
+  </div>
+</div>
+
+<h1 class="article-author">
+  
+    阿碳的作品集 By @天钢0w0
+      
+</h1>
+
+<script>
+  $(document).ready(
+    function () {
+      let FontChanger = function () {
+        if (this.value == "default") {
+          $(".markdown-content").css({ "font-family": "Arial, Helvetica, sans-serif" });
+          $(".markdown-content").css({ "font-weight": 'initial' });
+        } if (this.value == "heiti") {
+          $(".markdown-content").css({ "font-weight": '400' });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',STHeiti,SimHei,sans-serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400&display=swap rel=stylesheet>");
+        } else if (this.value == "light-heiti") {
+          $(".markdown-content").css({ "font-weight": '300' });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',STHeiti,SimHei,sans-serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300&display=swap rel=stylesheet>");
+        } else if (this.value == "lighter-heiti") {
+          $(".markdown-content").css({ "font-weight": '100' });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',STHeiti,SimHei,sans-serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100&display=swap rel=stylesheet>");
+        } else if (this.value == "songti") {
+          $(".markdown-content").css({ "font-weight": '400' });
+          $(".markdown-content").css({ "font-family": "'Noto Serif SC',STSong,NSimSun,SimSun,serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400&display=swap rel=stylesheet>");
+        } else if (this.value == "light-songti") {
+          $(".markdown-content").css({ "font-weight": '200' });
+          $(".markdown-content").css({ "font-family": "'Noto Serif SC',STSong,NSimSun,SimSun,serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200&display=swap rel=stylesheet>");
+        } else if (this.value == "kaiti") {
+          $(".markdown-content").css({ "font-weight": 'initial' });
+          $(".markdown-content").css({ "font-family": "'FZKai-Z03S','STKaiti','KaiTi',Serif" });
+          $("head").append("<link href=https://cdn.jsdelivr.net/npm/cn-fontsource-fz-kai-z-03-s/font.css rel=stylesheet>");
+        } else if (this.value == "fangsong") {
+          $(".markdown-content").css({ "font-weight": 'initial' });
+          $(".markdown-content").css({ "font-family": "'FZFangSong-Z02S','STFangsong','FangSong','FangSong_GB2312',Serif" });
+          $("head").append("<link href=https://cdn.jsdelivr.net/npm/cn-fontsource-fz-fang-song-z-02-s/font.css rel=stylesheet>");
+        }
+      };
+      $("#font").on('change', FontChanger);
+      $("#font").on('click', FontChanger);
+    });
+
+  $("#indent-checkbox").change(function () {
+    if (this.checked) {
+      $(".markdown-content > p").css({ "text-indent": "2em" });
+    } else {
+      $(".markdown-content > p").css({ "text-indent": "0" });
+    }
+  });
+
+  $("#fontsize-value").html("100%");
+  let rangeSwitch = function () {
+    let fontsizePercent = $("#fontsize-slider").val();
+    $(".markdown-content").css("font-size", fontsizePercent + "%")
+    $("#fontsize-value").html(fontsizePercent + "%")
+  }
+  $("#fontsize-slider").on("input", rangeSwitch)
+</script>
+      <section class="markdown-content" id="content">
+        <pre><code>来源：https://weibo.com/u/3815546014
+</code></pre>
+<p>祝天南第一次当上捕光节的捕手时，他20岁。<br>彼时他刚刚从高中毕业。高中毕业时会有长达三个月的休息时间，这段时间里孩子们什么也不用做，不用埋首于资料和技术手册的书海中，被允许在天河号上四处见习。绝大部分的舱室都向他们开放，包括从前决不允许孩子们进入的动力舱段。<br>祝天南花了两个晚上思考自己该去哪里见习。是生态维护部门还是动力部门？还是说选择流行的人口管理部门，过一个悠闲的假期？<br>城子就是在那时候向他发出了邀请。她问祝天南，要不要去当捕光节的捕手。<br>“捕手？这不太现实吧。我听说捕手需要经受专门的训练，平均用时是六个月。就算我们现在开始接受捕手的训练，也没法赶上今年的捕光节了。”<br>这是祝天南的第一反应。<br>城子却没有要放弃的意思，她坐直了身子，微微前倾，像一只猫科动物一样盯紧了祝天南：“那可不一定啊！高中的课程我们不也是只用两年就毕业了吗？”<br>“可你也不看一看每年当捕手的都是什么人！”祝天南调用搜索功能，把结果同时投射到城子的表层意识中，“去年的捕手是居住区32D片区的管理人，前年的是动力舱段服役时间超过二十万小时的三级工程师——再往前一年更有意思了，是天河号的舰长。我们只不过是刚毕业的高中生而已！”<br>城子的气势一挫，显然她也知道这些事实。但她还是不太服气地嘟囔道：“又没有人规定高中毕业生不可以去申请……”<br>祝天南叹了口气。<br>他和城子从18岁开始就被分配到同一间舱室，按照天河号上的制度，如果他和城子在高中毕业前都没有提出更换搭档的申请，那他们毕业之后就会继续组成搭档参与工作。许多搭档会结婚，但也有分别组成家庭的。不过不论他们的婚姻状况如何，搭档的关系一生都不会解除。<br>据说这个制度原本是为了舱外工作而设计的，在死寂的真空中长时间工作对心理和生理都是严峻的挑战，搭档制度能最大程度地降低出现事故的可能性。<br>正因如此，挑选搭档也不是个随便的决定。预定结成搭档的两人成年之后就必须保持长时间的浅层意识桥连接，两人会由此共享一部分的思维，习惯彼此的存在和思维方式，在毕业之前，一旦有任意一方认为无法适应，随时可以提出换人。<br>祝天南曾经听说过有人换了十二次搭档才勉强满意。不过他和城子不一样，现在两人已经毕业，而他们从开始就没有对彼此提出任何异议，所以他们已经是搭档了。<br>上高中的两年时光已经足够他了解这个小个子的女孩儿。他知道城子身上有一股奇怪的倔强，一旦她下定决心，除非能说服她这样做不对，否则她就一定会做到底。<br>因此祝天南放缓了语气，问：“城子，你为什么想去当捕手？”<br>对于祝天南来说，城子最可爱的地方就在于不管她多么不乐意，只要祝天南好声好气地问她，她就会老老实实说出来。这一次也一样，城子叹了口气：“我觉得这才算是足够特别的毕业见习。我们可是以天河号舰历上最高的分数毕业的，毕业见习当然也要选一件不一样的工作来做，不可以吗？”<br>祝天南听完这个理由，陷入了沉思。<br>这确实是个理由——不，不如说，想做一件事情从一开始就不需要理由。<br>思考了片刻，他脸上慢慢绽放出笑容。<br>“你说得对，城子。”祝天南用力点头：“我们去当捕光节的捕手！”</p>
+<hr>
+<p>祝天南和城子原以为最大的困难是如何令大人们允许他们参加捕手的选拔，但事实并非如此。两人去和所在的居住片区管理人提出这件事，少年和少女准备好了一肚子的自信和自我证明，甚至提前准备好了成绩单和简历。<br>不过，当他们提出自己的要求时，对方只是稍有惊讶。<br>“你们想去当捕手？那可真有意思。你们物理成绩如何？”<br>祝天南和城子对视一眼，最后由城子答道：“我们的物理学都是满分结业的。”<br>“那太好了，拿去吧，祝你们顺利。”<br>管理人痛快地发了一张电子通行证给他们，让他们前往捕光节组织委员会的训练场地。<br>训练场地在16区的下层，几乎快要到动力舱了。到那儿去可没有升降机能坐，祝天南只好和城子一道穿过气密闸门，进入无重力区的通行竖井。两人把锁扣挂在服务机上，让那方形的小机器带着他们在无重力区里移动，向下层前进。<br>下降的过程通常会花费五到十分钟，考虑到从居住层到动力舱附近的漫长路程，这时间已经让人挑不出毛病了。<br>祝天南透过通行竖井的透明外墙看向舰外，舰外是一片难以形容的漆黑。<br>没有灿烂的星海，天河号如今正航行在行星系之间的深空中，周围数百光年内没有任何散发光辐射的天体。这漆黑之中当然有光，但那根本不是肉眼能够分辨的。<br>“我还以为要花些口舌才能说服管理人同意。”<br>城子的信息传递到祝天南的浅层意识上。<br>“说实话我也没想到。或许捕手的遴选十分严格，以至于他觉得让我们试试也没关系，反正不会通过。”<br>“不，那样的话管理人先生至少会提醒我们难度的问题。可你想想，他不是很痛快地就发了通行证给我们么？说不定捕手根本就是只要申请就能当上的，只是一直没人想到去申请而已！”<br>“那也不一定是个好消息，城子。只要申请就能当上，却没人去申请，这也可能意味着捕手根本就是个没人愿意干的苦差事。”<br>“你总是喜欢给我泼凉水。”城子哼了一声，扭过头去。<br>“这是一种可能性。你总是很乐观，这很好，但我们得随时做好两手准备，不是吗？”<br>祝天南耐心地解释。他知道城子会听的，她从来都很讲道理。<br>城子没理他，并且在整个下降过程中都没有再理他。<br>但两人下到底层、踏出通行竖井的时候，城子没有甩开祝天南的手。</p>
+<hr>
+<p>关于捕手这件工作，祝天南和城子都猜错了。或者说，他们都只猜对了一部分。<br>“听说有两个高中生想来当捕手，大家都很开心，就把机会让给你们啦。”教官老刘对他们这么说。<br>老刘看起来约五十岁模样，留着短发，戴着一副圆框眼镜。天河号的船员早就不再受近视困扰了，老刘戴着眼镜只是当个装饰。除此之外他还喜欢收集小饰品，他脖子上挂着一串项链，上面全都是替换下来的零件。<br>老刘是动力舱的三级工程师，地球生人，得益于生物技术的发展，至今已经快三百五十岁了。在天河号上，动力舱的工程师就像英雄一般受欢迎，只有最精英最有经验的工程师才有资格常驻动力舱，与人类顶尖的技术成果相伴。当然了，他也很受祝天南和城子的欢迎。<br>“为什么要让给我们？”城子问。<br>“因为我们这些人不想干这份工作。可惜一直没有年轻人报名，我们只好每年都抽签决定谁顶上。你们应该参加过捕光节庆典吧？”<br>祝天南和城子对视一眼，同时点头。<br>天河号上的人们一年只过两个节日，每年2月左右的旧历新年和每年七月一日的捕光节。捕光节期间整个居住区都会换上复古的陈设，生态穹顶会铺张浪费地模拟出恒星光照来，参加庆典的人们穿着复古的装扮在街上四处走动，用自然语言谈笑，而不是用浅层意识桥来交谈。<br>据说这个节日是为了纪念人们的故乡。祝天南和城子都无法理解为什么要专门设立一个节日来模仿几百年前人们的生活，但这不妨碍他们加入庆典之中去。<br>“如果你们不知道捕光节设立的原因，这就是你们的第一课了。”老刘把自己挂在训练场的服务机上，在无重力场中保持悬停，“或许你们听完之后还是理解不了为什么要把名额让给你们。但没关系，带着疑问听吧。”</p>
+<hr>
+<p>天河号舰历第十五年，捕光节的雏形第一次出现。<br>那时天河号正远离地球，带着满满的科研任务、一切必要的工业设施和一批素质良好的精英志愿者，向两千光年外的星云而去。它将稳妥地逐渐加速到十分之一光速，以达到曲速的最低标准。<br>天河号刚出发时还能收到来自地球的定向通讯，那时说一句话要等十几秒才能得到回复。天河号的速度越来越快，离地球越来越远，通信的延迟也越来越高，从一开始的十几秒增加到几分钟，几小时，几天；通信的带宽也在逐渐减小，先是视频通话不再可用，然后是语音……直到最后只能收发10字符以内的文字信息。<br>天河号舰历15年，也就是天河号起航的第十五年，这艘巨型科研舰完成了第一次曲速。<br>这时候他们离地球的距离已经要用光年作单位来衡量，就算地球真的能接收到天河号远隔万里传回的信息再发出回复，那也要再过十几年的时间，天河号才能收到回信。<br>可是人总是会思念故土，尤其是当你在黑暗的真空中进行一次望不到尽头的远征时。<br>所以天河号的船员们开始回望故乡。<br>这是一件有难度的工作，隔着以天文单位丈量的漫长距离，要怎么才能看见那久别了的故乡？<br>一开始，船员们只能尝试着定向接收来自特定方向的电磁辐射。好在这一点还不是全无可能，寂静的宇宙中，唯有地球这一颗小小的行星在放射特定频率的、经过调制的电磁信号，她是舞台上唯一的歌唱家。<br>相隔如此之远，电磁信号的强度弱得不可思议，必须经过严格的检波放大才能勉强解读出信息。但死寂的真空足够洁净，天河号的探针也足够稳定，能够让船员们听到少许家乡的信息。<br>只是天河号的探针不能一直用来监听地球，这枚探针还有别的科研任务。当时的舰长于是定下了一个日子，每年的七月一日到四日——那是天河号起航的日期——在这期间，天河号那宏伟的探针将暂时停止科研任务，它将用四个小时慢慢转向舰尾方向，重新校准参数，接收来自地球的信息。<br>舰历15年的七月一日，就是实质上的第一个捕光节。</p>
+<hr>
+<p>说到这里，老刘暂时停了下来。他留了一点时间给少年少女慢慢消化故事，自己则在文件系统中翻找了片刻，向祝天南和城子发来一个磁力链接。<br>两人下载了链接指向的文件，得到了几百个媒体文件。有些是音频，有些是图片，编号从15到326。城子随手点开其中一个音频文件，底噪严重的音乐声在她和祝天南共享的浅层意识桥里响了起来。<br>“《波西米亚狂想曲》？”<br>“我们开始用探针观测地球的时候就同时发出了电磁通信。过了大约五年，地球那边才收到我们发的信息；又过了十年左右，我们接收到了这些。似乎是有人在同步轨道上架了专用的通讯卫星，给我们定向广播这些。”老刘用指节打着拍子，一边回答道：“这是我们接收到的第一首歌，在此之前接收到的都是零碎的卫星广播和通话内容。看起来这位好心人喜欢听摇滚。”<br>祝天南好奇起来。他点开另一个文件，这一次响起来的是李斯特的《钟》。<br>“似乎那颗卫星每天都会不间断地广播。那些年，一到七月一日，我们就放下手里的工作，走到居住区的街道上去。每年只有那四天舰长会批准我们一大堆乱七八糟的物资申请，我们在街道上狂欢，用啤酒和香槟互相泼洒，把奶油抹到每一个朋友脸上。那时候舰长会用广播系统转播探针接收到的信号，虽然音质很差，我们仍然很开心。”老刘沉浸在回忆里，脸上带着美好的微笑。<br>“后来呢？”祝天南知道一定发生了什么，因为如今的捕光节已经没有广播放音乐这个环节了。<br>“你继续往后听吧。”老刘动动手指。<br>祝天南于是一个个点开那些媒体文件。<br>一开始那些文件里装的仍然是音乐，虽然依旧会放很多经典作品，不过偶尔出现的新曲风格越来越前卫。<br>不过，从某个时间点开始，这些音乐忽然变了。祝天南也说不清楚究竟是哪里变了，但是城子的思绪里传来答案。<br>她感受到了，这些音乐逐渐变得不那么“自由”。有一些题材、一些语言的音乐再也没有出现过，过了某个时间点之后，干脆连新的音乐也没有了。编号108的文件开头正在播放20世纪的反法西斯歌曲，放到一半却忽然被切断了，改成了一首没什么营养的说唱。<br>“可惜，我很喜欢红旗歌舞团的。”老刘点评道。<br>“为什么不再放了？”<br>“你听编号120的那个，快进半个小时。”<br>城子依言开始播放编号120的文件。<br>这次开头是在放爵士乐。城子快进到半小时左右的地方，轻盈优雅的爵士乐忽然被切断了，有人清了清嗓子。<br>那是个苍老的男人声音。他略微停顿了片刻，说：“听众们，欢迎收听今天的特别节目！”<br>然后他毫无征兆地开始歌唱。没有伴奏，没有和声，那只是一个老男人对着麦克风唱起沙哑的歌。<br>“只要我还能够行走，只要我还能够张望……”<br>虽然那歌声荒腔走板，俄语也一点都不标准，祝天南还是顺利地用AI识别出了答案：“《歌唱动荡的青春》？”<br>老刘微微颔首：“他就是那个几十年以来一直给我们放音乐的好心人。”<br>只唱到一半，背景里就传来用力的砸门声。歌唱者并不理会，只是继续唱：“只要残躯一息尚存，怎惧前方路峥嵘——”<br>然后是爆破的声音和杂乱的脚步声，有一群人冲了进来。几声枪响，歌声戛然而止，接下来是死一样寂静的五分钟。<br>随后响起的是字正腔圆的通告。<br>“……我们一直致力于对抗任何对人权和主权的侵犯，因此，我们不得不公开宣布进入战争状态……我们相信这是必要且紧迫的，为保证所有人的权利平等和自由……”<br>“地球上开战了？”祝天南问。<br>老刘闭着眼睛，点了点头。<br>“得知这一消息后，时任的舰长下令暂停了科研任务，持续监听来自地球的声音。那一年的捕光节是最安静的捕光节，斟满的酒杯就放在大家手边，却没有人想端起来。我们坐在街头，大家肩并着肩，听故乡的战争，隔着几十光年传来的消息。”<br>“战争没有持续多久。步兵和枪弹的年代过去了，他们在两个月里发射了三万多枚导弹，全球的人口减少了六分之一。最终，其中一方获得了胜利，败者的残骸被消化殆尽，一个新的国家成立了。那些音乐再也没有响起来过，往后我们接收到的都是新闻。”<br>老刘的声音低沉。<br>“听见停战布告的时候，所有人都沉默了。我们其实早就知道，我们离家太远，熟悉的东西大多都已经随时间而去，哪怕现在就回到地球上，也没法重新融入社会。可是，直到我们原本的国家都不在了，我们才真切地意识到这一点。这一切甚至是发生在过去的……电磁波这只信鸽已经在全速飞行，但对于宇宙而言，它还是太慢太慢。在我们听着广播的时候，那场战争已经结束好几十年了。”<br>“一开始没有人动弹，可是很快有人啜泣起来。接着几乎所有的船员都开始哭泣，我们互相拥抱，号啕大哭。我们的故乡已经不在了，我们成了漂流在宇宙中的孤儿！”<br>老刘将播放进度条拉了回去，絮叨个不停的宣战公告没了声音，老男人的歌声重新响了起来。<br>“中国人认为人和自己的家乡是紧密相连的，那是一种灵魂上的联系，就算身死也要葬在故乡才能得到安宁。可我们呢？我们身死又该葬在何方？古时候的文人被贬离家尚且能收到家书，就算天南海北也不过几个月车程，只要挂印而去，总归能回到故土……我们呢？”<br>两个年轻人沉默不语。歌声还在他们的意识间回荡，老男人沙哑地唱：“我的心向我呼唤，去动荡的远方——”</p>
+<hr>
+<p>祝天南和城子开始接受捕光节捕手的训练。<br>两人曾经接受过舱外工作的训练，而且已经有150小时的舱外工作经验。但捕手的训练比那更加严苛，他们必须小心再小心。<br>捕手要做的工作其实很简单，他们之中有一个要留在舰内操纵光子探针，另一个则需要出舱行动，对舰尾的光子探针进行半手动的校准。但做这份简单的工作时遇见的困难可不是那么好对付的，不管是对于留在舰内的那个人还是出舱校准的那个人来说，都一样。<br>捕光节的原理其实和曾经的远距离监听差不多。不同的是，在那位给天河号放音乐的好心人离开之后，天河号就把探针的采集对象从电磁波改成了光辐射。<br>更加不同的是，他们如今离地球已经有近350光年远了。<br>如今的捕光节操作难度跟以往天差地别。首先，在真空中采集光子比监听特定频段的电磁信号要难得多——宇宙中少有通信频段内的电磁信号，但光辐射可是一点也不缺。如今的天河号船员们想要看到家乡，需要先从无数的恒星系中定位到太阳系，再从太阳的光辉下挑出地球表面反射出来的光子。<br>深远的宇宙就像是一条看不见尽头的黑色绸缎，上面点缀着无数璀璨夺目的宝石，其中象征太阳系的那一颗不过是一片米粒大小的白玉。而捕手们要做的事就像是站在三百五十米开外，用一根长针挑出这片白玉上的一颗灰尘。<br>由于地球本身并不发光，在如此遥远的距离上能捕捉到的、来自地球的光子数量几乎等于零。更糟糕的是，就算天河号定向捕捉到了光子，捕手们也根本无从知晓那颗光子是不是真的曾经到过地球。<br>不过，天河号既是一艘前往两千光年外的移民舰，也是一艘科研舰。<br>这艘全长六十公里的巨大舰船是一件精美的实验品，用来进行曲速技术的实验。结果是巨大的成功，天河号加速到十分之一光速后成功进入了曲速。<br>天河号如今离地球350光年远，但它起航至今才326年。<br>这艘巨舰是可以超光速航行的。<br>光速是宇宙不可撼动的基本规律之一，但既然天河号想办法绕过了它，有些曾经不可想象的技术也变得不那么遥远了。这其中就包括捕光节得以延续的基础——超先验计算。<br>通过对超光速的研究，天河号的学者们成功地实现了一种超图灵机架构，他们将原型机称为“烛龙”。在捕捉到光子的一瞬间，这台超图灵机能够在数个普朗克时间内完成原本需要数年时间的繁杂计算，确定这颗光子是否来自地球。如果答案是“否”，光子探针就不会截留这颗光子；反之，探针就会截留下这颗光子，让它撞击在“捕网”上，留下一个光点。<br>捕光节本身只会持续三天，但捕手们需要连续工作三个月。捕光节的准备将在三月一日开始，船员们过完旧历新年后几乎是马上就会投入到捕光节的准备工作中去。首先天河号会花费两周时间，由十分之一光速减速到静止。在彻底静止后，工程部门会开始检查仪器、检修关闭的主引擎，一切准备完毕后捕手们就会开始捕光作业。<br>四月一日至七月一日的三个月内，捕手们都要盯着光子探针，在深空里捕捞光子就像用渔网在太平洋里捞橡皮鸭子，几十分钟甚至好几个小时才会捕捉到一个。三个月时间过去，捕手才能收集到足够多的光子，勉强构成一幅画面。那时候，捕光节才会正式开幕。<br>而捕光节结束后，天河号会在一周内逐渐加速到十分之一光速，然后以巡航速度进入长达六个月的曲速航行，越过大约两光年的漫长距离。<br>训练确实耗费了很久时间，但并没有六个月那么长。天河号舰历327年四月一日，高中毕业后的第四个月第一天，祝天南回想着接受过的训练，踏出舱外。</p>
+<hr>
+<p>天河号为捕光节付出了很多，比如拿出一年的三分之一来准备这一节日。再比如，一旦捕手开始工作，全舰的外部灯光都会熄灭。<br>光子探针和用于计算光子来源的“烛龙”将会占用全舰60％的发电功率，所有非必要的灯光都会在此期间关闭，一些不那么重要的科研项目也将暂停。“烛龙”这个名字正是来源于此，它和古老神话中那注视天地的巨龙一样，它双目开合之间，天地万物都要黯淡无光。<br>因此，祝天南要面对的是极其恶劣的舱外环境。他没有任何可用的固定照明，只能用自己携带的灯光勉强照亮前路，而且一旦接近光子探针，他必须把所有灯光都熄灭掉。<br>天河号是一艘全长达六十公里的庞然巨物，有一座城市那样大小。架设在船尾的光子探针则有一幢大楼那样高，祝天南在它脚下仿佛一只蚂蚁。他把安全锁扣在天河号的船壳上，望着无尽的深空。<br>深空会吞噬一切光线。手电筒的光根本什么也照不亮，因为没有任何可供反射的东西，没有空气，没有参照物。<br>未经训练的工作员时常会因此怀疑自己的光源是否还在正常工作。祝天南不会这样，他的手电筒根本就没有开。他放松四肢，看着极远方的一小片星光。<br>他和城子仍旧通过浅层意识桥保持着链接，这就是搭档制度建立的初衷。生活在地面上的人们很难想象真正空无一物的深空是什么样子，很多人第一次出舱工作后都产生了心理问题，甚至有人在太空中痛哭流涕、大声哭喊。后来，为了防止舱外工作时产生心理问题，天河号设立了搭档制度。<br>这是一根心理层面上的救生索。<br>“我还是头一次独自进行舱外工作。”<br>“跟我说说一个人有什么体会吧。”城子的声音很紧张，像是绷着的弓弦，略微一碰就颤颤巍巍。<br>她在操作光子探针。虽说95％以上的操作都是自动完成的，但她还是很紧张。天山城子就是这么一个认真又爱紧张的人。<br>祝天南和她正巧相反，不但不会紧张，还经常在城子紧张的时候讲冷笑话。平时城子经常假装不理他，舱外工作的时候就不行。<br>按照工作手册，无论他在浅层意识桥里说些什么，不管是破口大骂还是语言骚扰，城子都必须陪他聊天。和自己搭档的联系是舱外工作时唯一的精神依靠，两人都有义务回应对方，以防另一人失控出现事故——至于回到舱内之后怎么算账，工作手册不管。<br>不过今天祝天南不想讲冷笑话。就算是他，也会有不想讲冷笑话的时候。<br>“体会就是黑得要命。你没见过天河号外部灯光关闭的样子吧？我很想给你拍张照，但实在是拍不了。”<br>“有多黑？”<br>“什么都看不见，只能靠服务机带着我前进。我感觉自己……”祝天南闭上眼睛，遥远的星光似乎还烙印在他的视网膜上，“好像悬浮在一片沥青的大海里，上下左右都是粘腻的半流体，或许还有一些发着光的小气泡。任何妄图在这里撞开一条路的光线都会被黑暗无情地吞吃殆尽。”<br>“星星呢？”<br>“星星啊……它们太遥远了。那些是几百年几千年几万年前燃烧着的天体的光，它们之中有些比太阳明亮几百倍，有些则是能毁灭一整个星系的壮丽爆炸，可是在这种距离上看来也不过是一个几不可见的小点，就像是你躺在一公里深的海床上，海面上投下来的那一丁点儿粼粼的波光。那很美丽，可是也太宏大了，你知道你就算用尽全身的力气，一辈子也触碰不到它们的边角。”<br>城子沉默了一会。她轻声问：“天南，那之中也有地球吗？”<br>“我不知道。相隔三百五十光年，所有的星星在我看来都没什么区别，不过是一串光点。”<br>“即使你的故乡也在其中？”<br>“我能理解老刘他们的思乡之情，但我确实没办法感同身受，城子。”祝天南呼出一口气，在航天服的面罩上形成一团水雾，又很快消去。“老刘他们是在地球上出生的，他们活得越久，就越怀念自己的故乡。但我的故乡是天河号。”<br>“我看过不少关于地球的资料，对于老刘他们来说，童年是摇滚、说唱、电子乐，是零食、糖果和夏日的冰棒，故乡是春夏秋冬和高山大海。可我是在天河号上出生成长的，我的童年是物资管制、能源管制，是幼儿养育系统和服务机，我的故乡是这艘六十公里长的巨舰和窗外这永远望不到尽头的深空。我知道他们在怀念什么，可是那和我终究隔了一层障壁。”<br>城子没有说话，但祝天南能听到她的呼吸声。他知道城子的想法其实和他一样，她也是天河号上诞生的孩子。<br>“其实对于老刘他们来说，捕光节只是饮鸩止渴而已。既然一路远行，人总要跟自己的过去告别的。”<br>“为什么？”<br>“我们现在离地球350光年，捕捉到的画面显示的是350年前的地球，也就是天河号起航前24年的地球。为什么老刘他们不去看327年前，326年前，300年前的地球呢？”祝天南反问道。<br>“因为……”城子停顿了一瞬间，祝天南感觉到她的思绪变得复杂起来。<br>她并不是笨蛋，所以立刻就想到了答案。<br>“因为光是有限的。”祝天南说。<br>“天河号可以借由曲速航行超越光速。现在是天河号起航的第327年，如果想要看到天河号起航时的地球，只需要天河号航行到距离地球327光年的位置；然后在捕光作业结束时，天河号再出发去追赶那些光，在下一年到达距离地球328光年的位置。这样我们就是和‘天河号起航那一年地球上传来的光’同速行进，老刘他们便可以永远地望着故乡。”<br>“但是，光子一旦撞上捕网，在天河号上成像，它就不可能继续沿着之前的方向运动了。换句话说，一颗光子、一幅画面只会被捕捉到一次。我们从光线奔涌的那条河流中捞起了一段记忆，浇入愁肠，从此之后这条河流便永久地缺少了那一段。”<br>“天河号舰历120年，来自地球的广播中断，那之后他们就开始使用光子探针了吧。捕光节已经从光的河流里抓去多少时间了呢？我们离目的地，那颗被称为‘未知伊甸’的行星，还有一千六百光年的漫长路程。捕光节总会把那些光用完的。”<br>“可是，地球并不是一个线光源，难道不能换一个角度吗？不就又能重新看到了吗？”<br>“不行。”祝天南微微摇头，尽管城子看不到。“光子探针过滤的范围并不止这几百米，而是半径数千公里的一个圆形平面。想要换一个角度，航路就要偏移数千公里，那已经是一颗行星的直径了。天河号的航路大体上是一道直线，绝不能有这么大幅度的变动。”<br>“总会有办法的，变动一下航路最多也就是需要一些复杂的计算，科研部门连超图灵机都做出来了，难道会害怕这个？他们不是怀念故乡吗？”<br>“怀念故乡，并不是看不见故乡就活不下去。他们没有那么脆弱。天河号是为了远航两千光年而出发的，老刘他们下定决心和自己熟悉的一切告别，和他们生长的故乡告别，甚至留下遗书，做好了在永远黑暗的深空中长眠的准备。即使身躯逐渐老迈，他们铁一般的决心也从未动摇过，如果只为回头看一眼就随便变动航路，那他们当初登上天河号的意义又在哪里？”<br>“……”<br>两人之间的对话暂时中断了。祝天南无言地在黑暗中悬浮着，看着他觉得应该是地球的方向。他想起老刘给他们放的那段录音来，想起录音里那个不知名的老男人唱着的歌。<br>只要残躯一息尚存，怎惧前方路峥嵘。<br>可是，祝天南又觉得有些不同。<br>“……其实我觉得，他们也在害怕。”他说。<br>“害怕什么？”<br>“害怕自己再回头多看几眼家乡，就会失去前行的力量。”<br>城子不说话了。隔了好一会，她才说：<br>“难怪老刘他们会把捕手的工作交给我们。”<br>城子似乎懂了，但祝天南并不理解。他能理解老刘他们的心情，但仍然不明白他们为什么自己不愿去做捕手的工作。<br>在他85岁生日那天，他终于明白了。</p>
+<hr>
+<p>祝天南在80岁时就不再进行舱外工作了。<br>他的搭档死了。<br>天山城子在一次舱外工作中遭遇了恒星爆发。爆发持续了约3秒，天河号舱外的所有电子设备和通信都被密集的带电粒子流干扰，遭到不同程度的破坏。<br>天河号立刻开始重启各个系统。他和城子之间的浅层意识桥在五分钟后勉强恢复，但在那之前，城子赖以移动的服务机已经损毁，脱离了天河号。她马上被恒星的重力捕获，缓缓向恒星坠落。<br>祝天南甚至没办法给她留下最后一张照片。他携带的大部分设备已经被烧毁，也包括航天服外置的摄像机。<br>祝天南最后和她保持了一分三十秒的浅层意识桥连接，浅层意识的交流里没有话语，只有巨浪般的思绪不停地翻涌。他看着自己的搭档兼恋人逐渐远离，慢慢缩小成一个小点，被恒星的炽白色光芒逐渐吞没。<br>祝天南没有闭眼，他一直看着，泪水从他眼中滚滚落下，悲伤的泪和视觉系统被强光灼伤而流出的泪液混在一起。<br>在那之后他就不再出舱工作了。他失去了搭档，也瞎了眼，天河号的医疗部门花了好几年才将他几乎被完全烧毁的视觉系统重建好。<br>他不再像原来那么爱开玩笑了，每日他只是坐在自己的椅子上，望着舷窗外漆黑一片的真空。熟悉他的人们都觉得，这个原本风趣的家伙正在渐渐死去，就好像他只剩一副躯壳徒留在那里，灵魂则早已纵身投入恒星的烈光之中去了。<br>在祝天南85岁生日这天，老刘敲开了他的门。<br>祝天南抬起眼来，望了望门口，却没有动弹，只叫了声：“老师。”<br>老刘什么也不说，只是在他对面坐下，重重地叹了口气。<br>老刘也很老了，他今年已经超过400岁，身体的各个器官都更换过不止一次，像是一台快要报废的老爷车，忒休斯的老爷车。即使以天河号医疗部门的技术，也很难再继续延长他的生命了。<br>“小祝。今年的捕光节，我推荐了你去当捕手。”<br>“捕手？”祝天南微微摇头，“我的搭档已经不在了。”<br>“你从高中毕业之后开始，担任了60年的捕光节捕手。你应该知道现在捕手已经不需要舱外工作了。”<br>“是的。可是那又怎么样呢？我的搭档已经不在了。”<br>祝天南轻轻地重复道。<br>老刘也不急，而是不紧不慢地先给自己剥了一片口香糖。<br>“你会感兴趣的。听我说完。”<br>祝天南平静地凝视着地板，视线低垂。比起头发斑白、正在嚼口香糖的老刘来说，反倒是祝天南显得更老态一些。<br>老刘也不管祝天南听不听，自顾自地说道：“今年科研部门那边在逆时计算技术上有所突破，‘烛龙’被更新了，它现在不仅可以计算光子的来源，还能可靠地补全图像。这意味着捕光节的‘捕网’生成的图像能够比以前清晰十几个数量级。从前我们捕捉到的图像就算经过补全处理也只能勉强算是一张像素画，但这一次我们可以获得卫星照片级别的清晰图像。”<br>“可地球不是我的故乡。”祝天南低声说。<br>“我知道，你是天河号上出生的。可是你有没有想过一个问题：天河号现在离地球已经有近450光年。如果我们能在450光年的距离上获得卫星照片级别的图像，那能不能在5光年左右的距离上拍清楚一个人呢？”<br>祝天南猛地抬起头来。</p>
+<hr>
+<p>六十多年过去，“烛龙”已经再度升级了数次，但每一次小小的修正都不如刚刚完成的这次升级有力。天河号的科研部门在超光速的研究上终于登上了新的阶梯。<br>他们做到了预知未来。<br>以往的“烛龙”最高只能做到跳过计算过程，直接得到答案。但这一次，仅限于对光子路径的计算上，“烛龙”完成了因果的逆转，在计算过程发生之前就凭空得到了正确答案。<br>假如有人有预知未来的能力，那么即使他的智力只有猴子水平，他也可以解决人类已知的一切难题。只要他拿着一支笔，不断地预言“下一秒笔尖所在的位置”，他就能凭空写出任何问题的解答来。<br>通过捕捉光子来还原图像，本质上是通过记录在光子运动状态中的信息来还原图像。光子的运动状态中承载的信息是有限量的，但“烛龙”却能够突破信息熵的上限，通过“预知”的方式获得更多的信息。虽然仅仅局限于计算光子路径，但这也足够让他们在四百五十光年外分辨出珠穆朗玛峰上每一块直径超过两米的岩石。<br>以这样的精度，自然也可以跨越五年时光，让祝天南再次见到他的搭档。<br>祝天南很快就重新坐到了捕手的全息控制台上。<br>“我们已经请舰长批准了，今年的捕光作业将为你提早一个月开始。鉴于你在捕手岗位上六十年的竭诚服务，几乎所有人都对这一提案表达了支持。”老刘在他背后说，“希望你的手艺还没有生疏。”<br>祝天南当然不会生疏，他是天河号上最有经验的几位捕手之一。如果你连续六十年做着同样的工作，直到进入坟墓你都不会忘记一切该如何进行。他熟稔地开始设定参数，只不过这一次的参数经由科研部门修正过：光子探针将指向天河号的历史航线，而非遥远的地球。<br>新的光子探针系统几乎是完全自动化的，祝天南以颤抖的手完成三次确认，按下开始键，操作室内便和天河号舰外一同陷入黑暗。<br>控制台上亮着全息数字显示，那是目前捕捉到的光子数量。<br>零，零，零。<br>祝天南屏息凝视着那个数字，他多么迫切地希望那个数字能跳动一下。<br>他只有一个月的时间，这是他宝贵的一次机会。错过了这次机会，他不知什么时候才能再见他的搭档。<br>祝天南不眠不休地盯着那个数字，就好像五年前盯着那颗永不熄灭的恒星。<br>终于，在第73个小时，那个0跳变成了1。<br>很多时候，从0到1就是从无到有的天堑。光子探针系统立刻开始自动校正参数，很快数字就开始继续上涨：12，230，3085……直到最后，一张清晰的图像被显示出来。<br>祝天南怔怔地看着那张图片。<br>人在过高的背景亮度下很难分辨出物体，更不用说他长时间直视一颗恒星，视觉系统在最初的数秒内就损坏了。因此他也从没见过这一画面。<br>城子在向镜头挥手。并不是向当时的天河号、祝天南的方向挥手，而是向天河号的前方。她在向未来挥手。<br>“这是……什么意思？”他喃喃自语。<br>其实他心里已经有答案了。城子是个聪明的人，而且也是服役60年的资深捕手。在生命的最后，她恐怕是想到了未来祝天南会从极远方，从时间的彼端回望她。<br>虽然不知究竟那时的祝天南身在何方、时间又过去了几何，她还是赶在被恒星的光吞没之前，微笑着向未来告别。<br>祝天南的泪水夺眶而出。他伏在案上，泣不成声。<br>——但他很快又想起了一件事。<br>他近乎惊恐地弹起身子，开始操纵光子探针的控制台，用力地按下停止按钮。他低吼着，“停啊，停啊！快停啊！”<br>全息控制台上，用于计算捕获光子数的计数器已经跳到了六位数。<br>光是有限的。<br>城子落入恒星的全过程只用了半小时不到，如今光子探针拦截了大约五分钟，那么从今往后，无论祝天南和天河号如何跳跃，只要天河号不改变航路，这五分钟就永远也看不到了。<br>祝天南本可以隔着光年的距离和城子最后的残影遥遥相望，但现在那残影已经被截留了，成了一张照片。<br>他可以对着光子探针的成像流泪，假装自己在和五光年外的某个人隔着时间遥遥对视，假装她还活着，只是光这只信鸽飞得太慢，延误了信件。<br>但他没法对着近在咫尺的一张照片这么做。他没法对着一张照片骗过自己。<br>直到这时候他才明白了六十五年前他没能想通的那个问题。老刘，那群出身地球的人们，为什么不愿去做捕手的工作。<br>离家路上，临行前母亲给你做的糕点好好地装在包里。你知道你一去不知什么时候才能再与母亲相见了，你能用来回忆她的只有那一盒小小的糕点。<br>老刘他们每个人都舍不得吃，只在捕光节时打开，小心翼翼地捏一小点放在嘴里，尝尝母亲的味道。<br>现在，祝天南也有一盒糕点了。<br>“看开点吧，小祝。”老刘叹了口气，拍了拍祝天南的肩膀：“既然远行，人总要学会和自己的过去告别。”<br>祝天南没有回答。他看着光子探针的成像，号啕大哭。</p>
+
+      </section>
+       
+    
+    
+  <div class="nav-container">
+    <!-- reverse left and right to put prev and next in a more logic postition -->
+    
+      <a class="nav-left" href="/copy/atan-rgjnb/" target="_blank">
+        <span class="nav-arrow">← </span>
+        
+          《人工纪念碑》
+        
+      </a>
+    
+    
+      <a class="nav-right" href="/copy/atan-mmmddy/" target="_blank">
+        
+          《魅魔们的地狱》
+        
+        <span class="nav-arrow"> →</span>
+      </a>
+    
+  </div>
+
+    
+      <div class="advertisement">
+        <p> 广告：快速学习 Crash Course十分钟速成课 <a target="_blank" rel="noopener" href="https://crashcourse.club/">字幕组网站</a></p>
+      </div>
+    
+    
+      <div id="waline"></div>
+
+<link href="https://cdn.bootcdn.net/ajax/libs/waline/2.15.5/waline.min.css" rel="stylesheet">
+<script src="//cdn.bootcdn.net/ajax/libs/waline/2.15.5/waline.min.js"></script>
+<script defer src="/js/waline-qqavatar.js"></script>
+<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/waline/2.14.9/waline.min.js"></script>-->
+<!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/waline/2.14.9/waline.min.css">-->
+
+<script>
+  // 中文默认
+  const locale = {
+    nick: '昵称',
+    nickError: '昵称不能少于3个英文字符或2个中文汉字',
+    mail: '邮箱(可用QQ邮箱获取头像)',
+    mailError: '请填写正确的邮件地址',
+    link: '网址',
+    optional: '可选',
+    placeholder: '' || '说、什么8 \n\n可使用QQ邮箱获取QQ头像，或在gravatar.com注册后使用邮箱绑定头像 \n支持Markdown语法：*斜体*, **粗体**, \# - ###### 1-6级标题, *** 或 --- = 水平分割线, ~~删除线~~, > 引用内容, `代码块`, 1. 序号列表, * 无序列表, ^上角标^, ~下角标~, <br> = 空行, [链接文字](链接地址), ![图片名称](图片地址.png), ',
+    sofa: '来发评论吧~',
+    submit: '提交',
+    like: '喜欢',
+    cancelLike: '取消喜欢',
+    reply: '回复',
+    cancelReply: '取消回复',
+    comment: '评论',
+    refresh: '刷新',
+    more: '加载更多...',
+    preview: '预览',
+    emoji: '表情',
+    uploadImage: '上传图片',
+    seconds: '秒前',
+    minutes: '分钟前',
+    hours: '小时前',
+    days: '天前',
+    now: '刚刚',
+    uploading: '正在上传',
+    login: '登录',
+    logout: '退出',
+    admin: '博主',
+    sticky: '置顶',
+    word: '字',
+    wordHint: '评论字数应在 $0 到 $1 字之间！\n当前字数：$2',
+    anonymous: '匿名',
+    level0: '潜水',
+    level1: '冒泡',
+    level2: '吐槽',
+    level3: '活跃',
+    level4: '话痨',
+    level5: '传说',
+    gif: '表情包',
+    gifSearchPlaceholder: '搜索表情包',
+    profile: '个人资料',
+    approved: '通过',
+    waiting: '待审核',
+    spam: '垃圾',
+    unsticky: '取消置顶',
+    oldest: '按倒序',
+    latest: '按正序',
+    hottest: '按热度',
+    reactionTitle: '你认为这篇文章怎么样？',
+  };
+
+  Waline.init({
+    el: "#waline",
+    serverURL: "waline.voiiu.com",
+    appId: "" || "M2JD6yGQhefhH2O0aSjFfclc-MdYXbMMI",
+    appKey: "" || "arEPHdbMnKwMjQgiWsLgw34N",
+    path:  "" || window.location.pathname,  // window.location.pathname.replace(/\/$/,''),
+    login: "disable",  // 'enable' || 'disable' || 'force'
+    avatarCDN: "https://gravatar.loli.top/avatar/",
+    //avatar: '',
+    placeholder: "",
+    pageSize: 10,
+    meta: ["nick", "mail"],
+    requiredMeta: [""],
+    pageview: "true" && "",
+    emoji: [
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/tieba",
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/weibo",
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/qq",
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/alus",
+      "https://testingcf.jsdelivr.net/gh/Saidosi/azuki-emoji-for-waline@1.0/azukisan",
+      "https://testingcf.jsdelivr.net/gh/norevi/blob-emoji-for-waline@2.0/blobs-gif",
+    ],
+    locale,
+  });
+
+  $('.wl-actions').append("<a href=https://emoji.zhuochi.org target=_blank id=wl-emoji-wrapper><img src=/images/emoji.png class=wl-action id=wl-emoji></a>")
+
+  //// Clean TEXTAREA 
+  //$(".wl-cards").change(function () {
+  //  alert('changed')
+    //('#wl-edit').html("")
+  //})
+  
+  //! Not functional
+  //$(".primary .wl-btn").click(function () {
+    //document.getElementsByClassName('wl-num')[0].innerHTML ++
+  //})
+</script>
+    
+    
+    
+      <div class="qrcode" id="qr-box">
+    <img id="share-qrcode" class="qrcode-image" src=""/>
+    <div class="qrcode-notice">保存二维码，分享此文章</div>
+</div>
+
+<!--<script type="text/javascript" src="/js/qrious.min.js"></script>-->
+<script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/qrious/4.0.2/qrious.min.js" ></script>
+<script>
+    // qrcode
+    let qr = new QRious({
+        background: '#F0FFFF',
+        backgroundAlpha: 1,
+        foreground: '#0096FF',
+        foregroundAlpha: 0.8,
+        level: 'L',
+        mime: "image/gif",
+        padding: null, // pixels
+        size: 100,
+        element: document.getElementById('share-qrcode'),
+        value: document.location.href,
+    })
+
+    $("#share-qrcode").click(function () {
+        let img = document.getElementById('share-qrcode')
+        let imgurl = img.src
+        let a = document.createElement('a')
+        let down_event = new MouseEvent('click')
+        a.download = '《捕光人》-CloudPool浊池'
+        a.href = imgurl
+        a.dispatchEvent(down_event)
+    })
+</script>
+
+
+    
+  </article>
+</main>
+
+<script>
+    (function () {
+      var url = "https://zhuochi.org/copy/atan-bgr/";
+      var banner = "";
+      if (banner !== "" && banner !== "undefined" && banner !== "null") {
+        $("#article-banner").css({
+          "background-image": "url(" + banner + ")",
+        });
+      } else {
+        $("#article-banner").geopattern(url);
+      }
+      $(".header").removeClass("fixed-header");
+    })();
+  </script>
+
+<script>
+  // error image
+  $(".markdown-content img").on("error", function () {
+    $(this).attr("src", "/images/error.png");
+    $(this).css({cursor: "default",});
+  });
+</script>
+ 
+    <aside class="sidebar">
+  <span class="scroll-top fa fa-arrow-up"></span>
+  <span class="fa fa-share-alt share-icon">
+    <span class="list-icon">
+      
+        <a href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=https://zhuochi.org/copy/atan-bgr/index.html&title=《捕光人》&pics=https://zhuochi.org/images/logo.svg&desc=&summary=CloudPool浊池是由年轻人管理的博客" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659969569042" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1231"><path d="M1023.210667 395.690667c-2.005333-6.08-7.381333-10.410667-13.781333-10.944l-347.114667-29.802667L526.634667 33.984C524.117333 28.096 518.4 24.256 512 24.256s-12.181333 3.861333-14.677333 9.749333l-135.616 320.938667L14.570667 384.746667c-6.357333 0.533333-11.797333 4.864-13.781333 10.944-1.941333 6.101333-0.106667 12.778667 4.714667 16.96l263.338667 228.138667L189.888 980.16c-1.429333 6.208 1.002667 12.757333 6.122667 16.512 5.205333 3.733333 12.117333 4.010667 17.642667 0.682667L512 817.450667l298.282667 179.946667c2.581333 1.557333 5.418667 2.346667 8.32 2.346667 3.221333 0 6.528-1.002667 9.344-3.008 5.162667-3.84 7.594667-10.368 6.122667-16.576l-62.442667-268.352c26.730667-13.482667 56.277333-36.245333 56.277333-36.245333s-116.864 57.066667-536.341333 29.205333L595.626667 484.437333c0 0-11.968-18.581333-392.981333-31.872-25.408-0.917333 310.677333-63.722667 558.933333-10.645333L456.298667 660.906667c0 0 122.453333 18.197333 307.328 16.085333l-8.448-36.181333 263.36-228.16C1023.381333 408.469333 1025.216 401.792 1023.210667 395.690667z" p-id="1232" fill="#04b2f1"></path></svg>
+        </a> 
+      
+      
+        <a href="https://service.weibo.com/share/share.php?url=https://zhuochi.org/copy/atan-bgr/index.html&title=《捕光人》&pic=https://zhuochi.org/images/logo.svg&summary=CloudPool浊池是由年轻人管理的博客" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659970330786" class="icon" viewBox="0 0 1138 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="3639" fill="#04b2f1"><path d="M914.432 518.144q27.648 21.504 38.912 51.712t9.216 62.976-14.336 65.536-31.744 59.392q-34.816 48.128-78.848 81.92t-91.136 56.32-94.72 35.328-89.6 18.944-75.264 7.68-51.712 1.536-49.152-2.56-68.096-10.24-78.336-21.504-79.872-36.352-74.24-55.296-59.904-78.848q-16.384-29.696-22.016-63.488t-5.632-86.016q0-22.528 7.68-51.2t27.136-63.488 53.248-75.776 86.016-90.112q51.2-48.128 105.984-85.504t117.248-57.856q28.672-10.24 63.488-11.264t57.344 11.264q10.24 11.264 19.456 23.04t12.288 29.184q3.072 14.336 0.512 27.648t-5.632 26.624-5.12 25.6 2.048 22.528q17.408 2.048 33.792-1.536t31.744-9.216 31.232-11.776 33.28-9.216q27.648-5.12 54.784-4.608t49.152 7.68 36.352 22.016 17.408 38.4q2.048 14.336-2.048 26.624t-8.704 23.04-7.168 22.016 1.536 23.552q3.072 7.168 14.848 13.312t27.136 12.288 32.256 13.312 29.184 16.384zM656.384 836.608q26.624-16.384 53.76-45.056t44.032-64 18.944-75.776-20.48-81.408q-19.456-33.792-47.616-57.344t-62.976-37.376-74.24-19.968-80.384-6.144q-78.848 0-139.776 16.384t-105.472 43.008-72.192 60.416-38.912 68.608q-11.264 33.792-6.656 67.072t20.992 62.976 42.496 53.248 57.856 37.888q58.368 25.6 119.296 32.256t116.224 0.512 100.864-21.504 74.24-33.792zM522.24 513.024q20.48 8.192 38.912 18.432t32.768 27.648q10.24 12.288 17.92 30.72t10.752 39.424 1.536 42.496-9.728 38.912q-8.192 18.432-19.968 37.376t-28.672 35.328-40.448 29.184-57.344 18.944q-61.44 11.264-117.76-11.264t-88.064-74.752q-12.288-39.936-13.312-70.656t16.384-66.56q13.312-27.648 40.448-51.712t62.464-38.912 75.264-17.408 78.848 12.8zM359.424 764.928q37.888 3.072 57.856-18.432t21.504-48.128-15.36-47.616-52.736-16.896q-27.648 3.072-43.008 23.552t-17.408 43.52 9.728 42.496 39.424 21.504zM778.24 6.144q74.752 0 139.776 19.968t113.664 57.856 76.288 92.16 27.648 122.88q0 33.792-16.384 50.688t-35.328 17.408-35.328-14.336-16.384-45.568q0-40.96-22.528-77.824t-59.392-64.512-84.48-43.52-96.768-15.872q-31.744 0-47.104-15.36t-14.336-34.304 18.944-34.304 51.712-15.36zM778.24 169.984q95.232 0 144.384 48.64t49.152 146.944q0 30.72-10.24 43.52t-22.528 11.264-22.528-14.848-10.24-35.84q0-60.416-34.816-96.256t-93.184-35.84q-19.456 0-28.672-10.752t-9.216-23.04 9.728-23.04 28.16-10.752z" p-id="3640"></path></svg>
+        </a>
+      
+      
+        <a href="https://www.douban.com/recommend/?url=https://zhuochi.org/copy/atan-bgr/index.html&title=《捕光人》&pic=https://zhuochi.org/images/logo.svg&summary=CloudPool浊池是由年轻人管理的博客" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659970941550" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1055"><path d="M88 72.9h848v95.5H88z" p-id="1056" fill="#04b2f1"></path><path d="M88 72.9h848v95.5H88zM862.3 641.5V268H161.7v373.5h700.6zM263.4 363.4h498.4v182.5H263.4V363.4z" p-id="1057" fill="#04b2f1"></path><path d="M862.3 641.5V268H161.7v373.5h700.6zM263.4 363.4h498.4v182.5H263.4V363.4zM710.8 856.7c30.5-46.7 59.3-100.8 85.9-162.2l-102-37.2c-26.5 72.8-57.4 139.4-92.5 199.4H424.9c-29.4-77.8-62.6-144.3-99.8-199.4l-93.8 37.2c38.6 58 69.9 111.9 93.8 162.2H64v94.5h896v-94.5H710.8z" p-id="1058" fill="#04b2f1"></path><path d="M710.8 856.7c30.5-46.7 59.3-100.8 85.9-162.2l-102-37.2c-26.5 72.8-57.4 139.4-92.5 199.4H424.9c-29.4-77.8-62.6-144.3-99.8-199.4l-93.8 37.2c38.6 58 69.9 111.9 93.8 162.2H64v94.5h896v-94.5H710.8z" p-id="1059" fill="#04b2f1"></path></svg>
+        </a>
+      
+      
+        <a href="http://tieba.baidu.com/f/commit/share/openShareApi?url=https://zhuochi.org/copy/atan-bgr/index.html&title=《捕光人》&pic=https://zhuochi.org/images/logo.svg&desc=CloudPool浊池是由年轻人管理的博客" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659968685554" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1659"><path d="M1024 862.826667a161.152 161.152 0 0 1-161.173333 161.173333h-701.632a161.152 161.152 0 0 1-161.173334-161.173333v-701.632a161.194667 161.194667 0 0 1 161.173334-161.173334h701.632a161.194667 161.194667 0 0 1 161.173333 161.173334v701.632z" fill="#04b2f1" p-id="1660"></path><path d="M828.842667 250.261333h-173.461334v-36.522666a17.066667 17.066667 0 0 0-17.066666-17.066667h-41.941334a17.045333 17.045333 0 0 0-17.045333 17.066667v263.296h-24.896a17.066667 17.066667 0 0 0-17.045333 17.066666V810.218667a17.066667 17.066667 0 0 0 17.045333 17.088h257.365333a17.066667 17.066667 0 0 0 17.066667-17.088v-58.986667h-0.256v-198.144h0.256v-58.986667a17.066667 17.066667 0 0 0-17.066667-17.066666H655.381333v-150.72h173.461334a17.066667 17.066667 0 0 0 17.066666-17.066667v-41.941333a17.066667 17.066667 0 0 0-17.066666-17.045334z m-93.376 302.848c9.429333 0 17.045333 7.637333 17.045333 17.066667v164.010667a17.066667 17.066667 0 0 1-17.045333 17.066666h-104.981334a17.045333 17.045333 0 0 1-17.045333-17.066666v-164.010667a17.066667 17.066667 0 0 1 17.045333-17.066667h104.981334zM197.909333 657.408h41.941334a17.088 17.088 0 0 0 17.088-17.088v-358.741333h174.528v358.741333a17.066667 17.066667 0 0 0 17.045333 17.088h41.941333a17.088 17.088 0 0 0 17.088-17.088v-417.749333c0-9.408-7.658667-17.066667-17.088-17.066667h-292.522666a17.066667 17.066667 0 0 0-17.045334 17.066667v417.749333a17.024 17.024 0 0 0 17.024 17.088z" fill="#FFFFFF" p-id="1661"></path><path d="M492.970667 739.2v-0.170667a110.656 110.656 0 0 1-110.656-110.656h-0.106667v-296.042666a17.066667 17.066667 0 0 0-17.066667-17.045334h-41.941333a17.045333 17.045333 0 0 0-17.045333 17.045334v296.042666h-0.362667a110.677333 110.677333 0 0 1-110.677333 110.656v0.170667a17.045333 17.045333 0 0 0-17.045334 17.066667v42.112a17.066667 17.066667 0 0 0 17.045334 17.066666 186.602667 186.602667 0 0 0 148.928-74.176 186.624 186.624 0 0 0 148.928 74.176 17.045333 17.045333 0 0 0 17.045333-17.066666v-42.112a17.024 17.024 0 0 0-17.045333-17.066667z" fill="#FFFFFF" p-id="1662"></path><path d="M865.450667 873.685333c17.664-3.797333 15.253333-24.896 14.741333-29.504-0.874667-7.125333-9.237333-19.541333-20.586667-18.581333-14.293333 1.28-16.362667 21.930667-16.362666 21.930667-1.962667 9.557333 4.608 29.952 22.208 26.154666z m18.752 36.693334c-0.533333 1.493333-1.664 5.290667-0.682667 8.597333 1.962667 7.402667 8.405333 7.744 8.405333 7.744h9.258667v-22.613333h-9.898667a10.837333 10.837333 0 0 0-7.082666 6.272z m14.037333-72.085334c9.749333 0 17.621333-11.221333 17.621333-25.109333 0-13.866667-7.872-25.088-17.621333-25.088-9.728 0-17.642667 11.221333-17.642667 25.088 0 13.888 7.893333 25.109333 17.642667 25.109333z m41.984 1.664c13.034667 1.706667 21.418667-12.202667 23.082667-22.762666 1.706667-10.538667-6.698667-22.762667-15.936-24.853334-9.258667-2.112-20.778667 12.672-21.845334 22.357334-1.258667 11.797333 1.685333 23.573333 14.698667 25.258666z m31.936 61.973334s-20.16-15.594667-31.936-32.448c-15.957333-24.874667-38.634667-14.762667-46.208-2.112-7.552 12.650667-19.328 20.629333-20.992 22.741333-1.685333 2.090667-24.362667 14.336-19.328 36.672 5.034667 22.336 22.72 21.909333 22.72 21.909333s13.013333 1.28 28.138667-2.112c15.104-3.349333 28.117333 0.832 28.117333 0.832s35.306667 11.818667 44.970667-10.944c9.621333-22.72-5.482667-34.538667-5.482667-34.538666z m-60.394667 33.877333h-22.954666c-9.92-1.984-13.866667-8.746667-14.357334-9.898667-0.490667-1.173333-3.306667-6.613333-1.813333-15.850666 4.288-13.866667 16.490667-14.848 16.490667-14.848h12.224v-15.04l10.410666 0.149333v55.488z m42.752-0.170667h-26.410666c-10.24-2.624-10.709333-9.92-10.709334-9.92v-29.205333l10.709334-0.170667v26.261334c0.64 2.794667 4.117333 3.306667 4.117333 3.306666h10.88v-29.397333h11.413333v39.125333z m37.376-77.994666c0-5.034667-4.181333-20.224-19.733333-20.224-15.552 0-17.642667 14.336-17.642667 24.469333 0 9.685333 0.810667 23.189333 20.16 22.741333 19.328-0.426667 17.216-21.909333 17.216-26.986666z" fill="#FFFFFF" p-id="1663"></path></svg>
+        </a>
+      
+      
+        <a href="https://connect.qq.com/widget/shareqq/index.html?url=https://zhuochi.org/copy/atan-bgr/index.html&title=《捕光人》&pic=https://zhuochi.org/images/logo.svg&desc=&summary=CloudPool浊池是由年轻人管理的博客" aria-hidden="true" target="_blank">
+        <svg t="1659969969936" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2714"><path d="M866.991 707.772c0 0-25.341 69.55-71.877 132.071 0 0 83.050 28.439 76.137 102.196 0 0 2.709 82.331-177.613 76.685 0 0-126.817-9.898-164.88-63.85h-33.53c-38.018 54.006-164.834 63.85-164.834 63.85-180.431 5.7-177.556-76.685-177.556-76.685-7.025-73.756 76.081-102.196 76.081-102.196-46.475-62.519-71.875-132.071-71.875-132.071-112.759 183.141-101.477-25.567-101.477-25.567 21.141-123.495 109.949-204.384 109.949-204.384-12.677-112.157 33.805-132.078 33.805-132.078 9.68-346.979 306.473-340.887 312.675-340.722 6.249-0.163 302.931-6.256 312.72 340.723 0 0 46.538 19.866 33.812 132.078 0 0 88.751 80.89 109.886 204.384 0.055-0.001 11.285 208.707-101.421 25.566v0 0z" p-id="2715" fill="#04b2f1"></path></svg>
+        </a>
+      
+    </span>
+  </span>
+</aside>
+    <footer class="app-footer">
+  <p class="copyright">
+    Copyright &copy; 2017 - 2023, CloudPool浊池, zhuochi.org︱voiiu.com, All Rights Reserved<br/>
+    本站为基于<a href="https://hexo.io" target="_blank">Hexo</a>的静态博客，<span id="busuanzi_container_site_pv">总访问量 <span id="busuanzi_value_site_pv"></span> 次</span><!--，来自 <span id="busuanzi_value_site_uv"></span> 个 IP--><br/>
+    主题源自 <a target="_blank" rel="noopener" href="https://github.com/yanm1ng/hexo-theme-vexo">Vexo</a> by yanm1ng，感谢 <a target="_blank" rel="noopener" href="https://github.com/MoePlayer/APlayer">APlayer</a> by DIYgod，感谢 <a target="_blank" rel="noopener" href="https://github.com/stevenjoezhang/live2d-widget">Live2D Widget</a> by stevenjoezhang & <a target="_blank" rel="noopener" href="https://github.com/xiazeyu/live2d-widget-models">live2d-widget-models</a> by xiazeyu
+  </p>
+</footer>
+
+<script>
+  function async(u, c) {
+    var d = document, t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0];
+    o.src = u;
+    if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+    s.parentNode.insertBefore(o, s);
+  }
+</script>
+
+<script src="/js/script.js"></script>
+ <!--无法移至head.js中，原因不明-->
+<script type="text/javascript" src="/js/busuanzi.min.js" async></script>
+
+
+  </body>
+</html>

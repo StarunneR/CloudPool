@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta http-equiv="Access-Control-Allow-Origin" content="*">
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport" />
+  <meta name="description" content="CloudPool浊池是由年轻人管理的博客">
+  <meta name="keyword" content="浊池, CloudPool, CloudPool浊池">
+  
+  <link rel="shortcut icon" type="image/ico" href="/images/cloudpool-favicon.ico">
+  
+  <title>
+    
+      《我的室友虽然是个福利姬但是她贼喜欢吃我做的饭》第二卷（上）
+    
+  </title>
+  <!-- CSS -->
+  <!--<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/6.4.0/css/all.min.css" />-->
+  <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />-->
+  <!--<link href="https://cdn.staticfile.org/nprogress/0.2.0/nprogress.min.css" rel="stylesheet"/>-->
+  <link href="https://cdn.bootcdn.net/ajax/libs/nprogress/0.2.0/nprogress.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/aplayer/1.10.1/APlayer.min.css"/>
+  
+<link rel="stylesheet" href="/css/style.css">
+
+
+  <!-- JS -->
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/geopattern/1.2.3/js/geopattern.min.js"></script>
+  <!--<script type="text/javascript" src="https://cdn.staticfile.org/nprogress/0.2.0/nprogress.min.js"></script>-->
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/nprogress/0.2.0/nprogress.min.js"></script>
+  
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+            <span class="search-icon">
+                <i class="fa fa-search"></i>
+            </span>
+            <div class="search-input-container">
+                <input autocomplete="off" autocapitalize="off" maxlength="80"
+                    placeholder="Anything...  今天想看什么w" spellcheck="false"
+                    type="" class="search-input">
+            </div>
+            <span class="popup-btn-go">
+                <i class="fa-solid fa-arrow-circle-right"></i>
+            </span>
+            <span class="popup-btn-close">
+                <i class="fa-solid fa-circle-xmark"></i>
+            </span>
+        </div>
+        <div id="search-result" class="search-result-container">
+            <div id="no-result" class="no-result">
+                <i class="fa-solid fa-spinner fa-pulse fa-5x fa-fw"></i>
+            </div>
+        </div>
+    </div>
+</div>
+  <link rel="prefetch" href="/search.xml" crossorigin="anonymous"> 
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Popup Window
+      let isfetched = false;
+      let datas;
+      let isXml = true;
+      // Search DB path
+      let searchPath = 'search.xml'; //CONFIG.search.path
+      if (searchPath.length === 0) {
+        searchPath = 'search.xml';
+      } else if (searchPath.endsWith('json')) {
+        isXml = false;
+      }
+      const input = document.querySelector('.search-input');
+      const resultContent = document.getElementById('search-result');
+
+      const getIndexByWord = (word, text, caseSensitive) => {
+        if ('false' == false) { // CONFIG.localsearch.unescape = false
+          let div = document.createElement('div');
+          div.innerText = word;
+          word = div.innerHTML;
+        }
+        let wordLen = word.length;
+        if (wordLen === 0) return [];
+        let startPosition = 0;
+        let position = [];
+        let index = [];
+        if (!caseSensitive) {
+          text = text.toLowerCase();
+          word = word.toLowerCase();
+        }
+        while ((position = text.indexOf(word, startPosition)) > -1) {
+          index.push({ position, word });
+          startPosition = position + wordLen;
+        }
+        return index;
+      };
+
+      // Merge hits into slices
+      const mergeIntoSlice = (start, end, index, searchText) => {
+        let item = index[index.length - 1];
+        let { position, word } = item;
+        let hits = [];
+        let searchTextCountInSlice = 0;
+        while (position + word.length <= end && index.length !== 0) {
+          if (word === searchText) {
+            searchTextCountInSlice++;
+          }
+          hits.push({
+            position,
+            length: word.length
+          });
+          let wordEnd = position + word.length;
+
+          // Move to next position of hit
+          index.pop();
+          while (index.length !== 0) {
+            item = index[index.length - 1];
+            position = item.position;
+            word = item.word;
+            if (wordEnd > position) {
+              index.pop();
+            } else {
+              break;
+            }
+          }
+        }
+        return {
+          hits,
+          start,
+          end,
+          searchTextCount: searchTextCountInSlice
+        };
+      };
+
+      // Highlight title and content
+      const highlightKeyword = (text, slice) => {
+        let result = '';
+        let prevEnd = slice.start;
+        slice.hits.forEach(hit => {
+          result += text.substring(prevEnd, hit.position);
+          let end = hit.position + hit.length;
+          result += `<b class="search-keyword">${text.substring(hit.position, end)}</b>`;
+          prevEnd = end;
+        });
+        result += text.substring(prevEnd, slice.end);
+        return result;
+      };
+
+      const inputEventFunction = () => {
+        if (!isfetched) return;
+        let searchText = input.value.trim().toLowerCase();
+        let keywords = searchText.split(/[-\s]+/);
+        if (keywords.length > 1) {
+          keywords.push(searchText);
+        }
+        let resultItems = [];
+        if (searchText.length > 0) {
+          // Perform local searching
+          datas.forEach(({ title, content, url }) => {
+            let titleInLowerCase = title.toLowerCase();
+            let contentInLowerCase = content.toLowerCase();
+            let indexOfTitle = [];
+            let indexOfContent = [];
+            let searchTextCount = 0;
+            keywords.forEach(keyword => {
+              indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+              indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+            });
+
+            // Show search results
+            if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+              let hitCount = indexOfTitle.length + indexOfContent.length;
+              // Sort index by position of keyword
+              [indexOfTitle, indexOfContent].forEach(index => {
+                index.sort((itemLeft, itemRight) => {
+                  if (itemRight.position !== itemLeft.position) {
+                    return itemRight.position - itemLeft.position;
+                  }
+                  return itemLeft.word.length - itemRight.word.length;
+                });
+              });
+
+              let slicesOfTitle = [];
+              if (indexOfTitle.length !== 0) {
+                let tmp = mergeIntoSlice(0, title.length, indexOfTitle, searchText);
+                searchTextCount += tmp.searchTextCountInSlice;
+                slicesOfTitle.push(tmp);
+              }
+
+              let slicesOfContent = [];
+              while (indexOfContent.length !== 0) {
+                let item = indexOfContent[indexOfContent.length - 1];
+                let { position, word } = item;
+                // Cut out 100 characters
+                let start = position - 20;
+                let end = position + 80;
+                if (start < 0) {
+                  start = 0;
+                }
+                if (end < position + word.length) {
+                  end = position + word.length;
+                }
+                if (end > content.length) {
+                  end = content.length;
+                }
+                let tmp = mergeIntoSlice(start, end, indexOfContent, searchText);
+                searchTextCount += tmp.searchTextCountInSlice;
+                slicesOfContent.push(tmp);
+              }
+
+              // Sort slices in content by search text's count and hits' count
+              slicesOfContent.sort((sliceLeft, sliceRight) => {
+                if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                  return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                  return sliceRight.hits.length - sliceLeft.hits.length;
+                }
+                return sliceLeft.start - sliceRight.start;
+              });
+
+              // Select top N slices in content
+              let upperBound = parseInt('1', 10); // CONFIG.localsearch.top_n_per_article: 1
+              if (upperBound >= 0) {
+                slicesOfContent = slicesOfContent.slice(0, upperBound);
+              }
+
+              let resultItem = '';
+
+              if (slicesOfTitle.length !== 0) {
+                resultItem += `<li class="search-result-element"><a href="${url}" class="search-result-title" target="_blank">${highlightKeyword(title, slicesOfTitle[0])}</a>`;
+              } else {
+                resultItem += `<li class="search-result-element"><a href="${url}" class="search-result-title" target="_blank">${title}</a>`;
+              }
+
+              slicesOfContent.forEach(slice => {
+                resultItem += `<a href="${url}" target="_blank"><p class="search-result">${highlightKeyword(content, slice)}...</p></a>`;
+              });
+
+              resultItem += '</li>';
+              resultItems.push({
+                item: resultItem,
+                id: resultItems.length,
+                hitCount,
+                searchTextCount
+              });
+            }
+          });
+        }
+        if (keywords.length === 1 && keywords[0] === '') {
+          resultContent.innerHTML = '<div id="no-result"><i class="fa-sharp fa-regular fa-circle-check fa-5x"></i></div>';
+        } else if (resultItems.length === 0) {
+          resultContent.innerHTML = '<div id="no-result"><i class="fa-regular fa-face-frown-open fa-5x"></i></div>';
+        } else {
+          resultItems.sort((resultLeft, resultRight) => {
+            if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+              return resultRight.searchTextCount - resultLeft.searchTextCount;
+            } else if (resultLeft.hitCount !== resultRight.hitCount) {
+              return resultRight.hitCount - resultLeft.hitCount;
+            }
+            return resultRight.id - resultLeft.id;
+          });
+          resultContent.innerHTML = `<ul class="search-result-list">${resultItems.map(result => result.item).join('')}</ul>`;
+          window.pjax && window.pjax.refresh(resultContent);
+        }
+      };
+
+      const fetchData = () => {
+        fetch('/' + searchPath) // CONFIG.root = ''
+          .then(response => response.text())
+          .then(res => {
+            // Get the contents from search data
+            isfetched = true;
+            datas = isXml ? [...new DOMParser().parseFromString(res, 'text/xml').querySelectorAll('entry')].map(element => {
+              return {
+                title: element.querySelector('title').textContent,
+                content: element.querySelector('content').textContent,
+                url: element.querySelector('url').textContent
+              };
+            }) : JSON.parse(res);
+            // Only match articles with not empty titles
+            datas = datas.filter(data => data.title).map(data => {
+              data.title = data.title.trim();
+              data.content = data.content ? data.content.trim().replace(/<[^>]+>/g, '') : '';
+              data.url = decodeURIComponent(data.url).replace(/\/{2,}/g, '/');
+              return data;
+            });
+            // Remove loading animation
+            document.getElementById('no-result').innerHTML = '<i class="fa-sharp fa-regular fa-circle-check fa-5x"></i></i>';
+            inputEventFunction();
+          });
+      };
+
+      if (false) { // CONFIG.localsearch.preload: false
+        fetchData();
+      }
+
+      if ('auto' === 'auto') { // CONFIG.localsearch.trigger: 'auto' / 'manual'
+        input.addEventListener('input', inputEventFunction);
+      } else {
+        document.querySelector('.search-icon').addEventListener('click', inputEventFunction);
+        input.addEventListener('keypress', event => {
+          if (event.key === 'Enter') {
+            inputEventFunction();
+          }
+        });
+      }
+
+      // Handle and trigger popup window
+      document.querySelectorAll('.popup-trigger').forEach(element => {
+        element.addEventListener('click', () => {
+          document.body.style.overflow = 'hidden';
+          document.querySelector('.search-pop-overlay').classList.add('search-active');
+          input.focus();
+          if (!isfetched) fetchData();
+        });
+      });
+
+      // Monitor main search box
+      const onPopupClose = () => {
+        document.body.style.overflow = '';
+        document.querySelector('.search-pop-overlay').classList.remove('search-active');
+      };
+
+      document.querySelector('.search-pop-overlay').addEventListener('click', event => {
+        if (event.target === document.querySelector('.search-pop-overlay')) {
+          onPopupClose();
+        }
+      });
+      document.querySelector('.popup-btn-close').addEventListener('click', onPopupClose);
+      window.addEventListener('pjax:success', onPopupClose);
+      window.addEventListener('keyup', event => {
+        if (event.key === 'Escape') {
+          onPopupClose();
+        }
+      });
+
+      // PageJumper button
+      let onJumpPage = () => {
+        window.location = window.location.origin + '/' + input.value
+      };
+      document.querySelector('.popup-btn-go').addEventListener('click', onJumpPage);
+      document.querySelector('.search-input').addEventListener('keydown', event => {
+        if (event.keyCode === 13) {
+          onJumpPage();
+          return;
+        }
+      });
+      
+      // Search Preload
+      let head = document.head || document.getElementsByTagName('head')[0];
+      let searchlink = document.createElement('link');
+        searchlink.rel="search";
+        searchlink.href="/search.xml";
+        searchlink.crossOrigin="anonymous";
+      head.appendChild(searchlink);
+    });
+  </script>
+
+  <!--
+<script src="/js/local-search.js"></script>
+--> 
+
+  <script src="/live2d-widget/autoload.js"></script>
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/aplayer/1.10.1/APlayer.min.js"></script>
+  <!-- Fonts -->
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+  <body>
+    <header class="header fixed-header">
+  <nav class="header-container">
+    <a class="home-link" href="/">
+      <img class="logo" src="/images/logo.png" alt="logo"/>
+      <span class="eng_mark">CloudPool</span><span class="chn_mark">浊池</span>
+    </a>
+    <ul class="right-list">
+      
+        <li class="list-item">
+          
+            <a href="/" class="item-link">主页</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/categories/" class="item-link">分类</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/tags/" class="item-link">标签</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/archive/" class="item-link">归档</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/mag/" class="item-link">网刊</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/one/" class="item-link">一言</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a target="_blank" rel="noopener" href="//pan.zhuochi.org/CloudShare/" class="item-link">网盘</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="//<emoji>" class="item-link">( ^ω^)</a>
+          
+        </li>
+      
+      
+        <li class="list-item">
+    <a role="button" class="item-link popup-trigger">
+        <i class="fa fa-search fa-fw"></i>
+    </a>
+</li>
+      
+    </ul>
+    <div class="menu">
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+    </div>
+    <div class="menu-mask">
+      <ul class="menu-list">
+        
+          <li class="menu-item">
+            
+              <a href="/" class="menu-link">主页</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/categories/" class="menu-link">分类</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/tags/" class="menu-link">标签</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/archive/" class="menu-link">归档</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/mag/" class="menu-link">网刊</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/one/" class="menu-link">一言</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a target="_blank" rel="noopener" href="//pan.zhuochi.org/CloudShare/" class="menu-link">网盘</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="//<emoji>" class="menu-link">( ^ω^)</a>
+            
+          </li>
+        
+        
+          <li class="menu-item">
+    <a role="button" class="item-link popup-trigger">
+        <i class="fa fa-search fa-fw"></i>
+    </a>
+</li>
+        
+      </ul>
+    </div>
+  </nav>
+</header>
+
+    <div id="article-banner">
+  <h2 class="post-title">《我的室友虽然是个福利姬但是她贼喜欢吃我做的饭》第二卷（上）</h2>
+  
+   
+    <p class="post-date">2021-01-05</p>
+  
+  <div class="arrow-down">
+    <a href="javascript:;"></a>
+  </div>
+</div>
+
+  <div class="catalog-container" id="catalog">
+  <div class="toc-main">
+    <div class="toc-title">目录</div>
+    
+      <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#%E7%AC%AC%E4%BA%8C%E5%8D%B7-01-49"><span class="toc-nav-text">第二卷(01-49)</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#01"><span class="toc-nav-text">01.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#02"><span class="toc-nav-text">02.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#03"><span class="toc-nav-text">03.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#04"><span class="toc-nav-text">04.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#05"><span class="toc-nav-text">05.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#06"><span class="toc-nav-text">06.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#07"><span class="toc-nav-text">07.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#08"><span class="toc-nav-text">08.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#09"><span class="toc-nav-text">09.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#10"><span class="toc-nav-text">10.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#11"><span class="toc-nav-text">11.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#12"><span class="toc-nav-text">12.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#13"><span class="toc-nav-text">13.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#14"><span class="toc-nav-text">14.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#15"><span class="toc-nav-text">15.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#16"><span class="toc-nav-text">16</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#17"><span class="toc-nav-text">17</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#18"><span class="toc-nav-text">18.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#19"><span class="toc-nav-text">19</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#20"><span class="toc-nav-text">20.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#21"><span class="toc-nav-text">21.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#22"><span class="toc-nav-text">22.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#23"><span class="toc-nav-text">23.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#24"><span class="toc-nav-text">24.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#25"><span class="toc-nav-text">25.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#26"><span class="toc-nav-text">26.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#27"><span class="toc-nav-text">27.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#28"><span class="toc-nav-text">28.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#29"><span class="toc-nav-text">29.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#30"><span class="toc-nav-text">30.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#31"><span class="toc-nav-text">31.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#32"><span class="toc-nav-text">32.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#33"><span class="toc-nav-text">33.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#34"><span class="toc-nav-text">34.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#35"><span class="toc-nav-text">35.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#36"><span class="toc-nav-text">36.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#37"><span class="toc-nav-text">37.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#38"><span class="toc-nav-text">38.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#39"><span class="toc-nav-text">39.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#40"><span class="toc-nav-text">40.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#41"><span class="toc-nav-text">41.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#42"><span class="toc-nav-text">42.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#43"><span class="toc-nav-text">43.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#44"><span class="toc-nav-text">44.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#45"><span class="toc-nav-text">45.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#46"><span class="toc-nav-text">46.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#47"><span class="toc-nav-text">47.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#48"><span class="toc-nav-text">48.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#49"><span class="toc-nav-text">49.</span></a></li></ol></li></ol>
+    
+  </div>
+</div>
+
+<main class="app-body flex-box">
+  <article class="post-article">
+    
+      <div class="front-parent" id="front-parent">
+  <div class="front-child" id="front-fontsize">
+    <label class="front-label" for="fontsize-range">字体大小</label>
+    <input type="range" min="50" max="200" id="fontsize-slider" step="1" value="100" />
+    <span id="fontsize-value"></span>
+  </div>
+
+  <div class="front-child" id="front-fontselector">
+    <label class="front-label" for="font-select">更换字体</label>
+    <select name="font" id="font">
+      <option value="default">默认</option>
+      <option value="heiti">黑体</option>
+      <option value="light-heiti">黑体（细体）</option>
+      <option value="lighter-heiti">黑体（极细）</option>
+      <option value="songti">宋体</option>
+      <option value="light-songti">宋体（细体）</option>
+      <option value="kaiti">楷体</option>
+      <option value="fangsong">仿宋</option>
+    </select>
+  </div>
+
+  <div class="front-child" id="front-indent">
+    <label class="front-label" for="TextIndent">段首缩进</label>
+    <input type="checkbox" id="indent-checkbox" name="text-indent" value="" />
+  </div>
+</div>
+
+<h1 class="article-author">
+  
+    2srDJ3V @adnmb.com
+      
+</h1>
+
+<script>
+  $(document).ready(
+    function () {
+      let FontChanger = function () {
+        if (this.value == "default") {
+          $(".markdown-content").css({ "font-family": "Arial, Helvetica, sans-serif" });
+          $(".markdown-content").css({ "font-weight": 'initial' });
+        } if (this.value == "heiti") {
+          $(".markdown-content").css({ "font-weight": '400' });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',STHeiti,SimHei,sans-serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400&display=swap rel=stylesheet>");
+        } else if (this.value == "light-heiti") {
+          $(".markdown-content").css({ "font-weight": '300' });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',STHeiti,SimHei,sans-serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300&display=swap rel=stylesheet>");
+        } else if (this.value == "lighter-heiti") {
+          $(".markdown-content").css({ "font-weight": '100' });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',STHeiti,SimHei,sans-serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100&display=swap rel=stylesheet>");
+        } else if (this.value == "songti") {
+          $(".markdown-content").css({ "font-weight": '400' });
+          $(".markdown-content").css({ "font-family": "'Noto Serif SC',STSong,NSimSun,SimSun,serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400&display=swap rel=stylesheet>");
+        } else if (this.value == "light-songti") {
+          $(".markdown-content").css({ "font-weight": '200' });
+          $(".markdown-content").css({ "font-family": "'Noto Serif SC',STSong,NSimSun,SimSun,serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200&display=swap rel=stylesheet>");
+        } else if (this.value == "kaiti") {
+          $(".markdown-content").css({ "font-weight": 'initial' });
+          $(".markdown-content").css({ "font-family": "'FZKai-Z03S','STKaiti','KaiTi',Serif" });
+          $("head").append("<link href=https://cdn.jsdelivr.net/npm/cn-fontsource-fz-kai-z-03-s/font.css rel=stylesheet>");
+        } else if (this.value == "fangsong") {
+          $(".markdown-content").css({ "font-weight": 'initial' });
+          $(".markdown-content").css({ "font-family": "'FZFangSong-Z02S','STFangsong','FangSong','FangSong_GB2312',Serif" });
+          $("head").append("<link href=https://cdn.jsdelivr.net/npm/cn-fontsource-fz-fang-song-z-02-s/font.css rel=stylesheet>");
+        }
+      };
+      $("#font").on('change', FontChanger);
+      $("#font").on('click', FontChanger);
+    });
+
+  $("#indent-checkbox").change(function () {
+    if (this.checked) {
+      $(".markdown-content > p").css({ "text-indent": "2em" });
+    } else {
+      $(".markdown-content > p").css({ "text-indent": "0" });
+    }
+  });
+
+  $("#fontsize-value").html("100%");
+  let rangeSwitch = function () {
+    let fontsizePercent = $("#fontsize-slider").val();
+    $(".markdown-content").css("font-size", fontsizePercent + "%")
+    $("#fontsize-value").html(fontsizePercent + "%")
+  }
+  $("#fontsize-slider").on("input", rangeSwitch)
+</script>
+      <section class="markdown-content" id="content">
+        <ul>
+<li><p>来源<br><a target="_blank" rel="noopener" href="https://adnmb3.com/Forum/po/id/33006693/page/1.html">A岛匿名版 - 2srDJ3V</a> 串号：33006693</p>
+</li>
+<li><p><a href="../adao33006693-1">第一卷</a></p>
+</li>
+<li><p><a href="../adao33006693-3">第二卷(下)</a></p>
+</li>
+<li><p><a href="../adao33006693-4">第三卷</a></p>
+</li>
+</ul>
+<h2 id="第二卷-01-49"><a href="#第二卷-01-49" class="headerlink" title="第二卷(01-49)"></a>第二卷(01-49)</h2><h3 id="01"><a href="#01" class="headerlink" title="01."></a>01.</h3><p>滋<br>我将油面，包菜，香肠，午餐肉，鸡蛋混合在一起，在超锅里翻炒着。<br>没错，今天中午吃炒面。<br>关于如何把面炒的好吃，我自己倒是做过不少的尝试，最后总结下来发现用什么面是一个比较关键的问题。<br>在经过不少尝试之后，得出来的结论是，用油面去炒比较好吃，再来是用方便面。<br>伴随着拖鞋的声音，我听到室友从自己房间里走了出来。<br>“可以吃了没有呀！” 这时，我室友在旁边打开了冰箱。“我好饿哦！”<br>看到她把橙汁从冰箱里拿了出来。<br>“给我也倒一杯。” 我一边把酱油倒入锅中一边说， “马上就好了。”<br>“嗯！” 她蹭蹭蹭的跑去帮我拿多了一个杯子。<br>昨天被室友按摩完后，我身上的颈椎病腰酸背疼等等疑难杂症基本上都飞走了。<br>甚至于昨天打了一晚上的游戏都没有感觉到有什么不舒适的地方。<br>想到这里，我活动了一下脖子。<br>请飘飘的，也没有任何卡拉卡拉的声音，舒服的很。<br>我开始做饭的时候已经是十二点半了，现在应该快一点了。<br>吃完饭后要好好打理一下自己，然后就得在四点钟之前出门了。<br>毕竟今天晚上要去工作，得让自己看起来稍微体面一点。<br>一分钟后，我把两盘林林特制炒面放到了餐桌上，然后再餐桌旁坐了下来。<br>室友的手从后面伸出来，给了我一双筷子。<br>然后她走到了我对门，坐下。<br>“哇呜！今天吃炒面诶！” 室友兴奋的搓了搓手， “林林炒面最好吃了！”<br>“那肯定是的啊。” 我动了动筷子，夹起了炒面往嘴里送。<br>哎呀，真香。<br>“你今天几点出门啊？” 我一边吃着炒面，一边问室友。<br>“我差不多五点出门吧，先和凛酱吃个饭，吃完饭了一起去看她演出。” 她也开始吃我的炒面。<br>“是Live house吗这次？” 我点了点头，“如果喝酒的话少喝一点哦，不过没事凛酱应该会照顾好你的。”<br>“那肯定！” 室友大口大口的吃着炒面，“凛酱就好比我姐姐！”<br>的确，这次有凛酱在，应该不会出什么岔子，如果室友喝酒的话。<br>大不了我到时候再去给她扛回来就是了唉，毕竟也不是第一次了。<br>“林林几点要出去工作呀？”<br>虽然我今天的活儿是九点才开始，但是得提早过去，毕竟还有很多准备工作要做。<br>而且晚饭还得在外面吃了。<br>“我差不多四点之前就要出门了，过去到西区要差不多一个小时，五点要到那边。” 我说，“你们晚上打算吃哪家呀？”<br>“罗兰厨房，那家西餐厅。” 她津津有味的吃着炒面。<br>罗兰厨房，诶？<br>“那不是我们东区这边最高档西餐厅的其中一家吗？” 我问。<br>“对呀对呀！” 室友疯狂点头，“凛酱说她想吃那个！”<br>可恶啊，我也想和凛酱一起去高档西餐厅吃牛扒喝红酒。<br>“行吧行吧，真羡慕。” 我说， “看样子今天大概不用给你做宵夜了。”<br>毕竟，那家西餐厅真的超级好吃的。<br>我很久之前去过一次，那里的牛排是我吃过烤的最好的牛排。<br>“不行！” 室友突然立马反驳道，“林林的宵夜是必须要吃的！”<br>诶嘿，她就那么喜欢吃我做的饭吗？<br>“好好好，今天忙完回来给你做。” 我拿起橙汁喝了一口。<br>“嘿嘿林林最好了！”<br>看着她大快朵颐的样子，心里的满足感又上升了。</p>
+<h3 id="02"><a href="#02" class="headerlink" title="02."></a>02.</h3><p>一边吃饭，我们一边在餐桌上聊着一些有一搭没一搭的话题，大部分是关于她和我吐槽一些找她买套图和买视频的人多么的奇葩。<br>这类奇葩我也遇到过不少，虽然我们提供的东西不太一样，但是总会遇到很多奇葩客户。<br>比方说，各种白嫖党，他们总是会强调自己身为弱势群体的身份，想要一次来获得特权等等。<br>“你知道吗？” 她一边吃炒面一边起劲的说，“之前还有人找我，和我说他是个高中生，没什么钱，问我能不能多送他一套图。”<br>“真的假的哈哈哈，高中生不应该好好学习准备高考吗？” 我说。<br>“最扯的地方是，我在他的朋友圈翻到了他和他大学校门合照的照片，配文是：‘今天终于成为了X大的一份子，X大的男同志们请看好你们的女朋友，因为我来了’。”<br>X大？X大不是在市里北区的大学吗？<br>“哈哈哈哈他不明显是个大学生嘛，还和你装高中生，这种人撒谎都不打草稿吗？” 我乐得笑了出声，“而且，他很帅吗？感觉他这条朋友圈发的特别的自信。”<br>“对对对这个就是重点！！” 室友疯狂点头，“照片上的他比你前天早上起来的时候还邋遢！”<br>“你不用这种都cue我一下吧喂！！！” 我朝室友翻了个白眼，“然后呢？你拆穿了他的谎言了吗？”<br>“我把他这条朋友圈截图发了过去，问了他一句 ‘就这？’，他就直接没说话了。” 我室友吐槽着，“你知道最最最扯的地方是什么吗？”<br>“这件事情还没结束吗难道？” 没想到还有更奇葩的事情，这引起了我的兴趣。<br>“过了两天，我当时刚更新了一套图，发布了购买信息，结果你猜发生了什么？”<br>“发生了什么？不会又是找借口白嫖的吧？” 我问道。<br>“不对，他比你想象中的还要过分的多。” 我室友喝了一大口橙汁。<br>“他直接发了一张他牛子的照片过来给我，问我要不要线下见面。”<br>？？？？？？<br>这个我是，完全没有想到的。<br>这个哥们是白痴吗？？？自信过度就算了，还明目张胆的进行性骚扰？？？<br>虽然我室友的职业是有点特殊，但是这也不是他可以做这件事的原因。<br>我感觉我额头上的青筋已经在跳了。<br>“你把他照片给我，我周一去趟他们学校。” 我已经生气了，“我要让他社会性死亡。”<br>“哈哈哈哈没事啦。” 室友开心的笑了笑，“不生气不生气，已经处理好啦、”<br>她伸出了她的手，又想摸摸我的头来安慰我，但是还是和上次的情况一样，她的手还不够长。<br>于是我还是把头往前伸了伸给她摸了摸。<br>“我和他说：‘哇呜！好大哦！我帮你发在x大的贴吧和论坛上让大家都看一下你的大牛子好了！’。”<br>“噗嗤！” 听到我室友的处理方式，我的怒气一下子降了下去，甚至笑了出声。<br>这个要是真的发了，这个人可能就真的社死了。没想到室友在应对这方面甚至比我还腹黑。<br>“然后呢？你发了吗？” 我一边被室友薅着头发一边问。<br>“我只是打算吓吓他，结果他一口气给我打了十几个语音电话，我没一个接起来的。” 室友拍了拍我的头，示意我可以把头缩回去了，“结果你猜怎么着？”<br>“怎么着？” 我把我的头缩了回来。</p>
+<h3 id="03"><a href="#03" class="headerlink" title="03."></a>03.</h3><p>“他看我不接他的语音，现实气急败坏的一直骂我，但是我就装作没看见没理他。” 室友缩回了自己的手，“后面再过了一会他又开始和我道歉，一直在说自己是一时冲动保证以后不会再犯了，还和我说让我千万不要发出去，如果被他教授还有女朋友看到的话他就死定了，他会没脸呆在这个学校的。”<br>“哈哈哈哈哈这哥们怂了竟然。” 看到室友以这个方式去处理，我开心的笑了出声。<br>“不过为什么连这种人都可以有女朋友啊！” 我不满的抱怨道。<br>转念一想，我好像也单身了蛮久的。不过还好，现在的我并不觉得孤独。<br>“然后你怎么说？” 我问。<br>“然后我把这件事情告诉了凛酱。” 室友把杯子里的橙汁一饮而尽，“当时凛酱已经准备第二天拿着棒球棍去x大了。”<br>“？？？你阻止凛酱了吗？？”听到这里我傻了，没想到凛酱是一个这么英勇的女生。<br>非常仗义的要去教训伤害了自己朋友的人，想到这里我对凛酱的好感度又上升了。<br>她就好像是，我室友的超人姐姐？<br>“其实这件事情，对我来说没有任何影响，我一开始也只是打算和凛酱吐槽一下的，我也没想到她是那个反应。” 室友一只手托着自己的脸，“不过在我反复强调了这件事请对我没影响，凛酱还是冷静了下来，这种事情上升到暴力层面就不好了。”<br>“这个的确，还好你劝阻了凛酱。” 我松了一口气。<br>“但是凛酱说，不能就这么放过这个人。最起码要让他女朋友知道他是怎样一个败类，于是她给我支了个招。”<br>“于是？”<br>“第二天，特意跑去了北区，把他的检讨书打印了好几份贴在了x大女生宿舍楼的楼下。这样子他女朋友应该可以看见，凛酱陪我去的，这个是她的主意。” 室友坏坏的笑了笑。<br>“哈哈哈哈哈哈啊哈哈哈！！！！” 我放声大笑，眼泪都给我快笑出来了。“哈哈哈哈然后呢然后呢？”<br>“那天晚上，他又跑来骂我了，说我把她女朋友搞得和他分手了。” 室友无奈的摇了摇头，“然后凛酱知道之后，直接从我这要了他的微信。”<br>“我本来想说可能对方应该不会随意通过陌生人好友吧，结果没想到他竟然通过了凛酱，可能因为凛酱太好看了。”<br>“然后呢然后呢！” 我摩拳擦掌，迫切的想要知道凛酱接下来的行为。<br>“凛酱直接打了一个语音过去，给了他三个选择。” 室友耸了耸肩。“第一是约个时间约个地点凛酱带着棒球棍把他揍一顿，第二个是把他的光荣事迹张贴在学校论坛上，以及学校的每栋教学楼，还有学校周边的所有餐厅等商铺门口，第三个选择是夹起尾巴老老实实做人让他别再骚扰我。他当然选了第三个啦，所以这事就这么结束了。”<br>芜！！！！湖！！！！！<br>凛酱太帅了！！！！<br>凛酱赛高！！！<br>“凛酱是超人！！！这也太帅了！！！” 我兴奋的说道，同时心里暗暗计划着明天吃海鲜的时候如何去邀请凛酱过来。<br>“嘿嘿！那可是凛酱！” 室友双手交叉抱着，下巴上扬，骄傲的说着。</p>
+<pre><code>问题与回答：
+Q1:喝酒的时候为啥还是妹妹的心态呀，妹妹可不会说自己身体很脏这种话，只有恋人的心态才会在意对方会不会嫌弃自己吧。
+Q2:另外我也比较担心这个，如果走室友线林林能够接受吗？作为室友和哥哥，他可以不在意这些，毕竟关系还没那么亲近.但是作为恋人他心里能没有芥蒂吗，室友在福利姬里尺度也算很大的了，还发过zw视频，以前似乎还有糟糕的事。林林能否做到包容这些（po写的这种贤妻良母林林感觉像是纯情处男，我就默认这种形象了），到时两人的关系又如何相处呢
+专门回答一下问题哈
+1.
+首先林林在很早的时候就已经知道室友是个福利姬，但是在林林的认知里，林林只是单纯的觉得这只是一个相对比较特殊的职业，所以林林并不在乎。当时喝酒的时候，室友主要是喝多了处于一个多愁善感的状态，所以问出了林林会不会觉得自己很脏这个问题。室友已经习惯甚至已经依赖于林林的照顾，所以她很害怕林林有一天会离开自己 （为什么会害怕，这个和室友的成长经历有关，后面会说。）。虽然室友知道像大哥哥一样的林林从来没因为对于自己是个福利姬介意过，但是在酒精的作用下，时候还是开始胡思乱想。于是问出了这些问题，同时这也是室友第一次这样问林林。
+因为自从住在一起后，室友从来没问过林林这个人对于自己的看法，林林也从来没对室友说过自己觉得室友是怎么样一个人（其实这里我是打算放在后面以室友视角进行的回忆部分来写的）。所以在喝了酒之后，室友问了林林会不会觉得自己很烦，觉得自己很脏等把自己身上的缺点说了一遍，当时的她想要知道林林对自己的真实看法，所以先把自己的身上的缺陷部分告诉了林林，才会问出了这些问题。
+然后林林的回答很刚好的戳中了室友，让室友觉得特别安心。
+碍于故事是林林的第一人称视角，我没有办法去直接描写室友的心境，这点也是我相对苦恼的地方。
+问出前面那些问题的时候，室友已经深刻的认识到自己对林林生活上的依赖。在室友内心深处的世界里，室友非常讨厌自己。具体的原因会在（以室友视角进行的回忆部分）进行详细的解说 （这个我不能说说了就剧透了）
+我简单说一下当时室友的心态，
+在是沉默的吹了五分钟的夜风那里，为什么室友会哭的主要原因，是因为林林的回答感动到了她。
+然后，在听完林林回答后感到安心的室友，简单的概括一下心态大概是这样的：
+“如果这个不在乎我过去，不在乎我身上的缺点，只知道照顾我的人，我一直和他这样生活下去，我觉得我自己应该会很快乐。等等...一直生活下去...难道要成为恋人吗？不不不我在胡思乱想什么呢！”
+这也是室友第一次产生了和林林成为“恋人” 的想法，也就是名为喜欢的感情。，然后后面在和林林互动的时候，这种念头会反复出现甚至加强，直到室友完完全全的意识到自己喜欢上林林。（毕竟设定上林林是一个经常撩人于无形的人）。
+2.
+总结一下就是，室友喝了酒和林林在阳台喝酒，室友提问林林回答，林林的回答触动到了室友，室友很感动，并且开始想象和林林以后一直生活，然后自然而然的想象到了恋人这种关系，虽然很快打消了这个念头，但是也开始对林林产生了一些‘喜欢’ 的好感，不过自己没有意识到。
+3.
+关于林林能不能接受这一点：在我的设定上，林林是一个完全不在乎并且心里不会觉得膈应的人，不论是否是恋人关系。前面和林林和凛酱在阳台抽烟的时候，林林提到过，他觉得这是一个再正常不过的职业了，这个职业有的一定的特殊性，但是在林林的认知里，林林并不把这当成一回事，毕竟人要恰饭的。
+之前在文里有提到过，林林不是一个喜欢探讨别人过去，同时也不喜欢别人探讨他的过去的人，除非对方主动提起，不然林林是绝对不会去问。
+同理，林林也希望除了自己主动提起，也不要有人问他的过去。
+在文里提到过，就算林林知道了室友的过去，也改变不了他对室友的感情。
+态。
+虽然目前林林看似是一个完美的人，但是林林有些地方其实是非常极端的，比方说不在乎室友的过去，就是真的完全不在乎，不论室友以前做了什么。
+具体有多极端？比方说如果室友是个罪大恶极的罪犯，林林也完全不在乎 （当然室友不是，我只是举个例子）
+关于林林为什么在如果是作为恋人的情况下心里没有芥蒂，为什么林林会完全不在乎一个人的过去，我会在林林过去的故事中会有一个合理的解释，关于林林经历了什么会造就了这种心
+林林在设定上是一个不喜欢强迫别人做自己不喜欢做的事情的人。如果（我是说如果）最后和林林走到一起的是室友，林林也不会去要求室友不去做福利姬 （如果室友还想做的话）。
+还要提的一点就是，室友开始做福利姬之后，从来只卖自己的套图和视频，并且从来不会接线下，室友觉得体育竞赛的话必须对象是自己信赖的人 （其实这里我是打算放在后面以室友视角进行的回忆部分来写的）。
+室友对于林林是非常的依赖和信赖的。
+这就是为什么室友在林林床上醒来后，误以为自己喝多了和林林进行了体育竞赛，所以才会说 “如果是林林的话...我也...”
+4.
+关于最后，室友的过去，会很刀。
+我还在考虑是放在主线里进行回忆，还是放在番外里写成一个回忆篇。
+室友的过去可能会是这整个故事最黑暗的地方，到时候请不要刀我的牛子，谢谢各位。
+5.
+林林不是一个纯情处男
+</code></pre>
+<h3 id="04"><a href="#04" class="headerlink" title="04."></a>04.</h3><p>“叩叩叩。” 我站在我室友房间门口，用嘴巴模仿敲门的声音。<br>“来啦来啦来啦！” 房间里传来室友的声音，然后室友打开门后，有些诧异的看着我。<br>“帅….帅哥你谁？” 室友仿佛看到了陌生人一样。<br>“我啊我啊！” 我把脸上的圆框眼镜摘下来，“不是我换了身衣服你就认不出来了？”<br>然后我看到室友在认真的上下打量我。<br>“你….穿这么帅干嘛….” 室友有些疑惑的问。<br>“我不是说了嘛，我今天要去工作啊。” 我回答道，<br>然后我看到室友挠了挠头，还是很疑惑的样子。<br>“你穿这么帅去工作…” 她郑重其事的说，“你不会是要去…陪富姐姐吧？”<br>“？？？？？？？你在想什么？？”<br>然后我伸出手在她的额头上用力的弹了一下，以此来制止她这个莫名其妙的想法。<br>“痛痛痛痛！” 她一边捂着自己的额头一边说。<br>“你又不跟我说你工作是什么，然后突然穿这么帅出门。” 她一边说一边拉了拉我脖子上的项链，“你看你项链和耳环都带上了，还说你不是去陪富姐姐？”<br>“行了行了，我真的不是要去陪富姐姐。” 我拍了拍她的头，“我要出门了，过来和你说一声。”<br>“嗯嗯！” 室友点了点头。“林林加油！”<br>“好。” 我转头离开了室友房间门口，往玄关走去。<br>“记得回来给我做宵夜！！！” 室友的声音从走廊传了过来。<br>“好！！” 我一边绑鞋带一边说。<br>绑完鞋带，我站起来摸了摸口袋，确保自己的手机钱包香烟等等都带齐了。<br>对着门口的全身镜照了照，整理一下自己的仪容仪表，然后打开门。<br>Gogogo！冲鸭林林！<br>我走出了我家，回头，把门关上。<br>进入电梯后，到了楼下。<br>带上耳机，走出了公寓，往地铁站走去。<br>走着走着，我又经过了那一家 便利店。<br>叫做&lt;啥子玩意都有便利店&gt;的便利店。<br>我这次经过的时候还是往里面看了看，上次值班的那个少女似乎不在。<br>可能今天不当班吧。<br>不过这次我没有时间，也没有理由进去就是了。<br>我转过头，头也不回的朝地铁站走去。</p>
+<hr>
+<p>坐了差不多四十五分钟的地铁，我从东区到了西区。<br>“哔！感谢您乘坐X市地铁，期待您的下次光临！” 我把硬币一样的地铁票投入了闸口里。<br>为什么大家都用地铁卡，而我偏偏要单独买地铁票呢？因为我平时连门都不出怎么可能坐地铁嘛。<br>我活动了一下脖子，看了看手机。<br>下午四点52分。</p>
+<h3 id="05"><a href="#05" class="headerlink" title="05."></a>05.</h3><p>很好，走过去只用大概五分钟不到，完全来得及。<br>走出地铁站，今天的太阳不是很大。<br>没过五分钟，我在西区Y大附近酒吧街的一家夜店门口停了下来。<br>好久没来这个地方了，我已经完全想不起来上一次来这个地方时什么时候了。<br>半年前？一年前？甚至更久？<br>算了，这些都不重要，我今天只是来这里彩排，晚点唱两首歌我就可以离开了。<br>希望今天的主办方管的饭好吃一点。<br>我深呼吸了一口气，推开了live house的大门。<br>我看向舞台上，彩排已经在进行了。<br>我进门时，台上的一个说唱歌手看到了我，朝我挥了挥手示意。<br>虽然在我的印象里我好像不认识他，但我还是朝他挥了挥手表示礼貌。<br>当然了我也不是考虑过人家会不会不是在和我打招呼，但是这个可能性不大，因为这个时候走进来的也只有我一个人。<br>“您好……请问您是…..” 我看着舞台的时候，听到旁边有一个女声向我提问。她的声音很小，听起来貌似有点紧张？<br>我转头看去，这个女生胸前带着一个吊牌，上面写着‘Staff’。看样子她应该是个工作人员。<br>“我是今天晚上的嘉宾。” 我说。<br>我把目光从她胸前的工牌移开，看向了她的脸。<br>她低着头，似乎不太敢和我产生目光上的接触。<br>等等，怎么感觉这么熟悉？<br>我睁大眼睛看了看，她长长的头发染成了黄色，然后扎了一个双马尾。<br>“你….今天不用在便利店值班吗…” 我挠了挠头说道。<br>然后我看到她整个人像是受到了惊吓一样，整个人震了一下。<br>她抬起头看着我的脸，然后瞳孔放大，仿佛像看到了鬼一样。<br>等等….我长的…应该没有这么的……<br>“诶….诶？？？？” 她稍微提高了几分音量，“你你你你你为什么……”<br>这时候，我感觉我的肩膀被人拍了拍。<br>我刚想转头过去，结果一只手直接搭在我的肩膀上，勾着我的肩膀。<br>“没事啦，他是我们今晚演出的嘉宾。” 我耳边传来一个我特别熟悉男声对着双马尾少女说。<br>这个男声有多熟悉呢，大概就是我一个晚上听了大概几百遍，而且这样的晚上有大概二三十个。<br>“好久不见啊林林。”<br>“你下次就不会来地铁站接我吗，让我当嘉宾还一点诚意没有，加钱。” 我头也没回的说。<br>“好…..我知道了…” 面前的双马尾少女还是不可思议的看了看我，“我我我等一下把演员证给你拿过来….”<br>然后她头也不回的就一溜烟的跑掉了。<br>我都来不及说 ‘麻烦你了’ 她就走掉了。<br>“别别别，你放过我好吗，这个一次你的那份，和你平时的比起来，已经多了三分之一了。” 勾着我肩膀的那个人说，“你要是再加的话就只能从我的那份里面扣了。”<br>“我不管，你知道今天为了来你这场，我错过了一个超棒的演出好不好！” 我抱怨道，“那个女歌手唱的超好听的！”<br>“我也不想啊哥，主办方一直和我说要我去请你的。我还帮你把你的报价往上报！”<br>“哟嚯，小伙子懂做事了啊？看样子以前没少照顾你啊。” 我说。<br>“而且我和你说，超好听的女歌手我们今天晚上也有一个，保证你满意，你到之前人家刚走，说是去趟东区带个人儿” 他一边勾着我一边走，“话我放这了，要是比你那个差，今晚的宵夜钱我出。”<br>“谁要和你吃宵夜了。” 我没好气的说，“我家那个吃白饭的点名说今晚要我做宵夜的，所以完事我就走了。”<br>然后他把他的手松开，走到了我的面前。</p>
+<h3 id="06"><a href="#06" class="headerlink" title="06."></a>06.</h3><p>“不是啊，你两到底啥关系啊？？在没在一起啊？？” 他一副意味深长的样子问我，“和那么可爱一妹子住一起，还天天给人做饭儿，你说你对她没点意思谁信啊？”<br>我感觉我头上的青筋跳了跳。<br>“王京，你要是再敢和我提一次这个问题，以后你就等着花钱找别的音乐制作人处理你的干声吧。” 我一字一句的说，“补充一点，伴奏也别从我这拿。”<br>“别别别哥我错了我真的错了不问了行不，您消消气您消消气。您看我这张嘴，就是管不住，您别在意啊哥，就把我说的话当个屁…..”<br>“行了行了，不见得你平时对我这么客气，每次都要我威胁你。” 我叹了口气，对他比了个中指。<br>“您瞧，我这张嘴不就是管不住嘛？” 他贱贱的笑了笑，“不过咱哥几个真不吃宵夜了？大家都很想你。”<br>“不吃，我要回家做饭。” 我心意已决。<br>“成成成。”<br>在他的带领下，我们在夜店里随便找了个地方坐了下来。<br>“你今天只用唱两首。” 他递了一瓶水给我，“我挑了你平时喜欢唱的那两首，已经把歌给他们发过去了。”<br>“嗯，谢谢。” 我接过了他的水，“彩排多久到我？”<br>他看了看舞台，上面还是刚才那个和我挥手的说唱歌手。<br>“他完了应该就到你了，他这首完了还有两首。” 王京说。<br>“行。” 我点了点头，“跟我抽根烟去。”<br>然后我们两个离开了座位，走到了室外的吸烟区。<br>他熟练的把他香烟拿了出来，递给了我一根。<br>我接过，放到了我的嘴唇上，掏出了自己的打火机把烟点上。<br>“真挺久没见了林林。” 他把自己的烟也点上了，“你最近过的怎样？”<br>“就那样呗，搞得好像我没在我们群里说过话一样。” 我吸了一口烟。<br>“唉，” 他说，“反正哥们就在这，需要帮忙啥的你就说。”<br>我笑了笑，虽然王京这个人嘴碎碎的，但是他的确把我当成一个重要的朋友。<br>“你放心吧，” 我冲他笑了笑，“虽然我没有固定工作，但是现在养活自己和家里那个吃白饭的，完全没有问题。”<br>这时，吸烟区的门被打开了。<br>我看到那个双马尾少女一溜烟的跑了进来，把一张挂牌塞到了我的手里。<br>“还还还有大概三分钟到您彩排了…..请您留留留留意时间….” 她磕磕绊绊的对我说，然后快速的朝我鞠了一个躬，紧接着就是一溜烟的跑掉了。<br>我懵懵的看了看她塞给我的吊牌，上面写着 ‘神秘嘉宾：林林’。<br>我的嘴叼住了香烟，把吊牌挂在了自己脖子上。<br>“挺可爱一妹子，今天第一天来。” 王京一边抽烟一边对我说，“貌似是主办这边缺人，临时招过来的。”<br>啊，怪不得可能她今天便利店没排班，所以刚好换了个地方打工。<br>真是个努力生活的人。<br>“这妹子是挺可爱的，就是有点儿害羞，讲话紧紧张张的。” 王京在一旁补充道。<br>“你不会想要去要人家的联系方式吧？” 我看了看他，没好气的说。<br>“才没有，我只对富姐姐感兴趣好吧！” 他贱贱的冲我笑了笑。<br>“那你还真是有志向呢。”我说。<br>“我去你的。”<br>“你再说一遍？去谁的？”<br>“哥我错了，去您的，去您的。”<br>“…..”</p>
+<h3 id="07"><a href="#07" class="headerlink" title="07."></a>07.</h3><p>我们沉默了一会后，王京突然开口对我说。<br>“林林，其实你心里也很清楚的，那件事情，真的不是你的错。”<br>“别说了。” 我吸了一口烟，“我不想提。”<br>“你到底要这样下去到什么时候？” 王京问我。“我知道这件事情对你的阴影很大，但是我一直和你说的是，只要你需要，哥们一直在这。”<br>“别说了，我不想提。”<br>“看看你的这个样子，每天门也不出，完全把自己关在家里，你还要这样封闭自己多久？”<br>“别说了，我不想提。”<br>“你知道吗？那件事情以后，我们哥几个都很关心你，很想帮你。但是我们做不到啊，你也不给大家机会，你知道哥几个心里有多难受吗？”<br>“我叫你别说了。”<br>然后我朝着王京走过去，抱住了他，拍了拍他的背<br>“你们时不时的给我介绍单子，介绍演出，就已经是在帮我了。” 我说。<br>“可是…哥几个怕你在家里给憋坏了….担心你会想不开….” 王京的声音有些哽咽。<br>“想啥呢，” 我松开了手，“我现在挺好的，真不用担心我。”<br>王京看着我，点了点头。<br>“还是那句话，需要帮忙的就说，不论什么事儿，都不是事儿。”<br>“行了行了，谢谢你。” 我把烟头掐了，“走吧，该到我彩排了。”<br>王京点了点头，把香烟掐掉后，和我一起走了回去。</p>
+<hr>
+<p>彩排完毕后，我把麦克风递给了工作人员，走下了舞台。<br>我在台上彩排的时候，看到台下那个双马尾少女一直在盯着我。<br>可能她也没想到，今天会这么巧吧。<br>我刚好又在她打工的地方遇到了她。<br>“强呀老林！” 王京一边说一边朝我走过来，“好久没看你演出，你还是挺出色的啊！”<br>“嗤，” 我说，“明明上个月才去了你的场。”<br>“哎呀这不是在夸你嘛！” 王京笑了笑。<br>“行了行了，我去个厕所，马上到你彩排了吧？” 我问道。<br>“对！” 王京兴奋的点了点头。<br>“好好准备啊。” 我拍了拍他的肩膀，“要是你演砸了你就找别人给你做歌去，以后别找我。”<br>“去你的，怎么可能，也不想想爷爷我是谁。”<br>“去谁的？”<br>“去您的。”<br>“xxx” 我骂了句脏话，“我去上厕所了。”<br>“得嘞！快去快回啊，回来看我彩排！”<br>我一边走一边听到身后传来王京的声音。</p>
+<h3 id="08"><a href="#08" class="headerlink" title="08."></a>08.</h3><p>说到底这家夜店我也不是第一次来了。<br>准确来说，是以前经常来。<br>这家夜店算是市里最有名的夜店之一，平时只是当做普通的夜店，但是经常会承接各类live house演出。<br>许多大大小小乐队或者是歌手在出名前都来过这个夜店演出，自然而然的这个夜店名气就上去了。<br>虽然以前我也经常来这里演出，但是后来我也很少来了。<br>虽然有一阵子没来的，但是这里厕所的位置我还是记得很清楚的，一下子轻车熟路的我就找到了。<br>刚进入厕所，我感觉到我口袋里的手机震动了一下。<br>我拿起手机一看，是室友发来的消息。<br>    霓倪ฅ՞• •՞ฅ：[微信图片]<br>芜湖，是他们吃的牛排的照片。<br>我还没来得及回复，一条新的消息又发送了过来。<br>    霓倪ฅ՞• •՞ฅ：[微信图片]<br>芜！！湖！！！！<br>这次是她发了一张她和凛酱的自拍过来！！！！<br>啊啊啊啊啊，凛酱真的好好看嗷！<br>好可惜，今天没能去成她的演出真的太可惜了，想到这里我就又有点来气了。<br>可恶啊王京你个王八蛋！！<br>触屏键盘上敲下。<br>    林林：牛排看起来好美<br>    林林：不对<br>    林林：凛酱看起来好好吃<br>    林林；不对不对不对<br>    林林：说反了说反了<br>    霓倪ฅ՞• •՞ฅ：？？？？？？？？<br>    霓倪ฅ՞• •՞ฅ：（本美少女要把你狗头打下来表情包）<br>    霓倪ฅ՞• •՞ฅ：你为什么夸凛酱不夸我！！<br>    霓倪ฅ՞• •՞ฅ：（本美少女今天要把你头给打烂表情包）<br>    霓倪ฅ՞• •՞ฅ：（美少女肘击表情包）<br>    林林：你也好好看哦<br>    霓倪ฅ՞• •՞ฅ：敷衍！！！！！！！不理你了！！！<br>我笑了笑，把手机收回口袋里，走到了小便池前拉下了自己的裤链。<br>（我知道你们没人会想看男孩子上厕所的所以我擅自决定帮你们快进了）<br>我在洗手池把手洗了洗，然后用烘干机把手吹了吹，准备往回走，去看王京彩排。<br>我走出厕所的时候，余光瞟到门口边上有个人靠着墙。<br>但是我没在意，朝着人家的反方向走了。<br>可是我刚抬脚才没走两步，突然感觉有人拉住了我外套的衣角，我顿了一下。<br>于是我回头，看到是那个黄头发的双马尾少女拉住了我。<br>原来是她刚刚在厕所门口。等等，她是专门在等我吗？<br>我转身看向她，她松开了她的手。<br>她低着头，涨红了脸，两只手都用力捏着自己的衣角。<br>身体还有些微微的颤抖，感觉起来好像很紧张的样子，不知道她在害怕什么。<br>“你是在等我吗？” 我决定先开口。<br>“嗯…嗯…” 她的声音小的几乎听不见。<br>“那个….不不不好意思…..” 她的声音也有些在颤抖。<br>虽然因为她低着头不能完全看到，但是我看到她的表情似乎有些着急的快哭出来了。<br>啊，这可不行。<br>你要我让一个这么可爱的女孩子当着我面哭出来我可做不到。<br>“啊。” 看着她真的很紧张的样子，我决定安抚一下她，“没事的没事的，不要紧张，你想说什么你就说吧，没事的。”<br>“嗯…嗯就是….前天你在便利店…..” 然后她的声音有小了下去，最后干脆不说话了。<br>“你是说你在便利店练习剑道社上学习的剑道吗？” 我问，“你很努力哦，而且那一招挺帅的。”<br>然后我看到少女突然愣住了，大概楞了五秒钟。</p>
+<h3 id="09"><a href="#09" class="headerlink" title="09."></a>09.</h3><p>“嗯…嗯..是剑道…谢谢….” 她的脸更红了，说话的声音还是很小但是感觉已经没有那么颤抖了。<br>我感觉虽然她的脸变得更红了，但是之前的着急和紧张貌似减轻了很多，取而代之的是害羞。<br>“你还好吗？” 因为她的身高比我室友还要稍微矮一点，所以半弯腰的低下头问她。<br>“没没没没事…就是….能不能…..不不不要….说….” 她的声音又是弱到了几乎听不见。<br>“你想说的是：能不能不要把这件事说出去吗？” 我问她。<br>“嗯….嗯！” 她有些惊讶的抬起头来看我，觉得我竟然能听懂她说的话。<br>我看到了这个一直低着头的少女的正脸。<br>她长得真的很可爱，看起来稚嫩光滑的脸蛋，眼睛水汪汪的，她还轻轻的咬住了自己的下嘴唇，可能是真的有点紧张吧。<br>就是那种，一眼看到就会让人产生心生怜爱的感觉。<br>“好哦。” 我冲她微微一笑，“我不会说出去的哦，虽然我觉得那看起来很帅。”<br>“谢..谢…” 她又低下了头。<br>“走吧，我们回去吧。” 我对她说，然后转身。<br>“好…” 她跟在我后面，小步小步的走着。<br>走出去后，在后面的她又突然拉住了我外套的衣角。<br>“怎么啦。” 我转过身问她。<br>“那个…等会晚饭..那边…问..你….外卖….出去..吃….” 她又低下了头。<br>不知道是因为舞台上的王京正在彩排所以有音乐的缘故，还是她说话的声音真的太小，所以我只能断断续续的听到几个字。<br>“你是想问我，那边在问等会晚饭我要怎么解决，是要你们帮我定外卖还是我自己出去吃吗？” 我把我对她说的话的猜想说了出来。<br>“嗯..嗯！” 她朝我点了点头。<br>“那家伙怎么说的？” 我指了指舞台上的王京。<br>“他…出….吃….”<br>“我和他一样。” 我点了点头。<br>然后她然朝我鞠了一个躬，小声的说了句谢谢，然后又一溜烟的跑掉了。<br>我无奈的耸了耸肩，然后走回舞台前看着王京彩排。<br>过了一会王京唱完了，他下来之后第一件事就时问我。<br>“你两怎么刚刚一块从厕所出来了？她还拉住了你？？你别瞎说啊我都看到了！！咋回事啊你这就勾搭上人家了？”<br>？？？？？？这？？？？<br>我此时此刻真想冲上舞台，拿过麦克风把他的头给锤烂。</p>
+<h3 id="10"><a href="#10" class="headerlink" title="10."></a>10.</h3><p>等到所有的彩排都结束以后，我和王京在夜店附近找了一家人少一点的餐馆吃饭。<br>“一个孜然羊肉，你再点多个菜。” 王京一边点菜一边问我。<br>“再来个茄子肉末吧，加个手撕包菜。” 我合上了菜单，“还要两碗白饭。”<br>“两位想要喝点什么呢？” 服务员接过了菜单，问我们。<br>“可乐，无糖的。”<br>“x多宝。”<br>点完菜后，我和王刚互相看了一眼。<br>“出去搞一根？” 他问我。<br>我点了点头，起身和服务员说了一声，然后我们两个人朝外面走去。<br>“所以今天的演出都是什么阵容？” 我点完了嘴上的烟，然后问他。<br>“我今天是演出嘉宾，你今天是还没对外公布的神秘嘉宾。然后还有另外两个演出嘉宾。” 他叼着烟说。<br>我不由得想到了我当时刚到，正在舞台上彩排的那个说唱歌手。<br>虽然我不认识他但是他还是和我打招呼来着？<br>“对了，我刚到的时候那个在舞台上彩排的人是谁？” 我问道。<br>“哎呀，他啊！我都忘了，瞧我这记性。” 王京拍了拍自己的脑袋，“人家今天听说你要来之后特别兴奋。”<br>“所以他，以前是我的粉丝？” 我问了问。<br>“对！你来之前他一直在问我等你有空的时候能不能和你合照来着，然后我看到你之后我就忘了。” 王京吐了口烟，说。<br>虽然我也有快近一年没有发行过自己的作品了，不过没想到在这里还能遇到我以前的粉丝，然后现在还会同台演出，不由得引起了我的好奇心。<br>“那他是今晚的嘉宾吗？” 我问。<br>“不是不是，今天的演出主要是给他们办的。” 王京说，<br>“他们？” 说到底，我本来也只是打算过来演完之后走的，所以也没打算去了解今天的演出都有些什么阵容。<br>“对，咱们市里最近新起的一个音乐厂牌，今天是他们厂牌的第一个专场演出。” 王京开始有些兴奋了，“他们以前只是一个小团队，后来慢慢做了起来之后成立了一个音乐厂牌，现在可火了。”<br>小团队，就像我们以前一样啊。<br>“说来听听。” 我弹了弹烟头。<br>“都是一帮年轻人，有的还是大学生。但是他们做出来的东西质量都很高，我觉得他们的潜力是巨大的。” 说到这里，王刚顿了顿。“尤其是他们有一个女R&amp;B 歌手， 就是我前面和你说你到之前就先离开了的那个，现在老多粉丝了! 而且她唱的真的太好听了，要不要给你听听？”<br>R&amp;B 女歌手，因为错过了人家的彩排，所以没能亲自听到。但能让王京做出这样的评价，我觉得这个人可能也不简单。<br>不过，我还是坚定的凛酱党。<br>我都没有听歌的时候被拉入到歌手的世界里的感觉了，但是凛酱做到了。<br>要不等会有空的时候给王京听一下凛酱的歌吧。<br>“没事，” 我说，“晚点就可以看到了。”<br>抽完烟后，我们两个回到了餐馆里面。<br>这家餐厅上菜的速度倒是很快，十分钟不到我们的菜就上齐了。<br>我们两个开始大口大口的吃着今天的晚饭。<br>我看了一眼时间，现在已经大概六点半快七点了。<br>根据这次演出的安排，差不多七点观众就会开始入场，八点正式开始演出。<br>“所以咱们今天的演出顺序是怎么样的？” 我问。<br>“那两个嘉宾在我前面，然后我第三个。” 王京夹了一块羊肉说，“因为你是神秘嘉宾所以你是最后一个。你演出完之后就到他们了。”<br>“好。” 我点了点头, “快吃把，虽然还有些时间，但是还是提早回去准备一下的好。”<br>王京点了点头，于是我们两个人接着大口大口的吃着。</p>
+<hr>
+<p>七点十三分，我们两个回到了夜店。<br>我们到演员休息室找了个地方坐下来。<br>休息室里也没什么人，除了一个正在整理东西的工作人员。<br>“我去拿点喝的。” 王京说，“你要喝点啥不？”<br>“水就行了。” 我说。<br>然后王京起身走出了休息室。<br>我掏出了手机，打开了微信，给室友发了一条消息。</p>
+<h3 id="11"><a href="#11" class="headerlink" title="11."></a>11.</h3><pre><code>林林：怎么样
+林林：你们那边的演出开始没
+过了几十秒。
+霓倪ฅ՞• •՞ฅ：还没有，不过我们已经到门口啦
+林林：（OK表情包）
+林林：记得帮我拍凛酱唱歌
+霓倪ฅ՞• •՞ฅ：好好好我知道啦
+霓倪ฅ՞• •՞ฅ：真的是
+霓倪ฅ՞• •՞ฅ：不说啦， 已经进去了。
+林林：（OK表情包）
+</code></pre>
+<p>然后我起身，看了看王京还没回来，我去下洗手间好了。<br>毕竟要喝一个陌生人呆在一个屋子里，虽然不用讲话但是难免有点不习惯。<br>所以我决定出去避下难。<br>去厕所的时候，我看到那个双马尾妹子正在认真的帮忙布置场地。<br>她看到我后，还是愣了一下。<br>我朝她点了个头，示意了一下，然后接着往厕所走。<br>真是个努力生活的人呢。<br>然后我进入了男厕所。<br>（我知道你们没人想看林林上厕所的过程所以我自做主张帮你跳过了）<br>上完厕所后，我照了照镜子。<br>然后我把眼镜拿下来，洗了把脸。<br>整理完自己的仪容仪表之后，我离开了厕所。<br>出去后，我看到对面女厕刚好有一个人走了出来。<br>这个身影非常的熟悉。<br>到下巴的短发，胸口上的纹身，手臂上的纹身。<br>耳朵上带着一个写着‘及时行乐’ 的挂饰。<br>和那天不同的是，她脸上的妆容更加精致了，而且她的外套换了一件。<br>不过里面穿的是另外一件比上次更性感的抹胸。<br>不得不说，她今天虽然和上次一样穿的都是一身黑，但是今天的她尤其的好看且性感。<br>我看到她也看到了我。<br>她的瞳孔此时因为惊讶而显得有些放大。<br>嘴巴微张，我们两个同时的问出了这句话。<br>“你怎么在这里？”</p>
+<h3 id="12"><a href="#12" class="headerlink" title="12."></a>12.</h3><p>凛酱惊讶的看着我。<br>“我今天是过来演出的。” 凛酱说，“你今天，在这里工作？”<br>“对。” 我点了点头。“没想到还是没有错过你的演出！”<br>我是完全没想到竟然会是这么巧合的一件事情。<br>我竟然和凛酱在同一场演出上，而且我还是她的演出嘉宾？<br>想到这里我的情绪一下子变得高涨，我非常的开心。<br>太好了，原来我没有错过凛酱的演出！<br>所以说，前面王京说的那个，R&amp;B女歌手，难道就是她？<br>“是的，早知道你今天在这工作的话我们就可以一起吃个晚饭然后过来了。” 凛酱拨了拨自己的的头发，把耳朵露了出来，然后冲我笑了笑。<br>啊！可恶！!<br>如果我当时问多一句凛酱今天演出的地点，说不定我就能提早反应过来然后和凛酱共进晚餐了！！！<br>想到这里我巴不得捶自己两拳。<br>“所以今天是你们厂牌的第一次专场？” 我问。<br>“对啊，所以之前想要邀请你过来看。”<br>“如果我当时多问你一点细节的话说不定就能提早发现我们是同一场的呢！”<br>“哎，我当时也应该和你说地点在哪的。” 凛酱说，“所以你今天是来这里陪富姐姐的吗？”<br>啊….啊？？？？？？<br>摔跤运动员，约翰·希纳疑惑？？？？？<br>富姐姐？？关富姐姐什么事？？？<br>“关…富姐姐什么事？” 我感觉我说工作的时候，这个工作好像被误解了。<br>等等，就在今天出门前，也有人和我说过同样的事情。<br>一种不好的预感在我心里升了上来。<br>“陈霓倪和我说，你的工作不是要陪富姐姐的吗？” 凛酱不假思索的说， “没事啦林林，我不觉得这有什么，不需要特意和我隐瞒。我理解你，就像你理解霓倪一样的。”<br>我听完凛酱说完这句话之后，我真是又气又想笑。<br>就是那种有点哭笑不得的感觉。<br>我开心的点是，虽然在凛酱误会我是陪富姐姐的鸭子的情况下，并没有对我产生偏见，还是把我当成之前那个林林。<br>当然这也反映出来了凛酱也是个特别善良的人，凛酱小天使！<br>我生气的点，呵呵呵呵呵。<br>陈霓倪你死定了。<br>我今天就是要把美少女的头给捶烂。<br>“啊这….你貌似是误会了。” 我强压着怒气，冲凛酱笑了笑，“我是你们今晚的，演出嘉宾。”<br>“啊原来是这样子吗？？” 凛酱张大了嘴，瞳孔再一次的放大。<br>然后她突然楞了一下。<br>“等等，我看过今晚记得嘉宾名单，没有你。” 她顿了顿。<br>“难道你是今晚的那个神秘…”<br>我把脖子上的吊牌举了起来，朝他晃了晃。<br>“我都说我不是陪富姐姐的了吧。” 我无奈的耸了耸肩。<br>“啊！误会你了实在抱歉！” 凛酱朝我低了低头。<br>“没事没事，” 我笑了笑，“你前面和我说，是陈霓倪告诉你我要去陪富姐姐的？”<br>“对，她说看你穿的帅帅的然后出门了，也没和她说你要去做什么。所以她觉得你是去陪富姐姐。” 凛酱一边说一边打量着我，“你今天确实挺帅的。”<br>听到凛酱夸完我，我突然感觉整个人变得轻飘飘的，心情好了不少。<br>“嘿嘿，谢谢。” 我说，“所以陈霓倪现在在哪里？”</p>
+<h3 id="13"><a href="#13" class="headerlink" title="13."></a>13.</h3><p>“陈霓倪你给我过来！！！！！” 我一边进入休息室一边大喊，“你死定了！！！”<br>我看到室友在化妆台前照着镜子。<br>室友今天还是穿了一身JK，白色的衬衫，小领结，黑色的过膝袜，圆头小皮鞋，还有一件宽松的针织外套。<br>室友今天画了个比较可爱的妆，头发上还别了发卡，头上还带了一顶大大的卡其色画家帽。<br>听到我的声音后，她整理自己刘海的手停了下来，然后转头惊讶的看向我。<br>“诶？？？？？？林林？？？？？？” 从她的表情看来，她似乎也很惊讶为什么我会出现在这里。<br>“你不是今天要去陪富姐姐吗？？？你怎么在这里？？？难道你是来这里陪富姐姐的？？？？” 她问我。<br>“啪。” 我听到在我身后的凛酱拍了一下自己的额头。<br>我才留意到，趁着我去上厕所的功夫，休息室里已经多了不少人，有其他的演出人员还有工作人员，而且王京也已经回来了。<br>完了，大家现在所有人的目光都向我看齐，就好像我要和他们宣布我是一个散（傻）兵（比）一样。<br>“牛逼啊林林！” 王京长大了嘴巴，惊讶的说，“有富姐姐还不给哥们介绍一下？”<br>啊啊啊这个人能不能闭嘴他不说话没人把他当成哑巴！！！<br>还偏偏要哪壶不开提哪壶！！！<br>“啪！” 轮到我拍了拍自己的额头，完蛋，林林社死。<br>估计以后要是有找我的演出，说不定都会以为我是个陪富姐姐的鸭子了。<br>想到这里，我突然不想在休息室里待下去了。<br>于是我快步走过去像拎猫一样拽着她出去了。<br>“诶诶诶等一下等一下！”<br>“出来说出来说。” 我拉着她就要往外走，回头的时候我看到凛酱对着我耸了耸肩。<br>“诶别走啊！” 王京在后面，跟着出来，“等等我等等我！”</p>
+<hr>
+<p>“所以你今天也是来这里演出的？还是凛酱的神秘嘉宾？” 室友一边惊讶的问我，“还真的不是来陪富姐姐呢！”<br>“哪来的那么多富姐姐给我陪？” 我无奈的说。<br>“啊哈！原来林林这么厉害！” 室友显得有些兴奋，“我还是第一次知道你会唱歌呢！”<br>“是的，然后你觉得我是要去陪富姐姐，” 我翻了个白眼，“呜呜呜然后你还在里面当着那么多人的面说出来，我直接社死好不好。”<br>“哎呀，没事啦，等会回去我帮你解释！” 室友挺起了自己的胸膛，拍了拍，像是为我打包票一样。<br>“算了吧，我就怕你越说越说不清。”</p>
+<h3 id="14"><a href="#14" class="headerlink" title="14."></a>14.</h3><p>“所以说，这是你室友，然后你没和你室友说你的工作是啥？所以人家以为你要去陪富姐姐？那你这也不能怪人家嘛。” 王京一边抽烟一边打断了我们说的话，还小声嘟囔，“没有富姐姐了，好失望。”<br>“你给我闭嘴！！” 我没好气的对他说，“没你说话的份！”<br>“就是就是！他刚刚还想管我要联系方式！！！” 室友指着他说。<br>“好好好我闭嘴我闭嘴。” 王京往后退了一步，嘴里还小声说着，“我又不知道是你室友嘛…你也只和我说过她长得很可爱，我又没看过她照片….”<br>我看到在一旁的凛酱啼笑皆非的看着我们的对话。<br>“好啦好啦，都是误会啦。” 凛酱把烟掐了，走到室友后面抱住了她，“你还不快给林林道歉！”<br>凛酱一边说一边揉了揉室友的小脑袋瓜。<br>外表看起来厌世叛逆的凛酱，展示出她温柔大姐姐的一面的时候，那种反差感真的深深的吸引住了我。<br>“好..好嘛…” 室友不情愿的噘着嘴，“还不是林林不和我说你的工作是什么…我错了嘛！”<br>“算啦算啦，” 我吸了口烟， “不怪你啦，怪我自己没说清楚。”<br>我一边说一边拍了拍室友的脑袋瓜子。<br>“所以真的没有富姐姐了？” 王京这个家伙不合时宜的又差了一句话，“好失望，林林你不行啊。”<br>“我改变注意了。” 我额头上的青筋又跳了跳，“王京我要把你头给打烂！”<br>“别别别，哥！” 王京慌了，然后指着凛酱，打算转移话题，“这妹子就是我和你说的那个超厉害的R&amp;B女歌手！”<br>“我知道啊，” 我摆了摆手，“我们之前就认识了。”<br>“是的，我前天还去他家吃饭了来着。”凛酱点了点头，“我是他室友的朋友，你好，我知道你，我是姜凛。”<br>“你好你好，” 王京楞了一下，“林林借一步说话啊！”<br>“哈？” 然后我被王京拉到了一边。<br>“你到底咋回事，你怎么勾搭上的到底，能教教哥们不？” 王京把我拉到旁边后，贼眉鼠脸的搓着脸手问我，“你看你都有了室友了，没想到你还认识姜凛这么帅气一妹子，结果今天还在勾搭可爱的工作人员妹妹。”<br>我：？？？？？？？？<br>“我不是我没有你不要乱讲啊！” 我翻了个白眼。<br>“咱哥俩啥交情了，有啥诀窍，和哥们说说呗？”<br>“？？？？？” 我甚至有些不爽，“你给我闭嘴好吗？你信不信我等下拿啤酒瓶尻爆你的狗头？”<br>“别别别哥我错了，” 王京立马认怂。“我可不想你再进一次局子，虽然上次不是尻我的。”<br>…..<br>这个人真的是，哪壶不开，铁了心的要把那壶不开的提起来。<br>“闭嘴，你要是再说一次，这次就是你的头。”<br>“不过你知道，姜凛他们厂牌有一哥们想追她你知道不？”<br>“关我什么事？” 我问，“谁啊？”<br>“就是那个…嗯…啊我知道了。” 王京拍了拍脑袋，“就那个，彩排和你挥手那个，你以前的粉丝！”<br>哈？这？<br>算了这也不归我管，毕竟现在是一个恋爱自由的时代。<br>啊，虽然我这么告诉自己，但是我还是好不爽啊，竟然有人想要追凛酱。<br>“哦。”说完我转身，准备离开。<br>“诶别生气啊哥！” 王京跟在我后面说。</p>
+<h3 id="15"><a href="#15" class="headerlink" title="15."></a>15.</h3><p>然后我们回到了室友和凛酱身边。<br>“你们刚刚在那边讨论什么呀！” 室友看到我们回来，好奇的问。<br>“没啥，” 我瞪了一眼王京，“音乐上的事情。”<br>“对对对！” 王京看到了我的眼神，也明白了我什么意思，“音乐上的事情，音乐上的事情。”<br>“诶嘿，那好吧。”室友说。<br>“所以林林你是以前和王京就认识？” 凛酱接过了话问我。<br>我张嘴刚想回答，却被王京打断。<br>“这可不，我和我哥们老早就认识了，” 王京拍了拍我的肩膀，“以前咱们团队的，制作人儿！”<br>听到这里，凛酱觉得有些不可思议，然后睁大了她的眼睛。<br>“原来是你吗？” 凛酱惊讶的说。<br>“什么什么？林林以前很厉害吗？” 室友歪了歪头，问道，“我以为林林就是个只会做饭和玩游戏的宅宅呢！”<br>这时，王京接过了话。<br>“妹子，这要我说就是你不了解了，” 王京说，“我哥们啊，可是以前连着七个通宵搞一首歌的人，还没有猝死，你说牛逼不。”<br>“不是，你夸我能不能用别的方式？？” 如果我哪天死了就是给王京气死的。<br>“林林厉害！” 我室友欢呼到。<br>“林林，你知道我以前和你购买过你的编曲吗？” 凛酱接回了话题。<br>“你说的不会是那首….霓虹…” 我拍了拍我的脑袋瓜，开始飞速思考起来。<br>“对。” 凛酱郑重的点了点头，“Neon Heartbreak, 那是我第一首歌。”<br>她这么一说我突然想起来了。<br>好久之前有人找我买这首编曲，然后人家付完款之后，我把文件和授权合约给人家邮件发过去之后就没有后话了。<br>怪不得，我听到她那首歌现场的时候我能对前奏这么熟悉，熟悉到我都知道是哪几个音。<br>原来当时买的那个人是凛酱。<br>不过当时她是直接用邮件联系我的，不然我说不定很早就能和凛酱认识了。<br>“哇！原来凛酱用过林林的编曲！！！” 室友惊讶的说，然后抓着我开始摇啊摇，“林林除了做饭好吃以外还这么厉害的吗！！”<br>人随着室友的拉动，我整个人也跟着左右摇摆。<br>“我曹！” 王京也不由得发出了惊叹，“哥们你太牛逼了，这歌当时在圈子里挺火的！”<br>“啊，这样子吗。” 一边被室友摇晃着，我一边害羞的挠了挠头。<br>然后我心中疯狂暗喜。<br>啊哈哈哈哈原来凛酱以前用过我的编曲！！！！啊哈哈哈爽到！！！！<br>“当时我靠着这一首歌，被那个团队的人找了上门。” 此时凛酱的声音有些激动的发出了微微颤抖，“然后我从此开始了我的音乐生涯。”<br>“能这么帮到你，我也很开心。” 我发自内心的笑了出来，没想到机缘巧合让我认识了凛酱。<br>“林林，” 凛酱激动的往前走了一步，“这首歌对我来讲意义真的很重大，后来我一直想再次联系当时的你。可是发了邮件也没回，问了你团队的人他们说你脱离了。”<br>她走到了我的面前，张开双臂轻轻的抱了抱我，然后松开。<br>“诶？？？？？？？” 室友和王京同时发出了惊叹。<br>“虽然只是单纯的购买，但是我还是很想谢谢你，做出了这首歌。” 她抓着我的双臂对我说。<br>“林林，你真是让我充满惊喜呢。” 凛酱声音颤抖的说。</p>
+<h3 id="16"><a href="#16" class="headerlink" title="16"></a>16</h3><p>“林林，我完了下一个就是你了。” 王京拍了拍我。<br>“加油，好好演。” 我对他点了点头。<br>然后我看着王京走出了后台，朝舞台上走去。<br>在上一名演出者的介绍下，台下爆发出了热烈的欢呼声。王京在欢呼声中，走上了舞台。<br>这小子经验也蛮丰富的，希望他好好的表演吧。<br>“林！！林！！” <br>我听到了熟悉的声音，于是我转头看去。<br>是室友在喊我，然后凛酱跟在了她的后面。<br>“诶？你们怎么过来了？” 我看到是她们，我开心的笑了笑。<br>“”这不是想说第一次看你演出，给你打打气！” 室友还是一如既往的充满元气，“不要紧张！加油加油加油！”<br>“哈？” 我一边笑着一边拍了拍室友的头，“我又不是第一次演出。”<br>“霓倪说你很讨厌人多的地方，所以她让我陪她过来看看你会不会不太适应什么的。” 凛酱也走了过来，对我说。<br>“放心啦，” 我把手从从室友的头上抽了回来，对着凛酱摆了摆手，“我只是不喜欢，倒也不会产生生理上的不适。”<br>“那就好，” 凛酱点了点头，“那我就放心了。”<br>“还是谢谢你们特意跑过来看我啦，” 我说。<br>然后我转过头问室友。<br>“今天宵夜想吃什么？” <br>“让我想想…” 室友把两只手都放在了自己的头顶上，像是在思考的样子。<br>“我要吃蛋包饭！” 室友得出了她的答案。<br>蛋包饭…不应该是午饭吃吗….<br>而且回家还要等饭煮好的话估计我室友已经饿死了。<br>看样子只能到时候去买现成的白饭。<br>“行行行，” 我点了点头，然后转头看向凛酱，然后下意识的问了一句。<br>“凛酱要一起吃吗？”<br>问出这个问题之后我立马后悔了。<br>因为等到凛酱演出完可能都已经十一点多了，加上刚演出完她应该会比较想回家休息。<br>而且我也不知道都这么晚了凛酱回去方不方便。<br>算了，应该会被拒绝吧。<br>但是接下来凛酱的反应出乎了我的意料。<br>“诶？我可以吗？” 她指了指自己，“不会让你困扰吧？演出完挺晚的。”<br>开什么玩笑，我室友隔三差五的就说要吃宵夜，经常还是大半夜的。<br>加上我本身睡的也不早，所以基本上给她做。<br>现在就算在多一个凛酱我也绝对不会感到困扰的。<br>反倒说，我还挺开心呢。<br>“不会啊，” 我笑了笑，“如果你不闲麻烦的话。”<br>“对呀对呀！凛酱你也过来吃嘛！” 室友在这个时候送上了神助攻，“你从我家回去走15分钟就能到了，而且林林的蛋包饭超好吃的！”<br>呜呜呜呜我现在心里感动的眼泪都快掉下来了。<br>我这个整天白吃白喝的室友终于知道报恩了，平时果然没有白白养她。<br>我突然觉得自己掏了那么多食材钱都值得了。<br>“来嘛来嘛！” 室友一边抱着凛酱的手臂晃来晃去，“凛酱如果不想回去我们可以一起睡嘛！凛酱你不是最喜欢吃蛋包饭了嘛！”<br>干得漂亮，陈霓倪，我决定明天给你多买一条龙虾。<br>“真的可以吗？” 凛酱抬起头问我。<br>“可以呀，如果你不觉得麻烦的话。” 我认真的说。<br>“那今天晚上就麻烦你了。” 凛酱对我点了点头。<br>麻烦吗？才不麻烦呢！<br>“小事啦，” 我说，“凛酱你是第几个上场啊？” <br>“你完了之后再过两个。” 凛酱冲我笑了笑。”<br>“好哦。” 我点了点头。</p>
+<h3 id="17"><a href="#17" class="headerlink" title="17"></a>17</h3><p>“让我们，有请今晚的最后一个嘉宾，也是我们的神秘嘉宾。”<br>听到王京这么说后，我朝舞台上走去。<br>灯光打在了我的身上，我一步一步的走了上台。<br>到了台上，我和王京握了握手，肩膀碰了一下。<br>“好好演啊哥们。” 王京说。<br>“放心。”<br>然后我接过麦克风。<br>“大家好，我是4woods。” 我把麦克风放在嘴边，把我的艺名说了出来。<br>这是个我以前经常用的艺名，虽然现在只有在演出的时候才会用这个名字。<br>4woods, 拆开来就是四个木，也就是我的本名。<br>然后听到了台下爆发出了欢呼声,还有不少人在大喊‘我曹那是4Woods！！！’。<br>“今天给大家带来的第一首歌叫做，‘She Got Blue’，DJ lets get it.”<br>然后音乐随之响起。<br>依然是熟悉的旋律，熟悉到我能清楚的知道每个音符具体是哪个音。<br>废话，因为这是我给自己做的，我自己肯定清楚。<br>我舔了舔嘴唇，开始了演唱。<br>    I know I am too sick can’t be heal<br>    （我知道我已经病的无药可救）<br>    rely on her only I can feel<br>    （而我只有在依赖着她的时候才会有感觉）<br>    She got the blue<br>    （她很抑郁）<br>    I gor her mood <br>    （我也感受到她的心情了）<br>    Can’t live without you<br>    （如果离开了她，我也活不下去了）<br>    See you in the mirror<br>    （我在镜子里看见了她）<br>    That girl with her blue hair<br>    （那个蓝色头发的女孩）<br>    Please don’t leave me<br>    （我请求你，不要离开我）<br>这首歌又叫做蓝色少女臆想，是关于我自己编的一个故事。</p>
+<h3 id="18"><a href="#18" class="headerlink" title="18."></a>18.</h3><p>一个将自己的身心都封闭在了自己的房间的少年，他从来不会与人交流，和人也几乎没有联系。<br>但是名为孤独的痛苦却夜以继日的侵蚀着他。<br>这种痛苦像是绳索一般，套住了他，将他拽入了痛苦的深渊。<br>少年有想过去改变自己的生活，踏出自己的房间去接触外面的世界。<br>但是他做不到，心理上的创伤让他感受到了恐惧。<br>日复一日，少年只能不断的吃安眠药让自己进入睡眠，好减轻这种痛苦感。<br>直到有一天，少年的安眠药吃完了。<br>在无法忍受孤独的情况下，少年从房间里找来了一根绳子。<br>看着窗外的夜景，他决定上吊结束自己的生命。就在这时，透过玻璃窗的反光，少年发现自己身后出现了一个蓝色头发的少女。<br>少女不会说话，对于少年提出的问题没有办法回答。<br>所以少年给了少女纸和笔，让她把自己想说的话写在纸上。<br>两个人就开始有了交流。<br>在日复一日的陪伴中，两个人互相了解了彼此。<br>少年了解到，少女其实是个忧郁的人，她的脸上也不曾出现过笑容。<br>但是随着时间不停地流动，他们都成为了彼此的依赖，慰藉。<br>随后，他们也对彼此产生了感情，他们都互相喜欢上了对方。<br>少年觉得，如果有少女在，可能他这辈子都可以好好的活下去了。<br>可少年并不知道的是，少女其实只是她臆想出来的一个人格。<br>也就是说，少女并不存在，从头到尾都只有少年一个人。<br>在现实中的人看来，少年就是一个每天都会自己在纸条上写东西，然后自己和自己对着空气说话的人。<br>少年的家人认为少年有精神分裂，为了少年的健康，把少年带去进行了精神治疗。<br>治疗过程中，少年也慢慢意识到了少女是一个并不存在的人，一切都是自己的臆想。<br>然而，“少女” 也不断留下纸条告诉少年，希望他可以好好接受治疗，回归正常的生活。<br>虽然“少女”的心里也不愿意，但是她知道，这样对于少年来说才是最好的出路。<br>于是双方都陷入了矛盾的心理，痛苦的挣扎着。<br>少年深爱着“少女”，可是她不是真实的。<br>“少女”也爱着少年，可是对少年来说，离开他才是他最好的救赎。<br>对少年而言，”少女”是对他的一种拯救。<br>对”少女”而言，少年也是对她的一种拯救。<br>虽然这一切都是臆想出来的。<br>这种矛盾感，再一次把少年拖入了名为痛苦的深渊。<br>少年的状态急剧恶化。<br>最后少年面临着两种选择， 是好好接受治疗，变回正常人回归社会，他可能再会遇到其他挫折使他抑郁 还是放弃治疗，选择和臆想中的蓝色少女拯救彼此。<br>家人替少年做出了选择。<br>最后，少年被迫接受了治疗，在麻醉的药物作用下，少年失去了意识。<br>忘记了‘少女’，忘记了一切。<br>忘记了那个曾经拯救了自己的“自己”。<br>醒来之后，少年失去了一切对于少女有关的记忆。<br>虽然少年的生活变得正常了，也不再自闭了。<br>但是少年心里强烈的感觉到自己缺少了什么。<br>但是他不知道，而这种感觉让他感到痛苦异常。<br>最后，少年无法承受这种痛苦，他决定去做一件他很久之前没做完，被打断的事情。<br>虽然他也想不起来是因为什么被打断了。<br>同样的时间，同样的地方，面对着同样的落地窗。<br>只不过，这次不一样的是，踢翻了座椅，少年的双脚离开了地面。<br>在少年几乎已经要窒息的时候，他突然在玻璃窗的反光里看到身后出现了一个少女。<br>可是，一切都来不及了。</p>
+<h3 id="19"><a href="#19" class="headerlink" title="19"></a>19</h3><p>我一边演唱一边看着台下的观众，仿佛在寻找什么。<br>然后我看到在舞池的后方，有一个人貌似因为身高不足，所以一直在跳起来朝我挥手。<br>我定睛一看，啊哈，是室友。<br>旁边站着的凛酱也在朝我挥手。<br>我心中暗喜，凛酱也在看我演出了。<br>而且等下她还要去我家吃宵夜。<br>想到这里，我的脸上不由得露出了笑容。<br>这让我在唱第二首一点都不欢快的失恋歌的时候，没控制好表情笑了出来。<br>啊，我觉得可能已经陷入气氛的观众们应该会被我这一笑把气氛都破坏掉了。<br>我一边演唱一边调整自己，好让自己恢复一个没那么开心的情绪，符合这首歌的气氛。<br>在我唱完第二首歌之后，我朝台下的观众挥了挥手。<br>“谢谢大家！” 我拿着麦克风说。“今天的嘉宾都演完了，接下来让我们正式开始今天的演出。”<br>随后台下再次爆发出了欢呼声。<br>但是，我好像有听到，下面有人在喊，4woods再来一首？<br>对，而且还不止一个。<br>算了算了我还是装作没听见好了。<br>我看到那个彩排时对着我打招呼的人和他另外一个同伴走了上来，我们握了握手，碰了一下肩膀。<br>“林林！虽然很久没看过你的现场了，但是感觉你还是像以前那么棒！” 他爽朗的冲我笑了笑。<br>“谢谢！” 我拍了拍他的背，“今天是你们的第一次专场，加油！”<br>然后我走下了舞台，我要赶紧找个好位置看凛酱唱歌。<br>我几乎是没花什么力气就挤到了舞台的最前方。<br>其实本来我只是打算在后面看着的，毕竟挤进去人太多了。<br>戏剧性的是，旁边的人认出了我，开始和我搭话。<br>然后我告诉他等会有个歌手我特别喜欢，所以决定来舞台下找位置看她。<br>“来来来那你往前站点，前面才看的清楚！” 他让开位置对我说，“可以和你合照一张吗？”<br>我点了点头，毕竟人家都对我展示出好意了，我也不好拒绝。<br>这样的事情发生了十几次，每次再往前一点下一个人也能认出我。<br>我和别人拍了十几张合照之后，我终于到了第一排。</p>
+<h3 id="20"><a href="#20" class="headerlink" title="20."></a>20.</h3><p>“林！林！” 我听到又有人叫我。<br>不会是又要和人合照了吧？我都到了第一排再往前就到台上去了都。<br>不过这个想法马上被我打消了，因为这个声音我再熟悉不过了。<br>“你也在这？” 我问室友。<br>“对啊对啊！” 室友和我比了个剪刀手，“我废了好大劲才挤进来呢！你是不是也是！”<br>“没有，” 我摇了摇头，“他们认出来我之后都给我把位置腾了出来。”<br>“哈？？？？’ 室友撅了噘嘴，“凭什么嘛！！！！林林了不起咯！！！”<br>“行了行了，” 我拍了拍她的头，“什么时候到凛酱？”<br>“我就知道你是来看凛酱的！” 室友朝我吐了吐舌头，“好像这个人唱完就是凛酱了。”<br>奈斯！<br>我和我室友，在前排听了一会后，台上的那个人朝观众挥了挥手。<br>“OK, OK, 接下来，重头戏。” 舞台上的人拿着麦克风说，“接下来，你们期待的，凛。”<br>然后我听到我的周围响起了今晚最大的欢呼声。<br>当然了，包括我和我旁边的室友都在喊。<br>然后舞台暗了下来，一束聚光灯打下，凛酱半披着自己的外套，露出了一边的肩膀，慢慢的走上了舞台。<br>大家再次爆发出了欢呼声。<br>凛酱的步伐优雅而透着自信，她拿起麦克风，走到了舞台前。<br>然后全部人都安静了下来，大家都期待着凛酱说点什么。<br>“大家好。” 简洁，精准。<br>台下再次爆发出了欢呼声。<br>“非常谢谢今天大家能来看我们的第一次专场，我很开心。”<br>舞台上的凛酱真的整个人散发着自信，又给人一种让人肃然起敬的感觉。<br>优雅的就像是个女王一样。<br>这时候不知道是哪个白痴在后面大喊了一句。<br>“凛酱我爱你！！！！”<br>然后台下爆发出了笑声，还有人起哄。<br>在第一排的我和室友激动的朝凛酱挥了挥手。<br>凛酱看到我后，愣了一小下，然后冲我轻轻一笑。<br>然后凛酱挥了挥手，示意大家安静下来。<br>“今天是特别惊喜的一天。” 凛酱对着大家说，“我今天遇到了我第一首歌的编曲制作人，而且我们竟然之前还认识。”<br>台下再次欢呼。<br>“他现在也在台下呢。” 凛酱看着我说。<br>“诶？？？？？？” 我周围传来了惊讶的呼声。<br>“我在上台之前，临时决定更改了曲目，” 凛酱拿着麦克风一边走一边说,“我决定，我今天的第一首歌，唱我第一首作品，Neon Hreatbreak。”<br>台下再次传来极其热烈的欢呼声，然后我看到凛酱在舞台上走到了我的面前，蹲下来看着我。<br>“会唱吗？” 她拿着麦克风居高临下的问我。<br>我有点颤抖着点了点头。<br>在我听到这首歌之后，基本上我自己呆着的时候都会播放。<br>虽然当时我还没想起来这首歌是我做的，但是真的，这首歌太好听了。<br>我已经听到自己都学会怎么唱了。<br>“会唱你就上来，帮我和声。” 凛酱用不容拒绝的口吻说。<br>她甚至连疑问句都没用，用的陈述句。<br>她对我伸出了手，似乎想把我拉上去。<br>我有些紧张的也伸出了我的手，握住了她的手。<br>好的我的女王。<br>“我曹我曹我曹！！！！！！！” 我听到旁边有人在大喊,“那不是4woods吗？？”<br>我握住她的手，直接从舞台下爬上了舞台。<br>虽然姿势看起来有点狼狈，但是我也不敢用太大的力气去拉凛酱。<br>上台之后，凛酱松开了手，从舞台后方的DJ那里拿了个麦克风出来给我。<br>“欢迎Neon Heartbreak的编曲制作人，4woods。” 凛酱举起麦克风说，“让我们开始吧。”<br>音乐响起，凛酱开始了演唱。<br>由于我对歌曲已经非常的熟悉，原曲里很多和声的部分我都得心应手的帮凛酱唱着。<br>我看到第一排的室友一边摇摆一边朝我挥了挥手，然后打开了手机的闪光灯，跟着节奏左右摇晃着。<br>我看到之后我也举起了我的手，跟着她一起左右摇晃着。<br>然后越来越多的人也开始效仿室友，跟着我们一起举起了手机的闪光灯开始摇摆。<br>在舞台最前方的凛酱也高举了自己的手，引导着大家。<br>我从后面看去，先是凛酱的背影。<br>然后她的身前是由手机闪光灯结合而成的星星海洋。<br>从我的角度看去，美的像一幅画。<br>于是我趁着还没到我和声的空档，用我最快的速度掏出了我的手机，找好角度拍下了这个和画一样美丽场面。</p>
+<h3 id="21"><a href="#21" class="headerlink" title="21."></a>21.</h3><p>“我完全没想到，你竟然会把我拉上去。” 我一边抽烟一边激动地对凛酱说。<br>凛酱的部分已经演完了，我现在和凛酱，还有王京又到了夜店外面的吸烟区抽烟。<br>室友呢？室友说她去上厕所，等下来找我们。<br>大部分的人都在里面看演出，吸烟区也没什么人。<br>“我本来也没这么打算的。” 凛酱吸了一口烟说，“但是直到我看到你在第一排的时候我才这么决定的。”<br>“我不知道为什么，我有预感你会唱这首歌，才会这么问你。不过我也做好了你不会唱的准备。” 凛酱补充道。<br>“哇兄弟，你太牛逼了真的，” 王京一边拍着我一边加入了对话，“还有你，姐们，你这次演出真的太棒了，你的台风震撼到我了。下次要来我们录音室录音的话和我说，我让林林给你录，不收你钱！”<br>“等等等等！”  我赶紧接过话，“王京你不要擅自替我下决定！！！” <br>“林林，” 凛酱一边拿着烟，一边抛了个笑容过来给我，“你不愿意吗？”<br>我转过头看着凛酱，不由得愣住了，甚至都忘了弹烟灰，烟灰直接落在了地上。<br>“不，” 我从凛酱的精神控制中脱离了出来，朝她笑了笑，“我很乐意。”<br>然后我看到凛酱的嘴角再次微微的上扬。<br>“凛！！酱！！！” 看到了室友一边走过来一边大喊，然后抱住了凛酱。<br>“怎么样，我唱的好不好听？” 凛酱也抱住了我的室友，然后宠溺的摸了摸她的头，像是姐姐宠妹妹一样。<br>“太好听啦！凛酱超棒！！” 室友开心的回答道。<br>“诶你真的，” 我对室友说，“干的漂亮啊，你怎么想到要举手机闪光灯的？”<br>“嘿嘿嘿，我聪明吧！” 室友松开了凛酱，插着腰骄傲的说。<br>“原来第一个举手机灯的是你啊妹子！” 王京也不由得讶异了一下。<br>“不愧是你啊陈霓倪，” 我走过去，开心的薅了薅她的头，“下礼拜想吃什么都给你决定！”<br>“真的吗真的吗！！！” 室友兴奋的向我确认，“那你可得让我好好想想了！” <br>“没事啊，你好好想，想好了和我说就行。” 我松开了手，把目光转向凛酱。<br>然后。<br>出现了让我极度不爽的一幕。<br>不知道什么时候，有一个男的站在了凛酱旁边，胳膊搭在了她的肩膀上。<br>“凛，原来你认识他啊！为什么不介绍给我认识一下？” 那个男的爽朗的笑了笑，然后把手伸到了我的面前，似乎是想要和我握手。<br>“你好。” 虽然我完全不想，但是在凛酱面前还是最好要保持一下风度，所以我也伸出了手和他握了握。<br>“你再乱搭我肩膀我就拿棒球棍把你手打折。” 凛酱把他的手臂从她的肩膀上拍了下来。<br>“这么凶干嘛，真是的。” 男子松开了我的手，爽朗的回应凛酱。<br>“我叫刘宇，是你的粉丝。” 他冲我笑了笑，“刚刚在台上还没来得及和你自我介绍。”<br>没错，他就是那个前面我刚到的时候，在舞台上对我挥手的那个人。<br>我前面还鼓励了她来着。<br>我记得王京前面和我描述的，他貌似在追求凛酱。<br>虽然是在追求，但是这么明目张胆的我是没有想到的。<br>而且怎么可以随便就把手搭在女生的肩膀上？还是凛酱的肩膀？？<br>“关我屁事。” <br>当然了我不可能直接这样说出来的，虽然我真的很想这么说。<br>不知道为什么，和平时的我不太一样，我压制了很久的坏脾气又再一次上来了。<br>冷静，我在心里告诉我自己。<br>以前已经因为自己的脾气太差犯过很多错误了，不要再重蹈覆辙了。<br>“谢谢，我是林林。” 我轻轻的回应道。<br>他朝我点了点头，然后转头问凛酱。<br>‘凛，等会一起吃个宵夜不？” 然后指了指自己，指了指凛酱，“就我俩。”<br>室友刚好在他的后面，悄悄的给他比了个中指，被我看到了。<br>“不了，” 凛酱直接拒绝，然后走到了室友旁边搭着她，“我等会去她家吃宵夜。”<br>“啧，那好吧。” 刘宇无奈的耸了耸肩，“那你地址给我一下呗，吃完我开车送你回去。”<br>“没事…” 凛酱刚张开口。<br>“没事，她家离我家走回去就15分钟，我会送她回去的。” 我打断了凛酱，看着刘宇说。<br>然后我不知道王京是感觉到了我的不爽还是单纯的想耍贱，直接走上去拍了拍刘宇。<br>“没事啊哥们，我陪你吃宵夜，没事啊！” 王 京贱贱的笑了笑，“要来咱们录音室录音不？给你个优惠！”<br>“算了算了，” 刘宇摆了摆手，“那就我自己吃啦，我先过去找他们了。”<br>然后他摆了摆手，离开了我们。</p>
+<h3 id="22"><a href="#22" class="headerlink" title="22."></a>22.</h3><p>哔哔，我打开了我家门的电子锁，然后推门。<br>“到家咯！ ” 室友开心的欢呼道。<br>然后我们三个人一起走了进门。<br>我把刚刚顺路买好的两盒白饭摆在了餐桌上，然后把外套脱掉，挂在了椅子上，接着换上了围裙。<br>我帮她们倒了两杯水，放在了桌上。<br>然后我打开了冰箱，从冰箱里拿出了鸡腿肉，洋葱，包菜，还有几颗鸡蛋。<br>室友和凛酱也在桌子旁边坐了下来，一边聊天一边等我把宵夜做出来。<br>“林林加油！”<br>“辛苦你了。”<br>她们两个说，<br>我点了点头，然后活动了一下脖子，从柜子里拿出菜刀和砧板。<br>一边听着她们两个聊天，一边切菜。<br>蛋包饭这道料理，我自己倒是特别喜欢吃，所以做起来倒是特别的轻车熟路。<br>我开始把注意力集中在处理食材上，争取能尽快的把饭做完，不要让她们等太久。<br>我切着鸡腿肉的时候，室友向凛酱提出的一个问题引起了我的兴趣。<br>然后我立马竖起我的耳朵听着，生怕错过任何的关键信息。<br>“凛酱，” 室友问 “今天你唱完之后，我们在外面那会那个男的是谁呀？” <br>刘宇，我记得他叫刘宇。<br>“你说刘宇吗？” 凛酱问。<br>“对啊对啊！他还想约你单独吃饭诶？”<br>嘶….我听王京也是这么说的。<br>“对的。” 凛酱喝了一口水，“他是经常想要约我喝酒吃饭看电影什么的。”<br>“哦豁！” 室友貌似来了劲，超凛酱追问道，“那你有答应过人家吗？”<br>“只去过一次，但是相处下来我发现他不是我会感兴趣的类型。” 凛酱轻轻的说，“所以后来没有了。”<br>芜湖，这可太好了。<br>凛酱对他不感兴趣！<br>“不过话说回来，我也好像一直没问过，” 室友说，“凛酱感兴趣的类型是怎么样的？”<br>“我会感兴趣的类型吗….”<br>此时此刻的我注意力已经完全集中在他们的对话上了，甚至都忘了停下我手头上正在切菜的动作。<br>直到一阵痛感从我左手的食指指尖传来.<br>“啊！” 看着正在流血的手指头，我不由得叫出了声。<br>我都差点忘掉我是一个正在切菜的人了。<br>由于我，过于专注听他们的对话，菜刀在我的手指上划出了一刀口子。<br>还好伤口不深，不过有在流血就是了。<br>“你怎么了？” 听到我的叫声后，凛酱问我，“你切到手了？”<br>“对。” 我转过身，给她们看了看我正在流血的食指，然后打开水龙头冲洗伤口。<br>“我去给你拿创可贴！” 室友从椅子上起来，一溜烟的往房间跑去。<br>“流的血多吗？” 凛酱也起身朝我走来，“伤口深吗？”<br>“没事，就是个小伤口。” 我摇了摇头，“问题不大，等等贴下创可贴就可以继续做了。”<br>我关掉水龙头，我拿纸巾把伤口上的水喝血擦干净。<br>伤口还没止住，血还一点一点的往外流。<br>“我来了我来了。” 室友拿着一盒创可贴，碘酒，还有棉签快步跑了过来。<br>我在桌子边上坐下，接过室友的面前和碘酒开始为自己手指上的伤口消毒。<br>“你怎么切到手啦，” 室友一边帮我贴创可贴一边问，“还是第一次看到你做饭的时候粗心呢。”<br>“啊哈，” 我放下了棉签，不好意思的挠了挠头，“就刚好分神了。”<br>总不可能说：因为我刚刚在偷听你们讲话吧。</p>
+<h3 id="23"><a href="#23" class="headerlink" title="23."></a>23.</h3><p>过了一会，我端着我的那一份蛋包饭，坐在了桌子旁。<br>虽然切到手，但是对于做饭来说影响不是很大，没过一会就做好了。<br>‘感谢招待。’ 凛酱直勾勾的盯着眼前的蛋包饭说。<br>“小事小事，快吃啦。” 我拿起勺子，也准备开动。<br>看向室友，她已经开始大快朵颐了。<br>我一边吃着一边悄悄的观察凛酱的反应。<br>凛酱先是挖了一小勺，然后慢慢的放进嘴里。<br>接着她开始细细的品味。<br>过了几秒，她睁大了眼睛，然后赶紧再挖了一勺送进嘴里。<br>“好好吃。” 凛酱惊讶的对我说。<br>“握酒硕零零德但保饭皓皓次！” 室友一边往嘴里扒饭一边含糊不清的说。<br>“东西吃下去了再讲话啊喂！” 我吐槽道。<br>“真的，好好吃。” 凛酱郑重的说，然后又送了一勺到自己嘴里。<br>我开心的笑了笑，自己做出来的食物被人喜欢，真是让我感到满足。<br>过了一阵，我们三个人都把面前的蛋包饭吃完了。<br>“好饱！” 室友靠在了椅背上，满足的拍了拍自己微微隆起的小肚子。<br>“的确。” 凛酱喝了一口水，然后抬起头问我，“抽烟吗？”<br>“好啊。” 我点了点头。<br>然后我们两个起身，走到了阳台。<br>还是和上次一样的万宝路，凛酱从她的口袋里拿了出来。<br>只不过不一样的是，凛酱叼起烟后，直接拿出了一根放在了我的嘴里。<br>然后她朝我靠近。<br>看着她的脸，我感觉到了我的心跳开始加速。<br>她的脸和我的脸越来越近，最后停住了。<br>我们两个就这样直视着对方的眼睛。<br>她的眼睛好美，我不由得这样想。<br>不对，她整个人都很美。<br>接着，她掏出了她的打火机。<br>同一个火源点燃了我们的香烟。<br>她这…是在撩我吗？？<br>不对不对，人生三大错觉。<br>手机震动，<br>我能反杀，<br>她对我有意思。<br>冷静啊自己！<br>点完火后，我们肩并肩的背靠在阳台的护栏上。<br>我们两个都没说话，就这样静静的抽着烟。<br>过了良久，她开口了。<br>“你的手指没事吧？” <br>“没事啊，小小的皮外伤罢了。”<br>“林林，” 她吐出了一口烟，“我听王京说，你一年前退出了当时的团队了？”<br>她怎么开始问起这事了？<br>“是的。” 我不可置否的点了点头，“发生了一些事情，但是我不是太想说，不好意思。”<br>“对不起，我不是有意想要提起这件事情的。” 凛酱愣了愣，“只不过没想到是你。”<br>“机缘巧合呗。” 我笑了笑，“当时的我也想不到我现在会和你在我家的阳台上抽烟。” <br>“那你…不打算回归吗？” 凛酱问。<br>“目前是不打算啦。” 我说，“怎么啦？”<br>“王京不是叫我有空过去你们录音室玩来着，” 她顿了顿，“所以我想说下周能不能和你一起去，我有首歌刚好想录一下。”<br>等等，凛酱这是在，约我吗？<br>“可以啊，你看你下周什么时候有空？” 我笑了笑。<br>废话，竟然凛酱要约我出去，就算我再不喜欢出门我也是要去的。<br>“那…先定周二？我应该没事。”<br>“好，” 我点了点头，“那我和他们说一声，到时候我带你过去。”<br>“麻烦你了。” 凛酱吸了口烟。</p>
+<h3 id="24"><a href="#24" class="headerlink" title="24."></a>24.</h3><p>这时候，室友拉开了阳台门。<br>“你们还没抽完烟呀。” 她披着我的外套走了进来，然后一边搓了搓自己的手臂，“冷死了！你们都不冷吗？” <br>“还好啦，” 我耸了耸肩，“你消化完了？”<br>“没呢，好撑哦。” 室友拍了拍自己的肚子，“都怪你的蛋包饭太好吃了，对不对凛酱！”<br>“是真的很好吃。” 凛酱点了点头。<br>既然话都说道了这个份上，那我这个时候提起来比较合适，<br>“对了，” 我说，“我们明天打算吃海鲜，你要一起来吗?” <br>“可以，明天我一整天都没事。” 凛酱说。<br>“好耶！” 室友欢呼道，“明天和凛酱一起吃海鲜！”<br>然后我把手机从口袋里掏出来，打开了线上超市的软件，递给了室友。<br>“明天刚好要买菜，你看一下你想吃什么你就加购物车里吧。” 毕竟前面答应了人家下一周的伙食都由她来决定。<br>“好耶！” 然后室友从我手里接过了手机，“我要吃雪糕！”<br>我耸了耸肩，然后看向凛酱。<br>“明天晚餐哦，” 我说，“大概六点钟。”<br>“好，那我早点过来帮忙。” 凛酱说。<br>这时候，室友把手机递给了我。<br>“这么快？” 我接过了手机，“你是只往购物车里加了雪糕吗？”<br>“才没有呢！” 室友说，“有人给你发消息。”<br>我打开微信，一看，哦，是王京。</p>
+<pre><code>Dollar$: 宵夜吃完没
+Dollar$: [转账]请你确认收钱
+Dollar$: 今天的演出费
+林林：好咧感谢宁
+林林：已确认收款
+</code></pre>
+<p>我看了看上面的数字，真的比我平时的多了不少。</p>
+<pre><code>林林：哇这次这么多？
+Dollar$: 废话，我都说了我帮你把价格抬了抬
+Dollar$: 你演完之后主办还和我说下次还想请你呢
+林林：OK啊，这个价格我太可以了
+</code></pre>
+<p>的确，这次的钱真的比之前的多了三分之一不止。<br>王京这小子，干的漂亮。</p>
+<pre><code>Dollar$: 你看我都帮你赚了这么多，你是不是要谢谢我
+林林：咋了，你想我请你吃饭？
+林林：我明天给你点外卖
+Dollar$: 哇你这人
+Dollar$: 不是，我想去你家吃饭
+Dollar$: （求求你了一次就行表情包）
+</code></pre>
+<p>不是，这个人是偷听到明天我们要吃海鲜了吗？我记得我们没说啊？</p>
+<pre><code>Dollar$: 认识你这么久
+Dollar$: 要不是你室友说，我都不知道你会做饭
+Dollar$: 还不快给哥们品品？
+</code></pre>
+<p>仔细一想，今天在外面抽烟的时候，室友好像说过来着。<br>算了，毕竟人家这次让我多赚了不少，请人家吃吃饭是应该的。</p>
+<pre><code>林林：行吧，明天下午六点
+林林：[微信位置]
+林林：到了直接坐电梯上来12楼，左手边第一个。
+Dollar$: 哇我太爱你了哥们
+Dollar$: 下次还有演出我再给你报高点
+</code></pre>
+<p>我笑了笑，重新回到了线上超市页面，把手机递给了室友。<br>“王京明天也来，” 我说，“就今天和我一起的那哥们。”</p>
+<h3 id="25"><a href="#25" class="headerlink" title="25."></a>25.</h3><p>我们三个人走在路上。<br>深夜出门虽然有些安全隐患，但是毕竟人还是不多，所以相对比起白天出门我还是更愿意一些的。<br>“真是麻烦你们了，这么晚还要送我回去。” 凛酱说。<br>“没事啦，毕竟晚上一个人的话不太安全。” 我看了看她。<br>“对呀对呀，而且你家不是也很近嘛。” 室友牵着凛酱的手，一边甩一边说。<br>我抬头看了看天空，今天晚上没什么云。<br>一轮圆圆的月亮挂在天空上。<br>吹着夜风，虽然有那么一点凉快，但是偶尔在晚上出来这么走走还是不错的。<br>而且如果当做是散步的话，还有两个漂亮女孩子陪着，怎么想都是件开心的事情吧。<br>虽然大部分时候都是他们两个在聊天，而我就是一边走一边看风景，加上一边听着她们聊天。<br>“诶诶凛酱，下个月月初有漫展诶，要不要陪我一起去？” 室友问。<br>“可以啊，到时候看下是周几，我应该都能陪你。”凛酱回答，“不过这个月不是还有一周就结束了嘛。”<br>“嗯嗯！” 室友点了点头，“那到时候凛酱也来当我的摄影师吧！”<br>“好哦，” 凛酱说，“不过不知道这一次还能不能见到那个叫什么，暗夜什么…”<br>“啊你说的是我们上次去的时候很多人围观的那个！” 室友像是想起了什么，兴奋的说道，“最后一个水之暗夜行者！！”<br>“对对对，” 凛酱点了点头，“好像是这么叫的来着。”<br>“你知道吗，那次我们遇到之后，我去查了一下这个coser是谁，” 室友说的越来越起劲，“结果发现是个都市传说！”<br>“都市传说？” 凛酱疑惑的问。<br>“对！就是这个女孩子只会在漫展上出现，网上也找不到关于她的任何资料，” 室友开始神神秘秘的描述道，“而且，好几个大佬摄影师都愿意给她免费拍照，但是无一例外都被拒绝了！”<br>“拒绝了？” 凛酱说，“不过她的服装质量，道具质量，姿势，甚至还有一些动作我觉得都非常的专业。”<br>“对对对！” 室友说，“但是最奇怪的是，她虽然每次都以极高的质量去进行cos，但是没有人知道她cos的是谁！”<br>“没有人知道她cos的是谁？” 凛酱好奇的问。<br>“对！” 室友点了点头，“而且，因为没有人有她的联系方式，现在在我们市里举办漫展的主办都会留意当天有没有出现这个女孩子，有的话一定都会请到舞台上表演！”<br>“表演？那她具体会表演什么？”<br>“剑术！！” 室友开始变得有些激动，“我看过视频，超级厉害的！！！”<br>“不过这么听下来，不能算是都市传说，” 凛酱说，“感觉这么形容有点太夸张了。” <br>“嘿嘿，现在去漫展上找到‘最后一个水之暗夜行者’然后拍照，已经成了好多人参加漫展必定做的一件事情了呢！”<br>“原来这么了不起…”<br>…….</p>
+<h3 id="26"><a href="#26" class="headerlink" title="26."></a>26.</h3><p>一边听着她们两个有一搭没一搭的聊着，过了一会就到了凛酱所居住的公寓楼下了。<br>“到这里就可以了。麻烦你们这么晚还送我回来，” 凛酱转头对我们说，“今天谢谢你们了。”<br>“没事啦，” 室友松开了凛酱，“明天要过来吃海鲜哦。”<br>“早点休息吧，明天见。” 我说。<br>凛酱朝我们点了点头，挥了挥手，就上楼了。<br>然后我和室友回头，准备原路返回我们的公寓。<br>一边走我一边伸了个懒腰，活动了活动自己的身体。<br>“今天真是忙碌的一天呢，” 我说。“好久没有这么长时间的待在外面了。”<br>“怎么，你体内的宅宅因子在对你表现出反抗了吗？” 室友笑嘻嘻的问我。<br>“啧，” 我皱了皱眉头，“才没有好不好。”<br>“好嘛好嘛。” 室友拍了拍我，“为什么从来没听你说过你是做音乐的呀？”<br>“因为你也没问啊。” 我无奈的挠了挠头，“不过都好久以前的事情了，现在就偶尔接点演出，然后帮帮别的歌手制作他们的音乐。”<br>“原来是这样~” 室友像是明白了什么，然后拍了拍手，“我之前还在纳闷为什么你天天不用工作，就在家里待着。最离谱的是却还是有钱吃饭。”<br>“那你本来以为我是做什么的？” 我问。<br>她这么一说，不由得勾起了我的好奇心。<br>“我之前一直以为你是尼特宅宅，” 室友说，“或着就是去陪富姐姐的。”<br>“怎么可能啊！” 我抱怨道，“尼特宅宅就算了，富姐姐是怎么回事？”<br>“还不是因为你之前每次说要出去工作的时候都会好好穿衣服，” 室友说，“而且每次你也不会说你要去干嘛，就说工作。然后傍晚出去到了很晚才回回来。我也想不到还有什么能符合你这种工作了嘛。”<br>“啊你真是的，” 我一边拍着自己的头一边说，“你见过哪个去陪富姐姐的是当天就可以回来的？”<br>“…..” 室友愣了一下，然后缓缓的说，“好像是这么一回事呢….”<br>“算啦算啦，” 我拍了拍室友的头，“怪我自己没讲清楚。”<br>“那没事！” 然后室友拉住了我的衣服，“为了补偿你，我请你吃雪糕！”<br>然后他指了指旁边的便利店，&lt;啥子玩意都有便利店&gt;。<br>“是你自己想吃吧！” 顺着她手指指的方向看去。<br>“别问这么多问题！” 她一边拉着我往店里走，“会被我请吃雪糕的机会其实少的可怜哦！”<br>“你这个人，明明前面还在喊好冷，现在又说要吃雪糕？” 我忍不住吐槽了这个翻脸比翻书还要快的女人。 <br>“嘿嘿~好冷，和吃雪糕，是两回事！” 她骄傲的对我说。<br>在她的带领下，我还是和她一起进入了便利店。<br>“欢迎光临啥子玩意都有连锁便利店！” 进门时，没有感情的机械电子音响起。<br>我往收银台看了看，今天值班的是另外一个店员。<br>也对，毕竟我们演出完后就离开了，那个社恐少女可能还要留下来收拾现场什么的。<br>真是辛苦人家了。</p>
+<h3 id="27"><a href="#27" class="headerlink" title="27."></a>27.</h3><p>我被室友拉倒了雪糕柜门口，看着她直勾勾盯着琳琅满目的雪糕。<br>“啊啊，” 室友拍了拍自己的头，开始纠结，“今天吃什么口味的好呢….”<br>“我要吃红豆牛奶的。” 我一边说一边打开了雪糕柜，把红豆牛奶口味的冰棍拿了出来。<br>“那你帮我拿那个，” 室友指了指，“草莓味的鲷鱼烧雪糕！”<br>我伸手在里面掏了掏，拿出了她想吃的那个。<br>“这个吗？” 我晃了晃手里的雪糕，示意她。<br>“嗯嗯！” 她点了点头，拿过了雪糕。<br>然后我们两个拿着雪糕来到了收银台前。<br>“您好，一共是8.5元。” 店员在结果雪糕后，扫了一下条形码。<br>然后我看着室友，她准备把她的手机掏出来付款。<br>可是动作进行到一半，她愣住了。<br>嘿嘿嘿，我早就知道她为什么愣住了。<br>其实我之所以愿意和她进入这家便利店一起买雪糕，有一部分原因是因为她说她要请我但是出门的时候我看到她把她的手机忘在了桌子上，所以可以看到她出丑。<br>“林林….” 她一边小声说，一边机械式的慢慢的把头转过来看着我。<br>“没事啊，我早就料到了。” 我拿出我的手机，打开微信后对着收银台上的二维码上扫了一下，“我们出门的时候，我看到你手机在桌子上啊哈哈哈哈。”<br>“哇！那你刚刚不和我说，买单的时候才说！” 室友惊呼道，“你是不是就是想看我出丑！”<br>“哎呀，” 我不怀好意的笑了笑，“对。”<br>我的余光瞟到店员似笑非笑的看着我们。<br>“哎…我怎么就笨的忘了带手机呢。” 她无奈的拍了拍自己的头。<br>“需要塑料袋吗？” 店员问我。<br>“不用，谢谢。” 然后我拿起了雪糕，递给了宿友。<br>“你能对自己有这么深刻的认识，让我感到很欣慰。” 我对室友说。<br>“林林，你个王八蛋。” 她‘啪’ 的一下从我手里抢过了雪糕。<br>我对着店员点头示意了一下，然后我们两个一边拆着雪糕包装一边走出了便利店<br>“唔，” 室友一边舔了一口雪糕，一边打了个寒颤，“果然还是好冷哦。”<br>“你自己说要吃的，我也没办法啊。” 我也舔了一口我的雪糕。<br>“明天你打算都买些什么海鲜呀？” 室友问我。<br>“我想想啊，龙虾，螃蟹，扇贝，青口，大虾….” 我边思考一边说，“算了明天起来在想吧。”<br>“嗯嗯！” 室友说，“我想吃刺身。”<br>“你还真是不和我客气呀，” 我拍了拍室友的头，“那就买吧。”<br>“嘿嘿，林林最好了！”<br>“下个礼拜你做家务。”<br>“诶…诶？？？！”<br>“还有下下个礼拜的。”<br>“诶？？！！！为啥！！！”<br>“让你宰我。”</p>
+<h3 id="28"><a href="#28" class="headerlink" title="28."></a>28.</h3><p>我又再次条件反射般的醒来。<br>拿起手机看了看，八点四十七。<br>昨天送完凛酱，回到家之后都快一点了。<br>我洗了个澡，玩了会游戏，等头发自己干就去睡了。<br>我放下手机，看着天花板发呆。<br>我的脑子里正在梳理一遍今天都需要做什么事情，然后我应该怎么合理安排我的时间。<br>等下要先去给室友做饭。<br>接着得在十一点前把超市的东西给下单了，这样下午四点之前才送的过来来。<br>然后今天要开海鲜Party，要提早打扫卫生，把地给拖一遍。<br>阳台已经一个月没洗过了，是时候也要冲洗一下了。<br>今天还要把衣服给洗了，要不要厕所也一起清洗一下？<br>然后客人来之前要先洗个澡，打理打理自己。<br>仔细想想，今天的事情还不算少。<br>于是我起身，离开房间走到厕所刷牙洗脸。<br>简单的洗漱过后，我来到了厨房，打开了冰箱。<br>看了一圈，剩下的东西不多，但是还是有东西可以做的。<br>昨天买的现成白饭还有剩半盒，冰箱里还有皮蛋和一块猪里脊。<br>那么今天早餐就吃皮蛋瘦肉粥好了。<br>于是我把皮蛋，里脊，还有一小块姜从冰箱里拿出来，开始处理。<br>把皮蛋切成小块，猪里脊切丝。<br>然后接了锅水，先把米饭倒入锅里煮软，最后再把所有材料都倒进去，开小火慢慢熬。<br>主食有了，现在差个配菜。<br>然后我再次打开了冰箱，做个葱煎蛋和榨菜炒肉丝好了。<br>一边切菜我一边活动了一下脖子，虽然没有像刚给室友按摩完之后那么轻松，但是的确让我感觉没有以前那么不舒服了。<br>看样子还是时不时的得找她帮我按一下。<br>我从冰箱里拿出了榨菜，把剩下的肉丝和榨菜一起倒入锅中翻炒。<br>在我聚精会神的做菜时，我的身后传来了室友的声音。<br>“我起来啦！嗯~~” 听她的声音，像是伸了个懒腰，“今天吃什么呀？”<br>“皮蛋瘦肉粥，” 我头也没回的说，“还有榨菜炒肉丝和葱煎蛋。”<br>“好耶！” 室友从我后面走过来，把胳膊搭在了我的肩膀上，“好香哦！”<br>“昨天你购物车都加完没有，十一点之前要下单了。” 我问。<br>“加完啦加完啦。” 室友拍了拍我。<br>“刺身你想吃什么的？” 我记得她昨天说了想吃刺身来着的，“我打算买一个大的拼盘，在买一点你要吃的。”<br>“呜呜呜林林最好了~” 室友开心的笑了，“那我要吃三文鱼和甜虾！”<br>“好好好，那么下午你把客厅给拖了。” 我头也没抬的讲, <br>“诶诶诶诶诶诶？？？” 室友疑惑的看着我，“哇你也太坏了！！！”<br>“你想吃章鱼烧吗？我突然有点想吃。” 我随口说转移了一下话题。<br>“好呀好呀！！！！” 室友开心的点了点头，“好久没吃章鱼烧了！”<br>“那我晚上一起做一点？家里有那种烤盘。” 我不断的将室友引导到陷阱里。<br>“好耶！” 室友说，“你怎么今天对我尤其的好？”<br>“那今天你也把阳台洗了。” 我说。<br>“林林你个王八蛋…..” 她极度无语的说出了这句话。<br>“那就不吃咯？” 我停下了手里的活，似笑非笑的转过头看着她。<br>“吃吃吃吃！” 室友没好气的说，“呜呜呜你太过分了。”<br>我耸了耸肩，接着做我的菜。</p>
+<h3 id="29"><a href="#29" class="headerlink" title="29."></a>29.</h3><p>我一边吃饭一边检查着线上生鲜软件的购物车，看看昨天室友都加了些啥进去。<br>雪糕，雪糕，雪糕，黄瓜味薯片。<br>果冻，奶茶，鱿鱼丝，瓜子。<br>雪糕，雪糕…..<br>“你怎么买了这么多雪糕啊喂！” 我忍不住吐槽道。<br>“人家想吃嘛…” 室友委委屈屈的说。<br>我接着往下翻。<br>午餐肉，火腿，香肠，关东煮…..<br>一圈看下来，室友基本上加的都是些雪糕零食，还有一些她自己喜欢吃的东西。<br>然后我打开软件里的海鲜分区，开始添加海鲜。<br>接着买了个刺身拼盘，还有室友想吃的三文鱼和甜虾刺身。<br>做章鱼烧的材料…..<br>然后加入了一些平常吃的食材，最后点击下单。<br>结算界面，我看了看价格。<br>嗯…这相当于买了一个月的伙食费………<br>想到这里，我不由得有些心疼。<br>算了算了，偶尔吃顿好的吧，毕竟这次也赚了不少。<br>我抬起了头，看了看正在喝着粥的室友。<br>然后她留意到了我在看着她，她也抬起头冲我笑了笑。<br>“好吃吗？” 我问。<br>“肯定好吃呀！” 室友笑嘻嘻的对我说，“林林的饭最好吃了！”<br>“那可不。” 我笑了笑，然后把目光移回到了手机上。<br>加多两块块三文鱼好了，我记得她还挺喜欢吃三文鱼的。<br>最后，我强忍着滴血的心，按下了结算。<br>嘶……<br>‘感谢您的消费，您的订单将会在当日下午3:30分送达。’ <br>手机屏幕上这样显示。<br>我怕放下了手机，接着吃饭。<br>“东西买完啦？” 室友问我。<br>“对啊，” 我点了点头，“不过到时候你要帮我一起准备，我一个人忙不过来。”<br>“好！” 室友说。<br>“你明天几点课来着？” 我喝了一口粥，“我忘了。”<br>“十一点上到四点。” 室友说。<br>“好，” 我点了点头，“明天便当想吃什么？”<br>“随便你啦！你决定就好。反正你做的都好吃！”<br>“好好好，那明天做早餐的时候我再想吧。” 我夹起一块煎蛋，送入嘴里。</p>
+<h3 id="30"><a href="#30" class="headerlink" title="30."></a>30.</h3><p>“好不想去上课哦，” 室友抱怨道，“但是想到有林林便当吃就突然可以接受了。”<br>“啧，你好歹也是个大二的人了，怎么还和个高中生一样。” 我吐槽道，<br>“高中生有什么不好嘛！”<br>“你现在就每周一到三有课，高中生还要一周上五六天呢。” 我说，“好好学习啦。”<br>“好好好，” 室友点了点头，“林林真啰嗦。”<br>“切，”我说，“上周在学校有碰到什么好玩的事情吗?” <br>“好玩的事情哦….” 室友抬起了脑袋，“我想想……没有。”<br>“哈，你的大学生活也太无精打采了吧？” 我耸了耸肩，“我还没毕业那会在学校里可会玩了。”<br>“这么一说，” 室友好像想起了什么，看着我，“林林你好像也是我们学校毕业的？”<br>“啊对啊，我是不是以前没和你说过来着？” 我点了点头，“不过你入学那一年我刚好毕业。”<br>“你是哪个系的呀？” 室友问。<br>“我才不告诉你呢。” 我摇了摇头。<br>“切，小气鬼。” 室友顿了顿。<br>“反正你好好上课啦，加入点社团什么的丰富一下课余生活。” 我说。<br>“我打算成立一个呢！” 室友骄傲的说。<br>“成立一个？” 我好奇的问，“成立一个什么社啊？”<br>“吃林林的饭社！” <br>“哈哈哈你是散兵！” 我笑了笑。<br>顺带一提，虽然我一直在自主的掏钱在养室友，管人家一日三餐。<br>但是室友每次都会趁我不注意帮多帮我付一些房租。<br>虽然我就算一边养她一边自己交房租也没问题，我也和她说过不用帮我多交，但是她每次还是趁我不注意就自己提早自己一个人交了很大一部分。<br>我自己掏钱给她做饭是我自发的行为，我也没打算她回报我什么，给人做饭也是我一个爱好罢了。<br>但是她这个行为的确让我提升了不少好感，相对的我也更加的愿意去对她好一点。<br>算是个微妙的平衡呢。<br>“可是成立一个部门要至少三个人，” 室友叹了口气，“我上哪去找三个人呀！”<br>“哈哈哈哈哈哈，” 我笑了出声，“我都毕业了，能加入才怪。而且你让我每天给三个人做三顿饭我不得累死。”<br>“所以嘛，不过我觉得凛酱有潜质成为我的部员！” 室友兴奋的说，“现在在找一个就行了！”<br>“那就要看你能不能在你们学校找到第三个认识我的人了，” 我开玩笑的说，“不过人家也得吃过我做的饭才会愿意加入你的社团吧？”<br>“那我努力带人回家吃饭！” <br>“你想都不要想！” 我吐槽道，“我可没那个精力！”<br>“那你还不是愿意给凛酱做饭！”<br>“凛酱例外！”<br>“不过其实之前来家里的那些妹子都很想吃一下你做的饭。” 室友说。<br>“之前来的那些摄影师？” 我问。<br>“对，她们都说闻起来好香，所以想吃。” 室友点了点头。<br>“可是你只和我说过凛酱想吃诶。” 我问。<br>“嘻嘻对呀，因为凛酱和我关系好嘛。” 室友补充道，“上周你做猪扒饭便当的时候，在学校给她吃了一口，她就特别想吃。”<br>“也对，我感觉凛酱对你也挺好的。” 我点了点头。<br>“那可不！” 室友开心的说，“我和凛酱可是高中就认识了呢！”<br>“对吼，凛酱和我说过来着。” 我问，“凛酱高中那会怎么样呀？”<br>“嘿嘿，她对我超级好，真的就像我姐姐一样，虽然我是独生。” 说到凛酱，室友仿佛提起劲了，“凛酱高中的时候和现在完全不一样，真的是那种温柔大姐姐。”<br>“温柔大姐姐？” 我问。<br>从外表上来看，的确很难把凛酱的外表和温柔大姐姐联想到一起。<br>“对！” 室友点了点头，“现在的她和当时的她差别真的很大，不论外表还是个性。当时的凛酱就像温泉一样。”<br>“温泉？这是什么形容方式？” 我问。<br>“就是那种温暖，柔和，细腻，给人一种很舒服的感觉。” 室友的脸上洋溢着幸福的笑容，“不过有一点一直没变的是，她对我还是像以前的凛酱一样。” <br>“哇！你这一说凛酱在我心里的高度又提升了不少。” 我说。<br>的确，在我的印象里，凛酱只有在面对室友的时候才会变得尤其的温柔，其他时候的凛酱都比较酷，比较有气势那种。<br>尤其是当时直接把我拉上舞台的那一下，我感觉真的像是一个女王对我发号了不容拒绝的命令。<br>“嘿嘿，对吧。” 室友开心的说，“感觉在这个世界上对我好的人只有凛酱了，还有你。”<br>我笑了笑。<br>‘你的家人呢？’ <br>虽然我很想这样问，但是这不太符合我的社交风格。<br>而且既然室友会这么说，可能她和她的家人关系不太好吧。<br>对别人过去还是不要随便提起的好，说不定人家的回忆可能不太好。<br>反正她是我室友，我管她饭这点是不会变的。<br>“好好好，” 我说，“那你以后多吃点。”<br>“嗯嗯！”</p>
+<h3 id="31"><a href="#31" class="headerlink" title="31."></a>31.</h3><p>“林林！” 室友跑到了厕所门口问我，“擦玻璃的那个喷的那个什么东西你收在哪里了？”<br>“在厨房水槽下面的柜子里，” 我一边擦着浴缸一边说，“等会你擦完玻璃过来把你的东西收一下，我要把厕所整个冲一遍。”<br>我指了指那个专门晾干她东西的小架子。<br>“啊我前天用完洗了忘了拿回去，” 她不好意思的说，“我等会过来拿！”<br>“好。” 我点了点头，擦浴缸的手一直没停下。<br>然后室友就会去找玻璃清洁喷剂了。<br>我蹲在地上一边擦一遍活动了一下脖子，感觉好像又有点酸疼了。<br>可能是刚刚刷马桶的时候一直低着头。<br>我感觉虽然我今年才24岁，但是我的脖子已经好比42岁的人了。<br>左右扭动一下，我的脖子发出了卡拉卡拉的声音。<br>我的脖子一定是一只神奇宝贝，卡拉卡拉。<br>我是小智吗难道？<br>在我把浴缸的每个角落都擦了一变后，我站起身，拿起花洒给浴缸冲洗了一遍。<br>然后我关上水龙头后，回头已经看到室友在收拾她的东西了。<br>“你客厅拖完了吗？” 我伸了个懒腰，“拖完了的话帮我把拖把拿过来。”<br>“好！” 她朝我点了点头，把东西拿回了她的房间。<br>我伸了个懒腰，打扫厕所真是麻烦嗷。<br>接着我把地毯放到了厕所外面，然后把花洒拿出来冲刷着地板。<br>打扫厕所真是麻烦嗷，早知道就让室友来弄了。<br>我拿着花洒，将水喷向厕所地板的每一个角落，还有一些不容易清洁到的地方。<br>比方说马桶的后面。<br>我蹲下身子，把花洒伸进去冲洗。<br>忙活了一会，我把厕所地板的每个地方都冲洗了一遍，室友也拿来了拖把。<br>哎，干活干活。</p>
+<h3 id="32"><a href="#32" class="headerlink" title="32."></a>32.</h3><p>“叮咚！” 在我把拖把放回去之后，我家的门铃响了。<br>我快步的走到玄关把门打开，应该是线上生鲜的东西送过来了。<br>到了玄关门口，我把门打开，一个小哥笑容灿烂的对我说。<br>“先生您好，您的订单我给您放在这里了。” 小哥职业性的冲我笑了笑，“感谢您选择我们&lt;啥子玩意都有线上超市&gt;，请给五星好评哦！”<br>“谢谢，” 我点了点头，“辛苦你了，会给的会给的。”<br>“期待您的下次光临！” 送货小哥朝我稍微鞠了个躬，然后就离开了。<br>这年头谁都不太容易啊。<br>我拿出手机，先给人家按了个好评再补了点小费，以防我等下忘记。<br>然后把我订购的东西都拿了进来。<br>“东西到啦？” 室友拉开了阳台的门问我。<br>“对，” 我点了点头，看着地上的五大袋子东西，“快过来帮忙帮我放冰箱。”<br>“来啦来啦！” 然后室友蹭蹭蹭的跑了过来。<br>不得不说，这家&lt;啥子玩意都有线上生鲜超市的服务&gt;还是不错的，室友买的雪糕都有用专用的冷袋包装的好好的，里面还放了一包冷冬剂。<br>等等，这难道和附近那家便利店，是一个企业的？<br>我一边把东西放到冰箱里，一边检查有没有什么东西是有被遗漏没有送过来的。<br>忙活了一会，我和室友把我们家的冰箱塞得满满的。<br>我看着冰箱。<br>看到这个什么东西几乎都快塞不下的冰箱，我的内心感到极度的满足。<br>不过这也让我想起来一件我属虎掉的事情。<br>我忘了买饮料。<br>“哎，我忘了买饮料。” 我和室友说。<br>“啊？” 室友拿出一根雪糕，拆开了包装，“那我等下弄完出去买就好啦！”<br>“没事，我让王京过来的时候买就行了。” 我看向室友，“你怎么刚买回来就拿出来吃了？阳台擦完没？”<br>“唔，还没，” 室友舔了一口雪糕，“休息一下嘛。”<br>“行吧行吧，” 我也在桌子边上坐了下来，“拿一根给我，我也要吃。”<br>室友再次拉开冰箱的冷藏柜，从里面随手抓了一根雪糕出来给我。<br>我接过雪糕，拆开包装。<br>哦豁，绿豆味的。<br>“龙虾你想吃什么口味的啊，” 我一边舔着雪糕一边问，“清蒸？还是拿去烤？”<br>“我想吃那个！” 室友兴奋的说，“就是那个！”<br>“哪个？”<br>“芝士焗龙虾！”<br>啪，我拍了拍脑袋。<br>虽然家里芝士是有的，但是我完全没学过做这个。<br>不过应该不难。<br>“行吧，” 我点了点头，“不过我得看一下菜谱怎么做。”<br>“嘿嘿，林林最好了。”<br>我看了一眼冰箱，今天的确有太多东西需要料理了，想想我感觉我头都大。<br>扇贝，青口，大虾，龙虾，鱿鱼….<br>本来还想买螃蟹的，但是想想由于拆螃蟹实在是太麻烦了，所以我打消了这个念头。<br>哎，赶紧打扫完卫生赶紧开始弄！<br>我接下来还差个衣服没洗。<br>我快速的把雪糕吃完，由于一下子吃了一大块冷的还是让我感到一阵牙疼。<br>我看了一眼时间，现在是三点40分，那我差不多先去洗个澡，然后把衣服洗了，就差不多得开始准备食物了。<br>“我先去洗个澡，” 我把雪糕棍丢到了垃圾桶里，“等你阳台弄完了我们就要开始准备了哦。”<br>“好！” 室友点了点头，“我吃完就去！”<br>然后我回到房间拿上换洗的衣服，走到厕所。</p>
+<h3 id="33"><a href="#33" class="headerlink" title="33."></a>33.</h3><p>我一边擦着头一边从厕所走了出来，看到室友已经坐在厨房等我了。<br>“都搞定了吗？” 我给自己倒了杯水。<br>“搞定啦！” 室友唆了一口橙汁，“接下来要开始准备了吗？”<br>“对，” 我点了点头，然后打开冰箱把大虾拿了出来，“你会去虾线吗？”<br>“不会，” 室友不假思索的摇了摇头，“你教我。”<br>“好好好，” 我把那一袋大虾放在了台面上，“你拿根牙签过来。”<br>然后室友起身，打开了柜子准备找牙签。<br>就在这时，我家的门铃突然又响了。<br>“叮咚。” <br>我感到非常的奇怪，明明刚刚送货的小哥已经把东西送过来了，我检查过也没有漏下什么。<br>难道是我疏忽了？所以人家把漏掉的东西补了上来？<br>然后我看了看室友，她也无辜的看着我。<br>我也感到非常奇怪，理论上来讲王京和凛酱现在过来的话也有点太早了，而且我和他们说的都是六点钟过来。<br>我把毛巾挂在了脖子上，走过去把门打开。<br>一个短发女生站在门口看着我。<br>同样还是一身黑的装束，只不过她今天穿的不太一样。<br>她穿着一件宽松的卫衣，配上了黑色的百褶裙，脚上套着一双球鞋。<br>脸上的妆容相比昨天画的更加自然了些。<br>脖子上的颈环换了另一个款式，上面还有个银色的爱心扣环。<br>她的手上还提着一袋东西。<br>“你怎么…这么早就来了？” 我问道。<br>“哇！凛酱怎么来这么早？” 跟在我后面的室友看到是凛酱也不由得惊呼。<br>“我想说早点过来帮忙。” 凛酱朝我们笑了笑。<br>“快进来快进来。” 我连忙让了个位置，一边想要伸出手帮凛酱拿那袋东西。<br>“这袋是什么？” 我问道。<br>凛酱把袋子举起来晃了晃，“是阿拉斯加帝王蟹。”<br>“哈？？？？”我和室友一起发出了惊讶的声音。<br>“我想说已经白吃了你两顿饭了，今天还要吃第三顿。”凛酱把袋子给了我，“不是今天吃海鲜吗？所以我来之前去买了这个。”<br>我打开袋子，室友的头也凑了过来。<br>哇….好大一只帝王蟹……<br>“凛酱你也太好了吧！！！！！” 室友激动地扑上去抱住了凛酱。<br>“乖啦乖啦，” 凛酱温柔的摸了摸室友的头，“就当做今晚加餐。”<br>“哇….这真的…太谢谢你了…” 我激动的有点难以言表，“这已经远远不止加餐的水准了….”<br>凛酱是…天使吧…<br>我垫了下手里的袋子，啊….<br>感觉这这重量真的…不便宜啊…<br>我大概估算了一下她一只帝王蟹袋很可能顶的上我一个月的伙食费了…..<br>我拍了拍自己的头。<br>“谢谢。” 我郑重的对凛酱说，“你以后要蹭饭随时过来，能做的我都给你做。”<br>“小事，不用客气，” 凛酱不假思索的答应了，“那以后我会再过来吃饭的。”<br>“下次不用再带食材了QAQ，虽然我真的很感谢，” QAQ不是我脸上的表情而是我真的说出了这三个字母，“但真的太让你破费了。”<br>虽然我不知道凛酱的经济情况到底是怎么样，但是一下子要我接受相当于我一个月伙食费的食材，我真的….<br>怎么说呢？感到特别开心却又惊慌失措。<br>就是我很开心能这么被凛酱这么认真的对待，同时还有奢侈的食材能够享用。<br>但是同时我也担心，生怕我糟蹋了这么贵重的食材。<br>毕竟这可是一大只阿拉斯加帝王蟹啊….<br>真的，阿拉斯加帝王蟹，只吃过一次，还是在餐厅吃的，我也不知道怎么去料理。<br>我之前完全没有这方面的料理经验。<br>看样子等会又要多学一份菜谱了。<br>和这帝王蟹一比，我觉得我今天买的龙虾都有点不好意思端上桌了。<br>这个帝王蟹得摆在中间的位置了，前提是我能料理好，让他还有能够端上桌的样子。<br>加油，林林，你可以的。<br>“还好，最近我们厂牌签约了音乐公司” 凛酱松开了室友，“给了我不少签约的费用，所以你不要有心理负担，随便做就是了。”<br>不知道是凛酱听到我内心的思考还是挣扎，所以她这样对我说。<br>呜呜呜这个女生真的是个天使….<br>不对，她看到我表情凝重的盯着袋子里的帝王蟹，内心进行着一番天人交战，怎么想都能反应过来吧。</p>
+<h3 id="34"><a href="#34" class="headerlink" title="34."></a>34.</h3><p>其实要说处理海鲜的经验，我是没多少的。<br>但是好就好在我在做饭这方面的学习能力还算可以，基本上跟着菜谱或视频走一遍之后我就知道怎么处理了。<br>但是现在位于料理台的c位并不是我，而是凛酱。<br>凛酱穿着我的围裙，将卫衣的袖子卷到了手臂上，手里拿着刀具熟练的拆着各类海鲜。<br>青口和扇贝她已经搞定了，现在还有帝王蟹，龙虾，大虾还没处理。<br>我和室友分别站在她的一左一右看着。<br>“林林，把剪刀拿给我一下。” 凛酱专注的盯着龙虾，朝我伸出了手。<br>我快速的抓起剪刀，尖端朝着自己递给了凛酱。<br>凛酱接过了剪刀，开始在龙虾身上进行一番精密的操作。<br>此时此刻，我感觉我家的厨房已经不再是厨房，更像是一个高压力环境的手术室。<br>当然，凛酱就是主刀医师，我是助手，室友是实习生。<br>看着凛酱进行了一步步精密的操作，我的心里不由得对这个女生产生了佩服感。<br>虽然我没什么经验，但是我也能明显的看出来她应该是有处理过大量类似食材的经验，<br>那句成语怎么说来着？熟能生巧。<br>“两只龙虾我都拆完了，你可以去准备了。” 凛酱拍了拍手，“接下来我要把帝王蟹拆了，你打算怎么做？” <br>“清….清蒸？” 我有点紧张的说，生怕糟蹋了食材让凛酱不满意，“我打算蟹腿用蒜蓉蒸，蟹膏炒饭，剩下的用烤的….”<br>“好。” 凛酱点了点头。<br>由于我家不是很大，料理区已经有凛酱在弄了，于是我拿了烤盘到餐桌上，准备处理我的龙虾。<br>我先是拿了胡椒和盐巴等调味品，然后再去冰箱里拿了几瓣大蒜，还有一颗柠檬。<br>“霓倪！” 我一边将大蒜切成蒜末，一边转头叫我室友，“帮我把黄油和百里香拿过来！然后再拿个小碗！” <br>“好！” 室友听到了我的呼唤，立马开始行动，“百里香是哪个？”<br>“就是香料柜子里面，那个绿色的。” 我说。<br>过了一会，室友把需要的东西都拿了过来。<br>我把黄油切片，然后和蒜末还有百里香一起一起放到了小碗里。<br>“拿去微波，让它化开。” 我递给了室友，“然后你去把虾线给去了。”<br>“好！Yess sir!” 室友兴冲冲的说。<br>接着我在龙虾表面撒上胡椒和盐。<br>没过多久，我听到‘叮’的一声，微波炉里的黄油已经化开了。<br>挤上柠檬汁后，我去微波炉把已经融化了的黄油拿出来，然后从柜子里找出了一个刷子。<br>接着开始把和蒜蓉还有百里香混合着的黄油均匀的刷在了龙虾上。<br>最后一步，撒上芝士，装入烤箱。<br>但是我还没开始烤，这个东西烤个几分钟就行了，等下等帝王蟹来了再一起烤就行了。<br>接下来，还有凛酱已经拆好的扇贝和青口要弄。<br>我的脑子开始快速运转，思考着要怎么安排才能最效率。<br>青口的话我打算也用芝士来焗，所以这个最后和帝王蟹还有龙虾一起烤就行了。<br>然后扇贝的话肯定要吃粉丝蒜蓉蒸扇贝，那也可以和帝王蟹蟹腿一起蒸。<br>大虾的话我想想….我还买了挺多。<br>那一半拿去炸一半拿去炒好了。</p>
+<h3 id="35"><a href="#35" class="headerlink" title="35."></a>35.</h3><p>一阵忙活过后，室友陪着凛酱出去抽烟了，我和王京在水槽前清洗着刀具等等工具。<br>我们准备到一半的时候王京也提早过来了。<br>他拎着一箱啤酒来到了我家，然后也说既然要来蹭饭，那么早点过来帮忙是应该的。<br>当时我看着他手里的那一箱啤酒，我巴不得直接从里面抽一瓶出来砸在他的头上。<br>他的解释是，啤酒和饮料有什么差别？又喝不醉。<br>……<br>我和我室友的酒量都不怎么好啊…..<br>我看了眼手机，现在是五点53。<br>烤箱已经在烤了，灶台上的两个蒸锅不断冒着水蒸气，大虾我五分钟前就搞定了。<br>我开始反思我自己，我发现今天对于自己的水平完全高估了。<br>要不是凛酱有丰富的海鲜处理经验，我们可能还要晚两个小时才能吃饭。<br>“哥们，你怎么勾搭上姜凛来你家吃饭的？” 王京接过碗，放到洗碗池，然后贼兮兮的问我，“养一个可爱妹子不够，还要养个女王？”<br>也对，我没和他说今天凛酱也会过来。<br>“你给我注意一下你的措辞，” 我把还沾着泡沫的菜刀举起来晃了晃，以表示威胁，“她有吃过我做的饭，觉得我做饭好吃，不行吗？”<br>“扎心了老铁！” 王京有点委屈的说，“我认识你这么久，今天才第一次吃你做的！”<br>“有的吃就不错了，” 我说，“然后你还买一箱啤酒过来，是不知道我不能喝酒？”<br>“我想看看你酒量有没有长进嘛….”<br>我把最后一把刀放进了柜子里之后，拍了拍手。<br>“抽烟去。” 我对王京说。<br>然后我们两个也到了阳台。<br>凛酱看到我们来了之后，拿出了她的万宝路扔给了我。<br>我接住，拿了一根给自己，然后递给了王京。<br>“怎么样啦，都弄完了吗？” 室友问我。<br>“差不多了，等会进去就可以吃了。” 我靠在护栏边上，一边点烟一边说。<br>“凛酱，你为什么这么会处理海鲜啊？” 我看着凛酱吸了一口烟，然后提出了我的疑问。<br>“之前做交换生的时候，我有在餐厅里打工过，” 凛酱吐出一口烟，“海鲜餐厅。”<br>怪不得，能这么熟练的拆各种海鲜，果然是经验丰富的人。<br>“辛苦你了，” 我点了点头，“还好今天有你帮忙，不然我和霓倪可能真的忙不过来了，霓倪也是。”<br>“小事啦。” 凛酱拨了拨头发，朝我笑了笑。<br>我看着凛酱的侧脸。<br>傍晚的风微微吹过，撩动了凛酱的发丝。<br>她一边抽着烟，一边用手把头发别到耳朵后面。<br>现在虽然快六点了，但是太阳还没完全落山。<br>我才注意到今天的天空因为夕阳的渲染已经变成了粉红色。<br>难得的景象，配上凛酱绝美的侧颜，就像是一副画一样。<br>我希望时间可以能定格一会，这样美丽的画面毕竟不是每天都可以看见的。<br>我是真的很想把口袋里的手机掏出来记录下这一幕。<br>当然了这么做不太好就是了，所以我还是打消了这个念头。<br>所以我还是这样静静看着就好，希望时间可以走慢一点。</p>
+<h3 id="36"><a href="#36" class="headerlink" title="36."></a>36.</h3><p>“我也很辛苦的！” 王京的声音把我的注意力从凛酱身上拉了回来，“你看我搬那么一箱啤酒多累啊！” <br>我实实在在的感觉到我额头上的青筋跳了跳，此时此刻的我是真的想把手里还在燃烧的香烟糊在他脸上。<br>“饮料啊哥！”我拍了一下自己的额头，没好气的说，“我让你买饮料啊！你知不知道三支啤酒就足够让我发酒疯了！”<br>“就是就是！” 室友在一旁附和道，“林林酒量超差的！跟我喝也只敢喝一瓶！”<br>“我知道啊哥！” 王京开始为自己辩解，“以前你喝了三瓶之后就准备要和人打架去了，拦都拦不住你！”<br>靠，哪壶不开提哪壶。<br>如果我所在的世界是个角色扮演游戏，那么王京的被动技能一定是：绝对不会提起那壶烧开的开水。<br>“我等下进去就喝三瓶，” 我已经放弃沟通了，“然后第一个把你头打烂。”<br>我的余光瞟到了凛酱，她用微妙的表情看着我微笑。<br>“林林的酒量，这么差吗？” 她问我。<br>“是的，” 我整个人背靠护栏上，抬头看着天空，“以前因为这个闯过不少祸，具体发生了什么最好就不要问了。”<br>“嗯，” 凛酱点了点头，“那我不….”<br>“我靠姜凛我和你说，” 凛酱话还没说完，王京直接兴奋的插了上话，“他当时抄着啤酒瓶…唔唔唔你别…我嘴巴…” <br>趁着他把不该说的事情说出来之前，我一个箭步冲上去赶紧把他的嘴巴堵住。<br>“行了行了，快闭嘴。” 我松开了他。 <br>“什么什么？” 王京的话也引起了室友的兴趣，“林林以前是不良吗？”<br>“行啦行啦，” 凛酱拍了拍室友的头，“林林不想说就别问啦。” <br>呼，我松了一口气，凛酱是救星。<br>“好了好了，别再提了，” 我松开了王京，最后吸了一口烟，然后掐掉。<br>“都进去吧，差不多可以吃了。”</p>
+<h3 id="37"><a href="#37" class="headerlink" title="37."></a>37.</h3><p>这是我家的餐桌第一次被食物占领的满满，几乎都快没吃饭的地方了。<br>同时也是我家第一次来这么多人，史无前例。<br>我看着一餐桌的海鲜，我不由得吞了一口口水。<br>活着也太值得了吧？这么多好吃的，我怎么这么幸福。<br>蒜蓉粉丝蒸帝王蟹腿和扇贝，芝士焗龙虾和青口，烤蟹钳，油焖大虾，天妇罗虾，蟹黄炒饭，刺身拼盘，三文鱼刺身，甜虾刺身….<br>呜呜呜这日子过得太舒服了！<br>“开动开动！” 王京夹起一根炸虾送进嘴里，一边含糊不清的咀嚼一边说，“哥们你手艺不错啊！”<br>我吃了一口蟹黄蛋炒饭，点了点头。<br>虽然用隔夜饭炒饭最好吃，但是在我精准的拿捏煮饭的水量下，这次的炒饭味道和口感非常棒。<br>米饭，鸡蛋，蟹黄完美的混合，粒粒分明的口感让我不由自主的多吃了两口。<br>“龙虾好好吃！” 室友一边吃一边惊呼，然后夹了一块到凛酱碗里，“凛酱你快尝尝！”<br>看到龙虾肉拉出了长长的芝士丝，让我的食欲大动。<br>这次焗龙虾我用的是马苏里拉芝士，这种芝士比较好拉丝。<br>凛酱伸出盘子接过了室友夹给她的龙虾肉，然后迫不及待的放入了自己的嘴里。<br>“真的好好吃，林林。” 咀嚼了几口，凛酱吞下后，也给我夹了一块，“你自己做的，快尝尝。”<br>诶…? <br>我看着自己盘子里的龙虾肉，表面覆盖着烤的焦黄的芝士，散发着迷人的混合在一起的蒜蓉，黄油，还有百里香的香气。<br>等等，现在不是思考这个的时候！<br>凛酱刚刚是给我夹菜了吗？<br>好像是这么回事。<br>我将面前的龙虾肉送入嘴中。<br>嗯！！！！！就是这个味道！<br>所有的材料完美的混合，由于加了柠檬汁，一丝微微的酸味让人感到清爽。<br>龙虾的肉维持在了一个最好的状态，饱满不失水分。<br>鲜嫩多汁！<br>“好好吃！” 我不由自主的发出了赞叹，佩服我自己的料理技能，“不愧是我！”<br>“尝尝帝王蟹怎么样，” 凛酱夹了一个北极贝刺身，在芥末酱油里沾了沾。<br>我点了点头，拿起一跟蒸蟹腿，开始嗦。<br>用蒸的方法，蟹腿很好的吸收了蒜蓉的香味，在我的嘴巴里回荡。<br>蟹肉很鲜嫩柔软，蒸的方法很好的能让蟹肉保持水分，加上这是一条长长的阿拉斯加帝王蟹蟹腿，吃在嘴里让人有一种极大的满足感。<br>那种小螃蟹完全没得比！<br>“怎么样？” 看到我吃下了她买的帝王蟹之后，凛酱问我。<br>“太好吃了！不愧是高级食材！” 我兴奋的说，“你和霓倪也快尝尝？”<br>“为什么不问哥们我？难道你重色轻友？” 一边夹天妇罗虾的王京一边问了一句。<br>“要吃自己夹！” 我说，“吃天妇罗要沾酱啊！不然我酱汁白弄了!”<br>“是是是是…” 王京小声的说，“我喜欢沾美乃滋嘛…”<br>吃天妇罗沾美乃滋，要是日本料理师傅听到估计都能直接抄生鱼片刀出来捅人。<br>不对，生鱼片刀捅人是黑社会才干的事情。<br>“甜虾怎么样？” 看到室友刚把甜虾刺身送入嘴里，我问。<br>“这次买的这家好好吃！” 室友点了点头，然后指了指距离她比较远的扇贝，“帮我拿块扇贝！”<br>我伸出手，夹了一块扇贝到室友盘子里，然后转头问凛。<br>“你要吃青口吗?” 我问。<br>“好。” 凛酱点了点头。<br>“你为啥不问我！” 王京开玩笑的说，“合着哥们我没人权呗！”<br>“那玩意就在你面前！” 我一边吐槽一边拿了一块芝士焗青口到凛酱的盘子里，“你自己就拿的到！把天妇罗递过来一下！”<br>“好好好好好，” 王京一连说了五个好，然后，然后端起天妇罗盘子往前伸了伸。<br>我夹了一根天妇罗虾，在混合着白萝卜泥的天妇罗酱汁里沾了沾，送到了嘴里。<br>香脆的面衣，混合着鲜咸的酱汁，还有这白萝卜泥的清爽。<br>呜呜呜我可是研究过好多炸天妇罗虾的视频的。<br>这次我的火候算是掌握的刚好，爽脆面衣下的虾仁是如此的鲜嫩。<br>通过由昆布水和柴鱼熬出来的日式高汤，加入酱油和味淋的天妇罗酱汁，白萝卜泥的加入又能让油炸的东西变的没那么腻，我感觉我的味蕾都在欢呼着“淦好他妈好吃不愧是我”。<br>“你们有尝尝，一定要沾酱料。” 我给凛酱和室友都夹了一根虾，对我来讲如果天妇罗不沾天妇罗汁就吃的话，是一种对天妇罗的侮辱。<br> 室友夹起大虾沾了沾酱汁，吃了一口，发出了惊叹<br>“这次比之前做的好吃诶！”<br>“我可是重新研究过调面衣的比例呢，酱汁也是。” 看到自己做的食物被赞扬，我感到了极大的满足。<br>“林林这次虾炸的真的不错，” 凛酱吃了一口，点了点头，“酱汁比我在外面吃到的还要好吃一点。”<br>“谢谢，” 我不好意思的挠了挠头，“喜欢就多吃点。”</p>
+<hr>
+<h3 id="38"><a href="#38" class="headerlink" title="38."></a>38.</h3><p>“啊~” 我拍着自己的肚皮。<br>“啊~”室友揉了揉自己的肚子, “林林你是不是忘记做章鱼烧了？”<br>“啊！” 我拍了拍自己的脑袋，我竟然忘记了这茬，“对不起我忘了！”<br>“没事啦没事啦！” 室友歪歪头笑了笑，’“今天东西已经好多了。”<br>“我明天给你做。”<br>“嘿嘿，好！”<br>“啊~嗝~”王京把剩下半瓶啤酒喝完，打了个嗝。<br>“我吃的好饱。” 凛酱说。<br>我看向面前的餐桌，现在只剩下了食物残渣。<br>虾尾，龙虾壳，螃蟹壳等等。<br>我伸了个懒腰，站了起来，让自己消化一下。<br>可能是真的因为海鲜太好吃了，我面前的桌子上真的出了残渣以外什么都不剩了。<br>“我要泡个茶，你们有人要喝吗？” 我说，“解解腻。”<br>“我要！” 室友举手。<br>“给我也来一杯，谢谢。” 凛酱点了点头。<br>“你呢？” 我看向王京。<br>“哥们喝这个就行。” 他拿起一瓶新的啤酒对我晃了晃，然后用开瓶器打开。<br>我耸了耸肩，拿起热水壶开始烧开水。<br>“我突然想起来我们家有现成的抹茶粉，” 我打开了柜子，“我们喝这个吧？”<br>“好。” 凛酱点了点头。<br>“我想喝柚子茶诶。” 室友歪了歪头。<br>我想起来冰箱里还放着一罐韩国的那种柚子蜜，室友买的，那个应该用个绿茶茶包泡好然后倒点进去就可以了吧？<br>“好好好。” 我点了点头。<br>接好水后，我按下烧水开关，然后拿出杯子准备好，靠在边上等着。<br>然后室友从餐桌旁起身，朝冰箱走过去。<br>“我要吃雪糕！” 室友拉开了冰箱的冷柜，“凛酱要不要吃！”<br>然后凛酱摇了摇头。<br>“你呢？你要不要吃？” 室友看向王京。<br>“哥们喝这个就行。” 人类的本质是复读机。<br>“你等下还要喝茶，冷热混着不怕拉肚子吗？” 我看着在冷柜里翻找的室友，问道。<br>“没事！” 室友一边认真的找着她想吃的口味，“我的胃是铁打的！你要吃吗？”<br>“行行行，” 我把抹茶粉倒入杯子里，“我喝茶就行。”<br>‘咔嗒’，热水壶发出声音提示我水已经烧好了。<br>于是我把热水倒入杯中，然后从冰箱里拿出那罐柚子蜜挖了两勺到室友的杯子里，加水丢了个立顿的绿茶茶包进去。<br>过了一会，我端着茶盘坐回了桌子边。<br>“喝茶喝茶。” 我把被子拿给室友和凛酱。<br>“谢谢。” 凛酱点了点头。<br>“好烫哦。” 室友接过杯子。<br> 我坐下来，轻轻的抿了一口还在冒着蒸汽的茶。<br>看着面面前这杯热乎乎的抹茶，我不由得想起了一部我很喜欢的小说的一个片段。<br>是关于男主主角团一行人在日本执行任务，但是由于不是特别了解当地的茶艺礼仪，所以一口气喝掉了滚烫的热茶，最后嘴巴里被烫掉一层皮。</p>
+<h3 id="39"><a href="#39" class="headerlink" title="39."></a>39.</h3><p>“怎么样，今天吃的开心吗？” 我放下茶杯问凛酱。<br>“很开心，很好吃。” 凛酱点了点头，“我以会再过来的。”<br>“可以啊，” 我笑了笑，“随时。”<br>看样子今天下来应该是和凛酱的关系有不少进展的，毕竟人家也喜欢吃我做的饭。<br>我第一次实实在在的感受到，做饭好吃是一件多么必要的事情了。<br>加上下周二要带凛酱过去录音，这个时候要趁热打铁再让我们的关系更好一点。<br>“对了王京，” 我看着那个还在喝啤酒的复读机。<br>“哥们喝这个就好。” 人类的本质是复读机。<br>“谁管你喝什么？” 我翻了个白眼，“我要说的是，周二录音室有没有人预约。”<br>“嗷嗷嗷我看看啊，” 然后王京拿出手机一阵操作。<br>王京翻了一会手机，然后抬起头。<br>“周二一天都没事，” 他放下手机，“咋啦？你要录歌？”<br>他的声音开始有些激动。<br>“你要回归了？” 他问我。<br>“不是，” 我摇了摇头，然后指了指凛酱，“我下周二带她过去，你之前不是也让人家过去玩来着。”<br>“好啊，” 王京点了点头，然后看向凛酱，“放心，哥们说过不收你钱就不收。”<br>“这个真的没事的，” 凛酱说，“该给的我还是会给的。”<br>“害，客气啥！而且还是林林给你录音呢！” 王京喝了一口啤酒，“到时候你们确定好时间跟我说，提早去把门给你们开…算了。”<br>然后王京的手在口袋里掏了掏，拿出了一个东西抛给我。<br>我稳稳的接住了，然后看了看，是一个钥匙。<br>“这不是我的钥匙吗？” 我问。<br>“对，就是你的。” 王京点了点头，“哥们一直带着呢。”<br>我看着手里的钥匙，笑了笑。<br>当初把那个地方租下来，改成录音室，我也花了不少钱在设备，装修，还有租金上。<br>严格来讲我也算是这个录音室的股东？<br>所以我有一把我自己的钥匙。<br>后来在大家的努力下，运营的很不错，总是能稳定的接到各种单子，生意也越来越好。<br>但是在那件事情之后，我退出了我们的团队。<br>走之前，把我的钥匙给了王京，没想到他会一直带在身上。<br>虽然很久没去了，但是不知道现在这个地方变得怎么样了。<br>“你们到时候几点去和我说一声，我去找你们玩。” 王京放下了啤酒瓶。<br>我点了点头。<br>“林林我也想去。” 室友捧着杯子，期待着看着我。<br>“你们周二几点下课？” 我问室友。<br>“三点！” 室友说。 <br>然后我看了看凛酱。<br>“你想几点过去？” 我问。<br>“我上午上完就没课了，我们三个可以一起吃个午饭，然后等霓倪下课了一起过去。” 凛酱对我说。<br>“好耶！” 室友欢呼。<br>“一起来吧一起来吧，录音室塞得下。” 王京又开了一瓶酒，“人多热闹。”</p>
+<h3 id="40"><a href="#40" class="headerlink" title="40."></a>40.</h3><p>“这个盘子放进去。” 我把刚洗好的盘子递给了室友。<br>“好。” 她接过了盘子，把盘子放进了消毒碗柜里。<br>半个小时前，我们送走了凛酱和王京，接着我们就开始清理吃完海鲜的残局。 <br>“桌子擦好没？” 我一边将碗上的泡沫冲洗掉，一边问室友。<br>“擦好啦擦好啦。” 室友点了点头。<br>我回头看了一眼，家里的残局已经收拾的差不多了。<br>“嘿嘿…” 室友突然神秘兮兮的把手搭在了我的肩膀上，“我想喝奶茶！”<br>“我可以拿红茶和牛奶给你泡，”我一边洗碗一边说，“等我把碗洗完。”<br>“可是我想喝那个，黑糖珍珠奶茶。” 室友否决了我的提案。<br>“我们家没有珍珠诶，” 我说，“要不给你点外卖吧。”<br> “可是我还想出去散步！” 室友说出了她的真正目的，“这么美好的一天就这样结束了你不觉得有些可惜吗？”<br>可惜吗…?<br>嗯…..的确。<br>虽然如果就这么结束了也和平时没什么差别，但是和平时相比，今天的确是美好的一天。<br>享受了一顿海鲜大餐，同时还和凛酱进一步的拉近了关系。<br>就这么结束难免有些可惜了。<br>被室友这么一说，我突然有一种想要找点事情做一下丰富一下自己生活的感觉。<br>果然还是平时在家里呆太久了吗？<br>这样的话还是偶尔出去散散步好了，挺惬意的。<br>偶尔也做一点，和平时不太一样的事情吧。<br>“现在几点了？” 我问室友。<br>“我看看哦…快八点半了！”<br>八点半吗？这个点外面人应该不会很多。<br>“行吧，” 我说，“那洗完碗我陪你出去走走。”<br>“好耶！” 室友欢呼，“那我去换衣服！”<br>然后她带着笑容的转过头，准备回到自己的房间，换上一身外出的衣服。<br>我好像突然想起了什么。<br>“等一下！” 趁着室友还没走掉，我叫住了她，“我有一个条件。”<br>“哈？” 室友疑惑的看着我，然后指了指自己，“我可以请你喝奶茶哦。”<br>“不是这个，虽然你要请我是绝对不会拒绝的，” 我摇了摇头，“不要去人多的地方。”<br>“嗯嗯！” 室友点了点头，我知道，所以我想说我们湖边走走吧，那里人少！”<br>湖边吗？虽然那里也不像西湖一样是个有名的风景光区，就是一个普通的湖。<br>但是那里晚上的确没什么人，也挺惬意的，还可以吹着夜风抽抽烟。<br>“好，” 我点了点头，“快去换衣服吧。”<br>室友蹦蹦跶跶的回到自己的房间，我加快了手上洗碗的速度。<br>散步吗….<br>我都忘掉我上一次没有目的性的出门是什么时候了。<br>之前基本上会出去都是为了演出，前几天去便利店也是为了特意去买河粉。<br>昨天晚上送凛酱回家算吗？<br>我不由得想起了自己以前的生活。</p>
+<h3 id="41"><a href="#41" class="headerlink" title="41."></a>41.</h3><p>以前我晚上基本上除了睡觉也很少待在自己家里，基本上不是在录音室就是在外面进行着灯红酒绿的夜生活。<br>后来在发生那些事情以后，我渐渐的对出门有些抗拒，也本能的讨厌人多的地方。<br>加上由于科技的发达，很多事情基本上不用出门就可以解决，所以后来我可以出门的理由少之又少。<br>就自己这样一个人度过了半年。<br>在室友搬进来之前，我虽然有另外一个室友，但是我们两个基本不会有任何交流。<br>平时是各过个的生活，那个室友经常会跑去女朋友家里住，所以相当于整个公寓都是我一个人的。<br>没和什么人交流过，也不怎么外出。<br>就这样浑浑噩噩的关了自己半年。<br>不过这半年也不是完完全全的浪费掉了，因为我发现烹饪是一件极其有意思的事情。<br>契机是我有一次特别想吃蛋包饭，但是当时已经是深夜了，有卖蛋包饭的餐厅都关门了。<br>于是当时我看了一下家里的冰箱，勉强能做一份出来。<br>所以我开始自己准备食材，那就做吧。<br>我记得当时我做出来的那份勉强做出来的蛋包饭也只是勉强能吃的程度。<br>第二天，我重新在餐厅里点了一份，仔细的吃着对比。<br>为什么人家做出来的就会比较好吃？<br>反正当时的我很闲，于是我干脆开始学习怎么做。<br>蛋包饭是我第一个能做好吃的东西。<br>后来，我不断的研究如何做饭，怎么把饭做好吃。<br>日常开销也从点外卖转变到了购买食材上。<br>当时的自己是觉得自己做的东西好吃，但是从来也没给任何人试过，更别说我当时那个人都见不到的室友。<br>后来有一天，我的室友一声不吭就搬走了。<br>看着空荡荡的房间，我发着愣。<br>就这么搬走了？？<br>她的女朋友后来有一次找到我们家，问我知不知道他在哪？<br>后来一问才知道，他把人家的肚子搞大了，然后跑路了。<br>我先是对那个女生表示发生这种事情很抱歉，然后说明了一下我和我室友的情况，最后建议她报警，如果有必要我不介意先照顾她一阵，帮我给房租就行。<br>可能对于初次见面的人不信任的原因吧，前室友的女朋友没说什么就走了，后来也不知道怎么样了。<br>由于租房合同是签的人是我，所以当时的室友直接走了的话，我一个人要给整个公寓的租金。<br>虽然这对我的影响不大，但是总的来讲我还是不太愿意的。<br>最后只能通过其他途径稍微压了一下价格，再找了个室友。<br>有人能过来摊房租总比没有好。<br>也就是陈霓倪，我现在的室友。<br>一开始和之前一样，我和她还是没什么交流。<br>基本上当时我们的交流都是维持在,有摄影师要过来拍照，然后她通知我一声。<br>虽然我也完全不介意，但是我们的交流就只维持在这个程度了。<br>我们保持着一个疏远的关系，自然而然的我也就没有考虑过是否让对方尝尝我做的料理了。<br>我当时觉得可能我的饭就只能做给自己吃了。<br>直到那一天。</p>
+<hr>
+<h3 id="42"><a href="#42" class="headerlink" title="42."></a>42.</h3><p>我打完游戏之后想要去上个厕所然后睡觉，可我发现厕所已经有人了。<br>然后我回到房间等了一会。<br>再次查看，厕所门还是关着。<br>反复了几次，我有些不爽的回到房间等着。<br>她用这么久，是想干嘛啊？<br>后来我在膀胱感觉到无法忍受时，出去查看，厕所门依然关着。<br>于是我敲了敲门，因为她再不出来我可能就要拿瓶子解决了。<br>但是没有任何反应，我不禁纳闷她是不是不在厕所，然后不小心把门反锁了。<br>我回头，看了看她房间的门，她房间门虚掩着。<br>我敲了敲，还是没有反应。<br>我把门推开，她也不在房间。<br>那她很可能，还在厕所。<br>一种不好的预感从我的心里升了上来。<br>于是我赶紧找出厕所门的钥匙，把厕所门打开。<br>她似乎是洗完澡的样子，头发还湿漉漉的。<br>她只穿着内裤倒在了地上。<br>我赶紧上前去检查她的身体，同时掏出手机准备拨打120。<br>我觉得她当时可能是摔倒撞到头晕了过去，然后失去了意识。<br>在我一边侧着她的鼻息时，我能听到她嘴里在喃喃的说着什么。<br>我屏住呼吸，将头伸过去仔细听了听。<br>“我好饿….”<br>她嘴里喃喃着。<br>她还有意识。<br>“你没吃饭吗？” 我问。<br>“我好饿…” 人类的本质是复读机。<br>在确认过她身上没有明显的外伤后，我觉得她应该就是饿的体力支撑不住了。<br>于是我先拿起毛巾给她盖住，然后将她抱到了床上。<br>这对于常年不运动的我，费了很大一番功夫。<br>虽然她的体型是偏瘦的，但是我是个肥宅。<br>厕所到床上的这几步路，我几乎用尽了我所有的力气。<br>将她在床上安置好，盖上被子后，我的脑子飞速运转。<br>我要怎么在最短的时间内，给她做出吃的。<br>她可能很久没吃东西了，我不敢给她做太刺激性的东西，怕刺激到她的胃。<br>我用冰箱里的剩饭，在最短的时间内煮了一锅皮蛋瘦肉粥出来。<br>然后拿上勺子之后，到了她的房间，喂她喝粥。<br>她完全没有力气从床上起来，我只能抱着她，让她坐起来一点。<br>她靠在床头，虚弱的看着我，眼神已经有点涣散。<br>“快喝点粥，” 我说我半跪在她的床头前看着她，“你先喝一点下去给你垫一下胃，我再去给你做点吃的。”<br>“动不了….” 她一边说着，一边又要滑下去恢复躺着的姿势。<br>我赶紧放下碗，再次把她抱了起来。<br>“我喂你，” 我拿起碗，“你快吃一点。”<br>然后我用勺子盛了一点碗里的粥，吹凉后把勺子伸到了她的嘴边。<br>她小口小口的嗦着勺子里的粥，好一会儿才把粥嗦完。<br>然后我在舀起下一口粥，吹了吹，再送到她嘴边。<br>时间过了很久，我一直重复着舀粥，吹凉，送到她嘴边给她小口嗦。<br>过了一会，我才喂完了那碗粥。<br>她也恢复了一些体力，气色也好了不少，但是总体来讲还是很虚弱的。<br>“谢谢你…” 她的声音相对的大声了一点。<br>“能起床吗？” 我放下碗问她，“外面还有粥，你先喝一点，我好再给你弄点吃的。”<br>她吃力的点了点头。<br>于是我从她的衣柜里随便找了一件卫衣递给了她。<br>“自己能穿上吗？” 我问。<br>她颤颤巍巍的伸了出手，想要接过衣服。<br>但是没拿稳，卫衣还是掉在了地上。<br>“没力气…” 她说。<br>“我帮你。” 我俯身捡起衣服，然后努力的让她把手举起来，把卫衣给她套上。<br>我看着她，眼神无精打采，手再床边无力的吊着，整个人看起来就是有力无气的。<br>“我扶你起来，” 我站在床边对她说，“去客厅再喝点粥好吗？”<br>她再次虚弱的点了点头。<br>我把她的被子掀开，想要将她从床上抱起来。<br>尴尬的一幕发生了。<br>两条白白的腿就这么出现在了我的眼前。<br>我才反应过来，她上半身的衣服有了，下半身除了一条内裤以外什么都没穿。<br>我竟然忘掉了这件事情，希望她恢复好之后不要记恨我，发生这种事情我也没办法。<br>当时的情况下很难在脑子里产生一些杂念，毕竟还是救人要紧。<br>于是我赶紧再从衣柜里拿出一条短裤帮她穿上。<br>然后俯身，将她抱起来。<br>用尽了吃奶的力气将她抱到了客厅，我甚至都感觉到我要脱力了。<br>我以后一定要在家里自己做做运动锻炼一下身体，当时的我这么想。<br>把她放在椅子上后，她在椅子上勉强的支撑着。<br>我重新舀了一碗粥，把粥和勺子摆在了她面前。<br>“你快吃点，” 我说一边回去打开冰箱一边说，“我再去给你弄其他吃的。”<br>她点了点头，虚弱的拿起了勺子，小口的喝着粥。<br>看到她自己有力气吃东西，我也放心了不少。<br>于是我开始快速地做菜。<br>过了一会，我用最快的速度同时的做好了蛋卷，煎午餐肉，和煎热狗。<br>虽然由于时间紧迫，我自然选择了能最快做好的食物。<br>我把冒着香气的食物放在了她的面前，我能看到她眼里的光泽恢复了不少。<br>可能是看到有肉吃，所以有了那么一点力气。<br>“你赶紧吃，” 我在她对面坐下，“吃完了我再给你做。”<br>她没有任何表示，直接开始大口大口的吃着面前的食物。<br>应该能让她回复不少力气吧？我心里想。<br>等下再给她做点什么好呢？<br>再给她炒个五花肉吧。<br>冰箱里还有不少东西，做一做都能给她吃。<br>于是我开始思考还能再为她做点什么。<br>知道她的声音打断了我的思绪。<br>“谢谢…” 她一边吃，一边含糊不清的小声说，“好好吃…”<br>她的声音由于吃着食物，听起来有点模糊。<br>但是我能感觉到她的声音是哽咽的。<br>我朝她看过去，看到了几滴透明的液体划过了她的脸颊，滴落到了桌子上。</p>
+<h3 id="43"><a href="#43" class="headerlink" title="43."></a>43.</h3><p>我再给她炒了一盘五花肉，然后蒸了一笼小笼包。<br>看来是得有几天没吃饭了，真的把她给饿坏了。<br>由于吃进去不少东西，她的精神恢复了不少，现在已经可以把整个盘子端起来狼吞虎咽了。<br>“你慢点吃，别噎着了。” 我做在她对面，看着她大快朵颐。<br>看她吃的这么香，我也感觉我有点饿了。<br>还是把她喂饱之后再来弄自己那份吧。<br>我靠在椅背上，伸了个懒腰，活动了一下脖子，静静的看着她吃饭。<br>过了好一会，她放下了盘子。<br>我朝盘子看过去，她面前的盘子已经什么都不剩了。<br>我看了看她，她好像恢复了不少。<br>脸色已经没有那么苍白了，气色和神情好多了。<br>她呆呆的看着我，我也看着她。<br>我看着她的眼睛，她的眼睛大大的，从她的眼神里可以看到她对我的好奇。<br>“感觉好点了吗？” 我开口了。<br>“嗯嗯，” 她点了点头，“恢复了不少力气啦，谢谢你。”<br>“还要再吃点吗？” 我问她，“我打算给自己再做点宵夜。”<br>然后她歪了歪头看了看我，再低头看了看自己的肚子。<br>“好。”她说。<br>我点了点头，给她倒了杯水然后准备再弄点宵夜。<br>我再次打开冰箱看了看，冰箱里的各种食材，思考着我要做点什么好。<br>吃炒面好了。<br>打蛋，切菜，切肉。<br>烧水，煮面，热锅。<br>把鸡蛋倒入油锅中，快速炒散，然后再把切好的包菜和肉片一起放下去翻炒。<br>“你多久没好好吃过东西了？” 我手里继续翻炒，一边问她。<br>感觉她前面虚弱成那样子，应该是明显摄入的能量不足。<br>“三天了…” 她的声音很小，但我还是听到了。<br>“什么都没吃吗？” 我问。<br>如果三天什么都没吃的话，我估计也能饿晕在厕所。<br>“喝水….” 她的声音越来越小。<br>也就是说，她这三天里只有喝水了吗…<br>虽然女生会经常觉得自己胖了想要去减肥，但是我觉得她应该不是因为这个原因不吃饭的。<br>要用这个方法减肥的话，的确太极端了。<br>何况在我看来，她的身材还蛮瘦的，尤其是腰和腿，都细细的。<br>等等，<br>等等。<br>等等。<br>等等。<br>我才反应过来一件重要的事情。<br>我是不是，不小心，看到了，她的，裸体….<br>嘶….我倒吸了一口凉气。<br>我真的不是故意的，她当时基本上什么都没穿倒在那边，我也没有办法。<br>不过话说回来，她本身这样不吃饭，应该是有什么苦衷吧。<br>算了不问了。<br>手上的活没停下，继续翻炒着锅里的东西。<br>最后我把酱油倒入锅中，锅子发出滋滋滋的声音，锅气冒了上来。<br>我快速的一边颠锅一边翻炒，让酱油和炒面均匀的混合在一起。<br>最后装盘。<br>放下锅子后，我端起了两盘炒面朝桌子走过去。<br>“快吃吧。” 我把盘子递给了她。<br>她接过盘子，放在了她面前。<br>她盯着面前的那盘炒面，然后用筷子夹了一点，放到了嘴里。<br>她慢慢的咀嚼，她的样子像是在细细品尝炒面的味道。<br>接着她突然暴起，再次拿起面前的的炒面，开始新一轮的狼吞虎咽。<br>看了看她的样子，我感觉我的嘴角不受控制的往上扬了一点。<br>她这个反应，应该是喜欢吃我做的饭吧？<br>我笑了笑，也动了动筷子，尝了尝自己面前的炒面。<br>嗯，挺好吃的，不愧是我。</p>
+<hr>
+<h3 id="44"><a href="#44" class="headerlink" title="44."></a>44.</h3><p>“我好了哦!！” <br>室友的声音突然打断了我的回忆，我回过神来。<br>我转头看去，看到室友已经换好了外出的衣服，在客厅里看着我。<br>我擦了擦手。<br>室友今天穿了另外一套JK制服，外面套了一件宽松毛绒开衫。<br>“晚上穿裙子，不会冷吗？” 我放下擦手布。<br>“嘿嘿~” 室友得意的笑了笑，“可不要小看女孩子的腿！而且我有穿袜子！”<br>她一边说一边伸出腿，然后往上拉了拉她腿上的过膝袜，证明给我看。<br>我耸了耸肩，既然她这么说那应该是没事的。<br>只不过她要是冷，我是可以把外套给她披着，只是下半身我总不能把我的裤子给她吧。<br>回到自己房间，换身外出穿的衣服。<br>看着我衣柜里挂着的衣服，我伸手拿了一件白色的短袖T，把自己现在的衣服脱掉，然后换上。<br>接着我脱掉我的裤子，换了一条黑色的破洞牛仔裤。<br>最后从一架上拿起了那件宽松的黑色长袖衬衫，当做了外套穿到自己身上。<br>带上手表，穿好袜子。<br>奶茶…要喝哪家呢？<br>戴上眼镜，对着屋里的全身镜整理了一下自己的头发和仪容，然后打开门走出去。<br>到了客厅，已经看到室友坐在餐桌旁玩着手机等我了。<br>“走啦。” 我朝她挥了挥手，走到玄关穿鞋。<br>“来啦来啦！” 她从椅子上起来，跟在了我的后面。<br>穿好鞋之后，我们一起出了门。<br>“奶茶你想喝哪家啊？”我问。<br>“嗯….我想想…” 室友思考了一下，“离湖边比较近的是…X角巷！”<br>“好哦，就那家吧。” 我们两个步入了电梯。<br>在我的记忆里，走过去大概是要十分多钟的样子，不会太远。<br>我们两个静静的看着电梯了显示器上的数字从12开始，不断减小。<br>“叮！”<br>电梯上显示器的数字减少到一之后，电梯门打开了。<br>我和室友肩并肩的从电梯走到了公寓外面。<br>晚饭徐徐吹来，有一丝丝凉意，但是并不会让人感到寒冷。<br>刚好的是很舒适清爽的一种感觉。<br>天上今天还挺多云的，倒是不怎么能看到星星。<br>街道上有人，但是也不多。<br>我们两个就这样一步步走着。<br>“你记得路吗？” 因为我只记得大概的方向，所以我问室友。<br>“嘿嘿~” 她对于我问出这个问题轻蔑的笑了笑，“我肯定记得的好不好！”<br>“那我就跟着你走了哦。”我说。<br>“你就乖乖跟着我吧。” 室友说。<br>“我好久没这样出来散步了，还蛮惬意的。” 我一边走一边说。<br>“是呀，林林你太宅了呢。” 室友转过头对着我笑了笑。<br>“我有什么办法嘛，” 我耸了耸肩，“毕竟现在很多事情不用出门都能解决，所以我出门的理由少的可怜。”</p>
+<h3 id="45"><a href="#45" class="headerlink" title="45."></a>45.</h3><p>“你是想赞美人类科技吗？” 室友笑眯眯的问我。<br>“差不多？” 我说，“我的情况是基本可以不用出门的。”<br>“你一直不出门，你不会觉得孤独空虚吗？” 室友问。<br>“还好其实，你在家的时候我们还是会和我交流的，加上我偶尔也会和王京聊聊天什么的。” 我说，“不过你搬过来之前，我的生活的确像你说的那样，孤独又空虚。”<br>“你以前是不是也有一个室友啊？” 室友问我，“就在我搬进来之前。不过也没怎么听你说过。”<br>“他啊,” 我顿了顿，稍微思考了一下，“其实倒是没什么好说的，毕竟我平时也不和他来往。”<br>“那你没有做饭给人家吃吗？” 室友歪了歪头，“毕竟你做饭那么好吃。”<br>“没有，当时他基本天天在她女朋友家住。” 我说。<br>“那他既然天天和女朋友住一起，他还租房子干嘛？” 室友疑惑。<br>“对啊，我一开始也很纳闷，直到他一声不吭的搬走了。” 想到他这么做，我也有点不爽。<br>“搬走了？为什么啊？” 室友再次疑惑。<br>“因为他把他女朋友肚子搞大了，所以要跑路，” 我叹了口气，“人家女朋友有一次还找上门来了，不过我也不知道他在哪就是了。所以最后只能建议她报警了。”<br>“诶？？” 室友惊呼了一声，然后痛骂道，“渣男！！”<br>“对啊，渣男。” 我说，“挺过分的其实，也不知道那个女生后来怎么样了。”<br>“希望人家能好好的吧，” 然后室友开玩笑的对我说。<br>“那林林你是渣男吗？”<br>“我吗….”  我开始思考自己过去的所作所为。<br>渣男吗….怎样算是渣男..<br>玩弄女生的感情，不在乎女生的感受？<br>又或者是对女生带着目的性的发展关系？<br>我好像…<br>“嗯，我好像是。” 我轻轻的说。<br>“诶诶诶？？？？？” 室友发出了比刚才还要惊讶的声音，然后一脸震惊的看着我。<br>她诶完之后就保持那个表情没有说话了。<br>“干嘛！” 我转过头看着她，“你看到鬼了哦！”<br>“林林竟然是渣男！” 室友停下了脚步，指着我，“我还觉得你挺好，挺善良的！是个好人！”<br>我也停下脚步，看着室友。<br>好人….<br>“干嘛，” 我说，“你反应怎么这么大。”<br>“你不会一边勾搭凛酱，一边还和别的女生暧昧吧！” 室友大声的说。<br>还好，现在街上没什么人，有人的话我估计就社死了。<br>“才没有！！！什么叫我勾搭凛酱！” 我对她比了个中指，然后翻了个白眼，“我是说我以前！！以前！！！！”<br>哎，以前。<br>“嗷嗷原来是以前啊。” 室友像是松了口气的样子，接着往前走，“我还以为林林在背着我还有凛酱和别的女生暧昧呢。”<br>“哪有和别的女生暧昧，” 我也迈出脚步，走到了她身旁，“都好久以前的事情了呢。”<br>好久以前了，一年多了。<br>“那林林当时做了什么？”室友问，“把女孩子搞怀孕然后跑路了？”<br>“…” 我沉默了一会，“你这是学以致用吗？”<br>“开玩笑的嘛。” 室友笑了笑。<br>“就是…怎么说呢，” 我有点点苦恼的挠了挠头。<br>因为这是我一件完全不想去细讲的事情，也算是我一直在逃避的一件事情。<br>所以我在努力思考如何用一句话去带过，然后阻止室友继续追问这个问题。<br>我深呼吸了一口气。</p>
+<h3 id="46"><a href="#46" class="headerlink" title="46."></a>46.</h3><p>“就是以前有一个女生很喜欢我，但是我当时太自我了，很多时候没在乎过她感受。我虽然没有出轨或者背着她偷吃，但是很多时候因为我的自我，给她造成了伤害。”<br>“比方说？”室友问。<br>“比方说我常常因为自己想做一些事情从而会冷落她，又或者因为我会觉得烦，所以我会忽略她。有时候吵完架之后她在那哭，我头也不回的就离开了，把她一个人丢在那里。她所有的朋友都叫她离开我，她还会为我辩解，可是我还是像之前一样，没在乎她的感受。”<br>“后来…” 室友问。<br>我深深的呼吸了一口气。<br>“当我开始后悔的时候，已经什么都来不及了。” 我平淡的说出了这句话。“她走了。”<br>“走…走了？” 室友小声的问我，“她..发生了不好的事情吗…”<br>我停下了脚步。<br>果然有些东西想逃避也一直逃避不掉。<br>其实我是一个矛盾的人。<br>我想要逃避，所以我一直不想见到任何人，所以我把自己关在家里。<br>可是我….<br>“她没有死啦，” 我拍了拍室友的头，“和家人一起去国外生活了。我一直很后悔，在我醒悟之后一切都太晚了。”<br>开什么玩笑，我在骗谁呢？<br>就算我骗的了别人，我骗的了自己吗？<br>很明显的，我做不到。<br>我只能不断的逃避，我不愿意去把这件事情从我的嘴里说出来。<br>虽然我也很清楚，那只是一件我改变不了的事情。<br>失去了才懂得珍惜，这句话说得一点也没错。<br>我非常的后悔，为什么我当时要那么的自我。<br>如果我能向一个好男友一样对待她，她走的时候会开心一点吗？<br>我不知道，什么都不知道。<br>我想要知道，但是却什么也来不及了。<br>我能做的只有后悔。<br>我真的很后悔当时的自己以那个态度和她相处。<br>我很后悔我对她不够好。<br>我很后悔我让她生气了。<br>我很后悔我和她吵架。<br>我很后悔我不理她。<br>我很后悔我不理解她。<br>我很后悔我，更加爱她，让她能够更加开心。<br>我到现在还记得非常清楚，她对我说的最后的话。<br>“哎呀，你在说什么呢？你除了吵完架不理我以外，已经对我很好啦。”<br>“乖啦，摸摸头，不要哭啦。林林不是人渣啦，是个小白痴啦。”<br>“林林有时候虽然很凶，但其实很善良呢。”<br>“其实你真的对我很好啦，不要再那么说自己啦。”<br>“不要哭啦，我也很爱你，所以没有我了以后，你也要好好生活哦。”<br>“以后要幸福哦，好好生活啦，林林。”<br>她当时对着泣不成声的我说。<br>对不起。<br>我没有做到。<br>对不起，就连好好生活我也做不到。<br>我只是把自己关在屋子里，去逃避。</p>
+<p>突然的，我感觉有什么东西碰到了我的脸。<br>“林林，你在哭呢。” 室友的手指擦了擦我的眼角。</p>
+<p>“诶…?”  我赶紧伸手摸了摸，不知道什么时候眼泪已经掉了下来。<br>“乖啦，摸摸头，不要哭啦。” 由于身高差，室友努力的伸了伸手，摸了摸我的头，“当时的林林不是渣男，是个白痴啦。”<br>“我…”<br>“她真的很喜欢你，你也很喜欢她吧？” 室友一边给我擦着眼泪一边说。<br>“嗯，我很后悔我当时太不懂事了，明明有时候互相理解一下就好了。” 我揉了揉自己的眼睛。<br>“虽然我不知道以前的林林怎样”， 室友捏了捏我的脸，“但是没事啦，现在的林林很善良哦，是个好人呢。” <br>“我是…好人吗？” 我看着她，愣愣的说。<br>“对呀，林林是个好人，一直不求回报的照顾我。”她认真的看着我，“所以我一直很感谢你。”<br>“我只是…”<br>我的脑海里想过了好多回答。<br>我只是，想要给人试试我做的饭。<br>我只是，觉得如果有人饿死在我家里我会很困扰。<br>我只是，想说你还挺可爱的所以照顾一下你好了。<br>我只是，喜欢做饭。<br>我只是，喜欢看着有人吃着我饭的样子。<br>我只是，有人觉得我的饭很好吃会很开心。<br>我只是。<br>我只是。<br>我只是。<br>我只是。<br>我只是觉得我好孤独，想要有个人陪我吃饭，陪我说话。<br>“她最后有对你说什么吗？” 我室友松开了我的脸，问我。<br>“她叫我好好生活….”<br>“那就好好活着，不要哭啦！来！” <br>然后室友点起了脚尖，张开了双臂。<br>一阵柔软的感觉从我身上传来。<br>我问道了她身上的香味。<br>“来，抱抱。” 她在我耳边轻轻说，“不要哭啦，好好活下去吧。”<br>“嗯。” 我也抱了抱室友，“谢谢你….”<br>“白痴林林，” 室友笑了笑，“是我谢谢你啦。”</p>
+<pre><code>po刚刚和编辑(朋友)一起过了一遍这几天码的字。
+编辑(朋友)是一个有丰富高级食材料理经验的人，但是他那几天生病了于是我就没有把那几天的更新给他看。
+弟34节开始，到第39节，很多对于料理的部分用了错误的方式去料理，还有吃完海鲜还喝茶(这个会出事)这类的错误。
+先对大家表示抱歉，由于Po相对的缺乏这方面的经验和常识，所以写出来了一些错误的示范。
+Po已经在检讨自己了，接下来会对34-39的修改以及重写。
+由于Po的疏忽以及常识缺乏，所以进行了错误的描写，po再次道歉。
+对不起各位。
+以后如果有这方面的东西，Po会更认真仔细的查阅资料，不让这类的错误再次出现。
+</code></pre>
+<h3 id="47"><a href="#47" class="headerlink" title="47."></a>47.</h3><p>“我要一杯黑糖珍珠鲜奶，少冰，还要一杯白桃乌龙，少冰半塘。”<br>“黑糖珍珠鲜奶..少冰….白桃乌龙…麻烦您扫这边付款哦。”店员指了指二维码的扫描标识。<br>室友拿出手机扫了扫二维码，过了一会，机器传来了收款成功的提示。<br>“这是两位的小票，请拿好。” 店员把小票递给了我们。<br>“谢谢。” 我伸出手，接过了小票。<br>没过多久，我们两个拿着奶茶离开了奶茶店。<br>奶茶店离湖不远，我们很快就到了。<br>晚上的湖边没什么人，基本上陪伴着我们的只有晚风和路灯。<br>和刚才相比，现在的确是有稍微那么凉了一些。<br>我们两个手里拿着喝的，肩并肩慢悠悠的走着。<br>“你不冷吧？” 我开口问室友。<br>“还好，” 室友点了点头，“不过真的比刚才冷了一点。”<br>我点了点头，嗦了一口自己的白桃乌龙。<br>风轻轻的吹着，路边柳树的枝叶随着风摇摆，发出了‘沙沙沙’的声音。<br>我们两个人没说话，就这么慢慢的走着，静静的感受这个惬意的夜晚。<br>时不时的会遇到另外一些出来散步的人，夜跑的人，还有骑着单车从我们身边经过的人。<br>偶尔出来这样走走，我感觉自己很放松。<br>“这里有的钓鱼吗？” 我开口问。<br>“好像没有，得查一下。” 室友说，“怎么，你不会是想钓鱼吧？”<br>“对啊，” 我点了点头，“你不觉得偶尔这样子钓鱼一下，能让人感到挺平静的吗？”<br>“确实，钓鱼是挺修身养性的，但是现在也没地方可以钓鱼呀。”<br>“嗯。” 我耸了耸肩，“而且还要买钓具。”<br>“对呀，你钓过鱼吗？” 室友问我。<br>“没有，你呢？”<br>“我只钓过虾。”<br>“那就等哪天有心情了买套渔具，再等哪天有心情了去钓鱼好了。” 我说。<br>“那如果钓到了，你打算怎么做呀？” 室友问我，“拿回家烧吗？”<br>“你怎么满脑子想着吃，” 我拍了拍她的头，“放走啦，我不怎么会做鱼。”<br>“切。” 室友调皮的吐了个舌头，“那我下次指名要吃鱼，看你怎么弄！”<br>“还能怎么弄，去学呗。” 我无奈的摇了摇头，补充道，“你都说要吃了。”<br>“竟然答应了…” 室友不可置信的看着我，“我还以为你会拒绝呢！<br>“那我就拒绝了哦，你都这么说了。” 我故意说道。</p>
+<h3 id="48"><a href="#48" class="headerlink" title="48."></a>48.</h3><p>“不行！” 接着室友突然话锋一转，“不过我好后悔。”<br>“后悔？” 我听到室友说她后悔后，不由得皱起眉头，疑惑的看着她。<br>“对！” 室友点了点头，“要是早点和林林搞好关系，就可以更早开始吃到好吃的饭了！”<br>哈，原来是这个，我还以为是什么严重的东西呢。<br>“那你就是因为馋我的饭才和我搞好关系的吗？” 我开玩笑的问她。<br>“嘛…..” 室友迟疑了一下，然后赶紧摆手说道，“才不是！林林是个好人！”<br>“好人哦！” 我笑了笑，“这是今天的第二张好人卡吗？”<br>“嘛…不是好人！不对！不是好人卡！” <br>“好啦好啦，” 我说，“主要是一开始和你也不熟，我也不好意思问你要不要吃。”<br>“嘿嘿~其实我以前也想问你的，但是感觉也是不太熟所以不好意思开口。” 室友笑了笑，挠了挠自己的头。<br>“你如果早说，当初就不至于饿晕在厕所了。” 我回想起当时发生的事情，开口说道。<br>“对….” 室友的声音小了下来，“我当时好像还没穿衣服来着…..” <br>的确… 她当时身上就只穿了一条内裤，倒在了浴室。<br>不过当时情况紧急，我也没有来得及仔仔细细的欣赏就是了。<br>当然啦，这是趁人之危，并不是什么好事情，所以我也没去那么做。<br>希望她不会介意吧。<br>“嗯…..” 我看了看室友，她貌似脸红了，突然间都不敢看着我了，“对不起…当时情况比较特殊…我也没有办法….不过你放心我没有特意去看就是了！”<br>“没事…不用道歉..不怪你啦！你只是想要帮我。” 室友大力的摇了摇自己的头。<br>”“虽然一直没问，但是当时是出于什么原因只喝了三天水？” 我看到她的样子，赶紧转移了一下话题。<br>“额…说起来这个原因..” 室友顿了顿。“其实很普通也很让人无奈。”<br>“很普通, 也让人很无奈？” 我问。<br>“对….” 室友叹了口气，“简单来讲就是，我当时没钱吃饭了。”<br>“所以你就，喝了三天水？？？” 我惊呼，“你当时可以跟我讲啊！”<br>“你当时面向不太善嘛…看起来凶凶的….” 室友委屈的缩了缩脑袋。<br>“唉，” 我叹了口气，“就算你当时和我不熟…那你好歹找下凛酱啊，她一定会帮你的。”<br>“她是会…唉，” 室友叹了口气，“但是她已经帮过我好多次了…不想再麻烦她了…” <br>我把手放在了她头上，揉了揉。<br>“还好那天我睡得晚，发现你了” 我说。<br>“嘿嘿，不过从那之后你就养了一个吃白饭的了呢。” 室友笑嘻嘻的对我说，“后不后悔呀！”<br>“后悔，后悔死了。” 我吐了个舌头，“还会抢着付我的房租。”<br>“哎~” 室友无奈的摊了摊手，摇了摇头，“林林你个王八蛋~”<br>“那王八蛋的饭，香吗？” 用力揉了揉她的头发。<br>“香香香！” 室友使劲的点了点头，“不过你真的很会照顾人呢。”<br>“难得哦，竟然还会夸我。” 我笑了笑。<br>“嘿嘿~毕竟你照顾了我那么久的一日三餐加宵夜。” 她笑了笑。</p>
+<h3 id="49"><a href="#49" class="headerlink" title="49."></a>49.</h3><p>“对吼，” 然后我停下了脚步，开始仔细打量她，“毕竟投喂你了那么久….”<br>我的目光对她从头到脚的扫描了一遍。<br>“嗯？” 室友看到我停住了，也停下了脚步。<br>“我的身上有什么东西吗？” 她看到我一直在打量着她，她开始检查自己的衣服。<br>“没有，” 我说，“感觉你比以前胖了一点，就一点点。”<br>“王八蛋！” 听到我的回答后，室友生气的举起了她的小粉拳，作势就要把我头给捶烂，“你怎么可以说女孩子胖！”<br>“那那那那那，” 我连忙改口，“你没有以前那么瘦了！”<br>“林林！你个王八蛋！” 美少女拳拳捶在了我的肩膀上。<br>“好好好好好，” 我一边躲避一边说，“不胖不胖不胖！”<br>“你还躲你竟然！”<br>“别打了别打了我错了！”<br>…….<br>打闹了一阵后，我们两个坐在路边的长椅上休息。<br>“呼….好喘…” 室友一边喘气一边说, “你跑那么快干嘛….呼…真是的…累死了…”<br>“你追我….哈….我能不跑吗….” 缺乏运动的我，在剧烈运动后也喘着粗气。<br>“打….把你….呼….头打烂…” 室友虽然还在喘气，但是还是举起了她的拳头。<br>“别….别打了….再打你又要去追,,,,” 我一边战术后仰，躲避她那有力无气的拳头，一边说。<br>“啊…..哈…..放过你了….” 室友收回了拳头，靠在了椅背上。<br>这样运动了一下，感觉我们两个人都热了不少。<br>我靠在椅子上休息了五分钟，感觉气息已经恢复平缓了。<br>“你好点了吗？” 我问。<br>“嗯嗯。” 室友点了点头。<br>我从口袋里把香烟拿出来，塞了一根到我嘴巴里，然后点上。<br>“呼~” 我吐出了一口烟，“让我抽根烟休息一下吧。”<br>“你刚跑完，抽烟不会呛到吗？” 室友问我。<br>“还好啦，” 我耸了耸肩，“感觉已经好多了，气息顺了已经。”<br>“切。”<br>“你还记得你有一次在外面喝醉吗？”<br>“哪…哪一次？” 室友挠了挠自己的小脑袋瓜，“我在广场上抱着人像那一次吗？”<br>‘不是，是那次你喝多了说要跳水那一次。’ 我指了指，前面一点的一个地方，“就是在前面。”<br>“王八蛋！所以你是特意往这边跑的吗！” 室友呵斥我。<br>“没有，我也是刚刚点烟的时候才反应过来是这个地方”，我一边打开了我那杯没剩什么东西的白桃乌龙，当成了烟灰缸，往里面弹了弹烟灰。<br>“啊….不过我倒是记不太清楚了…” 室友一边说一边拍了拍自己的头，叹了口气，“我到底是有在外面喝大过多少次啊….”<br>“要我帮你一一回忆一下吗？我记得你之前还有在街上抱着路灯嘴上说着’你个骚’…”<br>“不用了谢谢！！！！” 室友大声的打断了我，“这种事情不用帮我回忆了！！！”<br>“没事嗷，” 我耸了耸肩，然后继帮室友回忆，“当时你同学拿了你手机打电话给我，我赶过来的时候你指着湖的另一端说你可以游到对岸，问她们信不信。”<br>“啊…啊？？” <br>“她们一边拉着你，你还说你要去证明你自己不是个吃白饭的，所以要游过去。” 我耸了耸肩，“我废了好大力气才把你弄回来。”<br>“哎呀真是的….” 室友撅起了嘴，显得有些急了，“不要说啦！”<br>“你呀你呀你，” 我说，“以后在外面少喝点啊，你酒量也没多好。”<br>“主要是我开心了就会想要接着喝嘛….”<br>“不过你们是怎么喝完酒之后跑到湖边的？” 我提出了我的疑问。<br>“我听她们说…好像是我想要钓鱼…然后就拉着她们过来了…..”<br>我无奈的拍了拍自己的头，她的同学也太辛苦了…<br>“你下次要出去喝酒提早和我说你要去哪喝，不然我感觉你同学陪你这样乱搞也太辛苦了…” 我叹了口气。<br>“好嘛好嘛…我下次少喝点就是了…”<br>我们两个沉默了一会，我默默的把烟抽完了。<br>我把烟头丢进杯子里，确认灭掉之后把盖子盖上。<br>“起来吧，差不多该往回走了哦。” 我说。<br>“嗯嗯！” 室友也站了起来。</p>
+
+      </section>
+       
+    
+    
+  <div class="nav-container">
+    <!-- reverse left and right to put prev and next in a more logic postition -->
+    
+      <a class="nav-left" href="/copy/adao27773982/" target="_blank">
+        <span class="nav-arrow">← </span>
+        
+          《俞小姐》
+        
+      </a>
+    
+    
+      <a class="nav-right" href="/thinking/dai/" target="_blank">
+        
+          两张图
+        
+        <span class="nav-arrow"> →</span>
+      </a>
+    
+  </div>
+
+    
+      <div class="advertisement">
+        <p> 广告：快速学习 Crash Course十分钟速成课 <a target="_blank" rel="noopener" href="https://crashcourse.club/">字幕组网站</a></p>
+      </div>
+    
+    
+      <div id="waline"></div>
+
+<link href="https://cdn.bootcdn.net/ajax/libs/waline/2.15.5/waline.min.css" rel="stylesheet">
+<script src="//cdn.bootcdn.net/ajax/libs/waline/2.15.5/waline.min.js"></script>
+<script defer src="/js/waline-qqavatar.js"></script>
+<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/waline/2.14.9/waline.min.js"></script>-->
+<!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/waline/2.14.9/waline.min.css">-->
+
+<script>
+  // 中文默认
+  const locale = {
+    nick: '昵称',
+    nickError: '昵称不能少于3个英文字符或2个中文汉字',
+    mail: '邮箱(可用QQ邮箱获取头像)',
+    mailError: '请填写正确的邮件地址',
+    link: '网址',
+    optional: '可选',
+    placeholder: '' || '说、什么8 \n\n可使用QQ邮箱获取QQ头像，或在gravatar.com注册后使用邮箱绑定头像 \n支持Markdown语法：*斜体*, **粗体**, \# - ###### 1-6级标题, *** 或 --- = 水平分割线, ~~删除线~~, > 引用内容, `代码块`, 1. 序号列表, * 无序列表, ^上角标^, ~下角标~, <br> = 空行, [链接文字](链接地址), ![图片名称](图片地址.png), ',
+    sofa: '来发评论吧~',
+    submit: '提交',
+    like: '喜欢',
+    cancelLike: '取消喜欢',
+    reply: '回复',
+    cancelReply: '取消回复',
+    comment: '评论',
+    refresh: '刷新',
+    more: '加载更多...',
+    preview: '预览',
+    emoji: '表情',
+    uploadImage: '上传图片',
+    seconds: '秒前',
+    minutes: '分钟前',
+    hours: '小时前',
+    days: '天前',
+    now: '刚刚',
+    uploading: '正在上传',
+    login: '登录',
+    logout: '退出',
+    admin: '博主',
+    sticky: '置顶',
+    word: '字',
+    wordHint: '评论字数应在 $0 到 $1 字之间！\n当前字数：$2',
+    anonymous: '匿名',
+    level0: '潜水',
+    level1: '冒泡',
+    level2: '吐槽',
+    level3: '活跃',
+    level4: '话痨',
+    level5: '传说',
+    gif: '表情包',
+    gifSearchPlaceholder: '搜索表情包',
+    profile: '个人资料',
+    approved: '通过',
+    waiting: '待审核',
+    spam: '垃圾',
+    unsticky: '取消置顶',
+    oldest: '按倒序',
+    latest: '按正序',
+    hottest: '按热度',
+    reactionTitle: '你认为这篇文章怎么样？',
+  };
+
+  Waline.init({
+    el: "#waline",
+    serverURL: "waline.voiiu.com",
+    appId: "" || "M2JD6yGQhefhH2O0aSjFfclc-MdYXbMMI",
+    appKey: "" || "arEPHdbMnKwMjQgiWsLgw34N",
+    path:  "" || window.location.pathname,  // window.location.pathname.replace(/\/$/,''),
+    login: "disable",  // 'enable' || 'disable' || 'force'
+    avatarCDN: "https://gravatar.loli.top/avatar/",
+    //avatar: '',
+    placeholder: "",
+    pageSize: 10,
+    meta: ["nick", "mail"],
+    requiredMeta: [""],
+    pageview: "true" && "",
+    emoji: [
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/tieba",
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/weibo",
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/qq",
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/alus",
+      "https://testingcf.jsdelivr.net/gh/Saidosi/azuki-emoji-for-waline@1.0/azukisan",
+      "https://testingcf.jsdelivr.net/gh/norevi/blob-emoji-for-waline@2.0/blobs-gif",
+    ],
+    locale,
+  });
+
+  $('.wl-actions').append("<a href=https://emoji.zhuochi.org target=_blank id=wl-emoji-wrapper><img src=/images/emoji.png class=wl-action id=wl-emoji></a>")
+
+  //// Clean TEXTAREA 
+  //$(".wl-cards").change(function () {
+  //  alert('changed')
+    //('#wl-edit').html("")
+  //})
+  
+  //! Not functional
+  //$(".primary .wl-btn").click(function () {
+    //document.getElementsByClassName('wl-num')[0].innerHTML ++
+  //})
+</script>
+    
+    
+    
+      <div class="qrcode" id="qr-box">
+    <img id="share-qrcode" class="qrcode-image" src=""/>
+    <div class="qrcode-notice">保存二维码，分享此文章</div>
+</div>
+
+<!--<script type="text/javascript" src="/js/qrious.min.js"></script>-->
+<script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/qrious/4.0.2/qrious.min.js" ></script>
+<script>
+    // qrcode
+    let qr = new QRious({
+        background: '#F0FFFF',
+        backgroundAlpha: 1,
+        foreground: '#0096FF',
+        foregroundAlpha: 0.8,
+        level: 'L',
+        mime: "image/gif",
+        padding: null, // pixels
+        size: 100,
+        element: document.getElementById('share-qrcode'),
+        value: document.location.href,
+    })
+
+    $("#share-qrcode").click(function () {
+        let img = document.getElementById('share-qrcode')
+        let imgurl = img.src
+        let a = document.createElement('a')
+        let down_event = new MouseEvent('click')
+        a.download = '《我的室友虽然是个福利姬但是她贼喜欢吃我做的饭》第二卷（上）-CloudPool浊池'
+        a.href = imgurl
+        a.dispatchEvent(down_event)
+    })
+</script>
+
+
+    
+  </article>
+</main>
+
+<script>
+    (function () {
+      var url = "https://zhuochi.org/copy/adao33006693-2/";
+      var banner = "";
+      if (banner !== "" && banner !== "undefined" && banner !== "null") {
+        $("#article-banner").css({
+          "background-image": "url(" + banner + ")",
+        });
+      } else {
+        $("#article-banner").geopattern(url);
+      }
+      $(".header").removeClass("fixed-header");
+    })();
+  </script>
+
+<script>
+  // error image
+  $(".markdown-content img").on("error", function () {
+    $(this).attr("src", "/images/error.png");
+    $(this).css({cursor: "default",});
+  });
+</script>
+ 
+    <aside class="sidebar">
+  <span class="scroll-top fa fa-arrow-up"></span>
+  <span class="fa fa-share-alt share-icon">
+    <span class="list-icon">
+      
+        <a href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=https://zhuochi.org/copy/adao33006693-2/index.html&title=《我的室友虽然是个福利姬但是她贼喜欢吃我做的饭》第二卷（上）&pics=https://zhuochi.org/images/logo.svg&desc=作者： A岛匿名版 - 2srDJ3V&summary=CloudPool浊池是由年轻人管理的博客" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659969569042" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1231"><path d="M1023.210667 395.690667c-2.005333-6.08-7.381333-10.410667-13.781333-10.944l-347.114667-29.802667L526.634667 33.984C524.117333 28.096 518.4 24.256 512 24.256s-12.181333 3.861333-14.677333 9.749333l-135.616 320.938667L14.570667 384.746667c-6.357333 0.533333-11.797333 4.864-13.781333 10.944-1.941333 6.101333-0.106667 12.778667 4.714667 16.96l263.338667 228.138667L189.888 980.16c-1.429333 6.208 1.002667 12.757333 6.122667 16.512 5.205333 3.733333 12.117333 4.010667 17.642667 0.682667L512 817.450667l298.282667 179.946667c2.581333 1.557333 5.418667 2.346667 8.32 2.346667 3.221333 0 6.528-1.002667 9.344-3.008 5.162667-3.84 7.594667-10.368 6.122667-16.576l-62.442667-268.352c26.730667-13.482667 56.277333-36.245333 56.277333-36.245333s-116.864 57.066667-536.341333 29.205333L595.626667 484.437333c0 0-11.968-18.581333-392.981333-31.872-25.408-0.917333 310.677333-63.722667 558.933333-10.645333L456.298667 660.906667c0 0 122.453333 18.197333 307.328 16.085333l-8.448-36.181333 263.36-228.16C1023.381333 408.469333 1025.216 401.792 1023.210667 395.690667z" p-id="1232" fill="#04b2f1"></path></svg>
+        </a> 
+      
+      
+        <a href="https://service.weibo.com/share/share.php?url=https://zhuochi.org/copy/adao33006693-2/index.html&title=《我的室友虽然是个福利姬但是她贼喜欢吃我做的饭》第二卷（上）&pic=https://zhuochi.org/images/logo.svg&summary=作者： A岛匿名版 - 2srDJ3V" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659970330786" class="icon" viewBox="0 0 1138 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="3639" fill="#04b2f1"><path d="M914.432 518.144q27.648 21.504 38.912 51.712t9.216 62.976-14.336 65.536-31.744 59.392q-34.816 48.128-78.848 81.92t-91.136 56.32-94.72 35.328-89.6 18.944-75.264 7.68-51.712 1.536-49.152-2.56-68.096-10.24-78.336-21.504-79.872-36.352-74.24-55.296-59.904-78.848q-16.384-29.696-22.016-63.488t-5.632-86.016q0-22.528 7.68-51.2t27.136-63.488 53.248-75.776 86.016-90.112q51.2-48.128 105.984-85.504t117.248-57.856q28.672-10.24 63.488-11.264t57.344 11.264q10.24 11.264 19.456 23.04t12.288 29.184q3.072 14.336 0.512 27.648t-5.632 26.624-5.12 25.6 2.048 22.528q17.408 2.048 33.792-1.536t31.744-9.216 31.232-11.776 33.28-9.216q27.648-5.12 54.784-4.608t49.152 7.68 36.352 22.016 17.408 38.4q2.048 14.336-2.048 26.624t-8.704 23.04-7.168 22.016 1.536 23.552q3.072 7.168 14.848 13.312t27.136 12.288 32.256 13.312 29.184 16.384zM656.384 836.608q26.624-16.384 53.76-45.056t44.032-64 18.944-75.776-20.48-81.408q-19.456-33.792-47.616-57.344t-62.976-37.376-74.24-19.968-80.384-6.144q-78.848 0-139.776 16.384t-105.472 43.008-72.192 60.416-38.912 68.608q-11.264 33.792-6.656 67.072t20.992 62.976 42.496 53.248 57.856 37.888q58.368 25.6 119.296 32.256t116.224 0.512 100.864-21.504 74.24-33.792zM522.24 513.024q20.48 8.192 38.912 18.432t32.768 27.648q10.24 12.288 17.92 30.72t10.752 39.424 1.536 42.496-9.728 38.912q-8.192 18.432-19.968 37.376t-28.672 35.328-40.448 29.184-57.344 18.944q-61.44 11.264-117.76-11.264t-88.064-74.752q-12.288-39.936-13.312-70.656t16.384-66.56q13.312-27.648 40.448-51.712t62.464-38.912 75.264-17.408 78.848 12.8zM359.424 764.928q37.888 3.072 57.856-18.432t21.504-48.128-15.36-47.616-52.736-16.896q-27.648 3.072-43.008 23.552t-17.408 43.52 9.728 42.496 39.424 21.504zM778.24 6.144q74.752 0 139.776 19.968t113.664 57.856 76.288 92.16 27.648 122.88q0 33.792-16.384 50.688t-35.328 17.408-35.328-14.336-16.384-45.568q0-40.96-22.528-77.824t-59.392-64.512-84.48-43.52-96.768-15.872q-31.744 0-47.104-15.36t-14.336-34.304 18.944-34.304 51.712-15.36zM778.24 169.984q95.232 0 144.384 48.64t49.152 146.944q0 30.72-10.24 43.52t-22.528 11.264-22.528-14.848-10.24-35.84q0-60.416-34.816-96.256t-93.184-35.84q-19.456 0-28.672-10.752t-9.216-23.04 9.728-23.04 28.16-10.752z" p-id="3640"></path></svg>
+        </a>
+      
+      
+        <a href="https://www.douban.com/recommend/?url=https://zhuochi.org/copy/adao33006693-2/index.html&title=《我的室友虽然是个福利姬但是她贼喜欢吃我做的饭》第二卷（上）&pic=https://zhuochi.org/images/logo.svg&summary=作者： A岛匿名版 - 2srDJ3V" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659970941550" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1055"><path d="M88 72.9h848v95.5H88z" p-id="1056" fill="#04b2f1"></path><path d="M88 72.9h848v95.5H88zM862.3 641.5V268H161.7v373.5h700.6zM263.4 363.4h498.4v182.5H263.4V363.4z" p-id="1057" fill="#04b2f1"></path><path d="M862.3 641.5V268H161.7v373.5h700.6zM263.4 363.4h498.4v182.5H263.4V363.4zM710.8 856.7c30.5-46.7 59.3-100.8 85.9-162.2l-102-37.2c-26.5 72.8-57.4 139.4-92.5 199.4H424.9c-29.4-77.8-62.6-144.3-99.8-199.4l-93.8 37.2c38.6 58 69.9 111.9 93.8 162.2H64v94.5h896v-94.5H710.8z" p-id="1058" fill="#04b2f1"></path><path d="M710.8 856.7c30.5-46.7 59.3-100.8 85.9-162.2l-102-37.2c-26.5 72.8-57.4 139.4-92.5 199.4H424.9c-29.4-77.8-62.6-144.3-99.8-199.4l-93.8 37.2c38.6 58 69.9 111.9 93.8 162.2H64v94.5h896v-94.5H710.8z" p-id="1059" fill="#04b2f1"></path></svg>
+        </a>
+      
+      
+        <a href="http://tieba.baidu.com/f/commit/share/openShareApi?url=https://zhuochi.org/copy/adao33006693-2/index.html&title=《我的室友虽然是个福利姬但是她贼喜欢吃我做的饭》第二卷（上）&pic=https://zhuochi.org/images/logo.svg&desc=作者： A岛匿名版 - 2srDJ3V" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659968685554" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1659"><path d="M1024 862.826667a161.152 161.152 0 0 1-161.173333 161.173333h-701.632a161.152 161.152 0 0 1-161.173334-161.173333v-701.632a161.194667 161.194667 0 0 1 161.173334-161.173334h701.632a161.194667 161.194667 0 0 1 161.173333 161.173334v701.632z" fill="#04b2f1" p-id="1660"></path><path d="M828.842667 250.261333h-173.461334v-36.522666a17.066667 17.066667 0 0 0-17.066666-17.066667h-41.941334a17.045333 17.045333 0 0 0-17.045333 17.066667v263.296h-24.896a17.066667 17.066667 0 0 0-17.045333 17.066666V810.218667a17.066667 17.066667 0 0 0 17.045333 17.088h257.365333a17.066667 17.066667 0 0 0 17.066667-17.088v-58.986667h-0.256v-198.144h0.256v-58.986667a17.066667 17.066667 0 0 0-17.066667-17.066666H655.381333v-150.72h173.461334a17.066667 17.066667 0 0 0 17.066666-17.066667v-41.941333a17.066667 17.066667 0 0 0-17.066666-17.045334z m-93.376 302.848c9.429333 0 17.045333 7.637333 17.045333 17.066667v164.010667a17.066667 17.066667 0 0 1-17.045333 17.066666h-104.981334a17.045333 17.045333 0 0 1-17.045333-17.066666v-164.010667a17.066667 17.066667 0 0 1 17.045333-17.066667h104.981334zM197.909333 657.408h41.941334a17.088 17.088 0 0 0 17.088-17.088v-358.741333h174.528v358.741333a17.066667 17.066667 0 0 0 17.045333 17.088h41.941333a17.088 17.088 0 0 0 17.088-17.088v-417.749333c0-9.408-7.658667-17.066667-17.088-17.066667h-292.522666a17.066667 17.066667 0 0 0-17.045334 17.066667v417.749333a17.024 17.024 0 0 0 17.024 17.088z" fill="#FFFFFF" p-id="1661"></path><path d="M492.970667 739.2v-0.170667a110.656 110.656 0 0 1-110.656-110.656h-0.106667v-296.042666a17.066667 17.066667 0 0 0-17.066667-17.045334h-41.941333a17.045333 17.045333 0 0 0-17.045333 17.045334v296.042666h-0.362667a110.677333 110.677333 0 0 1-110.677333 110.656v0.170667a17.045333 17.045333 0 0 0-17.045334 17.066667v42.112a17.066667 17.066667 0 0 0 17.045334 17.066666 186.602667 186.602667 0 0 0 148.928-74.176 186.624 186.624 0 0 0 148.928 74.176 17.045333 17.045333 0 0 0 17.045333-17.066666v-42.112a17.024 17.024 0 0 0-17.045333-17.066667z" fill="#FFFFFF" p-id="1662"></path><path d="M865.450667 873.685333c17.664-3.797333 15.253333-24.896 14.741333-29.504-0.874667-7.125333-9.237333-19.541333-20.586667-18.581333-14.293333 1.28-16.362667 21.930667-16.362666 21.930667-1.962667 9.557333 4.608 29.952 22.208 26.154666z m18.752 36.693334c-0.533333 1.493333-1.664 5.290667-0.682667 8.597333 1.962667 7.402667 8.405333 7.744 8.405333 7.744h9.258667v-22.613333h-9.898667a10.837333 10.837333 0 0 0-7.082666 6.272z m14.037333-72.085334c9.749333 0 17.621333-11.221333 17.621333-25.109333 0-13.866667-7.872-25.088-17.621333-25.088-9.728 0-17.642667 11.221333-17.642667 25.088 0 13.888 7.893333 25.109333 17.642667 25.109333z m41.984 1.664c13.034667 1.706667 21.418667-12.202667 23.082667-22.762666 1.706667-10.538667-6.698667-22.762667-15.936-24.853334-9.258667-2.112-20.778667 12.672-21.845334 22.357334-1.258667 11.797333 1.685333 23.573333 14.698667 25.258666z m31.936 61.973334s-20.16-15.594667-31.936-32.448c-15.957333-24.874667-38.634667-14.762667-46.208-2.112-7.552 12.650667-19.328 20.629333-20.992 22.741333-1.685333 2.090667-24.362667 14.336-19.328 36.672 5.034667 22.336 22.72 21.909333 22.72 21.909333s13.013333 1.28 28.138667-2.112c15.104-3.349333 28.117333 0.832 28.117333 0.832s35.306667 11.818667 44.970667-10.944c9.621333-22.72-5.482667-34.538667-5.482667-34.538666z m-60.394667 33.877333h-22.954666c-9.92-1.984-13.866667-8.746667-14.357334-9.898667-0.490667-1.173333-3.306667-6.613333-1.813333-15.850666 4.288-13.866667 16.490667-14.848 16.490667-14.848h12.224v-15.04l10.410666 0.149333v55.488z m42.752-0.170667h-26.410666c-10.24-2.624-10.709333-9.92-10.709334-9.92v-29.205333l10.709334-0.170667v26.261334c0.64 2.794667 4.117333 3.306667 4.117333 3.306666h10.88v-29.397333h11.413333v39.125333z m37.376-77.994666c0-5.034667-4.181333-20.224-19.733333-20.224-15.552 0-17.642667 14.336-17.642667 24.469333 0 9.685333 0.810667 23.189333 20.16 22.741333 19.328-0.426667 17.216-21.909333 17.216-26.986666z" fill="#FFFFFF" p-id="1663"></path></svg>
+        </a>
+      
+      
+        <a href="https://connect.qq.com/widget/shareqq/index.html?url=https://zhuochi.org/copy/adao33006693-2/index.html&title=《我的室友虽然是个福利姬但是她贼喜欢吃我做的饭》第二卷（上）&pic=https://zhuochi.org/images/logo.svg&desc=作者： A岛匿名版 - 2srDJ3V&summary=CloudPool浊池是由年轻人管理的博客" aria-hidden="true" target="_blank">
+        <svg t="1659969969936" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2714"><path d="M866.991 707.772c0 0-25.341 69.55-71.877 132.071 0 0 83.050 28.439 76.137 102.196 0 0 2.709 82.331-177.613 76.685 0 0-126.817-9.898-164.88-63.85h-33.53c-38.018 54.006-164.834 63.85-164.834 63.85-180.431 5.7-177.556-76.685-177.556-76.685-7.025-73.756 76.081-102.196 76.081-102.196-46.475-62.519-71.875-132.071-71.875-132.071-112.759 183.141-101.477-25.567-101.477-25.567 21.141-123.495 109.949-204.384 109.949-204.384-12.677-112.157 33.805-132.078 33.805-132.078 9.68-346.979 306.473-340.887 312.675-340.722 6.249-0.163 302.931-6.256 312.72 340.723 0 0 46.538 19.866 33.812 132.078 0 0 88.751 80.89 109.886 204.384 0.055-0.001 11.285 208.707-101.421 25.566v0 0z" p-id="2715" fill="#04b2f1"></path></svg>
+        </a>
+      
+    </span>
+  </span>
+</aside>
+    <footer class="app-footer">
+  <p class="copyright">
+    Copyright &copy; 2017 - 2023, CloudPool浊池, zhuochi.org︱voiiu.com, All Rights Reserved<br/>
+    本站为基于<a href="https://hexo.io" target="_blank">Hexo</a>的静态博客，<span id="busuanzi_container_site_pv">总访问量 <span id="busuanzi_value_site_pv"></span> 次</span><!--，来自 <span id="busuanzi_value_site_uv"></span> 个 IP--><br/>
+    主题源自 <a target="_blank" rel="noopener" href="https://github.com/yanm1ng/hexo-theme-vexo">Vexo</a> by yanm1ng，感谢 <a target="_blank" rel="noopener" href="https://github.com/MoePlayer/APlayer">APlayer</a> by DIYgod，感谢 <a target="_blank" rel="noopener" href="https://github.com/stevenjoezhang/live2d-widget">Live2D Widget</a> by stevenjoezhang & <a target="_blank" rel="noopener" href="https://github.com/xiazeyu/live2d-widget-models">live2d-widget-models</a> by xiazeyu
+  </p>
+</footer>
+
+<script>
+  function async(u, c) {
+    var d = document, t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0];
+    o.src = u;
+    if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+    s.parentNode.insertBefore(o, s);
+  }
+</script>
+
+<script src="/js/script.js"></script>
+ <!--无法移至head.js中，原因不明-->
+<script type="text/javascript" src="/js/busuanzi.min.js" async></script>
+
+
+  </body>
+</html>

@@ -1,0 +1,1726 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta http-equiv="Access-Control-Allow-Origin" content="*">
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport" />
+  <meta name="description" content="CloudPool浊池是由年轻人管理的博客">
+  <meta name="keyword" content="浊池, CloudPool, CloudPool浊池">
+  
+  <link rel="shortcut icon" type="image/ico" href="/images/cloudpool-favicon.ico">
+  
+  <title>
+    
+      a岛牛子故事
+    
+  </title>
+  <!-- CSS -->
+  <!--<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/6.4.0/css/all.min.css" />-->
+  <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />-->
+  <!--<link href="https://cdn.staticfile.org/nprogress/0.2.0/nprogress.min.css" rel="stylesheet"/>-->
+  <link href="https://cdn.bootcdn.net/ajax/libs/nprogress/0.2.0/nprogress.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/aplayer/1.10.1/APlayer.min.css"/>
+  
+<link rel="stylesheet" href="/css/style.css">
+
+
+  <!-- JS -->
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/geopattern/1.2.3/js/geopattern.min.js"></script>
+  <!--<script type="text/javascript" src="https://cdn.staticfile.org/nprogress/0.2.0/nprogress.min.js"></script>-->
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/nprogress/0.2.0/nprogress.min.js"></script>
+  
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+            <span class="search-icon">
+                <i class="fa fa-search"></i>
+            </span>
+            <div class="search-input-container">
+                <input autocomplete="off" autocapitalize="off" maxlength="80"
+                    placeholder="Anything...  今天想看什么w" spellcheck="false"
+                    type="" class="search-input">
+            </div>
+            <span class="popup-btn-go">
+                <i class="fa-solid fa-arrow-circle-right"></i>
+            </span>
+            <span class="popup-btn-close">
+                <i class="fa-solid fa-circle-xmark"></i>
+            </span>
+        </div>
+        <div id="search-result" class="search-result-container">
+            <div id="no-result" class="no-result">
+                <i class="fa-solid fa-spinner fa-pulse fa-5x fa-fw"></i>
+            </div>
+        </div>
+    </div>
+</div>
+  <link rel="prefetch" href="/search.xml" crossorigin="anonymous"> 
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Popup Window
+      let isfetched = false;
+      let datas;
+      let isXml = true;
+      // Search DB path
+      let searchPath = 'search.xml'; //CONFIG.search.path
+      if (searchPath.length === 0) {
+        searchPath = 'search.xml';
+      } else if (searchPath.endsWith('json')) {
+        isXml = false;
+      }
+      const input = document.querySelector('.search-input');
+      const resultContent = document.getElementById('search-result');
+
+      const getIndexByWord = (word, text, caseSensitive) => {
+        if ('false' == false) { // CONFIG.localsearch.unescape = false
+          let div = document.createElement('div');
+          div.innerText = word;
+          word = div.innerHTML;
+        }
+        let wordLen = word.length;
+        if (wordLen === 0) return [];
+        let startPosition = 0;
+        let position = [];
+        let index = [];
+        if (!caseSensitive) {
+          text = text.toLowerCase();
+          word = word.toLowerCase();
+        }
+        while ((position = text.indexOf(word, startPosition)) > -1) {
+          index.push({ position, word });
+          startPosition = position + wordLen;
+        }
+        return index;
+      };
+
+      // Merge hits into slices
+      const mergeIntoSlice = (start, end, index, searchText) => {
+        let item = index[index.length - 1];
+        let { position, word } = item;
+        let hits = [];
+        let searchTextCountInSlice = 0;
+        while (position + word.length <= end && index.length !== 0) {
+          if (word === searchText) {
+            searchTextCountInSlice++;
+          }
+          hits.push({
+            position,
+            length: word.length
+          });
+          let wordEnd = position + word.length;
+
+          // Move to next position of hit
+          index.pop();
+          while (index.length !== 0) {
+            item = index[index.length - 1];
+            position = item.position;
+            word = item.word;
+            if (wordEnd > position) {
+              index.pop();
+            } else {
+              break;
+            }
+          }
+        }
+        return {
+          hits,
+          start,
+          end,
+          searchTextCount: searchTextCountInSlice
+        };
+      };
+
+      // Highlight title and content
+      const highlightKeyword = (text, slice) => {
+        let result = '';
+        let prevEnd = slice.start;
+        slice.hits.forEach(hit => {
+          result += text.substring(prevEnd, hit.position);
+          let end = hit.position + hit.length;
+          result += `<b class="search-keyword">${text.substring(hit.position, end)}</b>`;
+          prevEnd = end;
+        });
+        result += text.substring(prevEnd, slice.end);
+        return result;
+      };
+
+      const inputEventFunction = () => {
+        if (!isfetched) return;
+        let searchText = input.value.trim().toLowerCase();
+        let keywords = searchText.split(/[-\s]+/);
+        if (keywords.length > 1) {
+          keywords.push(searchText);
+        }
+        let resultItems = [];
+        if (searchText.length > 0) {
+          // Perform local searching
+          datas.forEach(({ title, content, url }) => {
+            let titleInLowerCase = title.toLowerCase();
+            let contentInLowerCase = content.toLowerCase();
+            let indexOfTitle = [];
+            let indexOfContent = [];
+            let searchTextCount = 0;
+            keywords.forEach(keyword => {
+              indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+              indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+            });
+
+            // Show search results
+            if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+              let hitCount = indexOfTitle.length + indexOfContent.length;
+              // Sort index by position of keyword
+              [indexOfTitle, indexOfContent].forEach(index => {
+                index.sort((itemLeft, itemRight) => {
+                  if (itemRight.position !== itemLeft.position) {
+                    return itemRight.position - itemLeft.position;
+                  }
+                  return itemLeft.word.length - itemRight.word.length;
+                });
+              });
+
+              let slicesOfTitle = [];
+              if (indexOfTitle.length !== 0) {
+                let tmp = mergeIntoSlice(0, title.length, indexOfTitle, searchText);
+                searchTextCount += tmp.searchTextCountInSlice;
+                slicesOfTitle.push(tmp);
+              }
+
+              let slicesOfContent = [];
+              while (indexOfContent.length !== 0) {
+                let item = indexOfContent[indexOfContent.length - 1];
+                let { position, word } = item;
+                // Cut out 100 characters
+                let start = position - 20;
+                let end = position + 80;
+                if (start < 0) {
+                  start = 0;
+                }
+                if (end < position + word.length) {
+                  end = position + word.length;
+                }
+                if (end > content.length) {
+                  end = content.length;
+                }
+                let tmp = mergeIntoSlice(start, end, indexOfContent, searchText);
+                searchTextCount += tmp.searchTextCountInSlice;
+                slicesOfContent.push(tmp);
+              }
+
+              // Sort slices in content by search text's count and hits' count
+              slicesOfContent.sort((sliceLeft, sliceRight) => {
+                if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                  return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                  return sliceRight.hits.length - sliceLeft.hits.length;
+                }
+                return sliceLeft.start - sliceRight.start;
+              });
+
+              // Select top N slices in content
+              let upperBound = parseInt('1', 10); // CONFIG.localsearch.top_n_per_article: 1
+              if (upperBound >= 0) {
+                slicesOfContent = slicesOfContent.slice(0, upperBound);
+              }
+
+              let resultItem = '';
+
+              if (slicesOfTitle.length !== 0) {
+                resultItem += `<li class="search-result-element"><a href="${url}" class="search-result-title" target="_blank">${highlightKeyword(title, slicesOfTitle[0])}</a>`;
+              } else {
+                resultItem += `<li class="search-result-element"><a href="${url}" class="search-result-title" target="_blank">${title}</a>`;
+              }
+
+              slicesOfContent.forEach(slice => {
+                resultItem += `<a href="${url}" target="_blank"><p class="search-result">${highlightKeyword(content, slice)}...</p></a>`;
+              });
+
+              resultItem += '</li>';
+              resultItems.push({
+                item: resultItem,
+                id: resultItems.length,
+                hitCount,
+                searchTextCount
+              });
+            }
+          });
+        }
+        if (keywords.length === 1 && keywords[0] === '') {
+          resultContent.innerHTML = '<div id="no-result"><i class="fa-sharp fa-regular fa-circle-check fa-5x"></i></div>';
+        } else if (resultItems.length === 0) {
+          resultContent.innerHTML = '<div id="no-result"><i class="fa-regular fa-face-frown-open fa-5x"></i></div>';
+        } else {
+          resultItems.sort((resultLeft, resultRight) => {
+            if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+              return resultRight.searchTextCount - resultLeft.searchTextCount;
+            } else if (resultLeft.hitCount !== resultRight.hitCount) {
+              return resultRight.hitCount - resultLeft.hitCount;
+            }
+            return resultRight.id - resultLeft.id;
+          });
+          resultContent.innerHTML = `<ul class="search-result-list">${resultItems.map(result => result.item).join('')}</ul>`;
+          window.pjax && window.pjax.refresh(resultContent);
+        }
+      };
+
+      const fetchData = () => {
+        fetch('/' + searchPath) // CONFIG.root = ''
+          .then(response => response.text())
+          .then(res => {
+            // Get the contents from search data
+            isfetched = true;
+            datas = isXml ? [...new DOMParser().parseFromString(res, 'text/xml').querySelectorAll('entry')].map(element => {
+              return {
+                title: element.querySelector('title').textContent,
+                content: element.querySelector('content').textContent,
+                url: element.querySelector('url').textContent
+              };
+            }) : JSON.parse(res);
+            // Only match articles with not empty titles
+            datas = datas.filter(data => data.title).map(data => {
+              data.title = data.title.trim();
+              data.content = data.content ? data.content.trim().replace(/<[^>]+>/g, '') : '';
+              data.url = decodeURIComponent(data.url).replace(/\/{2,}/g, '/');
+              return data;
+            });
+            // Remove loading animation
+            document.getElementById('no-result').innerHTML = '<i class="fa-sharp fa-regular fa-circle-check fa-5x"></i></i>';
+            inputEventFunction();
+          });
+      };
+
+      if (false) { // CONFIG.localsearch.preload: false
+        fetchData();
+      }
+
+      if ('auto' === 'auto') { // CONFIG.localsearch.trigger: 'auto' / 'manual'
+        input.addEventListener('input', inputEventFunction);
+      } else {
+        document.querySelector('.search-icon').addEventListener('click', inputEventFunction);
+        input.addEventListener('keypress', event => {
+          if (event.key === 'Enter') {
+            inputEventFunction();
+          }
+        });
+      }
+
+      // Handle and trigger popup window
+      document.querySelectorAll('.popup-trigger').forEach(element => {
+        element.addEventListener('click', () => {
+          document.body.style.overflow = 'hidden';
+          document.querySelector('.search-pop-overlay').classList.add('search-active');
+          input.focus();
+          if (!isfetched) fetchData();
+        });
+      });
+
+      // Monitor main search box
+      const onPopupClose = () => {
+        document.body.style.overflow = '';
+        document.querySelector('.search-pop-overlay').classList.remove('search-active');
+      };
+
+      document.querySelector('.search-pop-overlay').addEventListener('click', event => {
+        if (event.target === document.querySelector('.search-pop-overlay')) {
+          onPopupClose();
+        }
+      });
+      document.querySelector('.popup-btn-close').addEventListener('click', onPopupClose);
+      window.addEventListener('pjax:success', onPopupClose);
+      window.addEventListener('keyup', event => {
+        if (event.key === 'Escape') {
+          onPopupClose();
+        }
+      });
+
+      // PageJumper button
+      let onJumpPage = () => {
+        window.location = window.location.origin + '/' + input.value
+      };
+      document.querySelector('.popup-btn-go').addEventListener('click', onJumpPage);
+      document.querySelector('.search-input').addEventListener('keydown', event => {
+        if (event.keyCode === 13) {
+          onJumpPage();
+          return;
+        }
+      });
+      
+      // Search Preload
+      let head = document.head || document.getElementsByTagName('head')[0];
+      let searchlink = document.createElement('link');
+        searchlink.rel="search";
+        searchlink.href="/search.xml";
+        searchlink.crossOrigin="anonymous";
+      head.appendChild(searchlink);
+    });
+  </script>
+
+  <!--
+<script src="/js/local-search.js"></script>
+--> 
+
+  <script src="/live2d-widget/autoload.js"></script>
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/aplayer/1.10.1/APlayer.min.js"></script>
+  <!-- Fonts -->
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+  <body>
+    <header class="header fixed-header">
+  <nav class="header-container">
+    <a class="home-link" href="/">
+      <img class="logo" src="/images/logo.png" alt="logo"/>
+      <span class="eng_mark">CloudPool</span><span class="chn_mark">浊池</span>
+    </a>
+    <ul class="right-list">
+      
+        <li class="list-item">
+          
+            <a href="/" class="item-link">主页</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/categories/" class="item-link">分类</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/tags/" class="item-link">标签</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/archive/" class="item-link">归档</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/mag/" class="item-link">网刊</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/one/" class="item-link">一言</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a target="_blank" rel="noopener" href="//pan.zhuochi.org/CloudShare/" class="item-link">网盘</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="//<emoji>" class="item-link">( ^ω^)</a>
+          
+        </li>
+      
+      
+        <li class="list-item">
+    <a role="button" class="item-link popup-trigger">
+        <i class="fa fa-search fa-fw"></i>
+    </a>
+</li>
+      
+    </ul>
+    <div class="menu">
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+    </div>
+    <div class="menu-mask">
+      <ul class="menu-list">
+        
+          <li class="menu-item">
+            
+              <a href="/" class="menu-link">主页</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/categories/" class="menu-link">分类</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/tags/" class="menu-link">标签</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/archive/" class="menu-link">归档</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/mag/" class="menu-link">网刊</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/one/" class="menu-link">一言</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a target="_blank" rel="noopener" href="//pan.zhuochi.org/CloudShare/" class="menu-link">网盘</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="//<emoji>" class="menu-link">( ^ω^)</a>
+            
+          </li>
+        
+        
+          <li class="menu-item">
+    <a role="button" class="item-link popup-trigger">
+        <i class="fa fa-search fa-fw"></i>
+    </a>
+</li>
+        
+      </ul>
+    </div>
+  </nav>
+</header>
+
+    <div id="article-banner">
+  <h2 class="post-title">a岛牛子故事</h2>
+  
+   
+    <p class="post-date">2022-02-03</p>
+  
+  <div class="arrow-down">
+    <a href="javascript:;"></a>
+  </div>
+</div>
+
+  <div class="catalog-container" id="catalog">
+  <div class="toc-main">
+    <div class="toc-title">目录</div>
+    
+  </div>
+</div>
+
+<main class="app-body flex-box">
+  <article class="post-article">
+    
+      <div class="front-parent" id="front-parent">
+  <div class="front-child" id="front-fontsize">
+    <label class="front-label" for="fontsize-range">字体大小</label>
+    <input type="range" min="50" max="200" id="fontsize-slider" step="1" value="100" />
+    <span id="fontsize-value"></span>
+  </div>
+
+  <div class="front-child" id="front-fontselector">
+    <label class="front-label" for="font-select">更换字体</label>
+    <select name="font" id="font">
+      <option value="default">默认</option>
+      <option value="heiti">黑体</option>
+      <option value="light-heiti">黑体（细体）</option>
+      <option value="lighter-heiti">黑体（极细）</option>
+      <option value="songti">宋体</option>
+      <option value="light-songti">宋体（细体）</option>
+      <option value="kaiti">楷体</option>
+      <option value="fangsong">仿宋</option>
+    </select>
+  </div>
+
+  <div class="front-child" id="front-indent">
+    <label class="front-label" for="TextIndent">段首缩进</label>
+    <input type="checkbox" id="indent-checkbox" name="text-indent" value="" />
+  </div>
+</div>
+
+<h1 class="article-author">
+  
+    4Qys77b @adnmb.com
+      
+</h1>
+
+<script>
+  $(document).ready(
+    function () {
+      let FontChanger = function () {
+        if (this.value == "default") {
+          $(".markdown-content").css({ "font-family": "Arial, Helvetica, sans-serif" });
+          $(".markdown-content").css({ "font-weight": 'initial' });
+        } if (this.value == "heiti") {
+          $(".markdown-content").css({ "font-weight": '400' });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',STHeiti,SimHei,sans-serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400&display=swap rel=stylesheet>");
+        } else if (this.value == "light-heiti") {
+          $(".markdown-content").css({ "font-weight": '300' });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',STHeiti,SimHei,sans-serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300&display=swap rel=stylesheet>");
+        } else if (this.value == "lighter-heiti") {
+          $(".markdown-content").css({ "font-weight": '100' });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',STHeiti,SimHei,sans-serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100&display=swap rel=stylesheet>");
+        } else if (this.value == "songti") {
+          $(".markdown-content").css({ "font-weight": '400' });
+          $(".markdown-content").css({ "font-family": "'Noto Serif SC',STSong,NSimSun,SimSun,serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400&display=swap rel=stylesheet>");
+        } else if (this.value == "light-songti") {
+          $(".markdown-content").css({ "font-weight": '200' });
+          $(".markdown-content").css({ "font-family": "'Noto Serif SC',STSong,NSimSun,SimSun,serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200&display=swap rel=stylesheet>");
+        } else if (this.value == "kaiti") {
+          $(".markdown-content").css({ "font-weight": 'initial' });
+          $(".markdown-content").css({ "font-family": "'FZKai-Z03S','STKaiti','KaiTi',Serif" });
+          $("head").append("<link href=https://cdn.jsdelivr.net/npm/cn-fontsource-fz-kai-z-03-s/font.css rel=stylesheet>");
+        } else if (this.value == "fangsong") {
+          $(".markdown-content").css({ "font-weight": 'initial' });
+          $(".markdown-content").css({ "font-family": "'FZFangSong-Z02S','STFangsong','FangSong','FangSong_GB2312',Serif" });
+          $("head").append("<link href=https://cdn.jsdelivr.net/npm/cn-fontsource-fz-fang-song-z-02-s/font.css rel=stylesheet>");
+        }
+      };
+      $("#font").on('change', FontChanger);
+      $("#font").on('click', FontChanger);
+    });
+
+  $("#indent-checkbox").change(function () {
+    if (this.checked) {
+      $(".markdown-content > p").css({ "text-indent": "2em" });
+    } else {
+      $(".markdown-content > p").css({ "text-indent": "0" });
+    }
+  });
+
+  $("#fontsize-value").html("100%");
+  let rangeSwitch = function () {
+    let fontsizePercent = $("#fontsize-slider").val();
+    $(".markdown-content").css("font-size", fontsizePercent + "%")
+    $("#fontsize-value").html(fontsizePercent + "%")
+  }
+  $("#fontsize-slider").on("input", rangeSwitch)
+</script>
+      <section class="markdown-content" id="content">
+        <p>我的鸡儿变成一个美少女。<br>和我面对面的坐着。<br>短发，没啥表情，冷冷地看着我。<br>“我们就这样各过各的吧。”她说。<br>“不行！”我站起身抗议，下身空荡荡的，感觉一点气势都没有。<br>“反正你也用不上。”她笑了一声，满是嘲讽。<br>“怎么就用不上了，我每天不都……”我反驳道。<br>啪！<br>她身体前倾，用力给了我一巴掌。<br>“每天都用手弄我两三次，痛死了！”她变了脸，怒火冲天，“这么多年了，哪怕有一次发挥我的作用啦？”<br>“也……也不能这么说……”我捂着脸。<br>然后我联想到，我手冲的时候，手里握着是这么个美少女的时候，心跳不禁加快。<br>而她，脸色突然变红，衣服外的，麦色的皮肤也染上了浓艳的粉色。<br>“你……你……”她抱着自己的手臂，坐倒在沙发上，瞪大眼睛看着我。<br>“呃……抱歉……”我不敢看她，“我boki了。”</p>
+<p>“快给我冷静下来啊！”<br>“你别强人所难啊，你是鸡儿你还不懂吗？”<br>她抱着自己的身体，不安的在椅子上扭动，咬着自己的下唇，泪眼婆娑。<br>啊，感觉更不得了了。<br>光是看着她的模样，我的呼吸就越来越重……<br>“你，快冷静一下！快。”<br>带着些许哭腔的低吟，让我的脑子嗡的变空白。<br>“我……”我站起身，伸手轻轻捧起她的脸，有些烫手。<br>“不……不……”她意识模糊，眼瞳孔已经失去焦点。<br>我微微歪着头，朝着她的嘴唇缓缓靠近。<br>感受着她灼热的呼吸，我就要亲下去的时候。<br>“呕！”<br>“呕！”<br>她一下吐了出来，喷了我一脸。</p>
+<p>我和她都冷静了下来。<br>有点庆幸，她吐出来的不是乳白色的，都是透明的液体。<br>味道……还好。<br>但冷静下来之后，我有点担心我的未来。<br>“我去清理一下。”脸上都是黏糊糊的，难受。<br>“嗯。”她点点头，似乎有点累了，半躺在椅子上，看向天花板。<br>回房间拿了衣服，我进了厕所，关上门后开始脱衣服。<br>之前有点慌，没有发现，但是现在突然意识到，我的手脚好像都变得有点细了。<br>胸前感觉也有点不一样。<br>带着不详的预感，我战战兢兢的把裤子脱下来。<br>“啊啊啊！”我不禁惨叫着。<br>“你干什么？”她倒是不扭捏，直接就开门进来。<br>“这……这里……”我指着自己的下身。<br>“啊……”她也愣住了。<br>“我变成女的了。”<br>泪，留了出来。</p>
+<pre><code>和自己的鸡儿百合，你们猜不到吧(ゝ∀･)
+</code></pre>
+<p>“还挺好看的。”她放开手，一脸感叹的从我下身抬起头来。<br>回过神来，我已经在卧室里，身上也被洗干净了。<br>还是我的鸡儿贴心，我抿着嘴，看着她：“现在要怎么办？”<br>“不也，挺好的嘛。”她微微笑着。<br>“才……才不好。”我拉着她的袖子，“我可是男的！”<br>她看着我的脸，有点愣住了，看了一会，又别开脸，双颊微红：“总之你先穿上衣服……”<br>我可没空理她，捏了捏自己的胸前，摸了摸自己的手臂和大腿。<br>然后。<br>然后。<br>我咽了咽口水，手止不住的颤抖着往下身伸过去。<br>“等等！”她握住我的手，一下把我按倒在床上，“你不要乱来，等一下又，又让我……怎么办？”<br>她身上又开始呈现淡淡的粉色，麦色的肌肤再次变得诱惑。<br>“我，只是想确认一下……”我也不想的，等一下又让她吐了怎么办。<br>脸和脸又贴得很近，她的气息带着些许甜甜的香味。<br>用力咽了咽口水，不敢看她，但是现在的状况让我的脑子不停翻腾。<br>“你又这样！”她气急，但是按着我的力气却一下小了不少。<br>我轻轻挣脱着，这个姿势的话，等一下肯定又要被吐一脸了。<br>就在我打算挣脱出来，她忽的将手放在我的腹侧。<br>“咦！”我尖叫起来，抱着自己的肚子，紧张的看着她，而她也惊讶地看着我。<br>肉眼可见，她皮肤的粉色浅了一些。<br>“原来如此。”很快，她似乎就理解了什么，笑得很开心的看着我，“就委屈你……不让你，舒服一下吧。”<br>“不要，不要，不……要……”</p>
+<pre><code>声明一下，这段是本文尺度最大的片段，后边写不会超过这个尺度( ﾟ∀。)
+</code></pre>
+<p>我脏了。<br>任由她帮我做清洁，我盯着天花板发呆。<br>“我这，也是逼不得已。”她拿着毛巾，轻轻地帮我擦了擦脸上的泪水和汗水。<br>我看向她，她的表情不再是冷冷的，眼中带着些许潮气。<br>“只要你别在想要，我就不会这样折腾你了。”她把被子盖在我身上，摸了摸我的脸，“你休息一下，我去帮你做饭。”<br>虽然她很温柔，但是我一点都没觉得我赚到哦？<br>“我不吃！”我把脸埋在被子里，闷声说。<br>她没有回话，一会之后，厨房传来抽油烟机的声响。<br>她怎么能这样。<br>我想。<br>冷静下来之后，我意识到一个问题。<br>她是我的鸡儿变的。<br>我被她上了。<br>不就是我被我自己上了。<br>这让我更难接受了。<br>不对。<br>在此之上还有另外的问题。<br>“你个鸡儿为什么会做饭啊！”我朝着厨房喊道。</p>
+<p>“不舒服吗？”她问。<br>“干嘛？”我放射性的往后退了一步，警惕地看着她。<br>“没，看你做的时候明明咬着下嘴唇的样子，现在又那么抗拒，我还以为不舒服。”她已经换成T恤和运动裤，黑色的长发编了麻花，搭在一边的肩上。从容而得意地笑着。<br>硬要说舒服，还是不舒服，这种只有两个选项的问题，那么必然是舒服的。<br>不，也不是说她技巧多好，或者说我多弱。只是这个问题只有二选一的答案，所以这是必然结果。<br>在做的时候，羞耻，害怕，紧张各种负面情绪也是存在的！<br>所以，就算是舒服，也是让人不开心的舒服！<br>“闭嘴！”我瞪了她，“明明是我的鸡儿，却只想着自己。”<br>“那是。”她靠在沙发上，曲起一条腿，“从你青春期开始，有多少次能摆脱我的控制。”<br>一副理所当然的样子，太不要脸了吧？<br>“我不管，你不准再对我做那些事了！”我指着她，尽量让自己不要去回想，好让自己的脸没那么烫，也避免被她抓到机会又来，“而且你是我的鸡儿，快点变回来。”<br>“办不到。”她摊开手，“本来就是莫名其妙就分开的，哪有一下就变回去的？”<br>“那要怎么办啊？我这一辈子都要这样了吗？”虽然知道对她发火也无济于事，但是看着她那游刃有余的模样，我就火大。<br>“就说，这样不也挺好的。”她摸了摸自己的脸，似乎十分满意，“要是皮肤能白一点就好了。”<br>“那我怎么办？我的学校怎么办？”我在原地走来走去，焦躁不已，“还有我的爸妈会怎么看我？我的那些朋友怎么看我？”<br>“反正大学，你又外宿，没什么吧。”她说，“至于你……呃……我们爸妈，就先走一步算一步，暂时瞒着他们咯。”<br>“你那些朋友。”她说到这里微笑着看着我，“反正你们也不熟，不去见面不就好了，他们大概也不会主动来找你。”<br>“喂！”感觉我一整天都在发火，但谁遇到这种事情不火大啊。<br>但是暂时也只能如此了，接下来再好好考虑要怎么办。<br>趁着我愣神的时候，她站起身，走到我身边，搂着我的肩膀，在我耳边轻声问：<br>“你晚上要吃生蚝吗？”<br>我惊恐地看向她。</p>
+<pre><code>写想反抗，但是被自己的鸡儿艹服的故事吧( ﾟ∀。)
+</code></pre>
+<p>傍晚的时候，她竟然想要去买菜。<br>“家里的菜，不够两个人吃了。”她睁大了眼看，期待地看着我。<br>“要去你自己去。”我非常不爽。<br>好累。<br>“你不怕我走丢啦？”<br>“……不怕。”<br>虽然心中有些许犹豫，不过看她耍我耍得那么起劲，也不像是会走丢的样子。<br>“真的不去吗？”她拉着我的袖子，嘴角微垂，有些不安。<br>“不去。”我看着地板，躲开她的眼神。<br>其实去也可以啦，但是我还想听她再求我一下。<br>但是，她直接就‘切’了一声之后，转头去了我的房间，用力关上门。<br>“嘭！”<br>巨大的响声震得我的心里发颤。<br>出来的时候，发型变成干练的马尾辫，身上穿着对她而言有点宽松的白色衬衫，挽起袖子露出带着些许光泽的小麦色手臂，配上牛仔裤，看起来有些许帅气的感觉。<br>朝着我皱着鼻子，做了个鬼脸示威，拿起挂在大门旁的钥匙，转身离开家门。<br>脾气倒是挺大。<br>我对着关上的门用力哼了一声，坐在椅子上思考接下来要怎么办。<br>课肯定还会继续去上的，大学课堂也比较自由，现在还刚开学不久，班里的人都比较陌生，混过去应该不难。<br>父母那里……只能多用微信打字联系了。<br>对着空气“啊”了几声，明显变得有些尖锐的声音大概是瞒不过去的。<br>之后……<br>就没什么头绪了，虽然想马上变回去，但是根本不知道方法。<br>我下意识的拿起手机，在网上搜索起来，这算是现代年轻人的通病？<br>但凡遇到什么难题，都会想去网络上找找看有什么解决办法。<br>不过理所当然的，像是‘鸡儿变成美少女之后怎么弄回去’之类的，肯定是找不到答案的。<br>然后就会因为搜索时，浏览器各种地方的推荐，开始看一些不怎么相干，却很想看看是什么的推送里……<br>反应过来的时候，我已经在看古代男性如何壮阳了。<br>分针也已经转过了半圈。<br>她倒是还没回来。<br>走到房间里，从窗外望去。<br>小区大门人来人往，等了好一会，一个白色的身影，提着大堆东西在人群中进到小区里。<br>就说她这种满脑子小聪明的人怎么可能走丢呢？<br>又想起她对我做的事情，有种被她玩弄在股掌之间的感觉。<br>我摸摸自己变得有些圆润的下巴，冷笑一声，打开电脑，估摸着她差不多要进到电梯里了，打开一部我的珍藏的学习资料。<br>呵呵呵，让你知道我也不是好惹的。<br>快进到重点片段，一声又一声沉醉的娇喘声从音箱里传出来。<br>看着显示器里那半眯着的眼睛的沉醉表情，不知怎的又让我想起她的手。<br>修长光滑，骨节分明……<br>摸摸自己的脸，有点烫。<br>大腿下意识的相互蹭了蹭。<br>不对。<br>不能再看下去了。<br>我觉得自己有点不对劲，有些手忙脚乱的把播放器关掉，手扶着电脑桌面，一时间有些反应不过来。<br>只是性别变了一下，有这么夸张吗？<br>但……<br>这时，大门被打开。<br>我轻轻拍了拍自己的脸，走出去准备看她笑话。<br>她看到我，温和的微笑着。<br>白色的衬衫胸前已经湿了一片，嘴角也流着些许透明的液体。<br>看起来有些狼狈，但是她神态自然，将手上的袋子放在桌子上，对我说：“我不小心把电梯弄脏了，我去擦一下。”<br>“好。”我有些得意。<br>这下你不敢再折腾我了吧！<br>她拿了拖把，往外走去，经过我身边的时候，站定。<br>“晚上的生蚝，你记得多吃一点哦。”她说。<br>呃<br>呃<br>我现在说自己不喜欢吃生蚝会太迟吗？</p>
+<p>虽然刚刚充满了‘给我走着瞧’的氛围。<br>但是她在清理完电梯之后，并没有拿我怎么样，而是拎着买来的菜去厨房做饭，无视了缩在墙角的我。<br>我松了一口气。<br>悄悄跑到厨房，往里边看去。<br>什么嘛。<br>说让我多吃生蚝，结果只看到她从袋子里拿出两只而已，肯定是一人一只。<br>“没事的话，去把你上次买的酒精灯拿出来。”她头也不回地说，“把围裙也拿过来。”<br>“哦。”我应了一声，在堆满杂物的角落里翻了一会，把上次冲动买下来的户外酒精炉找出来。<br>拿上放在餐桌旁的围裙。<br>“给你。”<br>“没手。”她背着我，晃了晃自己湿答答的双手。<br>我把酒精炉放在一旁，拿着围裙想让她转过来，不过看她手上还在干活，转来转去也麻烦。<br>我拿着围裙从她的腋下穿过，在她身前展开围裙，想要把脖子那里的带子给她套上去，但因为比她矮，不得不踮起脚，贴着她的后背。<br>黑色的发梢骚弄着我的鼻子，有点痒。<br>我忍不住在她的肩膀上蹭了蹭。<br>淡淡清爽味，挺好闻的，有点佩服我自己挑柔顺剂的品味。<br>她被我蹭着的肩膀缩了缩，手上的动作顿了一下，又继续剥着大蒜。<br>把手收回来，给背后的带子打上一个蝴蝶结。<br>完美。<br>“好了。”<br>“嗯，做好饭叫你。”<br>“哦。”<br>我可没打算和我的鸡儿客气，溜到电脑那边上网。<br>“在吗？在吗？”<br>这个直播吵死了。<br>不过我也没怎么看，有点走神。<br>其实是感觉刚才是不是有点过分了，虽然计算了时间，但是要是耽搁了一下，没在电梯里，不就是在大庭广众之下……<br>啊，不，就算进到电梯，没准会有很多人。<br>总之我似乎有点过分了。<br>不过也就一点吧？<br>毕竟她之前那么对我？<br>厨房传来浓郁的蒜香味，把绿毛主播的直播间关了，一下变得安静不少，菜刀轻敲砧板，伴随着水落入热油中的滋滋声。<br>突然意识到现在房子里有两个人了，莫名的有种安心感。<br>“吃饭了。”<br>“哦。”<br>来到餐桌前，中间就是两枚被蒜末淹没的生蚝，一盘青菜，一大碗冬瓜排骨汤。<br>两碗白饭。<br>面对面的坐下来，两人同时拿起筷子开始默默吃饭。<br>生蚝好吃。<br>想到她应该放过我了，我也安心的享受起她做的饭。<br>挺好吃的。<br>“你做饭竟然这么厉害。”我说。<br>“还行吧。”她看了我一眼，“你倒是心安理得地吃起来了。”<br>“哈哈哈，毕竟我们俩谁跟谁啊。”<br>“哦。”她拉着长音，半眯着眼睛看我。<br>“我会洗碗的。”我说。<br>“哼。”口气虽然不太好，但是她倒是看起来挺满意的。</p>
+<pre><code>哈哈，被红名抽了好多，还被删了一段。
+那一段的内容是鸡儿小姐发现只要在主角将要boki的时候，让主角现在身体的快感去覆盖掉想要boki的冲动，自己就可以避开呕吐的丑态(ゝ∀･)
+</code></pre>
+<p>洗碗的时候，打发她去洗澡。<br>等到我洗完碗，刚好看到她洗完澡出来。<br>“你也快去洗澡吧。”<br>“哦。”<br>先是回房间拿了衣服，我进到厕所里，脱下衣服。<br>和原来身体完全不一样的感觉。<br>身体到处都是软软的，皮肤看起来也是有些不健康的白，小臂内侧甚至能看到隐约的青色血管。<br>唉。<br>一想到之后关于我改变性别之后，会产生的各种问题，就觉得心累。<br>三下五除二的洗完澡，穿上之前买的运动服。<br>有些怀疑是不是买大了好几码的，裤管卷了好几圈才没在地上拖着，袖子也是松垮垮，非常碍事。<br>但是确认了一下，发现是170的M码。<br>是我自己缩水了？<br>把换下的衣服进洗衣机，顺便启动。<br>来到客厅，她正坐在沙发上盘着腿，认真的磨指甲。<br>茶几上放了两杯金黄色的果汁。<br>“这是什么？”<br>我拿起一杯，问她。<br>“菠萝汁哦。”她说。<br>喝了一口，清甜的菠萝味，凉爽的口感，确实是洗完澡之后不错的享受。<br>“谢谢。”我由衷地向她表达感谢。<br>“对了，晚上早点休息吧，你也很累了吧？”她收好指甲钳，站起身。<br>听到‘很累’这个词，我忍不住瞪了她一眼：“晾了衣服再说。”<br>“没事，我大概没那么早睡，留着我晾就好了。”<br>“你还要干什么？”我觉得有点怪怪的。<br>她笑着没回答，拢了拢自己的头发，拆开下午新买而头绳，拿出一根扎好马尾。<br>“晚上我睡客厅吧，房间就给你睡了。”我说。<br>算是对下午那件事的赔礼吧。<br>“也不用，一起睡房间就好了。”她捏捏自己的手，拿起桌子上的菠萝汁一口气喝完。<br>“还是分开睡好，两个人太挤了。”我快速地说着，站起身，“那我就先回房了，你晚上就睡客厅……”<br>我刚转身，就被她抓住手臂，拉到怀里。<br>温热的触感让我浑身僵硬。<br>“你不会真以为下午的事情就那样算了吧？”她笑得十分开心。<br>“难……难道不是吗？”<br>“你。”她敛起笑容，“想得美。”<br>“咦！不要啊，我错了！我……我……”<br>之后，我脑子一片混乱，只能说出一些不成文的句子。<br>至少，我不用晾衣服了！<br>对不对！<br>可恶。</p>
+<pre><code>《本草纲目》记载：牡蛎肉&quot;多食之，能细活皮肤，补肾壮阳，并能治虚，解丹毒&quot;。
+中医认为牡蛎的肉具有很好的食疗价值，是一味非常好的滋阴、补血，而且还能激发情欲的食物，特别适用于虚劳、虚损的病患和那些阴虚、血亏、气血不足的人。(ゝ∀･)
+</code></pre>
+<p>今天的闹钟声音有些小。<br>我想。<br>翻过身，手从被子里伸出来，从指尖到肩膀立马暴露在有些凉的空气中，让我不禁用被子把自己裹得更紧了。<br>手在床头柜那摸索着，但是没有找到我的手机，但是闹钟声音停了下来。<br>睁开一只眼睛看去，手机并不在床头柜上。<br>“醒了就快点起来，十点还有课吧。”<br>听到声音，我抬头往房门看去，她拿着我的手机，靠在门框上。<br>“嗯……”我整个人都缩进被子里，感受着身体传来的酸涩感，心里是欲哭无泪的悲痛。<br>前天晚上也就算了，昨天我明明没有得罪她，就差贴着墙走路了，结果昨天晚上还被她折腾到三点多。<br>“这节课的老师要点名的吧。”她走过来，拍了拍我。<br>“知道了。”我有气无力地应着，声音有些沙哑。<br>喉咙好痛。<br>“谁让你老是叫那么大声。”她隔着被子，贴在我耳边说。<br>这说的是什么鬼话？<br>我把被子往下拉，露出眼睛恶狠狠地瞪了她一眼。<br>她却满不在乎的离开了房间：“快点起来，牛奶要凉了。”<br>我叹了一口气，起床。<br>然后看着身前三四点零散的紫红色痕迹，又马上被气得牙痒痒的。<br>迅速穿好衣服，跑到厕所里对着镜子仔细观察，除了扒开领口能看见肩胛那里有一点，其他衣服遮挡不到的地方基本都没有。<br>有点庆幸。<br>才怪！<br>我又不是什么斯哥摩尔综合症患者，难不成还要感谢她吗？<br>可恶。<br>明明只是个鸡儿，为什么力气会那么大！<br>想起昨晚被她压着动弹不得，我就气。<br>洗漱完后，我来到餐桌旁，冷着脸看她。<br>她头也没抬，用我的手机打着字。<br>不理我，我也就不理她，默默的喝着温好的牛奶，三两口把面包和荷包蛋吃完，就打算直接出发去学校了。<br>“喂。”她说。<br>我装作没听到，往大门走去。<br>“叫你呢。”<br>“干嘛？”我没好气的问。<br>回答我的是她的手。<br>“你你你你你……你大白天的干什么呢？”我抱着胸，往后退了三四步。<br>“你没穿我拿给你的那件短袖外套就想出门吗？”她皱着眉头问。<br>“没，干嘛，天气那么热，穿两件不难受吗？”我警戒地看着她。<br>“唉。”她看起来有些无奈，“你那胸吧，小归小，但也是胸，直接穿了这么薄的短袖就出门，是想招色狼吗？”<br>“你就是最大的色狼了！”<br>“给我回房间穿好了再出来！”她抓住我的手往房间里拉。<br>“你放手，我自己走！”我挣脱了好几次没挣开，最后在她的监视下另外穿上了短袖的外套。<br>好热……<br>“不准抱怨。”她站在我身前，伸手把我背后的帽子整理了一下，“放学我去接你，然后再去买内衣。”<br>“我是男的！我不要。”我拍掉她的手，就算外表再怎么像女的，内里的灵魂也是一个二十岁的堂堂男子汉，打死不穿。<br>“没问你意见，反正放学后在校门口看不到你，晚上我们再算账。”她轻描淡写的话，让我想起了昨晚，脸色不禁有些发烫。<br>然后就被脸颊微粉的她掐住腹侧。<br>痛！<br>“快去上课，不要想些乱七八糟的！”她用力的扭着，让我痛到想要大叫。<br>然后不给我反应时间，把书包和手机塞给我之后，把我推出家门。<br>“记住我的话！”她说完，就关上了家门。<br>到底这家里谁是主人啊？</p>
+<p>我是坐公共汽车去学校的。<br>公共汽车还没到，已经是九点多，错开了上下班高峰，车站没什么人。<br>我拿出手机打发时间。<br>漫无目的的在各个app上随便看着，没什么感兴趣的，随便看了点新闻，偶有声响，就抬头来看一眼，确认是不是公车到站了。<br>有点不自在。<br>也许是错觉，但又感到很真实。<br>老是觉得有人在看我。<br>但是左右看了一圈，又觉得没人看我……<br>自我意识过剩？<br>这时，公共汽车进了站，我把手机揣兜里，因为不想去挤，就等到最后再上车。<br>当然也没有座位了，我就站在前门，随意的往上伸了伸手，却抓了个空。<br>吊环什么时候这么高了？<br>我竟然要伸直了手才能抓到，感觉好怪。<br>啧，这破身体，太不方便了。<br>把歪掉的背包肩带背好，我退回到车前门门口，抓住一旁的栏杆。<br>又是感觉到刺人的视线，我收回看着窗外的视线，四处打量了一下，还是没有……<br>不，一下就看到了旁边座位上，一个穿着高中校服的女生正直勾勾地盯着我看。<br>“那个……有什么事吗？”我被盯得有些发毛，下意识摸了摸自己的脖子，忽然想起早上照镜子没什么特别的，才又冷静下来。<br>“小妹妹，你长得好可爱。”女生有些兴奋地说。<br>小妹妹？<br>小妹妹！<br>“虽然我矮了一点，但是我大一了，不是什么小妹妹好吗？”我努力让自己看起来满不在乎，不过大概是办不到。<br>我生气了。<br>你个高中生小屁孩凭啥叫我小妹妹？<br>还有，盯着别人看是非常不礼貌的，你爸妈没教你吗？<br>“那就是小姐姐了。”女生伸手想要拉住我，被我躲开了，不过她一点都不在乎，“小姐姐可以让我拍张照片吗？”<br>我还没说话，她就拿出手机对着我。<br>“喂，等等！”我用手挡着脸，“不准拍！”<br>这家伙是不是有毛病啊？<br>“唉，给我拍一张吧，小姐姐你真的很可爱，要是以后遇不到怎么办？”女生却不肯放弃。<br>“走开走开！”我松开栏杆，往车箱后半躲去。<br>你是痴汉吗？<br>“后边的！注意一下，等一下急刹怎么办？坐好！你个小女娃娃，人家都不想了还在那胡搅蛮缠！坐好！”这时候，正义之光公车司机出声制止了女生。<br>因为司机师傅语气异常凶，一下就让女生乖乖坐回自己的位置上。<br>感激地看向司机师傅，不过他看到女生没在闹了，便继续认真的开着车，没再说话。<br>我和女生保持了一定距离，不过对方还是时不时的悄悄看我，我装作没看到，等到到了站，立马跑下车。<br>这些天真是多灾多难。</p>
+<p>五月，蝉初鸣。<br>我躲在校内的小巴站台旁的影子里，不耐烦的等着小巴。<br>被太阳烤得温热的空气，将我完全的包裹起来，穿着两件上衣的我后背不停的有汗往下滴。<br>“好热……”<br>我不禁低声说，提着领口轻轻地扇着风。<br>半眯着眼，和身旁的同学一样，微微伸着脖子往宿舍楼的方向看，白色的小巴就是没有在视野里出现。<br>用手背抹了一把额角的汗，十分钟的间隔有这么久吗？<br>就在我觉得自己快要融化了的时候，那辆白色，拖着三节四面透风车厢，车头挂着一个大大的‘6’的圆牌子的校内小巴终于从宿舍楼那边慢悠悠的开过来。<br>一节车厢能坐十二个人，中间能站上十来人，这辆感觉是退休观光车改造的电动小巴，就这样兢兢业业的和自己的几个兄弟，每天都在校内跑着，为没有长距离移动工具的师生们提供服务。<br>依旧最后一个上车，我站在最后边，站好之后，小巴缓缓的开动。<br>虽然时速不过二十五，但不用在这炎热的天气里不用自己顶着大太阳走路实在是非常棒的选择。<br>当然缺点就是四面透风，没有空调，迎面的微风带着温热。<br>十五分钟之后，我和同车的同学们总算踩着上课铃声进入到教学楼，往各自的教室奔去。<br>只要还没点名，就不算迟到。<br>我和老师在前后门同时踏入教室，年近七十的特聘老教师面无表情的看了我一眼，没说什么，拿起点名本开始点名。<br>这么晚才进教室，后排自然是没有位置了，我只能在中间找了一个靠中间的座位，希望点名的时候没人注意到我。<br>“江又夏。”<br>听到我的名字，我趴在桌子上，只是高高的举了手，然后马上放下。<br>透过前桌人群的缝隙，老师看到我举手的时候虽然顿了一下，但扶了扶自己的老花镜之后，又继续点了下去。<br>这时我才算松了口气，也有空开始观察身旁的同学，不是看着手机就是看着讲台，好像没人注意到我。<br>哼哼，看来老教师也是有好处的，每个星期就上那么一两节课，肯定没办法记住每个人的脸。<br>我稍稍坐直了身体。<br>也不是那么麻烦嘛。<br>课上得异常顺利，下课的时候我假装趴在桌子上睡觉，好歹是把两节课都混过去了。<br>就在我有些得意，听着下课铃声，哼着歌，慢悠悠的收拾着东西。<br>想着好像她还没有名字的时候。<br>一个人站在我旁边敲了敲我的桌子，把我吓了一跳，抬起头看去。<br>戴着眼镜，黑发齐肩，发尾微卷的女生。<br>“同学，有什么事吗？”我僵硬地笑着问。<br>她叉着腰，上上下下的把我打量了一下：“我是这个班的纪律委员，刚刚老师让我跟你说，小妹妹，这次就算了，下次如果你姐姐还是哥哥再让你来代课，就让她准备重修吧。”<br>“为为……为什么啊？我就是江又夏啊。”我忍不住发出悲鸣，这下要怎么办？<br>“哈。”纪律委员捂嘴轻笑，“小妹妹你好可爱，不过不可以帮哥哥姐姐代课哦。”<br>“我真的是江又夏啊！”我提高声调辩解着。<br>纪律委员向我伸出手。<br>“干嘛？”<br>“学生卡，如果你是江又夏就把学生卡拿出来让我看看啊。”<br>“忘……忘带了！”<br>“看吧。”纪律委员微扬着下巴，得意地看着我。<br>“啊！”我气极，朝她吼了一声，背着书包跑出教室。<br>可恶啊，为什么会一下就被看穿啦。<br>之后上课要怎么办啊？<br>我烦恼不已，没注意到脚下的楼梯，一下踩空，往前摔去。<br>这时，有人猛地将我抱住，止住了我往下掉的势头。有往后跌去，两人一起倒在地面上。<br>“好痛。”背后的人轻呼，是个女声。<br>我因为摔在她身上，反倒是一点都没有伤到，头刚好靠在胸的位置。<br>超软。<br>“谢……谢。”我马上从她身上爬起来，“啊，纪律委员。”<br>抱住我的正式刚刚给我剧烈打击地纪律委员，她穿着红色体恤和米色长裙，跌倒在地上，裙子染上了些许污渍。<br>“没事吧？”旁边有人出声问。<br>“我没事，纪律委员，你怎么样？”现在也不是计较刚刚的事情的时候，我连忙和周围的人一起拉她起身。<br>纪律委员捂着屁股，把歪了的眼镜扶正，摇摇头：“没事，小妹妹有伤到吗？”<br>虽然对小妹妹的称呼还是有点不爽，不过也就不和她计较了。<br>“没事，刚刚谢谢你了。”我诚恳地向她道谢。<br>“没事就好，我也没什么事，啊，我的书包。”纪律委员说着，找起她的书包，我当然也是帮忙找着，结果是在楼梯下方。<br>旁边的同学帮着捡过来，背包里发出清脆的响声，有一点湿从里边透出来。<br>“看来是水杯碎了。”纪律委员有些无奈的说。<br>“抱歉，都是我没看路……”我低着头。<br>纪律委员笑了笑，轻轻拍了拍我的头：“人没事就好，以后要看路，也怪我刚刚把你逼太紧了。”<br>“没有啦……”<br>看到我们俩都没事，周围的人也就散了，我和纪律委员一起下楼，看她走路的姿势也没问题，我安心下来。<br>“我不叫纪律委员。”就在我们俩沉默者一起快要离开教学楼的时候，她突然说，“我叫安芝。”<br>“哦，安芝。”我点点头。<br>“小妹妹你呢？”安芝笑眯眯地问我。<br>“江又夏啊……”我有些无奈。<br>“嗯……好吧，就当做是吧，小又夏，现在是要回家吗？”安芝一副拿我没办法的样子说。<br>“回家。”我说。<br>小巴刚好快到跟前，我打算和她道别，至于感谢，毕竟同班，之后还有机会嘛，当务之急是回家和她商量一下接下来的事。<br>她……我才想起来，她说过放学要到学校来接我的。<br>要是太晚了，晚上她又要……我打了个冷颤。<br>“安芝，我就先走了，我的J……姐姐在校门口等我。”我和安芝道别，打算搭上小巴去校门口。<br>“哦。”<br>“再见。”我上了小巴，回过头却发现安芝也跟了上来。<br>“我也去校门。”安芝笑着说。<br>“啊？”<br>“想看看让妹妹帮着上课的姐姐长什么样子。”<br>“不……唉……”<br>我放弃了，看就看吧。<br>就这样，我们两人一起坐着小巴到了校门口，我一下车就小跑着，安芝也紧紧的跟着。<br>本来以为会很难找，结果一下就看到了穿着白色衬衫牛仔裤，扎着马尾背靠在校门口的她。<br>麦色的肌肤，有些冷淡的表情吸引着周围人的目光。<br>我停下脚步，等着安芝追上来，指着她对安芝说：“那个就是我的姐姐了。”<br>没有回应。<br>我有些奇怪，转头看她。<br>只见安芝愣愣地盯着她，好一会之后，才低声地说：“好帅。”<br>啊？<br>这女人脑子没毛病吧？</p>
+<p>看着安芝那愣神的样子，我犹豫了一下，伸手拍了拍安芝的手臂。<br>“看到了就可以回去了吧？”我说。<br>“嗯，还好。”安芝回过神来，但是回答却还是牛头不对马嘴。<br>“什么还好？”我皱着眉头问。<br>“就……我是说，我既然是纪律委员还是去提醒一下你姐姐吧。”安芝自顾自地说着往她那边走去。<br>“等一下，喂！”我头痛起来，感觉我遇到的女的一个比一个不听人说话。<br>“你好，你是江又夏吧？”安芝来到她的身前，有些紧张地问。<br>她看向安芝，上下打量了一下之后，疑惑地看向被安芝落在身后的我。<br>“这是我们班的纪律委员，叫……”<br>“我叫安芝。”安芝情绪有些高涨地自我介绍着。<br>她眨眨眼，点了点头：“你好，有什么事吗？”<br>“这个，江又夏同学，虽然同为学生还是很能理解你有时候不想上课的心情的，但是也不能这样让上妹妹来代课吧。”安芝看着她的眼睛，语速颇快地说着，“而且小妹妹，应该是高中……初中生吧，肯定一下就被老师抓到了。”<br>笑了，你个混蛋在听到初中生的时候笑了对不对？<br>虽然隐蔽但还是被我注意到了！<br>你这个臭鸡儿！<br>“哈哈，被发现了吗？”被我瞪着，她反而笑得很开心，“哎呀，因为我妹妹老是说想体验一下大学上课是什么样子的，昨天晚上缠了我一晚上，我没办法了才勉强答应她的。”<br>“昨天晚上，是谁缠着谁……”我的反驳被安芝打断。<br>“小妹妹可不能这么调皮，会给姐姐添麻烦的。”安芝温柔地摸了摸我的头，像是在安抚我，“今天要不是老师放你一马，你姐姐可就要挂科了。而且今天你自己也要上学吧？”<br>太奇怪了吧？她这样说你就信了？<br>哪个初中生会在星期一这种日子放着自己的课不上来上姐姐的课啊？<br>这时候，一旁的她突然伸出手，把我拉到她的身边，安芝也因为和我的距离变远，摸不到我的头了。<br>也打断了我刚要说出口的辩解。<br>“下次会注意的，谢谢纪律委员的提醒了，如果没事的话，我和妹妹还要去买点东西。”她微笑着打算和安芝告别。<br>安芝露出一副心领神会的模样，悄悄地靠过来，对着她轻声说：“是要去帮小妹妹买内衣吗？”<br>她睁大了眼睛，然后看向我，似乎在问是不是我说的。<br>不过我还没空回她，而是愣愣地看向安芝：“为什么你会……”<br>安芝神秘兮兮地说：“手感啦。”<br>痛痛痛！<br>好痛啊！<br>我回过身，一把抓住她掐着我腹侧的手。<br>我差点就哭出来了！<br>“你突然掐我干什么？”我恶狠狠地质问。<br>“第一次到校就给别人摸胸，姐姐可不记得把你教育成这个样子。”她不快地说。<br>“谁给她摸了！我今天……啊，刚才……”我这才想起来，安芝刚刚为了不让我掉下楼梯而抱住我。<br>我用力锤了她的肩膀一下，然后把刚刚的事情讲给她听。<br>“咳，我这个妹妹实在是让纪律委员费心了。”她挺直了背，非常认真地向安芝道了谢。<br>安芝有些不好意思地摆摆手：“也没有啦，就看到都会拉一把的……”<br>“不对你怎么知道我们要去买内衣……”我暂且不去纠结她还没和我道歉的事，而是去问安芝。<br>“就猜一下，毕竟前几天阴雨天衣服还是挺难干的，要不是没内衣穿了，小妹妹肯定也不会在这种天气里边，真空却穿了两件衣服出门吧。”安芝朝我扬了扬眉毛。<br>可惜只猜对了一半，我和她都没内衣。<br>“纪律委员猜对了。”她说着，看了看手表，“时间也不早，商城离这边还是有点距离的，我和妹妹就先走了。”<br>“啊，恩，那明天上课见。”安芝也说着。<br>她点了点头，道了别，带着正在挥手的我离开。<br>“对了，小妹妹。”安芝说，“你的名字是什么？”<br>“我说了是江又……”<br>“江又萌。”她说。<br>“那，又夏，又萌再见了。”说完，安芝总算转身离开了。<br>“谁是江又萌啊！”我又锤了她一下。</p>
+<pre><code>嗨呀，之前没细想，名字随便取可惜了。
+不然就是江又木和江又人了(`ε´ )
+</code></pre>
+<p>我们来到了市中心的一个商业广场。<br>凉爽的环境让我整个人都觉得轻松不少，接过她递给我的纸巾，我擦了擦额头的汗。<br>“然后要干什么？”我明知故问，尽量不把注意力放在眼角余光所捕捉到的内衣店上。<br>那粉粉的氛围，别说进去了，现在就让我很紧张了。<br>明明之前来逛都不会去注意到。<br>不过，就算是她，作为原本我男人身份的一部分，肯定也不好意思进去的吧！<br>“先去吃饭吧。”她说着就先往往自动扶梯走去。<br>看吧。<br>她果然不好意思。<br>你才萌呢！<br>以后就叫她江又萌了。<br>“江又萌。”我追上去叫她。<br>她愣了一下，在扶梯前面停下脚步看我：“你叫我？”<br>我点点头：“不然呢？这个名字是你自己取的，你就自己用吧。”<br>我抢先一步上了电梯，随着电梯运作缓缓往上升去。<br>回过头去看她，发现她才刚刚登上电梯，又往上爬了几阶，站在我的身后。<br>“不是不行，不过刚刚已经和纪律委员已经说了你叫江又萌，现在换过来，等一下又乱了。”她说。<br>“不管！”<br>“如果你换，等一下怎么买内衣就你自己决定。”她说。<br>“本来就是我自己决定！不对，我才不穿。”我抗议，“江又夏这个名字我都叫了二十年了，就不换。”<br>她没接话。<br>电梯缓缓的上升，我们就一前一后的到了二楼。<br>脚刚踏上二楼的地板，她就拉着我的手臂，往旁边的一间内衣店里走去。<br>“你你你，你想干什么？”我连退好几步，但被她拉得死死的。<br>“没什么，我觉得我们还是先买完东西再去吃饭吧。”她说，“既然你不愿换名字，那么现在就是我作决定了。”<br>这间内衣店倒是没有那种粉粉的氛围，白炽灯将里面照的十分明亮。<br>也许是临近中午，店里没其他人在，只有一个穿着灰色西装的导购小姐。<br>各色的内衣被展示在墙上货架上，琳琅满目。<br>几个人体模型就在进店的入口，展示着成套的睡衣，再往里一些，还有只有身躯的模型展示着成套的深色的蕾丝内衣。<br>突然给我来这一出！<br>我已经紧张得说不出话来，死命的反拽住她的手臂往外拉，想要出去，无奈力气没她大。<br>店里的导购小姐已经往我们这边走过来：“两位请随便看，款式觉得不错的话，后边有试衣间可以试穿。”<br>“啊，是她要买，可以推荐几款吗？”她突然将我推到导购小姐的面前。<br>我脑子有点发麻，用力地摇头。<br>“哈哈哈，小妹妹不用这么害羞的。”导购小姐看着我，爽朗地笑出来，“虽然是贴身的内衣，但是我们女生每个人都要穿的，用不着这么怕羞的。”<br>我是男的！<br>我在心里嚎叫。<br>但是嘴里是一个字都没说出来。<br>“像是小妹妹的话……”导购小姐说着，在旁边一个看起来比较朴素的柜台拿出一件淡绿色的内衣到我们面前，“可以试试这种比较可爱的，而且这款是纯棉无钢圈，也适合小妹妹这个年龄的。”<br>我缩着肩膀，感觉自己的脸都僵硬了，因为紧张而流出的汗水将里边的衣服浸湿。<br>“要不还是去试一下吧。”她在此时做出了十分恐怖的建议，松开了我的手，将我往导购小姐那边又推了过去。<br>试穿？<br>我要在内衣店试穿内衣？<br>我回过头去看她，她倒是笑得很开心。<br>感觉我的脑袋彻底变成浆糊。<br>我……<br>我慌不择路的往外跑去。<br>“喂！”<br>谁在喊我，我已经无法去分辨了，羞耻感让我跑着，仅剩的一点点理智让我还能避开障碍，至少在我跑到三楼的角落之前，都没有撞倒东西和人。<br>我靠在墙边，想着刚刚发生的事情，脸烫得不像样，后背感觉也被汗弄湿了。<br>导购小姐拿着内衣推到我眼前的一幕不停在我脑海里回放。<br>内衣……<br>试穿……<br>刚刚如果拿着内衣，进到里边试衣间，内衣店的试衣间……<br>我……我是不是错过了什么……<br>总觉得脸更烫了。<br>“你这人，真是！”<br>抬起头，是她，脸色微粉。<br>她没有犹豫，抬起我的下巴，亲了上来。<br>嗯？<br>柔软而湿润的触感。<br>不容拒绝的强硬。<br>不准把舌头伸过来啊！<br>混蛋！</p>
+<p>我的名字叫江又萌，20岁。<br>本来是男的，现在是女的。<br>住在本市大学路一带，未婚。<br>是个今年刚上大一的大学生。<br>每天都会老老实实的按照课程表上完课才回家。<br>我不抽烟，酒也只喝过啤酒。<br>晚上11点半上床，每天要睡足6个小时。<br>睡前，我一定会刷一会匿名版，然后一晃神就到了十二点多，在自责中进入睡眠。<br>一觉到天亮，因为没什么疲劳和压力，所以不会有疲劳和压力，留到第二天。<br>医生都说我很正常。<br>至少在前天之前很正常，现在感觉也挺正常。<br>鸡儿，也就是江又夏，正坐在我的对面。<br>她正拿着菜单兴致勃勃地看，时不时将感兴趣的菜品指给站在一旁的服务生看，听过介绍之后，如果觉得可以就会下单。<br>完全没有打算问我想吃什么。<br>因为就面对面的坐着，点菜的时候我也能听到，点的那些菜也有很多我喜欢的，而且还是火锅店，点什么倒也没啥所谓。<br>最终，我还是把陪伴了我二十年的名字送给她了。<br>这是基于我的宽宏大量，以及对她的怜爱和，小小的，些许的，一点的，一丢丢的不想再进内衣店的心情，而做下的决定。<br>妈的！<br>我是不会用江又夏叫你的！<br>你用江又萌叫我我也不会应的！<br>“又萌，点这些好吗？”她突然问我，服务员也跟着看过来。<br>“嗯，可以。”我下意识点了点头。<br>不对！我不应该回应她的！<br>我才不是江又萌！<br>服务员离开之后，她靠在椅背上盯着我看：“没想到你只是亲一下就那么有感觉，又萌你喜欢被人看吗？”<br>她手臂撑在桌子上，微微歪着头，脸上是揶揄的笑，有些低沉的声音轻轻地说：“是暴露狂吗？”<br>“什……”我心中那一直避着不去想的羞耻感再一次涌上心头，顺带着把我的怒火也给点燃了。<br>“对吗？”她还是笑眯眯地问。<br>“不是！”我大声地说。<br>从内衣店到大庭广众亲我。<br>还有之前的事。<br>把心中的不快，透过这两个字爆发出来，宣泄给她。<br>店内的安静了一下。<br>又逐渐开始变得吵杂，服务员走过来，让我们安静一些。<br>我只是瞪着她，没理服务员。<br>“不好意思，我有点欺负她过头了。”她微笑着和服务员道歉。<br>接着，有服务员端着锅底放在桌子上。<br>电磁炉的风扇呼呼地响着。<br>周遭是异常热闹的交谈声，<br>我不再看她，转而拿出手机开始玩起来。<br>她也没有说话，只是看着锅底。<br>推着装满菜的推车服务员确认完点单之后转身离开。<br>几滴汤汁贱到我的面前的桌子上，抬头看去，她有些生疏的把小盘鸡肉倒入锅中。<br>隔着水蒸气，她的面容有些朦胧。<br>她微微张开的嘴，眼中满是期待。<br>等到锅中汤开始滚起来，香味也随着飘散开来。她便迫不及待地夹起一块白色的肉，送进嘴里，半眯着眼。<br>原本看起来有些冷淡的脸，此时带着满足的笑容：“好吃。”<br>然后又夹起一块，穿过淡淡的蒸汽，递到我面前。<br>“很好吃哦。”她歪着头，“还在生气吗？”<br>废话。<br>我别开脸没理她。<br>她站起身，继续把肉递到我嘴边。<br>“吃吧。”她说，声音变得有些糯，有些轻。<br>我转过头看她。<br>她的脸上是有些讨好的笑容。<br>盯着她看。<br>她的笑容也一直没变。<br>我看了一眼那个肉，一口吃下，用力地嚼着。<br>“怎么样？”<br>“江又夏你是不是傻，蘸料都没有好吃个屁！”<br>说完我往蘸料那边走去。<br>江又夏跟上来。<br>“你还蛮好哄的。”她小声地说。<br>闭嘴。<br>得了便宜卖乖。</p>
+<pre><code>鸡儿小姐吐出来的其实不是精液，前面我不是强调了一下吐出来的是透明的吗？(ゝ∀･)
+其实是还有一个设定的，不过不知道接下来要多久才能写到，所以提前说一下，算是剧透。
+
+鸡儿小姐不是一个人，还有两个双胞胎一样的萝莉妹妹，不过暂时没想好要怎么出场| ω・´)
+所以鸡儿小姐吐出来的只是原本的本能反应，并不是吐出精液。
+我在想要不要让两个萝莉妹妹拥有让人怀孕的能力( ﾟ∀。)
+</code></pre>
+<p>最后，内衣决定在网上买了。<br>对啊，网上买就好了，今天为啥带我去实体店？<br>“因为。”江又夏说，“想和你一起逛街。”<br>呸。<br>我不想和你逛街。<br>后来吃完饭，我们去了超市。<br>事实证明，我大意了。<br>不，是我太天真了。<br>不对，她就是个鸡儿哪来那么多的心眼？<br>妈的。<br>在江又夏买软尺的时候我就应该察觉到的。<br>回到家。<br>“脱衣服。”江又夏那东西分门别类话，拿出软尺。<br>“大白天的你想干什么呢！”我皱眉瞪她。<br>“你想网上买内衣，不就得量尺寸吗？”她挽起袖子。<br>“等等等等等。”我一手护着自己胸前，一手阻止她，“我自己来。”<br>“你知道怎么量吗？”江又夏摊手，将软尺的包装丢进垃～圾桶里。<br>“我百度！”我说。<br>“节省时间，我来就好。”她说着走过来，“而且百度只会告诉你让其他人帮你量会更准。”<br>“那……不，不脱衣服。”<br>“抱歉，不脱衣服量不了。”她展开尺子微笑着看我。<br>在江又夏面前脱衣服，我是没什么心理障碍的，但是我担心她在量尺寸的时候做什么。<br>“你不给我量，就只能去内衣店让店员帮你量了。”<br>“……我脱。”<br>在脱下外套，正要脱下t恤的时候，我发现了一个盲点。<br>我别开脸，忍不住笑了一下，又马上收敛笑容，直接了当的把t恤脱下来。<br>“你量吧。”我坦然地说。<br>江又夏眼睛眨也不眨的点点头，抿嘴，舔了舔自己的嘴唇，走到我的身后，按着我的背：“稍微弯一下腰，恩，就这里。”<br>大约是四十五度的样子，我记下步骤，努力不去在意她绕过我胸前的手，尺子。<br>动作轻柔又仔细，就是有点慢吞吞的。<br>“不能快点吗？”我忍着微微的痒感，催促她。<br>“好了。”她说着收回手。<br>我转过身看她。<br>“32a大概就够了，虽然小小的，但是很可爱哦。”江又夏温柔地看我，“我很喜欢哦。”<br>“哦。”<br>这种莫名其妙的屈辱感是怎么回事？<br>不过这些暂且放在一边。<br>“那接下来，我帮你量吧。”我将她手中的软尺抢过来，连衣服都顾不上穿，就挡在房门口，得意地看她。<br>“呃，我自己来……”江又夏愣了一下，说。<br>可能吗？<br>可能吗？<br>江又夏！<br>“别人量才准吧。”我逼近她，感觉自己的嘴角快翘到天上去了。<br>“好吧……”她看着我，缓了一会，才认命似的开始解开衬衫的扣子，内里是一件同样白色的背心。<br>麦色的肌肤，细看光滑而细腻，散发着些许带着野性的活力感。<br>肩窝线条明晰却柔和，若隐若现的胸部轮廓给人无限遐想。<br>又拉着衣服下摆，犹豫了一下，江又夏脱下自己的背心，将自己的上身完全展示在我的眼前。<br>“……被你这样盯着看，还挺不好意思的。”她的弓着背，拢着肩，肩窝又凹得更深了。<br>我回过神来，盯着自己手里的软尺，突然有点想不起来接下来要干嘛。<br>冷静，冷静。<br>我深呼吸一下，绕到她身后。<br>突然想起，我们好像没有这样看过对方的身体。<br>她往前弯着腰，透过腋窝看去，我用力吞了吞口水，才拿好软尺的一头穿过去。<br>就像之前说的，我的身高比她矮，这个时候我就不得不贴着她的背。<br>温热感透过皮肤传到我身上。<br>嗯……有点软。<br>第一次主动去触碰她。<br>连呼吸都带着她身上沐浴露的味道。<br>我辨认着尺子上的数字，报给她。<br>然后又量了一个数字。<br>到了结束之后，我才想起之前打算以牙还牙，报复她内衣店作弄我的事了。<br>不过总觉得没那么气了。<br>回到江又夏身前的，我有点不敢看她。<br>脖子用力，朝她望去。<br>脸色艳红。<br>不，这不能怪我！<br>等一下，等一下！<br>不要拉我！<br>地上好凉啊！<br>臭女人！</p>
+<pre><code>鸡儿小姐最敏感的地方肯定是江又萌呀
+boki就会让鸡儿小姐浑身无力，所以只要好好刺激江又萌……( ﾟ∀。)
+</code></pre>
+<p>迷迷糊糊的醒过来时，我瞄了一眼墙上的时钟。<br>十点。<br>哦，到这个时间点了。<br>十点。<br>早饭和午饭一起吃了吧。<br>我催促着自己的懒懒的身体快点动起来，坐起身。<br>空调已经停止运行，只剩下风扇在吹着。<br>打着哈欠从被窝里爬出来，检查了一下身上，没有留下什么奇怪地痕迹，我松了口气。<br>我的强烈的抗议总算是有效，江又夏收敛了一些，没有在我身上种草莓了。<br>我得意地穿上衣服，打开房门，屋里静悄悄的。<br>“江又夏？”我喊了一声，回应我的只有微弱的回声。<br>出门了？<br>买菜吗？<br>我思考着走向厕所，洗手台的镜子贴着一张便条。<br>黄色的便条上，字形圆润的字写着“我帮你上课去了，手机我带走了，早餐在桌子上，吃完记得洗碗。”<br>我就说有什么忘了的感觉！<br>早上有早课啊！<br>没听到闹钟的声音，肯定是被她按掉了，八点上课，现在已经十点了，第二节都快下课了。<br>但……但还有第三四节课，快一点的话肯定能赶上……<br>江又夏去干什么？<br>等一下被人发现……<br>我刷牙的手停了下来。<br>是我去才会被发现吧。<br>想起班里那个纪律委员，叫……安啥来着？<br>不管了，反正她也认为江又夏才是我。<br>我看着镜子里自己的样子。<br>淡粉色的嘴唇上满是白色泡沫，微微张开，白得有点不像话的皮肤，脸看起来有些圆，比起江又夏看起来有些英气的面孔，这张脸就看起来是个还没长开的初中小女孩。<br>圆圆的眼睛有些茫然，我看向自己的手，手指比原来短了不少，不过因为手掌也变小了，看起来倒是变得小巧。<br>手臂身体都是瘦瘦的，如果仔细观察还能看到皮肤下青色的血管。<br>用力掐了一下手臂。<br>痛感从被掐住的地方蔓延开来，皮肤也变得通红。<br>是我的身体，又不是我的身体。<br>洗漱完，来到桌旁，桌上是牛奶和面包。<br>“凉了记得温一下。”<br>依旧是有些圆润的字体，黄色的便签贴在杯身上。<br>玻璃杯是凉的，里面的牛奶估计也不会很暖着。<br>懒得重新去温，把便签撕下来放在一边，先喝了一口牛奶。<br>不出所料的没有温度，有点甜，大概是加了糖。<br>那家伙对我的喜好倒是一清二楚。<br>她是怎么看的？<br>剩下半杯的牛奶在杯子里晃着，想起刚分开的第一天，她对我说，想要各过各的。<br>现在她还在这样想吗？<br>我们，会分开吗？<br>还是继续这样，两个人两个人一起过下去？<br>把面包和牛奶一起吃完，我躺在客厅的沙发上。<br>沙发……<br>是和爸爸一起去买的。<br>担心我住不惯宿舍，陪着我租下这件一厅一室，在小区里的房子。<br>每个月租金是两千二。<br>看着爸爸爽快的付了一年租金，房东乐开了花。<br>房间的床单被褥，厕所的洗发水沐浴露，各种零零碎碎的东西，都是一边听着妈妈的唠叨一边买下来的。<br>爸爸妈妈现在怎么样了？虽然变成这样前一天才联系过，但是现在也好几天了，要是再打电话过来，我要怎么办？<br>还有学校的事……<br>脑子像粘稠的浆糊一般，各种思绪在里边搅动。<br>胸口被堵得异常难受。<br>我侧躺着蜷缩起身体。<br>“咔擦。”<br>门口传来声响。<br>抬头望去，江又夏背着书包，额头有些汗，手上提着塑料袋，袋口伸出几根葱叶。<br>“干嘛？”她皱着眉头走过来，塑料袋随手放在桌子上，在我身边坐下来，“哪不舒服吗？”<br>“没事。”我转过身，背对着她。<br>“没事干嘛在这一个人掉眼泪？”江又夏轻轻拍了拍我的背，又摸了摸我的额头。<br>“就没事。”我说着晃了晃头把她的手从我额头上甩掉，用手背胡乱摸了摸自己的脸。<br>“好，没事。”她站起身，“中午吃可乐鸡翅和蛋花汤怎么样？”<br>“嗯。”<br>“早餐吃了吗？”<br>“吃了。”<br>“江又萌。”<br>我没应她。<br>“没事的。”她说，“我陪着你呢。”<br>“就说没事了。”<br>她笑了笑，提着塑料袋去厨房了。<br>真没事了。<br>嗯。<br>至少胸口不堵了。<br>我从沙发上坐起来，去厕所洗了洗脸，来到厨房。<br>和她一起并肩站在灶台前。<br>似乎还没来得及擦脸，她的额头上依旧挂着汗珠。<br>我从一旁抽了两张纸巾，叠好，帮她擦了擦额头和鼻翼的汗：“汤里加紫菜吧。”<br>“没买。”江又夏转过头，一动不动地看我，微微笑着。<br>“那快去买吧！”<br>“不去。”<br>切。</p>
+<pre><code>看看晚上能不能发出来，十一点还没有就要明天了
+明明为了写东西才开周杰伦的歌出来听，结果每次都只顾着看mv了( ﾟ∀。)
+</code></pre>
+<p>“你今天还没出过门吧？等会跟我去买菜。”江又夏对着在包子头娘上点来点去的我说，发现我在干什么之后，她拍了拍我的头，“那么无聊倒是把今天的作业写了啊。”<br>“作业？”我看向她。<br>“早上两门课都有作业，课后题吧，我做了记号。”她在一旁的书包里，拿出今天上的两门课的课本。<br>江又夏两本都叠了页脚，很快就翻到要找的地方：“就这些。”<br>我恍然大悟地看向她，点点头：“没事。”<br>对着面露疑惑的她竖起大拇指说：“老师不检查的。”<br>江又夏听着，叹了口气，合起一本书，用书背轻轻敲了敲我的头：“快写。”<br>虽然不痛，不过我还是捂着头以示抗议：“我现在没空！”<br>“点这个包子头让她变样子？”江又夏把电脑频幕关掉，“我陪你一起写。”<br>“用不着，我又不是小学生，还要人看着才写作业。”我将她手上的书拿过来在桌上摊开。<br>她搬了把椅子，在我旁边坐下来，“你又没办法去上学，要是考试不还是要我去。别到时候临时抱佛脚，现在稍微学一学做点准备。”<br>倒也是，听到这个，我的心情又不免有些低落。<br>漫不经心的看向课后题，没什么头绪又往前翻了翻，她看我这个样子，江又夏从书包里拿出今天记的笔记给我看。<br>倒是挺工整的。<br>“今天学校有什么事吗？”我看着笔记，随口问她。<br>“就上课咯。”江又夏说，“不过教学楼离校门好远，走这种天气走起来挺费劲的。”<br>啊，忘记说了吗？<br>“校门口那里不是有站台吗？可以在那里等车，然后站牌那里有路线。”我把笔记放在一边，数着手指和她说，“六号是去教学楼，二号是宿舍楼，食堂一二号都能到，操场在教学楼旁所以也是六号……恩，经常用的就这些，其他的我也不太记得，你要坐记得看路线图……”<br>我仰头看向天花板，思考者学校里有什么事要注意的事要和她说。<br>“之前我倒是加了一个社团……不过去了两次就没去了……”我重新看向她，发现她认真的看着我，“干嘛？”<br>江又夏回过神来，微微低着头：“没什么。”<br>奇怪。<br>“不过这样光说也不太准确，我明天还是陪你去一趟学校吧。”我说。<br>“可以吗？”<br>“倒不如说早上没陪你去是我的疏忽。”<br>“恩。”<br>结束了对话，我又拿起笔记翻看。<br>因为只是刚开始的基础内容，倒也不是很难，笔记也很全面，一下就看完，顺便把作业也做好了。<br>又帮江又夏把前边的一些内容稍微讲一下。<br>“对了。”等到学习都告一段落之后，我才想起问她，“那个安什么的纪律委员今天怎么样了？”<br>“你说安芝？”她把纪律委员的名字补完，“今天她倒是帮了我不少，换教室的时候如果不是她带我，差点走错教室。”<br>“她倒是热心。”<br>“还行，不过老是找我说话，有点难应付。”<br>“哦。”<br>“笔记也是她帮着整理的，要不然我还真不知道怎么办。”<br>“哦，你们上课也坐一起？”<br>“嗯，第一节课还帮我留了座位。”<br>“这样啊。”我说。<br>“不过女生身上倒是都挺香的，我们身上也是这样？”江又夏说着闻了闻自己的手臂。<br>“你们俩是贴一起了还是怎么？还能问到味道？”<br>“毕竟坐一起。”她说，“你看。”<br>她突然将身体靠过来，手从我的腋下穿过，整个上半身都贴过来，突然转过头来看我，因为离得近，我发现她长长的睫毛很漂亮。<br>明明是同样的洗发水，为什么她闻起来那么香？<br>“怎么样？香不香？”她眨着眼问我。<br>“还好。”我挪开目光：“好挤啊，你快走开。”<br>“哦。”<br>“你亲我做什么？”我用手背捂着嘴。<br>“就，想亲呗。”她蹭了蹭我的脸，“你倒是挺香的。”<br>滚啊，臭女人。</p>
+<pre><code>日更做不到啊( ﾟ∀。)
+话说之前在cwm写东西，每天两千写得我欲仙欲死，后来就放弃了，还是在小说版写比较快乐 想咕就咕
+</code></pre>
+<p>对于现在的快递业来说，三天才送到，实在是算不上快。<br>但在心理上而言，只要不是在江又夏放过我之后才到的，就是太快了。<br>她回到家的时候，抱着快递，到正在电脑前的我身边，对着我轻轻得摇了摇手上的快递：“内衣到了。”<br>“哦。”我尽量让自己看起来冷静一点，不去看她，目光盯紧了显示器，假装自己满不在乎。<br>听到她的笑声和快递袋被撕开的声音。<br>“看看，这是你的。”<br>突如其来的粉色让我不禁向后仰。<br>是她拆开包装将内衣展开在我眼前。<br>稍微冷静了一下之后，我打量起这件内衣。<br>没有之前想象中带着色气的蕾丝边和带给人遐想的两个圆杯。<br>而是两件淡粉色的，像背心一样，但在下摆和背后都比背心少了不少布料的衣物。<br>只有两个隐约的隆起才让人意识到它主要的功能。<br>“这……是？”我后仰着头问她。<br>江又夏低下头：“运动内衣。”<br>“那是什么？”<br>“看你那么抗拒，我找来找去，发现了这一种，你就当做是多穿一个背心好了。”她说，“而且因为你的胸也不大，应穿这个似乎正合适。”<br>“哦。”我重新看向那件现在被放在我桌上的内衣，伸出手指搓了搓，面料倒是挺舒服的。<br>我小声的对她说：“谢谢。”<br>江又夏没有回话，摸了摸我的头。<br>就在我怀着感激的心情以为事情就这样结束的时候。<br>身后突然暗了下来，回过头发现是她把窗帘拉了起来，回过身，暧昧地笑着走过来：“那么，脱衣服吧。”<br>“干嘛？”我从电脑前站起身，连退好几步，躲在离她较远的墙边，“大白天的你要干嘛？你下午不上课啦？”<br>“当然是帮你穿内衣。”她拿起放在桌上的内衣，缓缓走到我跟前。<br>“我自己来就好！”<br>“你知道怎么穿吗？”<br>“你不是说和背心差不多吗？”<br>看起来也很像，难不成还有其他穿法吗？<br>她摇了摇头：“虽然像背心，但毕竟是内衣，肯定还是有不一样的地方。”<br>又往前走了一步。<br>我也往房门的那边靠近了一步。<br>她绕了一下，往房门那边靠了过去，又往前走了一步。<br>我只能往墙角那边挪动脚步。<br>一步又一步。<br>是墙角啊！<br>我缩着肩膀，看着手里拿着粉色内衣的她。<br>“我……我们商量一下，我自己穿……”<br>“没问题。”她回答得颇为干脆。<br>“那你先出去……”<br>“也不用吧，又不是没看过。”她疑惑的看着我，“摸都不知道摸过多少遍了，看一下有什么大不了的？”<br>“是你自己强行摸我的！”我对她大吼，“而且就不一样！”<br>“好吧，好吧，你说什么就是什么吧，我先出去，你穿好和我说一下。”江又夏也不和我争了，把内衣塞我手里，便从房间出去。<br>我跟着把门关好锁上，对着门狠狠地竖了个中指。<br>重新看向手里的内衣的时候，一下又变得紧张起来。<br>有些不知如何是好。<br>又捏了捏。<br>嗯。<br>手感确实不错，穿起来肯定也舒服。<br>不，我在想什么。<br>我可是男的，穿这个干什么……<br>好吧，我之前是男的，现在穿这个……<br>摸了摸自己的胸前，有种挫败感油然而生。<br>就算再怎么争辩，这个身体，性别上依旧是女性。<br>现在说这些又有什么用呢？<br>也不知道怎么变回去。<br>“好了吗？”<br>她的声音从门外传来。<br>“没有！”<br>我狠狠地回她。<br>“你到底会不会啊？不会就让我进去啊。”<br>“我会！”<br>烦闷感一下被气愤所替代。<br>她有时候就觉得很细心，但这种时候就让人讨厌得要命！<br>丝毫没有体谅我心情的打算。<br>我把衣服一脱，丢到地上，把内衣从头上套下去，一下就穿好了。<br>打开门，我扬起下巴看她，虽然平时也要抬头才能和她对视，不过这次我在眼神中加了点鄙夷和骄傲。<br>气势上是不会输的。<br>“好了！”我说。<br>江又夏看到我，愣住，嘴巴微张，眼睛也跟着睁大了一些。<br>哼哼，小看我吧，吓你一跳！<br>她就这样盯着我看，感觉有点久。<br>我伸手在她眼前晃了晃：“你干嘛？”<br>她回过神。<br>“啊，不，没有……等你出来……你出来了，嗯，粉色，嗯，很可爱。”<br>她在说什么？<br>语无伦次地说了一大堆，我没听明白她要说什么。<br>“咳咳。”她低头，手挠了挠头，手臂挡住了脸，我看不见她表情，等到手放下来的时候，又是一副笑眯眯地样子，“我眼光不错吧。”<br>“内衣不就这样，还有什么错不错的？”<br>“这样说也对啦。”她以我为圆心，慢慢踱步，目光在我身上上下扫着，“有哪里不舒服吗？”<br>“也没有……”我皱着眉头看她，手下意识的抱胸，胸前有点不舒服，我低头看了下。<br>“怎么了？”她走到我的背后。<br>“嗯，胸口有点不舒服。”<br>“太紧了？”<br>“倒也不会，就是有点怪怪的。”<br>“啊。”她像是想起什么，突然从后边抱住我，手异常灵活的从内衣下摆钻进去！<br>微凉的手贴着我的皮肤，在我还没完全反应过来的时候，已经顺着侧边贴住了我的胸前。<br>“咦！”我发出尖叫，“你干什么！”<br>我按住她在内衣里的手，挣脱着。<br>“别动。”她说。<br>她的手往里侧收了收，又换另一只手伸到里边去，做了同样的动作。<br>随着她的手从内衣里出来，刚才的不适感一下就没了，内衣贴合着胸前，柔软的布料轻柔的包裹着。<br>“现在好了吧？”她又到了我的跟前，向我邀功，“以后穿内衣都要这样把胸往杯罩里推一推，这样才会舒服一点。”<br>“是呢！非常舒服呢！真是谢谢你了！”<br>我护着胸前，咬牙切齿地对她说。</p>
+<p>之后几天，倒是没发生什么事。<br>想了一下外出该怎么联系，最后另外注册了一个QQ，互相加上之后倒是也可以用了。<br>这天过后，每天打开电脑，都能看到几张她拍的照片。<br>有时候是灰蒙蒙的天空下，深绿色的树。<br>有时候是淡蓝色天空中，几乎白色的太阳。<br>有时候是路边刚开的紫色野花。<br>简单的“要下雨了”，“好热”，“好看”，表达着她的心情。<br>又或者放学买菜之前问我吃什么。<br>虽然没几次买我想吃的。<br>“那个我不会做，所以吃这个将就一下吧。”<br>切。<br>依旧是江又夏去上课，下午没课，我就在家里等着她回来做饭。<br>由于没啥事要做，闲的发慌的我，就把一些家务做了。<br>如果下午有课，她就在食堂吃饭，我叫外卖。<br>晚上就跟着她一起去附近菜市场买菜。<br>吃完饭花上两三个小时做作业，教她之前教过的内容，再一起自学她今天记回来的笔记。<br>不过最近感觉江又夏已经可以出师了。<br>我已经没什么可以教给你的了。<br>这样对她说了之后，江又夏抱着我笑得花枝乱颤。<br>很烦。<br>不过挣脱也很麻烦，所以就由着她了。<br>感觉最近已经开始适应各种变化。<br>身体上的。<br>生活上的。<br>人的适应力太强了！<br>人真的太了不起了！<br>不过半夜醒过来，有时候会因为站着上厕所导致把脚弄湿。<br>好在只穿了一件以前我自己的而大t恤，而撩下摆是通用操作，不然就要光着回房间了。<br>但半夜洗冷水澡还是把自己洗精神了。<br>回到房间，刚洗过冷水加上空调的冷风，让我打了一个喷嚏。<br>走快几步，钻进被窝。<br>“为什么凉凉的？”<br>回到被窝里，江又夏就抱过来。<br>她的皮肤光滑，贴着很舒服。<br>不过抱着睡有点难受。<br>“洗了一下。”我含糊的说，“喂，你手不要乱摸，不准摸我的屁股！”<br>我将她的手丢回去，她继续伸过来，在我的腰上摸了摸：“好软。”<br>“要开热水啊。”她迷迷糊糊地说着，呼吸变得沉稳而悠长。<br>抱着我的腰的手也没有再动。<br>江又夏的脸贴着我的头顶，结果我只能贴着她的胸睡。<br>有点软。<br>感受着她的体温，静悄悄的夜似乎也透着温暖。<br>第二天，听着厨房的抽油烟机的声音醒过来。<br>想要起床的时候，超乎想象的疲倦感却席卷而来，充斥着身体和四肢。<br>感冒啦？<br>我摸了摸自己的额头，感觉没有特别烫的样子。<br>但是这种类似的乏力感，我好像只在感冒的时候感受过。<br>从床上爬起来，腹部传来隐约的痛感。<br>看来是半夜洗冷水澡的报应来了。<br>我有气无力地从床上爬起来穿衣服。<br>“醒啦。”她似乎刚做好饭，端着盘子从厨房出来。<br>“嗯。”我低低地应了声，去洗漱。<br>从厕所出来，按照以往习惯，我倒了一杯凉白开水一口气喝完。<br>嗯……<br>感觉水好像有点冷。<br>肚子似乎也开始有点不舒服。<br>坐到桌旁，早餐是炒鸡蛋，一碟小咸菜和炒花生，主食是白粥。<br>“快吃吧。”她把筷子递给我。<br>我接过来，拿在手上，望着桌面发呆。<br>江又夏看我没有动筷子，夹了点鸡蛋放在我的碗里。<br>“嗯……没什么胃口。”我烦闷地说。<br>“感冒啦？”她摸了摸我的额头，又用另一只手摸了摸自己的，皱着眉头，“嗯，体温好像挺正常的。”<br>她撩起我的和她自己的刘海，额头贴了过来。<br>略微眯着眼，长长的睫毛轻轻地颤着，鼻尖相互轻蹭。<br>“好像有点热。”她说，“应该是昨晚着凉了吧？”<br>也许吧。<br>我不耐烦地把她推开，开始一口一口喝粥，但没喝两口，就把碗放下。<br>“还有哪里不舒服吗？”江又夏继续问我。<br>我皱着眉，手捂着自己的小腹：“这里有点痛。”<br>“要上厕所吗？”<br>“要……”我放下筷子，再次往厕所走去。<br>上完厕所出来，感觉整个人都有些发冷。<br>而且就算上着厕所，肚子也很不舒服。<br>有种古怪的闷痛感。<br>大概是我的脸色有些不对，江又夏有些紧张的问我：“要不要去医院？”<br>我摇摇头，整个人都有些乏，感觉回房间有点小题大做，等一下要吓到她了，于是往客厅去，打算在沙发上躺一下。<br>“喝点感冒药吧？”她说着跑到厨房煮开水。<br>“好。”我有气无力地对着她的背影回答道。<br>感觉肚子好像更疼了。<br>没多久，她冲好感冒药，我接过手，水温刚好，于是我一口气将整杯喝下肚。<br>温热感从喉咙一直抵达小腹，疼痛感似乎也得到一些缓解。<br>但又觉得似乎还是那样。<br>好像和以往得感冒的时候有点不同。<br>“睡一觉就好了。”我对着紧张的她懒懒地说。<br>她点点头，帮我拿了条毯子盖上。<br>说了谢谢之后，我迷迷糊糊的闭上了眼睛。<br>这时候天真的我真以为喝了感冒药，睡一觉就会好一点。<br>真正的地狱，是在醒过来的时候哒！<br>准确来说，是被痛醒过来的！</p>
+<pre><code>你们打我做什么( `д´)
+日更啊！这可是日更啊！(`ε´ )
+如果我今天能在工作的时候摸鱼把日常做完，省下的时间，晚上就可以再更一次了( `д´)9
+这样就是连续日更了，生产队的驴都没有这么能干( `ー´)
+</code></pre>
+<p>很老旧的房子。<br>有点像在电影里见过的。<br>青瓦屋檐，深色的粗木房柱，纸糊的雕花木窗。<br>我被一个拿着红色蒲扇的老妇人牵着，沿着长长的木廊走着。<br>那手皮肤松弛，干枯，如同冰块一般的冷。<br>木廊外，雨水滴滴答答的落在空无一物的泥地里，逐渐积起一个混浊的小水坑。<br>走廊空气阴寒，我觉得很冷，也很难受，像被浸在水中一样。<br>那老妇人时不时回过头来，面容却十分模糊，像是带着一个面具，又像躲在雾中。<br>但是能感觉到她在笑，嘴里还说着尖锐却听不清内容的话。<br>走了一段，突然黑暗的远方出现两个红色光点在飘荡。<br>走进了才明白，那是两个大红色灯笼，随风在夜里轻摆。<br>在灯笼内里忽明忽暗的火光中，我勉强辨认出那退了色的‘囍’。<br>我这才想起来，今天是我拜堂的日子。<br>低头看去，我身上正穿着白袍，往头上摸去入手是蕾丝的触感。<br>我的身上正穿着婚纱。<br>惊讶，惶恐，不知所措。<br>心脏、灵魂，几乎在我脑子想起来的这一个瞬间，满溢的抗拒就想要撕裂我的身体，向这一切咆哮。<br>我想要逃跑，想要跨过这腐朽了的走廊木栏往外逃去！<br>但这身体似乎不再是属于我的一般，丝毫不在乎我的想法，“我”依旧在老妇人的牵引下如同踱步一般的往前走。<br>灯笼下，双开大门，门上红色黑字对联。<br>一切都模糊的现在，唯有这对联却清晰无比。<br>在天比翼，在地连理，此去千程不寂寞；<br>同衾可喜，同穴堪忧，其情百年何深沉。<br>胃部一阵翻腾，几欲作呕。<br>“我”依旧无动于衷，随着老妇人一同跨过黑色的门槛，进到屋内。<br>父亲母亲一左一右坐在主人位上，两人中间的茶几上点着一根红色蜡烛，而黑暗则如同蛋壳一般将我们同这烛光一同包裹起来。<br>两边的红缎和大红花刺得我眼睛生疼。<br>两边各坐着三两人。<br>“来啦。”“来了。”“到了。”“新娘子。”<br>“对的。”“新郎呢？”“还没有。”<br>“那怎办？”“怎办？”“找一个。”<br>“哪个？”“就他。”<br>两边的人七嘴八舌讨论着，父亲母亲始终面带微笑，不发一语，目光没有焦距。<br>一个男人站起来。<br>刚刚还是老旧长袍的他，现在已经变成西装领带。<br>和老妇人一样被雾所遮盖的脸，看不清长什么样子。<br>那是房内唯一的光源。<br>橙红色的火苗轻轻跳动着，将房内的一切都蒙上一层淡淡的黄纱。<br>“我”和他一起站在面对着主位父亲母亲，身上是西装和婚纱，手里却拿着大红花的一端。<br>“你……愿意……吗？”<br>老妇人在我们身边绕着走来走去，嘴里发出尖锐到刺耳的声音，像是将要被宰杀的猪的尖叫，只能模糊的听到几个字。<br>他点了点头。<br>那老妇人又问了我一边。<br>不愿意！<br>我不愿意！<br>我脖子用力，不让自己的而头点下去，但是那头却硬是往下低去。<br>两股力量异常强大，互相拉扯，竟是一时间分不出胜负。<br>就在僵持的时候，‘咔嚓’一声。<br>我的头和脖子一下脱了节，掉在地上。<br>“……洞房……”<br>老妇人说着，将我们引到内间去，而我的头则系在红花上，被带着一起到房间内。<br>不对，不是这样的！我不要，我不要！<br>但是身体丝毫不理会我的想法，还是往里边走去。<br>有谁能救我？谁来救救我？<br>我在黑色和红色相间的空间里绝望的呼喊，却没有回应。<br>忽而红光猛地一闪。<br>我躺在床上，肚子隆起。<br>旁边是一群穿着各种鲜艳衣服的女人。<br>我还未理解发生何事之时。<br>随之而来的，是剧烈的痛楚。<br>如同有刀在腹中搅动。<br>“生了。”“要生了。”“孩子要出生了。”<br>“唉，不用力。”“不用力怎生？”“不知道。”<br>“会死吧？”“会吧。”“那咋办？”<br>“我来拉？”“我也来。”“一起来。”<br>吵杂到让人想呕。<br>更要命的是接下来那坠痛感，如同内脏被拉扯。<br>“快拽啊。”“你没用力。”“用力了。”<br>“那再拽。”“好。”<br>痛感原来越强，最后肚子炸裂开来一样将我染成血色！<br>我猛地张开眼睛，想要坐起身。<br>但腰部马上传来酸痛感。<br>“啊！”与此同时，那腹部的也传来剧烈的疼痛，让我忍不住哀嚎出声。<br>随着我的动作，盖在身上的被子欺负所带起的风将带血腥味送进我的鼻腔中，下身湿黏微凉的感觉也让我感觉难受。<br>混身都在轻轻颤抖，冷汗直冒。<br>这是受伤啦？<br>我连忙忍痛掀开被子。<br>看到的是衣服，下身和沙发被染成血红色。<br>“你怎么啦？”房内传来江又夏的声音。<br>应该是听到客厅的声响，她从房间里走出来。<br>然后就一脸震惊的看着眼前的一切。<br>看到她，知道家里还有一个人。<br>噩梦中的惶恐，对现状的不安，腹部剧烈的痛，烦闷，不知如何是好。<br>各种情绪交织在心中，让我忍不住掉了眼泪。<br>“江又夏……”<br>我带着哭腔喊她。<br>江又夏马上走到我身边，神色慌张，脸色也变得有些白，但声音却缓和而沉静：<br>“没事，没事，我……我在这里。”</p>
+<p>这个肯定不能吃吧。<br>“什么？”门外传来江又夏的声音。<br>“以前网上不是有段子，说吸血鬼去咖啡店，拿出卫生巾说自备茶包吗？”我坐在马桶上，抱着自己的肚子，前曲着身体和她说着话。<br>“这种东西吃不下去吧。”我用干瘪地勉强笑了两声。<br>过了很久，她都没有反应。<br>不过透过厕所门的雾面玻璃还是能看到她模糊的身影于是我自顾自地说下去：“我第一次看到这个笑话还觉得挺好玩，现在我心里只有悲痛了！”<br>笑话还是那个笑话，但现在的我已经完全笑不出来了。<br>我从未想过，我一个男的也会面临生理期！<br>我已经在马桶上坐了小半个小时了。<br>刚刚睡醒的时候，身上和沙发上，被子上都染了血，一下把我吓懵了。<br>好在她还算是冷静，仔细在有血的地方仔细观察，边看边问我哪里不舒服。<br>“肚子。”<br>“肚子的哪里？”<br>“一整圈。”我一只手捂着肚子，另一只手在附近比划，“好痛！”<br>腹部的内脏在不停的抽搐，又像是被人用电钻在肚子里便不停的搅。<br>剧烈的疼痛让我的额头和后背都开始冒冷汗。<br>浑身发冷，止不住微微颤抖。<br>江又夏随着观察和我的话，倒是一下冷静下来不少。<br>她抿了抿嘴：“嗯……大概是生理期吧。”<br>说着，她抽了几张纸巾在我身上擦了擦，纸上那触目惊心的血红色让我有些反胃。<br>什么……<br>我的勉强撑起上半身，疼痛和惊讶让我一时间说不出话来。<br>猛地起身，突然感觉到下身确实有什么液体沿着大腿往外流出来，而且还有股便意越来越强烈。<br>“我……我要上厕所……”我挣扎着起身，她伸出手来扶我。<br>我刚站起来，眼前一黑头也晕乎乎的，脚下踉跄，好在江又夏将我扶住。<br>而腹部随着我的动作，又似被突然割了一刀的阵痛，让我忍不住倒吸一口凉气。<br>“怎么样？”<br>我已经没什么力气回答她了，四肢无力，只能轻轻摇头，指了指厕所。<br>她扶着我慢慢走到厕所，接下来就是剧烈的腹泻。<br>地狱。<br>腹痛并没有随着腹泻而减轻，反倒是从短时间的阵痛变成了持续时间越来越长的剧痛。<br>我坐在马桶上弯着腰，以为会舒服一点，但没一会后腰却酸的让人难受，肚子更是痛得不行，怎么都不舒服。只能勉强缩着肩膀，尽量保持不动动。<br>明明现在是三十多度的夏天，但是厕所里边却是阴冷得让我发抖。<br>又觉得有点反胃……<br>我吸了吸鼻子。<br>为啥啊？<br>我看妈妈生理期的时候怎么就没见过像我这样的？<br>头发因为冷汗而贴着额头和后颈，衣服不用看也知道后背湿了一大片。<br>“你说我的肚子里边会不会其实已经烂掉了？”我说着，肩膀靠在墙上，像是被巨石压着的身体暂时得到了一点支撑，倒是稍微缓过来一些。<br>之前还抱怨过厕所小，现在我只觉得小气鬼房东实在是颇有远见。<br>“太夸张啦，就是普通生理期而已。”她说。<br>“这还普通！”我大声地对着厕所外的身影喊，然后因为太腹部用了力，又痛得弯下腰。<br>“嗯，我上网查了一下，你这种情况好像不是很少见……”<br>女生太强了吧！<br>我捂着肚子，眼泪都快要掉下来。<br>“好了没？要不要我进去扶你？”<br>“没有……”我往下身看，虽然不快，但依旧有颜色偏暗的血在流出来，“这样没办法出去吧。”<br>我刚说完，厕所门就被打开。<br>“哇，这味道……”她皱鼻子，把手里的东西递给我。<br>啧，你上厕所没味道？<br>但我已经没力气开口抱怨，接过她递过来的东西，是我的内裤，不过感觉变厚了。<br>“能自己穿吗？”<br>我点点头，江又夏犹豫了一下，还是离开厕所关上门。<br>哆哆嗦嗦地抽了纸巾擦屁股，把内裤穿上。<br>冲水声刚结束，她就走了进来，本来我还想扶着她走，结果被她横抱起来。<br>感受着她略高的体温，我往她怀里缩了缩，小声的呻吟着。<br>被她抱到床上，盖上被子，我马上像煮熟的虾一样的缩成一团。<br>“嗯……虽然之前就做了些准备，不过没想到你是这个类型的。”江又夏又去了厕所打了盆水过来。<br>先是帮我擦了擦额头的汗，又拿着毛巾伸到被子里帮我清理了一下身上沾了血的地方。<br>什么类型？<br>“家里没有布洛芬啊。”她敲了敲自己的额头，又看了看我，“得出去买才行。”<br>听到江又夏要出门，我下意识的拉住了她的袖口：“不行……”<br>我微仰着头，抿着嘴，吸了吸鼻子，看她。<br>“啊，不，我就去买药……等一下，很快就回来了。”她眼神有些游移，不太敢看我，似乎有点慌了。<br>“不要。”我抓着她的手，把头靠在她的手臂上。<br>这是一种有点难以诉诸于言语或是文字的情感。<br>或许是梦里那种孤独无助的情绪还浅藏在我的潜意识之中，又或者是对她从我身体分化出来导致我要经历这份痛苦的报复，又或者是疼痛让我失去了理智，又或者……我只是想要她陪着我。<br>总之，我似乎把忍耐痛楚的力气全部都放在她的手上了。<br>江又夏深吸好几口气，轻轻地摸了摸我的头，蹲在床边，在我耳边小声地说：“好，不走了。你先松开，我去倒杯热水给你。”<br>“真的？”<br>“真的。”<br>我松开手，用被子将自己完完全全地裹起来，只留出眼睛紧盯着她离开房间的背影。<br>剧烈又似乎没有尽头的痛，我随着内脏被揉搓似的疼，在被子里发出有些闷的悲鸣。<br>感觉到被拍了拍，被子被掀开，她将我扶着坐起身靠在她怀里，把玻璃杯递到我的嘴边，喂我喝水。<br>甜又有点咸的温水，我小口小口地喝着，突然想起“多喝热水”的段子。<br>多喝热水不是挺好的嘛？<br>我想。<br>等到我喝得差不多，她将杯子放在一旁，然后将装着毛巾的透明袋子从我衣摆下伸进去，捂在我的肚子上。<br>有点烫，但是过了一会，这略微的烫却缓解了一些痛感。<br>枕着她的胸口，因为总算稍微舒服了一些，我老实的侧躺在她怀里，一动不动。<br>而她也没有动作，只是用毛巾帮我捂着肚子，下巴抵着我的头顶。<br>我们就这样坐了好一会，就在毛巾感觉有点凉的时候，门铃响了。<br>我抬头看她。<br>她微笑着说：“是跑腿小哥吧，我在网上买了药。”<br>我闻言，从她身上离开，继续用被子把自己裹起来：“你去开门吧。”<br>江又夏无奈地笑了笑，离开房间。<br>一会，她回来了。<br>再次将我扶起来，喂我吃了一颗白红胶囊，又拆了一包暖宝宝贴了一张在我的内裤外边。<br>“还要上厕所吗？”她问我。<br>我摇了摇头，随着暖宝宝温度开始缓缓上升，但是疼痛也只是和刚刚一样缓和了一点。<br>“舒服一点了吗？”<br>我点了点头。<br>“等会止痛药起效了就会好很多了。”<br>我点了点头。<br>之后，我又跑了两趟厕所，感觉灵魂都要被冲进厕所里了，还反胃，好在没有吐。<br>折腾了好几次，最后在小腹疼痛感变弱点后，温热感让精疲力尽的我慢慢睡了过去。<br>又是一个梦。<br>入眼的满是白色。<br>这里除了我身下的床外空无一物。<br>我爬起来，大喊了一声。<br>理所当然的无人回应。<br>但是我不在乎，下了床，往前走去。<br>明明连可以参照的东西都没有，但是我却非常自信的知道我是在往前。<br>虽然脑子和这里一样都是空白的。<br>却莫名的充满劲头，似乎一切都在不远的地方。<br>我走着，走着，不知道时间也不知道路程，脚步不停，不觉疲惫，因为我知道我就要找到了。<br>突然远处的白泛着微红。<br>红……<br>这个颜色让我脚步莫名一顿，但是没过多久又重新迈开步伐往前走去。<br>这个红，并不是深红或者暗红，而是粉红色。<br>淡淡的粉色充斥着整个空间，明明也是空荡荡的，却让人觉得连空气都变得有些暧昧，全部都变得不同。<br>我往前走去，已经没有丝毫犹豫，甚至开始小跑起来，温热感将身体包裹起来。<br>我跑啊跑，来到了这个空间的尽头。<br>碎马尾，白衬衫，麦色的肌肤在这里透着诱人、又万分可爱的粉。<br>她看到我，露出一个淡淡的微笑：“你好啊。”<br>我也微笑着来到她的面前，有些不好意思地晃了晃身体，最后立定不动，对着她说：“你好……还有……”<br>“谢谢。”我呢喃着从睡梦中醒来，虽然依旧觉得累，肚子倒是只剩下微弱的痛感。<br>我算是知道梦里那温热感是哪来的了，我现在被她抱着，她也睡着了。<br>有点难受。<br>我调整了一下姿势，往江又夏怀里蹭了蹭，继续睡着了。</p>
+<pre><code>并……并不是整天都在玩哦
+只是这段时间家里装修逐步完工，一些房间可以开始放东西进去了，所以晚上下班之后都要打扫和把东西归回原位。
+买书的时候倒是爽了，现在整理起来想吐血( ﾟ∀。)
+</code></pre>
+<p>“用了二十多万年还没能进化出无性生殖或者有丝分裂的物种根本就不应该存在于这个世界！”我手里捧着喝了一半的姜红糖水，猛地靠在沙发上，仰头对着天花板控诉自己的心酸。<br>江又夏刚好从厕所里出来，将手里拧成麻花的淡粉色内裤展开，往阳台走去，晾好之后甩着湿湿的手，发现没什么用，于是抽了张纸巾，边擦手边在我身边坐下。<br>“你倒是别因为一次痛经就否定了整个哺乳类动物的存在价值啦。”她屈起一条腿，往我这边侧着身，“还有，别再做太大动作了，刚刚我洗的可是你最后一条内裤了，如果现在再漏就只能穿我的了。”<br>我把杯子放在桌子上，尴尬的看向别处：“不……也不是我想，就这个感觉是在太过难受……不动一下我就静不下来……呃……抱歉。”<br>自痛经那天到现在已经是过了五天，除了那天之外，倒是没再怎么痛过，或许是因为吃了止痛药？<br>但在内裤里另外垫了东西，也实在算不上什么好的体验，更何况那闷热又带着潮湿的感觉让人静不下来。<br>就算体内激素是正常的，一整天都这样捂着心情都不可能会好。<br>“嗯……我倒是没关系。”江又夏倚在沙发的靠背上，回头看了眼阳台“毕竟内裤就那点布料洗起来倒也不麻烦，而且我也买了专用的清洗剂。就是没有新内裤了。”<br>我也跟着看过去，外边挂了好几个内裤。<br>当然，都是我的。<br>旁边则是床单。<br>“抱歉，呃，还有……谢谢。”我有点没脸看她，昨天半夜还害她起来洗床单。<br>“嗯。”她头枕在椅背上，半眯着眼睛，懒懒地应着，似乎是困了。<br>“要不你去睡会？”我推了推她。<br>“不了，等会还要去上课。”她抬起眼皮，看了一眼时钟，摇了摇头，靠在沙发上看着我，突然笑了。<br>“干嘛？”我重新拿起桌上的姜红糖水，喝了一口。<br>这味道实在算不上好，何况我很讨厌生姜的味道。<br>但好歹是她研究了一个下午才学会的，不喝又感觉不太好，终归还是硬着头皮喝完。<br>不过好在一天就一小杯，倒也没有煮一堆逼着我喝。<br>“就觉得你挺乖的。”她打了个哈欠，伸了伸懒腰。<br>随着后仰的身体，下摆处露出了她的看起来有些紧致的小腹和圆圆的肚脐。<br>乖？<br>我倒是没想到年过二十还会有人用这个词还形容我。<br>有些不知道该怎么反应，犹豫了一会：“谢谢？”<br>这时她更是笑出声来，然后像泥鳅似的蹭到我身边，贴着我的耳朵：“听说，只要有过侵入式的性交，以后就不会痛了，要试试吗？”<br>“你别得寸进尺！”我用力推着她的下巴，让她远离我的耳朵，不然那温热的气息实在有些痒，“敢给我乱来我就把你赶出去。”<br>“现在我才是江又夏，是我把你赶出去吧？”她抱了上来。<br>“你试试？”我不服输的从她怀里抬起头瞪她。<br>“哎呀。”她笑着把脸贴过来，在我脸上蹭了蹭，又在我骂她之前从我身边退开，站起身：“不闹你了。我去准备一下，再不出门要迟到了。”<br>“哦。”我把姜汤一口气喝完，跟在她身后去洗杯子。<br>“放着吧。”她在房门口停下脚步，“我回来再洗。”<br>“你太夸张啦。”我觉得她是在有些紧张过头了，因为刚刚喝完，稍微冲一下水在用洗碗用的布擦擦就干净了。<br>江又夏看着我把被子扣回杯架之后，才进房里。<br>“中午回来吗？”我来到房门口，靠在门框上问她。<br>她正在脱衣服。<br>和我一样，江又夏在家里也是穿着以前的t恤，虽然她比现在的我高不少，但是我以前的衣服穿在她身上依旧宽松似连衣裙。<br>也只有现在脱下了上衣之后，才能看到那比例相当漂亮的身材。<br>同样是运动内衣，她穿上之后就是有那健美感。<br>麦色的肌肤光滑得似乎带着光泽，因为背对着我，那随着她换衣动作隐约可见运动内衣下锁骨和肩胛的线条，展现着干练且充满活力的魅力。<br>“嗯，回来吧。上课了再过去。”她解开马尾重新梳一遍，扎好，回过头，“小色狼你看够了吗？”<br>“哼。”我别开脸，被她这么直白地说，倒是让我不好意思，“你是我的，我想看就看，你管我！”<br>“哦……”她拉长音，拿起一旁的书包，“那你也是我的，怎么之前我看你换内衣就不行啊？”<br>“不行就是不行！”我转身回客厅，“你快去上课！”<br>“好好好。”江又夏笑着往大门走去，“不要跑来跑去的，有什么事等我回来再说，如果还漏我的内裤在那个抽屉里，你自己拿去穿，换下的放在厕所里，我回来洗。”<br>“知道了，知道了，快走吧。”我点着头，把遮阳伞塞她手里，又突然想起来还有东西没给她，让她等一会。<br>有点急又不敢走太快，好一会才又回到大门那，把东西给她，“给你，这是我上次买的保温杯，里边是运动饮料，装进去之前是在冰箱冻过了，记得喝。”<br>江又夏拿着印着绿毛双马尾美少女的保温杯，有点纠结地眨了眨眼，最后叹了口气，点点头，被我目送着进了电梯。<br>我满意地点了点头，关上门。<br>回到沙发，她一走，感觉家里就变得空荡荡的，往厨房望去，看向房间，客厅后的厕所也是静悄悄的。<br>现在是九点半，离她回来还有三个小多时。<br>嗯……<br>我靠着椅背，上半身顺着滑下去，倒在沙发上。<br>看着墙上一下一下慢慢划过刻度的秒表，也许是昨晚半夜还要等洗衣机洗好被套，睡眠不足。<br>我眼皮变得沉重，将脚收到沙发上，就这样侧躺着睡着了。<br>“又萌，江又萌，醒醒，醒醒。”<br>听到有人叫我，还在捏我脸。<br>我迷迷糊糊的从睡梦中醒来，张开眼，就看到江又夏有些无奈的脸。<br>我正想起身和她说说话，结果大腿内侧和屁股凉凉的，还有身下湿粘感。<br>我立马精神过来，此刻，我的心也是凉凉的。<br>毕竟那么多天，我倒是有点经验了，于是哭丧着脸看着江又夏。<br>不用说，大腿凉凉的地方和沙发上，沿着沙发坐垫到地板上都是暗红色的。<br>我深吸一口气，本是想缓解一下自己的情绪，结果满是血腥味的空气倒是差点让我哭出来。<br>江又夏没说什么，先是拿了纸巾帮我擦了擦，发现效果不怎么样，就拿了毛巾过来。<br>“抱歉。”我闷着声接过毛巾，默默的捂住下身，打算往厕所去。<br>“没事。”她说着，扶着我，然后突然亲了上来。<br>简单的嘴唇相贴，便马上分开。<br>“喂！”我气闷地朝她喊了一声，现在正烦着呢，这家伙又在干这种事。<br>“总觉得这么原谅你也不太好，这是利息。”她点了点自己的嘴唇。<br>哼。<br>不想搭理她，感觉刚刚的愧疚还是我太善良了。<br>“你又贴歪了。”<br>厕所里，江又夏拿着我的内裤，叹了口气，“而且还是侧躺。”<br>我坐在马桶上，手肘抵在膝盖上，托着脸，抿着嘴。<br>她把内裤放在一旁的脸盆里，然后离开了厕所。<br>过了一会，拿了新的内裤过来：“现在你只能穿我的了。”<br>“哦。”我倒是不介意，看她那样子大概也不在乎。<br>因为已经贴好了，我直接就穿上。<br>看我穿好了她就赶我离开厕所。<br>客厅已经被稍微清洁过。<br>我坐在沙发一端，厕所传来水声。<br>摸了摸小腹，感觉她的内裤穿起来也没啥区别，虽然样式上也一样。<br>掀起衣摆看了一眼，紫色的……<br>她的好像都是深色的，我的都是浅色的。<br>到底是根据什么来决定的？<br>柔软的布料贴在身上，她是不是也是这种感觉？<br>之前好像看她穿过这一件……<br>脑子无法控制的想起之前她在床上贴着我的模样，紫色的内衣衬得她那麦色的肌肤无比性感。<br>肌肤相贴时那细腻的触感。<br>有些硬的手骨。<br>舌头……<br>厕所水声停了下来。<br>“江……又萌……”那是有些虚弱的声音。<br>我猛地一惊：“我……我……”<br>小心翼翼的起身往厕所走起：“我不是故意的！”<br>我试着为自己解释。<br>但是厕所传来呕吐的声音。<br>江又夏抚着墙从厕所里走出来，半眯着眼睛看我。<br>像是盯上猎物蓄势待发的黑豹。<br>“呃……能……能不能之后再算？”我小声地和她商量着。<br>“当然可以，毕竟本金还是可以一起算的。”她用手背擦了擦嘴角，笑眯眯地说。<br>此时，我才明白，既然有所谓的利息，那本金……<br>我只希望到时她能手下留情。</p>
+<p>“非常感谢您在这几天对小的无微不至的照顾，也请原谅小的那几天心情不好，对您也不够尊敬，还害您糟了罪，实在万分抱歉，希望您大人不计小人过，原谅小的。”<br>再这样诚恳的和她道过歉之后，江又夏坐在沙发上翘着二郎腿，用鼻音轻轻地应了我一声。<br>这算原谅了我？<br>不，我没下跪。<br>再怎么样，对自己的鸡儿下跪也太丢脸了。<br>我只是九十度鞠躬而已。<br>“话说，家里你原来的那些衣服，很多都太大了。”江又夏轻轻晃着自己的脚尖，语气淡淡。<br>这是陷阱。<br>我心中响起警笛。<br>“我……我自己买就好。”<br>“这个啊……”她拿起一旁我上次买的那个绿双马尾美少女的保温杯，“我不太放心你的品味。”<br>“我不会买这种图案的衣服啦。”<br>除非印的是二号机的驾驶员。<br>“这次如果让我做决定的话，你之前的事，就这样算了。”<br>“呃……”本来就要开口答应，不过仔细想想之前的事，我又犹豫了。<br>“还是说。”江又夏把杯子放下，一把抓住我，拉到怀里，“你要这样？”<br>一只手将我抱在怀里，细长的眉毛微微扬起，刘海的发梢骚弄着我的脸颊，她又用指腹顺着我脸的轮廓往下画，最后抵在我的下巴，托起。<br>她温热的气息从我因为吃惊而微张的嘴探入，让我的上颚忍不住的发痒。<br>我盯着她的眼睛愣了好一会，才反应过来，头往后仰：“我……我答应你！”<br>“答应我什么？”她没有就这样放过我，反而借着我后仰的势头将我松开，然后翻过身来将我压倒在沙发上。<br>大腿在架在我双腿之间，我并起膝盖，阻止她的往上蹭的势头。<br>又连忙伸出手，想要撑住她，不让她贴过来。<br>却没想一下按住了她的胸，柔软的触感像触电一样让我马上把手缩回来。<br>“我不是故意的！”我马上解释。<br>“故意的也没关系哦。”她脸色微红地说，似乎是有些不好意思，但手上到还是十分强硬的将我压着，“我都习惯了，毕竟每次你都……”<br>我手在两人之间乱比划让她不要继续说下去：“答答答答应你，买衣服的时候都由你做主！”<br>“嗯。”她满意的点头，但是身体依旧一动不动。<br>“呃……可以让开了吗？有点热……”我咽了咽口水，催促她。<br>“不行。”<br>“让开啦！”我推她脸。<br>她被我推着侧着头，但手上力气依旧不松：“衣服这件事是本金，还有利息我没收回来。”<br>“你是黄世仁吗？利息之后有本金，本金之后还有利息，借高利贷的都没你这样的！”<br>“反正我不让。”她一副无赖的模样，甚至得寸进尺的直接将我抱住，手也被箍着。<br>她将我的一条腿夹在两腿之间，我们的小腹紧紧相贴。<br>“喂！”<br>“利息嘛，让我亲一下。”<br>“臭流氓！”<br>“那亲我一下。”<br>“……”<br>“亲了就放开你。”<br>我冷着脸看她，结果她依旧不为所动。<br>啧。<br>懒得和她理论下去了，速战速决吧。<br>我微仰起头，在她嘴唇上点了一下。<br>“满意了吗？”我冷着脸看她。<br>江又夏愣住，舔了舔嘴唇：“我只是想说亲一下脸，没想到你倒是挺主动了。”<br>啧。<br>“可以放开了吧？”我朝她翻了个白眼。<br>“还是不行，太快了，不算。”<br>不再废话，我再次将嘴唇贴了上去，也不主动分开，就这样贴着。<br>江又夏睁大眼睛，脸色竟然在我的注视下变得通红，表情呆滞，手上的力气也松了。<br>我趁机咬了一下她的嘴唇，然后从她手里逃出来，不爽的看着她：“这下你满意了吧。”<br>“嗯，软……哈……满意的，也不是，就还行，还行。”她坐在沙发上，嘴里说个不停，“不太一样……嗯……也没啥不一样……主动，不，被动，呃，都挺好，对，都挺好的！”<br>她抬起头来，双眼放光：“再……再来一次！”<br>由于太激动，最后一个字都破了音。<br>不想理她，我跑回房内，上锁。<br>“休想！”<br>臭女人。</p>
+<pre><code>不应该啊。
+那个麦昆。
+明明绝好调，开跑也没迟，先也跑在第五六位。
+最后直线还开了技能。
+春秋连霸啊。
+不过区区ura。
+为什么还是三着啊。
+为什么啊……
+为什么……
+为什……
+为……
+･ﾟ( ﾉд`ﾟ)
+</code></pre>
+<p>睡梦之中，屁股上遭了一击。<br>不用想，肯定是江又夏，我用肩膀撑起身体，睁着一只眼睛看向床边。<br>她穿着宽松t恤和牛仔裤，脚踩我的屁股：“早上我去开会回来，下午没事，我们就去买衣服。”<br>臭女人边说边用脚在我屁股上来回搓。<br>重新躺回去，懒懒地应了一声。<br>“那我走了，中午回来去外边吃吧。”她的脚步声渐渐远去，最后是大门关上的声音，家里陷入一片寂静。<br>我迷迷糊糊地睡了过去。<br>等到再次醒过来，已经是九点多。<br>感觉上是醒了，身体却不想起床。<br>我躺在床上翻来覆去，如果有手机的话，至少就能在床上打发时间了。<br>唉……<br>从床上坐起身，还想发会呆，却隐约听到客厅传来有人用钥匙开门的声音。<br>看来是她回来了。<br>我伸伸懒腰，又动了动脖子，随便抓了件放在床边的t恤穿上，便往客厅走去。<br>边挠肚子边踢着拖鞋，打了个哈欠：“江又夏你回来的挺早的……啊。”<br>不是江又夏。<br>来人是一个人，手里提着大袋小袋，瞪大眼睛看着从房间里走出来的我。<br>我也愣看她，好久才反应过来：“妈……”<br>这下，来人，我的妈妈，连嘴巴也张大开。<br>‘妈来家里了！’<br>我趁着妈妈去厨房放东西的时候，溜进房间开电脑，给江又夏发了消息。<br>还没等她回复，妈妈喊我出去：“又萌啊，快出来吃苹果。”<br>“妈……麻烦阿姨了，我就来。”<br>当妈妈问我是谁的时候，下意识的叫了阿姨……<br>心里是觉得说清楚也没关系，但没和江又夏商量过又觉得没有底。<br>总之先撑到江又夏回来再说。<br>临出房门才发现忘记穿内裤，好险。<br>有些拘谨的在妈妈的身边坐下，接过她递过来的苹果：“谢谢阿姨……阿姨怎么今天过来啊……”<br>“唉，那个又夏不是喉咙痛很久了嘛，一直都在发文字消息给我和他爸，都这么久了，我就过来看看他到底怎么样了。”妈妈笑着把手里的苹果一口吃下去，看起来非常高开心，“对了，那小子放着女朋友不管跑哪去啦？”<br>“她去学校开会了……呃，我和她不是这种关系啦，阿姨。”我尴尬地笑着，“我们就是，普通同学。”<br>“哈哈哈，这样啊。”妈妈笑得眼角的鱼尾纹都出来了，点点头，“我明白的，明白的。”<br>“又夏开会，又萌你不用，你们不同系吗？”妈妈拉过我的手放在膝盖上。<br>感觉，妈妈的手好像比以前的大……应该是我的手变小了。<br>“嗯……我们不同系。”我并着腿，挺直了背，努力糊弄过去。<br>“嗯嗯。”妈妈点点头，“成年就好成年就好。”<br>就算你是我妈我也是会生气的哦？<br>“不过真是巧啊，你们两人连名字都差不多，听口音是不是我们那边的？”<br>“嗯，旁边的一个区的。”我强笑地编着话，“我们就因为名字认识的。”<br>“哎呀，你们年轻人就是容易亲近，又萌经常来又夏这边住吗？”<br>“嗯，因为，因为，又夏说房租贵想找人分摊一下，我宿舍又比较吵，就搬出来住了。”<br>“又夏那个小子，就是缺心眼，还嘴笨，每个月两三千块房租，阿姨家还是负担得起的。”妈妈恨铁不成钢地在拍了拍我的手，“又萌你要是有需要就放心住，钱自己留着啊。反正住一个住两个，房租也不见得会涨。”<br>妈妈这话把我感动了……不，等等，她是在说我吧？<br>“呃，不太好吧，我和又夏真不是那种关系……”<br>“好好好，不是就不是吧。”妈妈没细究，四处打量，“家里厨房到处都挺干净的，是又萌在打扫吗？”<br>“嗯，对啊，是我打扫的。”毕竟整天呆在家里也没啥事。<br>“我就说嘛，还是女孩子勤快，又夏那个小子在家就懒得要死，可是一点家务都不做。”<br>“是这样吗？又夏还是经常做饭的。”我为她辩解，毕竟现在的江又夏虽然是她，但是之前的江又夏是我们两个人。<br>“真的？”妈妈十分感慨，“没想到这小子也会疼人了……”<br>说完还抹了抹眼角。<br>不，我以前没那么没用吧？<br>应该。<br>“对了，又夏喉咙好了一些没？”妈妈放开我的手，拿块苹果递给我，漫不经心地问。<br>你现在才重新想起来吗？<br>“嗯，好得差不多了，不过说话还有点痛，我已经让她去复诊了，过几天大概就会好了。”我边想边说，总得先糊弄到江又夏回来。<br>“这样就好，他呀从小一感冒就很难好，我冰箱里放了瓶我自己做的酸梅，你记得让他冲水喝一点。”<br>我点点头。<br>“年轻人皮肤就是好。”妈妈看着我的腿说，“不像又夏那个男孩子，以前就黑，大腿这里还有一块难看的胎记。”<br>我顺着妈妈的手指看向自己的大腿，好像是在说根部的地方。<br>我不好意思的把衣服下摆拉了拉，虽然肩膀从宽大的领口露出来，不过毕竟比露脚好点，早知道就穿上长裤了。<br>“有吗？”我看向一边回忆着，“没有吧。”<br>妈妈视线往上移，看到我的肩膀的时候，愣了一下，接着笑起来。<br>笑得有点暧昧，看起来怪怪的。<br>我以前这里确实没胎记，我没说错啊？<br>“这样啊，是阿姨记错了吧。”妈妈咧嘴笑着，站起身，“唉，那阿姨就先回去了，又萌你记得让又夏去复诊啊。”<br>“阿姨现在就要走吗？”我紧张地站起身来。<br>怎么能现在就走，江又夏还没有回来，这次不说清楚，以后再找机会就很难了吧……<br>“本来是打算晚上再走的，不过今天工厂……又夏有和你说吗？我们家是开玩具厂的，最近订单比较多，也忙，早点回去能多处理点活。”妈妈边说边走，到了大门旁开始穿鞋，“而且现在有你在，阿姨也放心，对了，你安心住，不用给又夏租金。”<br>“那……”听到是因为家里忙，我只能把心里那些挽留的话都吞下肚子，“那阿姨慢走，我会和又夏说阿姨来过……”<br>下次遇到的时候再和妈妈说吧。<br>“好，又萌真是乖。”妈妈着开门，离开之前回过身，捂嘴笑，“年轻人爱玩没关系，安全措施要记得做，不过不做也没事，阿姨和叔叔带小孩还是挺拿手的，阿姨就不再打扰你们二人世界了，拜拜。”<br>“不……我们！”我大声辩解，“真不是那种关系……”<br>妈妈在电梯里莞尔地指了指我，又点了点自己的锁骨，轻轻地和我挥了挥手，电梯门缓缓关上。<br>电梯门有些模糊的磨砂效果，但是也能隐约看见，发呆的我，从宽大的领口露出来的左侧锁骨上，一个紫红色的点在白皙的肌肤上强调自己的存在。</p>
+<p>你们说，乌拉拉怎么样才能有马一着？(*ﾟ∇ﾟ)<br>妈妈走后，我坐在沙发上发呆。<br>门口响起清脆的钥匙声，我吓了一跳，看向大门。<br>江又夏满头大汗地冲进来。<br>大口喘气，往房里各处打量，在我身边坐下。<br>汗水的味道，急促的呼吸。<br>“妈妈呢？”<br>江又夏用手抹了抹自己的额头。<br>“回去了。”<br>这家伙老是这样抹汗，我抽了两张纸巾递给她。<br>“厂里还有事要忙，妈妈来了一会之后就回去了。”<br>她接过纸巾，没有擦汗反倒是攥在手里，略显不安地问：“那你有没有把我们的事情和她说……”<br>“想等你回来再说。”<br>纸巾你拿手里干嘛？<br>擦汗啊。<br>看着她额头和鼻翼的汗，我都觉得难受。<br>把她手里的纸巾拿回来，叠两叠，手上用力在她额头擦着。<br>“那……就是还没说了？”她拉着我一只手，问。<br>“没有。”手上的纸巾已经湿透，丢进一旁的垃0圾桶里，“等下次她过来再说吧。”<br>“嗯……”江又夏纠结地松了口气。<br>“倒也没必要这么紧张。”我故作轻松地往厨房走去，倒了杯水回来，“又不是我们故意要变成这样的。”<br>接过我递给她的水，她心不在焉地说谢谢，一口气喝完，放在桌上。<br>虽然说了不要紧张，但岂是一说就做得到，刚刚和妈妈在一起我也是紧张得不行。<br>更何况还有爸爸那里。<br>而且‘喉咙痛’也是有好的一天的……<br>衣服滑倒肩膀有点难受，我往上拉了拉，突然想起那个紫红色的小点，我用力拍了她的大腿。<br>“你干嘛？”江又夏吓了一跳。<br>我指了指肩膀：“这个！我说过不能在这种地方留痕迹吧？”<br>“哦……这情不自禁……”她心虚地笑了一下。<br>“情不自禁哦，呵，情不自禁哦。”我抱胸看她，想着怎么才能向她表达我的不爽。<br>“最多我下次不在这样了……”江又夏打着哈哈，马尾左右轻晃。<br>“脱裤子。”我说。<br>“啊？”她愣住了，脸色突的变红，“大白天的，想干嘛呢？”<br>感觉台词有点熟悉，不过我可不管。<br>“把裤子脱了给我看一眼。”<br>“至少去房间里……”<br>“就看一下，婆婆妈妈干什么呢？”<br>“你别，我自己来……”<br>“来个屁，别动！”<br>“你别这样粗鲁啊！我明明对你都很温柔的……”<br>“我手腕都被你抓红好多次，我信你个鬼！”<br>江又夏躺倒在沙发上，侧着的脸颜色通红，让她原本有些冷峻的麦色脸庞变得娇艳可爱。上衣卷起的一角露出漂亮的小腹。<br>我骑在她的大腿上，摸摸她的小腹。<br>手掌下的小腹变得有些僵硬，手感倒是挺滑的，挠了挠，江又夏躬起身：“痒。”<br>害羞，又带着些许……期待。<br>“哦。”<br>算了。<br>我继续拉着她的已经解开了腰带的裤沿。<br>裤子宽松，不难脱。<br>“屁股抬起来。”<br>一下就把裤子褪到膝盖处。<br>我在江又夏的大腿上左右找了找。<br>果然没有胎记嘛。<br>在她愕然的目光中，我从她身上下来，去开电视。<br>“你个笨蛋！”她对着我喊。<br>“你才是。”我说。</p>
+<pre><code>感觉套路有点重复了( ﾟ∀。)
+突然想起还有个蛋蛋姐妹，但是已经找不到地方塞进小说了( ﾟ∀。)
+要不另外开串写蛋蛋姐妹的故事？
+大概设定是
+双胞胎
+一高一矮的两个萝莉
+三无高个子姐姐
+优雅矮个子妹妹
+“来，喝茶。”妹妹把一小杯茶放在姐姐面前。
+姐姐端茶，杯薄，茶水有些烫手。
+吹了吹，一口喝完，略有回甘，但也不过如此。
+她还是喜欢大杯茶，可以大口大口喝，解渴。
+望向妹妹，妹妹托着茶，先是闻，嘴角含笑，似乎单从气味中便已体会到茶的滋味。
+红唇轻抿，三口才将小杯茶喝完。
+她将手里茶杯放下，又收回姐姐面前的茶杯。
+“姐姐觉得这茶怎么样？”
+妹妹笑着问。
+“好喝吧。”姐姐摇摇头，语气不太肯定。
+“是吧。”妹妹也没多问。
+姐妹在一起，对方什么样子，心里都有数。
+点点头，姐姐继续看书。
+过了一会，妹妹再次将一杯茶放在她面前。
+不是她的杯子。
+为什么那么肯定？
+因为一红一蓝，蓝的上边画着鱼，红的上边画着花。
+是去年生日她送给妹妹的。
+也只有两人喝茶的时候妹妹才会拿出来用。
+刚刚是蓝杯，现在是红杯。
+端起来，姐姐心里莫名的有些在意，被子在手上转了转，转到有鱼图案的那边，有些紧张的把嘴唇贴上去，小口小口地喝。
+四口还是五口？
+姐姐不太记得，有些依依不舍地把杯子放回桌面。
+妹妹紧盯着姐姐的一举一动，等到姐姐把杯子放回桌上，才垂下眼睑，避开目光的相接。
+妹妹端起自己的那杯茶，转到有花的那边，轻轻的把唇贴上去。
+有点烫，但舍不得分开。
+一口一口的抿，比刚才喝得更慢。
+姐姐看着妹妹，下意识甜甜嘴唇。
+等到妹妹把杯放下，姐姐重新把视线放回书页上。
+“一页要看这么久吗？”
+听到妹妹的话，姐姐才意识到这一页已经看了很久。
+“有点难懂。”姐姐说。
+“这样啊。”
+“嗯。”
+“我啊。”
+“嗯。”
+“最喜欢和姐姐一起。”妹妹顿了一下，“喝茶的。”
+“嗯。”姐姐觉得自己的心脏随着妹妹这一顿，被突然扯了一下，有些痛。
+“嗯。”姐姐又应了一声。
+在有些寂静的房间内，姐妹继续喝着，品味着这烫人又让人回味无穷的茶。
+</code></pre>
+<p>那之后，江又夏开始闹脾气。<br>把被我脱下的裤子重新穿好，曲着腿缩在沙发的角落里，面无表情地看电视。<br>下巴抵在膝盖上，时不时看我一眼，又重重的用鼻子呼一下气，别开脸。<br>无声的气愤。<br>好有意思。<br>我假装没注意到，回房间。<br>悄悄探出头。<br>她看向房间的方向，抿着嘴，身子摇啊摇，然后一下倒在沙发上。<br>看来是真在闹别扭了。<br>但是仔细想想，我也没得罪她什么啊？因为脱她裤子生气啦？<br>刚刚也解释过啦，说是妈妈问我你大腿有没有胎记，我确认一下。<br>但还是在生气。<br>明明每天晚上都自顾自地说裸睡舒服，自己脱光之后把我也扒光？<br>现在被我硬脱了一下裤子，就生气啦？<br>太小气了吧？<br>嗯……不过之前毕竟受了她那么大的照顾，也一直在靠她去上课和交际来维持“江又夏”这个身份的正常存在。<br>而且她还在煮饭……<br>嗯……<br>要不，哄哄？<br>我踱步，从房间走出去，往她身边靠过去。<br>“江又夏。”<br>没理我，头埋在沙发里。马尾偏向一边，露出纤细的后颈。<br>因为她不安分的动作，宽大的衬衫还露出了一边的肩膀。<br>“江又夏。”<br>还是没理我。<br>我在她头侧的沙发坐下来，思考着要怎么做。<br>毕竟哄人这种事我还是没做过。<br>我就坐在那里。<br>大概是觉得我很久没动，她抬起头，怨怨地看向我：“我生气了！”<br>“我知道。”我点点头。<br>“你不打算哄哄我？”她发出‘哼哼’的声音，向我表示着不满。<br>“在想怎么哄。”我老老实实地说。<br>总之，先抱住她？<br>我俯下身，抱住她：“虽然不知道你为什么生气，不过我错了，可以原谅我吗？”<br>“你这样只是在压着我而已吧！”她展开蜷缩的身体，翻过身来，在下方看着我。<br>我俯视她的脸，因为离得近，些许汗水的气味混在她温热的气息扑面而来。<br>我吞了吞口水，手撑着，因为视线倒转，她的嘴唇在我眼前，细腻的唇纹清晰可见。<br>唇色红润，如被沾湿的玫瑰，娇艳欲滴。<br>“说点会让我开心的话。”她向我展现她心里的不满。<br>“我怎么知道你听到什么话会开心。”<br>“那就亲我。”嘴唇撅起来，伸出手搂住我的脖子。<br>心脏剧烈的跳动。<br>“手放开啦，等一下我磕下去了，我告诉你。”我说，但也没像以往一样挣扎，总归是来哄她的，这次就姑且按耐一下心中的羞涩感。<br>她没说话，只是盯着我的眼睛。<br>亲就亲呗，又不是没亲过。<br>我弯下腰在她唇上轻点一下。<br>“满意啦？”<br>她抿抿嘴，嘴角有些上扬：“就这？”<br>这家伙就是这样，得寸进尺。<br>我微微低下头，从江又夏圈着我脖子的手里逃出来，就在她以为我要跑掉，我转身跨坐在她身上。<br>在她愣神的时候，按着她的肩膀，让她重新躺回沙发，歪着头，吻下去。<br>因为吃惊而微张的嘴，连反应过来的时间都没有，就被我的舌头钻进去了。<br>她瞪大眼睛，手紧抓我的袖子。<br>其实我也不知道接下来该怎么办……反正就这样吻着，舌头时不时舔舔她的上颚，又和她的舌头纠缠。<br>等到胸口变闷，脑子也混沌，我撑着她的肩膀和她分开，用力喘气。<br>“怎……怎么样？满意了吗？”我用力呼吸，盯着她迷离的眼睛。<br>“还……还行。”她的胸口剧烈的起伏，缩着肩，脸也发红。<br>我用力吸一口，再次吻上去。<br>舌头描着她的唇，又继续吻了上去。<br>分开。<br>“现在呢……”<br>“呃……呃……嗯。”<br>模糊不清的回答，让人不快。<br>再次吻上去。<br>她的身体似乎已经失去力气，手勉强拉着我腹侧的衣服。<br>感觉到她身体轻轻一颤，再次分开，有些疑惑的看着她。<br>“现……现在呢？”<br>“满……意了。”她声音细不可闻，似乎害羞到不行。<br>我衔着她的上唇，轻舔了她的唇峰，然后趴在她的身上。<br>“哄你好累啊。”这样跟她抱怨。<br>她没说话，只是抱着我。<br>“好饿啊。”我说，“出去吃饭吧。”<br>“好……不过先让我去换一下……裤子……”<br>我摸摸她的上衣：“没流汗啊。”<br>“你别管……”她吞吞吐吐地说着，从我身下爬起来回房间，用力的关上房门。<br>　　<br>“你就不觉得热吗？”<br>我用力甩了甩她牵着我的手。<br>“不是有空调嘛，不热。”江又夏捏捏我的手。<br>总觉得哄过之后变得有点黏人了。<br>我们现在正在上次来过的商业广场，并排站在入口的一个角落里。<br>吃饭，买衣服。<br>本来我是强烈要求在网上买就好，无奈答应过她，让她决定，就跟着一起出来了。<br>牵手的事先放在一边，在那之前还有更重要的事。<br>“不准给我买裙子。”我到她跟前，恶狠狠地说。<br>不过由于身高差，由下至上的看着她，总觉得没气势。<br>“知道啦知道啦。”她漫不经心地说，“你一路上说过不止一百次了，不会给你买裙子的。”<br>虽然有点不放心，但现在也没办法。<br>我只能不甘心想着等一下要多多留心才行。<br>至于说为什么到了商场还要傻站在门口，其实是在等人。<br>“纪律委员迟到了吧……”我小声抱怨。<br>我和江又夏是在等纪律委员，那个安什么来着。<br>“安芝可能路上耽搁了吧。”江又夏说，“她一般都挺守时的。”<br>“哼。”我不爽地盯着商场大门，“我肚子饿了。”<br>“好好好，再等一会，呆会买奶茶给你喝。”江又夏说。<br>“你在哄小孩嘛！”我用肩膀撞了她一下。<br>“没有啊。”她后踏一小步，稳住身体，抿着嘴笑。<br>又等了一会，纪律委员终于来了。<br>“安芝！”江又夏伸直手挥了挥。<br>纪律委员循着声音望过来，看到我们后，小跑着到我们身前：“对不起对不起，今天不知道为什么人那么多，连续两辆公车都满人，直接开过去了……”<br>缓了一会，她拿了张纸巾擦了擦额头和鼻尖的汗水，才和我们打招呼：“又夏，等很久了吗？又萌，好久不见。”<br>打招呼的时候朝我轻轻摆了摆手，接着马上面向江又夏。<br>江又夏微笑着摇了摇头：“没事，不算久。”<br>和对着我的时候带点痞气不同，面对纪律委员倒是一脸和善。<br>啧，都等了快半个小时了还不算久，我要吃饭啦。<br>纪律委员穿着一件青苹果绿的连衣裙，白色的娃娃领带着些许蕾丝花边，腰上微微微微一收，彰显着自己纤瘦的腰身，清新，又有着着些许俏皮的感觉。<br>“那先去吃饭吧。”江又夏说着，牵着我往手扶电梯走去，纪律委员在我们身后。<br>我悄悄往身后看。<br>大概是一路跑过来的，纪律委员看起来精心打理过，有些许蓬松感的头发变得有些凌乱，现在她正借着一旁的橱窗稍微整理一下。<br>嗯，倒也没必要那么急啦。<br>虽然心里这么想，但我是不会开口去和她说什么的。<br>一会之后，纪律委员走快两步，到了我的身旁，自然而然的牵起我的另一只手。<br>嗯？<br>她隔着我和江又夏说话：“要吃什么呢？”<br>“四楼的茶餐厅。”她说。<br>“那家店还挺不错的。”纪律委员说，“又夏喜欢茶餐厅吗？”<br>“姐姐只要是吃的她都喜欢。”我替江又夏回答。<br>手上稍微用了用力，没从纪律委员的手里挣脱出来。<br>“又萌也喜欢茶餐厅么？”她笑眯眯地问我。<br>“还行。”我说。<br>“又萌喜欢喝那里的丝袜奶茶。”江又夏说，“上扶梯了。”<br>她松开了我的手，第一个上了手扶电梯，我搓搓手指，想要跟在她身后上了电梯，却被拉了一下。<br>“纪律委员你不热吗？”我把还牵着的手拿到纪律委员面前问她。<br>“啊。”她一下松开手，轻咳了一声，“我叫安芝啦，又萌你是记不住我的名字吗？”<br>“反正你也是纪律委员。”<br>“你是在记仇吗？上次把你抓出来是老师哦，和我没关系啦，我只是去传话。”<br>“我没那么小气！”<br>“那你叫我安芝姐姐。”<br>“这是两回事吧？”<br>“我上次救了你忘了吗？”<br>“我才不叫！”<br>“那你也叫又夏姐姐了，我和她是同学，你不也得叫我姐姐。”<br>“我！”<br>我和你也是同学！<br>不过这句话是不能说出来的，说出来也没人信。<br>而且我也不想把这个秘密和家人之外的人分享，谁知道他们会怎么看我。<br>“我才不叫！”我撇开脸不看她。<br>“为什么啦……”纪律委员打算过来拉我的手，不过这时候刚好江又夏放缓步伐，插入到我们两人之间，将我们隔开。<br>“你们不热吗？”江又夏说，“安芝你也别逗又萌了。”<br>“又萌的反应真的很可爱，又萌是初中生吧？初几？”安芝双手，扶着江又夏的手臂，探出头问我。<br>初中……<br>“我……”我刚要开口，就被江又夏抱住，还捂住了我的嘴。<br>“又萌今年是初二了。”江又夏自作主张的替我回答，“就是这一家了。”<br>我们三人停在四楼的一家名叫“粤风味”的店家前，因为节假日，人还挺多的。<br>“里边还有位置，我们进去吧！”安芝踮起脚尖，伸长脖子往里边看了看，有些兴奋的对我们说。<br>我在江又夏怀里用力挣扎。<br>不过人很多，不想不小心碰到路人，我没敢用力做大动作，一下没挣脱出来。<br>什么叫初中生！<br>老子是大学生好吗！<br>“冷静点，现在是在外边，安芝也不是故意的，最多回家之后我再补偿你吧。”江又夏抱着我在我耳边轻声说，“等一下绝对不会给你买裙子，你不喜欢的我都不给你买好不好？”<br>我没再挣扎，她看我冷静下来，也放开手，我瞪了她一眼。<br>自顾自地往店里走起。<br>“你好，几位？”<br>“1位！”我生气地走进店内。<br>“三位啦，三位，我和她一起的，还有她。”江又夏说着指了指安芝。<br>“哼。”我率先坐下，由于是四人桌，江又夏坐在我身边，纪律委员坐在她对面。<br>纪律委员盯着我看了好一会，我皱眉瞪了回去：“干嘛？”<br>“叛逆期？”<br>“你才叛逆期！”</p>
+<p>点完菜，纪律委员盯着我直看。<br>“干嘛？”我瞪了她一眼。<br>她倒是笑了一下：“又萌真的很可爱。”<br>这女人脑子有毛病吧。<br>服务员，麻烦加一道猪脑给她补补。<br>“感觉很适合那种吊带连衣裙。”她又说。<br>“我不穿裙子！”我用力拍了拍桌子。<br>周围几桌都回过头来看我，不过我现在可没空理他们，看了一眼坐在我旁边的江又夏。<br>“嗯，又萌不喜欢穿裙子，等一下麻烦安芝你帮她挑几条裤子就好了。”江又夏给我们各倒了一杯茶。<br>我喝了一口，不好喝，我的丝袜奶茶什么时候上啊。<br>“为什么啊？”纪律委员大受打击，“又萌你穿那种吊带裙一定很可爱，不然穿短裙也不错……你等一下我拿给你看一下你就懂了！”<br>“我不懂，也不想懂，你不要拿给我看！”我伸出手挡住她拿给我看的手机屏幕，“我不要穿裙子！”<br>“你看一下啦！”纪律委员站起身，拨开我的手，推到我眼前。<br>这真的是不看也得看了。<br>看起来非常宽松的米色连衣裙套，模特本身就有些娇小，穿上这件裙子之后显得更加可爱。<br>“看像这种娃娃裙，又萌穿起来肯定可爱到爆！”<br>“确实。”江又夏也靠过来看，最后认真地点了点头。<br>“确你个头！你答应过我什么你忘啦？”我拍了她肩膀一下。<br>“又不是真的买了，我就看一下。”<br>“不准看啊，给我闭上眼睛。”我伸手捂她眼睛。<br>“但是你看这种，作为一个女孩子你不会心动么？”纪律委员又划过去，穿着薄荷绿连衣裙，米白色毛衣马甲，手上一个白色帆布包，简约清新。<br>“有病吧，大夏天穿毛衣。”我看着纪律委员。<br>“但是好看啊！”她说。<br>“那你自己买去穿呗。”我推开她的手机。<br>“我也想啊。”纪律委员有些泄气，“但是我太高了，这些可爱风的穿起来感觉就像在装嫩。”<br>“那真是可惜了。”我面无表情地接过服务员送上来的丝袜奶茶，喝了一口。<br>顺滑，凉爽的口感。<br>“确实，我也觉得小姐姐不适合连衣裙，像她这种看起来可爱但实际上有点毒舌的，还是适合那种酷酷的风格，短裤会比较好！”一个听起来有些熟悉的声音，我望过去，差点被呛死。<br>“咳……咳……咳……”我捂住嘴，指着她用力咳嗽。<br>江又夏在我身边，也顾不上身上被我喷了几点，连忙帮我拍后背，边拍边看向来人：“你是？”<br>粉色衬衫，左胸口袋一个圆形的刺绣图案，下摆扎在黑色百褶裙里，勾勒出纤细腰身，黑色短裙下白皙的双腿随意的分开站着：“我是小姐姐的颜粉哦！”<br>“偷……偷拍狂！”我好不容易喘过气来，指着那家伙说。<br>听到我这么一说，江又夏挡在我的身前，皱着眉头看她。<br>纪律委员也是连忙收回自己的手机，警惕的看她。<br>“唉！”她急了，撑着桌子靠过到我跟前，“我不是偷拍狂啦，我那次可是问过你了，也没拍成！”<br>“要不是司机师傅阻止你，你会那么容易就放弃吗？”我抽了两张纸巾擦嘴，又抽了两张帮江又夏擦了擦被我喷到的地方，但是很难擦。<br>“哎呀，最后不也没拍嘛。”因为被江又夏挡着，她踮着脚，伸长脖子看，“还有小姐姐我叫柏静雅。”<br>“人和名也差太远了！”<br>“一样好吗。”脖子上的银白色的项链垂下，轻轻摇晃，柏静雅不满地说，“不准吐槽我的名字！”<br>“好了，呃，柏静雅，我们现在就要吃饭了，你如果没事可以离开吗？”纪律委员看了一眼江又夏，说。<br>“别呀。”她倒是不客气地绕道纪律委员另一边坐下来。<br>“喂！”江又夏皱眉看向这个坐在我面前的家伙。<br>“我是刚到还没吃饭，我们就一起吃呗！”柏静雅直接把身上的包放在下，“我请你们吧，算是对小姐姐你上次的赔礼道歉吧！”<br>“大可不必！”我放弃继续擦江又夏身上已经晕开的奶茶渍，“都是你害的，你看这衣服！”<br>“啊……抱歉，不过你们等一下是要去买衣服吧？我也一起去，买一件赔给这位姐姐吧。”柏静雅毫不客气地再拿过菜单，“这个虾饺你们有叫吗，很好吃哦。”<br>我们三人面面相觑。<br>“你太过目中无人吧？”江又夏敲了敲桌子。<br>“姐姐别这样嘛，我上次也是太激动了，又怕以后都见不到小姐姐了才会那样，现在不会了！而且就吃个饭，也不会怎么样啦。”<br>柏静雅那边刚和江又夏说完话，马上张大眼睛，期待地看着我：“对了，小姐姐我还不知道你的名字呢！”<br>“我叫江又夏，她是我妹妹江又萌，这位是安芝。”江又夏在我开口前，先和她介绍了我们。<br>“又萌，小姐姐连名字都很萌呢！”柏静雅有些兴奋的轻摇身体。<br>你一秒都静不下来，叫什么静雅？<br>就在她热火朝天的单方面和我们聊得火热的时候，一个男生走了过来：“静雅，你怎么在这？我们那边菜都点得差不多了。”<br>“叶伦！”柏静雅看着男生恍然大悟，“你们吃吧，我和她们一起吃了。”<br>“啊？”那叫叶伦的男生也是反应不过来，“不是说好我请你吃饭……”<br>“没事没事，下次也行，难得我又碰上小姐姐了，可不能那么容易就放走了！”她说着回过头来看我。<br>“不，你还是回去吃吧……”我说。<br>江又夏和纪律委员同时默默点头。<br>“我想和姐姐你们吃饭啦。”柏静雅伸手过来拉住我放在桌上的手，“好不好……”<br>她的手和我的手差不多大，两只手完整的包着我一只手，在桌面轻轻晃着。<br>我正要说她，让她放手，江又夏先开了口：“你放开。”<br>伸手过来想把柏静雅的手拨开，不过没成功。<br>“好不好嘛……”还带着撒娇的语气。<br>这家伙也太胡搅蛮缠了！<br>“好好！你先松开！松开！”江又夏感觉比我还紧张，就想让她松开我的手。<br>“好耶！就是这样，叶伦你们几个自己吃吧，我就在这里了！”柏静雅轻轻推了推叶伦，让他快点回去。<br>叶伦有些茫然，愣了一会，想说什么，嘴巴微张，最终放弃，点了点头，和柏静雅告了别回自己那桌。<br>柏静雅有些开心地望着我，抿着嘴笑。<br>“干嘛？”我问她。<br>“我在想小姐姐……啊，又萌姐姐等一下要买什么衣服呢？”她说。<br>“要你管……等一下，你真的要和我们去买衣服吗？”<br>“当然！”她点点头。<br>“你！”江又夏似乎被气得不轻，“我们又不太熟，买衣服这种事我们自己去就好了。”<br>“一起逛一下就熟了嘛。”<br>“静雅，为什么一直叫又萌姐姐呢？感觉你应该是高中生吧？”一旁的纪律委员突然问。<br>“因为又萌姐姐不是大学生吗？上次我叫她小妹妹她还生气了。”柏静雅说。<br>纪律委员忍不住捂嘴笑：“大学生！她这样说你就信了吗？”<br>我嘴角抽搐。<br>“不然呢？”柏静雅有些疑惑。<br>“她才初二啦。”纪律委员说。<br>“我就说，果然是小妹妹嘛。”柏静雅和之前在公车上一样，非常愉快的就接受了。<br>“我！”我瞪了她们，不过却没引起她们重视，对面两人依旧开心地笑着。<br>我看了一眼江又夏。<br>只见她面无表情，不太开心。<br>刚好上菜了，服务员上菜的动作将我和江又夏，纪律委员和柏静雅之间的空气隔开。<br>“你看她们！”我贴着江又夏的耳朵气冲冲地说。<br>江又夏缩了缩脖子，轻应了一声。<br>看她没啥反应，趁着对面两人没注意我们的时候，我靠过去在江又夏耳朵上轻轻咬了一口。<br>滑滑的，口感还不错。<br>“你干什么？”江又夏被我吓了一跳。<br>“不准给我发呆，都怪你，现在我真成小妹妹了！”<br>“也……没啥关系吧？”她摸摸自己耳朵被我咬的地方，脸有点红，嘴角有些上扬。<br>“哼！”就每一个靠谱。<br>不理她们。<br>我拿起筷子对准眼前的虾饺，自己开始吃起来。<br>一口气连吃两个，顺便把剩下两个也夹到自己碗里。<br>饿死你们！<br>“唉，又萌喜欢吃虾饺吗？我就说这里的好吃嘛，我再点几盘给你吃！”<br>喂！<br>我本想阻止，但是嘴里有东西，结果眼睁睁的柏静雅又点了五屉虾饺，而且很快就端了上来。<br>“快吃快吃。”柏静雅殷勤地说。<br>“吃你个头！”我说。<br>气得我又吃了一屉虾饺。</p>
+<hr>
+<p>一顿饭下来，柏静雅倒也没那么闹了。</p>
+<p>“又萌试试这个，很好吃哦。”柏静雅笑眯眯地给我夹了菜，一次直接把筷子递过来，想直接喂我，被江又夏强行夹走。<br>“她又不是小孩，她自己会夹菜，还有给我用公筷！”江又夏说。<br>“唉，又夏你也快吃嘛。”起初看起来还有点矜持的纪律委员，在柏静雅的带动下也变得积极，不停给江又夏夹菜。</p>
+<p>我因为碗里一直都有菜，没空说话，不过丝袜奶茶真好喝啊。</p>
+<p>柏静雅来了之后，又加了好几道菜，四个人好不容易才吃完，江又夏冷着脸，接过纪律委员把叠好的纸擦了擦嘴。</p>
+<p>我半躺在椅子上，摸着肚子，好撑啊。<br>“坐好。”江又夏拉着我的手，拉拉我衣服的下摆，“肚子要露出来了。”</p>
+<p>柏静雅抽了纸巾递给我，不过被江又夏抢走，直接上手帮我擦嘴。<br>力气好大，嘴唇会痛啊！<br>我不满地看她，结果被她瞪了回来。</p>
+<p>不，我又没做错什么，干嘛瞪我？</p>
+<p>确认大家都吃完了，江又夏就起身结账。<br>也不能真让一个高中生请我们吧。<br>看着桌上好不容易吃完的几笼虾饺，我有点心痛，这个很贵的。</p>
+<p>“我来我来。”柏静雅迅速站起身，小跑着到柜台。<br>江又夏没理她，把手机递给收银员，让她扫码。<br>不过收银员看到柏静雅走过去，又说了几句话，柏静雅就拉着江又夏回来。</p>
+<p>“怎么了？”我把剩下的奶茶一口气喝完。<br>唉，不行了，不行了，肚子好饱。</p>
+<p>江又夏表情复杂：“嗯……”<br>“都说我请你们当做给你道歉了。”柏静雅在江又夏的位置上坐下来。</p>
+<p>“但是，也没看到你付账吧。”纪律委员疑惑的看着她。</p>
+<p>“回去你自己那边坐啦。”江又夏不爽地推了推她的肩膀。</p>
+<p>“就坐一下，反正都要走了不是吗？”柏静雅纹丝不动，让江又夏坐她位置，于是我和江又夏就变成面对面坐了。</p>
+<p>悄悄在桌下面踢了踢她的脚，没理我，夹住她的小腿，晃了晃，总算看了我一眼，又马上回过头去看柏静雅，冷冷的脸总算缓和了一些。</p>
+<p>“这店是我们家开的，说一下就好了。”柏静雅有些得意地对纪律委员说。</p>
+<p>“你家开的？”纪律委员睁大眼睛，吃惊地说，“这家是连锁店吧？”</p>
+<p>“是啊，不过市内的才是我们家自己开的，其他地方大部分就都是加盟店了。”柏静雅说。</p>
+<p>“没想到你竟然是有钱人。”我感慨道。</p>
+<p>“什么叫没想到，明明我这么充满高雅的气质。”柏静雅说。</p>
+<p>看不出来。</p>
+<p>“那你同学还来这里请你吃饭？”江又夏问。</p>
+<p>“他要请的，我没理由不让他请吧，反正最后给他打个折就好了。”柏静雅不在意地说。</p>
+<p>“他们好像也吃完了，一直在看这边，是在等你吧？”纪律委员看向墙边的一桌，对她说。</p>
+<p>“是吧？”柏静雅朝他们挥挥手，“好像接下来是要去唱歌。”</p>
+<p>“那你快去吧，我们就这样永别了。”江又夏冷冷地说。</p>
+<p>“我要和你们一起去买衣服啦。”柏静雅凑到我身边。</p>
+<p>我推开她靠得有点近的脸：“我们就随便买几件，用不着那么多人，你快和同学去玩吧。”</p>
+<p>“又萌你好无情啊，明明才刚请你吃饭。”柏静雅虽然这样说，但是脸上却是非常开心地抱过来。</p>
+<p>江又夏也站起身，帮我把人按回去。</p>
+<p>纪律委员无奈地摇摇头：“那你也要和同学说一下吧？”</p>
+<p>“对哦，我去和他们说一下，你们等我啊！”柏静雅把背的包塞我怀里，小跑着到同学那边，虽然不知道她说了什么，她的几个同学愣住，还没说话，她就跑了回来。</p>
+<p>“我们出发吧！”在我们同样还没回过神的时候，她拿过我怀里的包，牵着我的手拉着往外走。</p>
+<p>“喂！”<br>江又夏烦躁的声音在我身后响起。</p>
+<p>“又夏，你等等我啦。”纪律委员的声音。</p>
+<p>总觉得接下来有点麻烦。<br>大概。</p>
+<hr>
+<p>手抓着黑色的门帘，但是实在提不起勇气拉开。</p>
+<p>“又萌，好了吗？”帘外外传来柏静雅的声音。</p>
+<p>吃完饭，我就被拉着直奔一楼的服装店，她们三人一进门就商量着拿了一套衣服让我进去试。</p>
+<p>我现在就在试衣间，心脏剧烈地跳动，再次打量了全身镜中的自己。</p>
+<p>还是不太习惯，虽然纪律委员和柏静雅给我选的是比较宽松的衣服，也挺舒服的，但是就是觉得怪怪的，不如我原来那些肥大的T恤和短裤。</p>
+<p>“你不要催她。”这次是江又夏，“让她习惯一下。”</p>
+<p>“这个有啥好习惯的？还是说又萌你不好意思，那我进去……”帘子微微晃动，吓了我一条，连忙用手拉住。</p>
+<p>帘子一边是固定的，于是我双手死死的拉住另外一边。</p>
+<p>“等一下，不要随便进去。”纪律委员语气变得有些严厉，“这里是公共场合，不要开这种玩笑！”</p>
+<p>“呃……对不起。”柏静雅老老实实地道了歉。</p>
+<p>我深呼吸了几次，下定决心，不甘心地说：“催什么催，我第一次穿这种衣服，多花点时间不行啊！”</p>
+<p>拉开门帘，看到的是江又夏冷着脸和纪律委员站在柏静雅两边，一人架着她一只手。<br>本来还在挣扎的柏静雅看到我出来，也不乱动了，三个人同时看过来，让我心里又有点发虚，脸发烫。</p>
+<p>“你……你们倒是别看着不说话啊，怪慎人的……”我扭头假装去看试衣间外的大镜子。</p>
+<p>白色的polo短袖，一件颜色略深的背带牛仔短裤，polo衫胸口有一次粉色兔子被背带挡住一半，像悄悄探出头打量一般。<br>原本扎成一束小马尾，现在解开变成刚好盖住耳朵的短发。</p>
+<p>“又夏姐，安芝姐，你们怎么看。”柏静雅轻轻地呼了一口气，像是在感慨一般。</p>
+<p>“嗯，怎么说呢……”纪律委员看着我，点点头。</p>
+<p>“呃……”江又夏好像呆住了，眼睛里眨也不眨。</p>
+<p>“我就说不适合……”我左手垂着，右手从身前环着肚子，抓着左手的手臂，左手手指搓着一旁的门帘。</p>
+<p>还是换回来算了……</p>
+<p>“这不是适不适合的问题。”纪律委员松开柏静雅，走到我跟前，半弯着腰，将我一缕垂着的刘海别到耳后。</p>
+<p>和江又夏那麦色，看起来总带着些许性感的肤色不用，纪律委员的皮肤白皙而干净，棕色的瞳孔灵动的在我脸上打量着。</p>
+<p>“太近了。”我心脏猛地一跳，忍不住往后退了一步。</p>
+<p>“又夏你觉得呢？”纪律委员回过头问。</p>
+<p>“可爱……”江又夏喃喃地说，似乎还没回过神来，不过也是和纪律委员一样，靠了过来。</p>
+<p>“啊？”我吓了一跳，又退一步，回到试衣间里。<br>脸烫到不行，眼光在三人身上飘个不停：“你……你们在胡说什么！”</p>
+<p>“虽然觉得又萌穿起来会好看，但是没想到这么可爱。”柏静雅兴奋地走过来，这下变成三人把我围堵在试衣间的似的。</p>
+<p>而且她们三个还都比我高，头上的灯光将几人的影子都罩在我身上，总觉得有点不妙……</p>
+<p>“这……这个上厕所也太不方便，我还是买点普通的裤子和t恤……”我说着打算拉上门帘，但是被江又夏猛地按住。</p>
+<p>“你干嘛？”我瞪了她一眼。</p>
+<p>“再看一会……不，就买这套吧……”江又夏感觉眼睛里放光。</p>
+<p>“不要。”</p>
+<p>“说好的我做主的，而且这也不是裙子，对吧？”江又夏拿出了我们之间的约定。</p>
+<p>我咬着下唇，虽然心里非常不甘愿，只能点头同意。</p>
+<p>“知道啦，快放手，我换回去。”我掰着她的手指，心想着反正就一套，放着不穿也没问题。</p>
+<p>“换回去做什么，接下来还有其他的衣服要试呢。”江又夏微笑着看着我。</p>
+<p>“不是一套就好吗？”我向她抗议，然后靠到她身边小声的说，“我们没这么多钱吧？”</p>
+<p>“没事，妈妈不知道为什么发了‘加油’后，又发了个大红包给我，所以预算充足。”江又夏朝我竖起拇指，“而且一套怎么够穿呢？”</p>
+<p>“那就试一下这件吊带上衣。”柏静雅在我和江又夏说话的时候，跑到外边拿了好几件回来，纪律委员也是一副心领神会的模样，迈着轻快的步伐往外边展示区走去，但我觉得那脚步就像一步一步的踩在我的心脏上。</p>
+<p>我接过那件背心：“这不就两根绳子！”</p>
+<p>“你先试试嘛，和polo衫换一下，看看效果。”柏静雅语气欢快，手上的衣服都往我怀里塞，“你都试试，然后我们再决定嘛。”</p>
+<p>“我不要，太麻烦了。”我猛地摇头，想把衣服都还回去，这时候纪律委员也已经回来，而且手里提着一个篮子，感觉比柏静雅拿给我的都多。</p>
+<p>“纪律委员你干什么？”我抱紧怀里的衣服，警惕地看着她。</p>
+<p>“又萌你不是想要买t恤和短裤吗？我去帮你拿点过来试试啊。”纪律委员把一篮子衣服拿到我的眼前，笑眯眯地说着，篮子里各种颜色的衣服都有，而且这个数量，全都试下来，一整个下午都没了！</p>
+<p>“试着么多衣服不好吧？多给人添麻烦……”我努力挣扎。</p>
+<p>“没事，没事，这件店的店面是我们家的，店长我认识，她不会介意的。”柏静雅拍着胸口给我保证。</p>
+<p>“你干脆说这个商业广场都是你家的算了！”我气急败坏地对她说。</p>
+<p>“也没有全部啦，就是有点股份。”柏静雅掰着手指给我看，“大概这么多。”</p>
+<p>你是哪来的剧情金手指吗？</p>
+<p>江又夏接过纪律委员手里的篮子，推着我进到试衣间里。</p>
+<p>“不要啦……”我拉着她的手，抬头看着她的眼睛。</p>
+<p>江又夏和我对视着，像忘了眨眼一样愣着，又突然回过神来，舔了舔自己的嘴唇：“也没让你全都试，你就多挑两套，毕竟家里的基本都不能穿了，总还得换洗的……”</p>
+<p>可恶，最后还是得试啊！</p>
+<p>抢过她手里的而篮子，把她推出试衣间，朝着试衣间外的三人‘哼’了一声，拉上帘子，开始从篮子里挑一些简单的款式出来。</p>
+<p>“就是这个，就是这个，有点傲又有点乖，而且还非常萌的感觉！”帘子外，柏静雅‘啊啊啊’的边叫边说。</p>
+<p>“同感。”纪律委员说。</p>
+<p>“同感。”江又夏说。</p>
+<p>同感你们个大头鬼。</p>
+<hr>
+<p>还是背带裤，但这次是浅色的牛仔长裤，白色的背心。<br>看起来干净而简约，我还蛮喜欢的。</p>
+<p>“但是上厕所还是很麻烦吧？”我拉了拉背带，问她们，“做工也不太行，前边这个袋子也还一边没缝上？”</p>
+<p>我拉着折了一个角的胸前袋子给她们看。</p>
+<p>纪律委员有些为难地苦笑：“又萌能别再说上厕所的事吗？而且外出也不是整天都要上厕所吧？”</p>
+<p>“对哦，又萌你就不能把重点放在好不好看上吗？”柏静雅也附和着，“袋子这个是衣服的设计啦！”</p>
+<p>“还行吧。”我上半身转了转，看向江又夏，“至少挺凉快的。”</p>
+<p>毕竟是背心嘛，而且因为有背带，也不用再系皮带了，感觉挺宽松的，前面这个袋子……这边没缝上，感觉不能装手机啊。</p>
+<p>伸出手，左摇右摆。<br>活动也挺方便的。<br>“就是感觉有点幼稚？”我在镜子前举着手，皱着眉头，看着镜子里那个一脸不爽的自己，“有点蠢？”</p>
+<p>“不会啦，我觉得很好看。”江又夏趁机戳了我的抬起手时露出的腋下，“这套很可爱，就再买这一套吧。”</p>
+<p>“呵，谢谢您了嘞。”我夹着自己的胳膊，离她远了几步，躲开要抱过来的柏静雅，回试衣间把衣服换回来。</p>
+<p>打开试衣间的门帘，把要买的那一购物篮的衣服递给江又夏，我自己提着不要的那一篮找到店员：“不好意思，这是试了之后觉得不合适的，麻烦你放回去吧。试的有点多了，不好意思。”</p>
+<p>一直站在旁边的店员小姐一脸满足的笑着：“没关系哦，小妹妹你再多试几件也不错啊。”<br>另外一个店员小姐也跟着点点头，说什么‘大饱眼福’之类意义不明的话。</p>
+<p>我皱着眉头回到江又夏她们身边，看了柏静雅一眼，心想着和她有关系的人是不是都是这样奇怪的。</p>
+<p>“我们去买单吧。”江又夏拿着购物篮一马当先地准备离开，看起来有点急。</p>
+<p>纪律委员和柏静雅点点头，跟在江又夏身后打算去柜台。</p>
+<p>“等一下！”我跑到江又夏身边抓住她衣服下摆，然后拦下其他两人，“就只买我的？”</p>
+<p>纪律委员不解：“不是吗？又夏说今天就是来帮你买衣服的。”</p>
+<p>我半眯着眼睛看向被我拦住脚步的江又夏，她有些心虚地别开脸。<br>你这家伙又算计我！</p>
+<p>“姐姐。”我微笑着朝她装模作样地说，“不是说好一起买的吗？”</p>
+<p>虽然我叫姐姐的时候，江又夏脸红了一下，不过后边又开始打着哈哈：“我只说过一起来买而已，没说过我也要买哦。”</p>
+<p>“你这是诡辩！而且你不也没多少件自己的衣服吗？”我可不会被她就这样糊弄过去的，“你也买！”</p>
+<p>“还不是有之前的衣服嘛，我还穿这些就好。”江又夏指了指穿在身上的衣服。</p>
+<p>这些是我之前穿的衣服，上次我们一起量了一下身高，她只比我原来矮了不到五公分，穿上之前的衣服，虽然有些宽，但是健康的麦色皮肤让她穿着却有种随意的潇洒帅气。</p>
+<p>我对着柏静雅说：“柏静雅也还要赔你一件衣服对吧？”</p>
+<p>柏静雅点点头：“对啊，又夏姐，刚刚弄脏你的衣服我说过要买一件赔给你的。”</p>
+<p>“那下次吧。”江又夏从我手里扯着，想要抢回自己的衣摆，我可不会就这样算了，直接上去抱住她的腰。</p>
+<p>这样就让江又夏跑了我可是不甘心的，怎么都要让她尝试一下我的感受！</p>
+<p>“姐姐，就让柏静雅和纪律委员挑几件让你试试嘛！”我抱着她往试衣间拉过去。</p>
+<p>江又夏无可奈何地拍拍我的手：“我知道了，你放手，我买还不行吗？”</p>
+<p>纪律委员早就跃跃欲试，拉着兴致缺缺的柏静雅去挑衣服了。</p>
+<p>“这下要超预算了。”江又夏用空着的那只手捏我的脸。</p>
+<p>“哼，我之前才看过手机，明明妈妈还汇了点钱过来！”虽然那个‘特别经费’让人觉得有点怪，不过好歹是有钱了。<br>我十分得意的抱胸，虽然看她还要仰着头，但是气势不能输，我就算现在不到一米六，至少气势上是一米八。</p>
+<p>江又夏把篮子放在一边，双手齐用一起揉我的脸：“你就不怕回去被我欺负回来吗？”</p>
+<p>回家那是回家之后的事，现在的场子当然要现在就找回来！</p>
+<p>“脸都红了！”我握着她的手，往后推几步，逃出魔爪，捧着自己的脸揉着，恨恨地看着她。</p>
+<p>这时候，柏静雅和纪律委员也回来了，两人手上都拿了几件衣服。</p>
+<p>“又夏，快试试，我觉得你穿这种衣服，一定超好看的！”纪律委员激动地把衣服都塞江又夏手里。</p>
+<p>柏静雅也把自己挑的递给江又夏，随后到我身边：“又萌，又萌，我可是很花心思的给又夏姐挑了衣服的哦。”</p>
+<p>看她一脸期待的，我点点头，对她说了谢谢。</p>
+<p>“只是这样吗？”柏静雅有些不满意。</p>
+<p>纪律委员则是贴心的在江又夏身边讲解哪件配哪件，江又夏听了个大概之后，便进了试衣间。</p>
+<p>我和她们两人在外边等着，过了一会，门帘被拉开。</p>
+<p>“怎……怎么样？”江又夏重新出现在我们眼前，低着头，不太好意思直接看我们。</p>
+<p>“挺不错的嘛。”柏静雅点点头。</p>
+<p>“很好看！非常棒！”纪律委员差点就鼓起掌来了。</p>
+<p>“好看是好看。”我走近江又夏，灰色带着简单白色英文图案的T恤，一件白色的卫裤，我不禁不满的抱怨，“但是很普通啊。”</p>
+<p>“毕竟夏天的衣服都是比较简单的，多带点饰品应该就不错了。”纪律委员凑到我们身边说。</p>
+<p>“那就买这一套……”江又夏说着，就打算拉上门帘。</p>
+<p>“那就换下一套吧。”我才不会就这样被她蒙混过关的。</p>
+<p>“我觉得这套就够了……”<br>“不行。”</p>
+<p>江又夏哀怨地盯着我，最后身影消失在门帘后。<br>又过了一会，江又夏换上一套新的衣服。</p>
+<p>纯白色的T恤，黑线条白色格子的格子长裤，原本应该是很简单的衣服，但是略短的上衣下摆所露出的一节麦色小腹却紧紧的吸引着旁人的目光。<br>江又夏脸色微红，别开脸，似乎是为了掩饰心中的羞涩，往后理了理散开的头发。</p>
+<p>健美带着些许性感。</p>
+<p>“哇喔。”柏静雅有些夸张地惊叹让我回过神来，我假装咳了一声。</p>
+<p>“咳，纪律委员你觉得怎么样？”</p>
+<p>不过纪律委员是没空理我了，她捂着嘴，睁大了闪闪发亮的眼睛，好一会才说：“好看！”</p>
+<p>江又夏手背在身后，小声地说了“谢谢”后马上拉上门帘。</p>
+<p>看着她俩的互动，我不爽地对着试衣间喊：“要换下一套哦，不是换回来。”</p>
+<p>这次有点久，江又夏才出来了。</p>
+<p>等一下！<br>这是什么鬼！</p>
+<p>我连话都说不出来，推着江又夏回到试衣间里，手忙脚乱的拉上帘子。</p>
+<p>“你穿这样子是想干什么？”我生气地指着她的下身。</p>
+<p>她也跟着我的手指往自己腿看。</p>
+<p>自大腿开始就非常漂亮的线条，细腻到似乎会反光的皮肤，看起来非常纤细的小腿。</p>
+<p>“你这不是没穿裤子吗？”我恶狠狠地说。</p>
+<p>除了被上身宽大的条纹上衣挡住的地方，江又夏的下身又变成不着片缕的模样。</p>
+<p>江又夏开始被吓了一跳，又马上恢复过来，异常开心地笑起来：“你啊……”<br>说着她掀起衣服下摆。</p>
+<p>“等一下！这可是在外……面。”然后我就看到了她身上浅色的牛仔短裤。</p>
+<p>“怎么可能会没穿呢？你当我是什么人啊？”江又夏脸凑过来，嘴角上扬。</p>
+<p>“我以为……”发现是我自己误会了，这下轮到我倒是有些不好意思，“没事我就出去了……不对，不准穿这个！”</p>
+<p>“为什么啊？”江又夏放下自己的下摆，把短裤挡起来，又是一副下装消失的模样，裸露在外的修长双腿带给人无限遐想。<br>她上倾身体，脸贴过来，一副有趣的模样。</p>
+<p>狭窄的试衣间。<br>她伸出一只脚，贴着我穿着短裤而露出的半截小腿，肌肤贴着，温热的体温让我的心也变得急躁。</p>
+<p>因为不想给别人看到。<br>这句话我是不会说出口的。</p>
+<p>“反正第一套就很好！”我说完，逃似的离开试衣间，顺便拉上门帘，“快换回衣服，回家了。”</p>
+<p>一出来就是纪律委员都不太开心的表情，柏静雅则是缠着我说她也要和我一起换衣服。</p>
+<p>我果断拒绝。</p>
+<hr>
+<p>之后，又逛了一阵，柏静雅提议去看电影和游乐城，不过手上提着两三袋东西，我和江又夏都觉得挺麻烦的。</p>
+<p>被柏静雅缠着和她交换了qq，本来就打算这样分开。</p>
+<p>不过一听到我和江又夏还顺便打算去负一楼的超市买完菜才回家，柏静雅又吵着要跟着来，纪律委员也默默地跟了上来。</p>
+<p>于是就变成了四个人一起逛超市了。</p>
+<p>江又夏推着购物车在前面走着，纪律委员在她身边小声地和她讨论着。<br>我也才知道原来纪律委员的爱好是做菜。</p>
+<p>我和柏静雅则并排跟在她们身后。</p>
+<p>“又萌喜欢吃什么？”柏静雅拿起一颗小白菜在手上，问我。<br>到了生鲜区，江又夏和纪律委员在卖生肉的柜台处买猪肉，我把目光从她们两的背影上挪回来，看了一眼满架都是绿色蔬菜的货架，指着下边的一个架子：“卷心菜吧。”</p>
+<p>“这个吗？”柏静雅把小白菜放回去，有拿起卷心菜，“这个吗？炒的话确实挺好吃的。”<br>“炒饭也不错啊。”我拿着另外一颗说。<br>“这个比你脸还大。”柏静雅突发奇想的把手里的卷心菜挡在我眼前，然后又错开，“炒饭不行啦，我就不爱吃炒饭。”<br>“你竟然不喜欢吃炒饭！你还是地球人吗？”<br>“难不成还能是外星人吗？炒饭有这么高的价值吗？还能区分地球人和外星人。”<br>“不然还有什么其他可能吗？竟然有人不喜欢吃炒饭。”<br>“那个一粒粒的，又有菜又有肉的，你吃起来不会觉得奇怪吗？”<br>“肯定不会啊，炒饭就是要那种颗粒分明，一口下去蔬菜的清爽和肉的香气一起在口中迸发的感觉啊！”<br>“不懂。”柏静雅吧卷心菜放回货架，又把我手里的接过放回去。<br>“不懂你就要试一试，肯定很好吃的。”我激动地拉着她的衣服说。<br>“那你觉得哪一家炒饭好吃，我们下次一起去好不好？”柏静雅转过身，笑眯眯地和我说。<br>“好。”我点点头，“我找的那家你肯定会爱上炒饭的！”<br>“我觉得也是。”她伸手摸摸我的头。<br>“不要摸我头啦！”我拍开柏静雅的手。</p>
+<p>不准占着身高优势摸我头啊！<br>会让我想起自己现在是最矮的！</p>
+<p>“你们在干嘛？”</p>
+<p>回过身，是江又夏皱着眉头和纪律委员买好肉过来了。</p>
+<p>“又萌约我下次一起去吃饭。”柏静雅说。<br>我点点头。</p>
+<p>虽然结果如此，不过这样说总有点奇怪啊。<br>当然也可能是我多心了。</p>
+<p>我看向购物车：“晚上吃什么？”<br>“安芝刚教我的红烧肉，再炒个菜。”江又夏还是一脸不快，但也只是回答了我的问题，没多说其他。</p>
+<p>“那炒这个卷心菜吧。”我重新把货架上的卷心菜拿起来，托到江又夏面前，期待的看着她。</p>
+<p>“卷心菜不错啊，不过要在去买点肥一点的猪肉，热点油跟着一起炒会好吃一点。”纪律委员给出了建议。<br>“那回去在买点？”江又夏接过卷心菜，从一旁扯了个袋子装好，又交到我手上，“那你去算钱，我和安芝再回去买点猪肉。”</p>
+<p>“好。”我接过来，和柏静雅往称重那边的柜台走去。</p>
+<p>我们这是正式分成两队？</p>
+<p>称重的地方人有点多，我和柏静雅排着队，有一句没一句的聊着。<br>“又夏姐还把你看得挺紧的嘛。”她看了一眼江又夏的方向，和我说着。<br>“还好吧？”我抱着卷心菜，数着前面还有几个人。<br>“感觉不像姐妹像怕女友被拐跑的男友。”柏静雅小声笑着。<br>“咳！”我被呛了一下，男友这个词忍不住让我想起之前江又夏在家里对我干的事，和出门前我还亲过她，脸有些发烫，“你在胡说什么啊！”</p>
+<p>“确实嘛。”柏静雅没有反省的意思，继续说，“不过你们姐妹长得不太想耶，一个看起来挺帅的，一个看起来凶但实际上软乎乎的。”<br>她说着从后边把我抱住，原本淡淡的像花一样的清香气味，随着距离的变短似乎也变得浓厚起来。</p>
+<p>“松开松开，轮到我们了。”我抬了抬肩让她把放在我肩膀的下巴挪开。<br>柏静雅倒也马上就松开了，称好重量，回过身，看到冷着脸看我们的江又夏和抿嘴笑的纪律委员。</p>
+<p>“干嘛？”我把卷心菜放进购物车，问江又夏，又看向纪律委员。</p>
+<p>“没什么。”纪律委员用眼角悄悄地看了一下江又夏，又捂着嘴偷偷笑。<br>“哼。”江又夏推着购物车就往超市的收银台走去。</p>
+<p>结了帐，我和江又夏提着到了商城门口，一路上江又夏自顾自走着，不怎么理我，但是会和纪律委员说说话。</p>
+<p>我们一起走到公车站，纪律委员回学校，不是和我们一趟车，刚好公车也到了，她急急忙忙地和我们告了别，挤上了公车。<br>看着她那艰难的样子，我看了看自己和江又夏手上提着好几袋东西，想象着等一下再公车上的惨状，在下午的太阳底下，汗流浃背地绝望着。</p>
+<p>回去和我们同趟车的柏静雅望了望来车的方向，发现车还没来，于是拿出手机对我们说：“我们坐滴滴回去吧？大包小包的，也不方便坐公车。”<br>听到不用挤公车和能直接到家的提案，我不禁眼睛发亮，看向江又夏。</p>
+<p>江又夏想说什么，但是看了看手里的和我手上的东西，咬着下嘴唇，像是下了极大的决心一般地用力点头。<br>得到江又夏的同意，柏静雅就在手机上交了车。</p>
+<p>因为是市中心，车一下就来了。<br>江又夏双手都提着东西，我就帮她开了车门，然后自己绕道另一边，柏静雅已经上了车，坐在中间，我就坐在她的左侧，江又夏坐在右侧。</p>
+<p>空调，宽敞的后座，刚好我们要坐的那趟公车到了，看着那如同沙丁鱼罐头般的情况，我有些庆幸江又夏同意柏静雅的决定。</p>
+<p>一路上，柏静雅还和我说着什么，江又夏一直沉默，只是有时候眼神复杂看向我和柏静雅，又转过去看车窗外。</p>
+<p>“又萌住在这个小区吗？那离我家也不太远啊。”柏静雅得知我们的地址之后，开心地说。<br>“哦。”因为有些在意江又夏的情况，和她的聊天也变得有点心不在焉。<br>这样聊着，到了我们家。<br>“那柏静雅，再见了。”我和还在车上的她道了别。</p>
+<p>柏静雅也依依不舍地挥了挥手，一个人坐着车走了。</p>
+<p>我正想回过身和江又夏说话，结果发现她已经走了。<br>“喂！”</p>
+<p>没理我，江又夏埋头走着。</p>
+<p>“真是！”又在生什么气啊？</p>
+<p>我叹了口气，追上去。</p>
+<hr>
+<p>问题。</p>
+<p>如何让一个木头知道自己不开心是因为她和别人太过亲密呢？</p>
+<p>怀着这种酸涩的心情，我用菜刀抵着包心菜，想着超市里柏静雅拿着在又萌面前对比说笑的亲密模样，手上用力，木制的砧板发出清脆的响声，包心菜被我一分为二。</p>
+<p>把一半用保鲜膜包好，走出厨房。</p>
+<p>又萌正趴在沙发上，以前宽大的t恤穿在她的身上，像是身上摊了一张薄被，白白的小脚不安分地拍着沙发，随着动作扬起的衣服下摆，还能从缝隙中看到我给她买的浅黄色内裤。</p>
+<p>突然惊觉这样看着似乎有点猥琐了，我低下头，把包心菜放进冰箱。</p>
+<p>我觉得自己还是太天真了。<br>期望她能自己领悟到我生气的原因，大概是不可能的。</p>
+<p>但是直接和她说，会不会被她觉得太过小气和莫名其妙？<br>而且……</p>
+<p>我拿起菜刀，回过头，又萌这时刚好懒懒的翻了个身，看着手机傻里傻气地笑了。</p>
+<p>我觉得她大概只认为我们现在的关系不过是逼不得已的得过且过。</p>
+<p>我把包心菜切成丝，这么多天下来，刀用起来也是越来越顺手。<br>之前因为不怎么会用菜刀，所以能煮的菜色不多，最近安芝才告诉我，说可以摆脱档口的老板帮忙弄好。</p>
+<p>把锅空烧到没有水分，把切好的肥肉下锅热油。</p>
+<p>“又夏，厨房为什么烟这么多啊？”又萌突然走到厨房门口，问我。</p>
+<p>我回过神来，想起自己还没开油烟机。</p>
+<p>“做菜不要走神，很危险吧。”她靠在门框上说。</p>
+<p>齐肩的短发被扎成短短的马尾，明明内里是个二十岁的大学生，但一言一行却和这个初中生一样的外表没有太大的违和感，反而因为有时候一些大大咧咧的行为看起来格外可爱。</p>
+<p>反正男大学生其实就是大孩子呗。<br>我在心里想，手里又翻炒了几下锅里的肉。</p>
+<p>热的差不多了，肉变得有些焦黄。</p>
+<p>正打算把切好的包心菜拿过来炒，发现不知道什么时候，又萌已经进到厨房里，她将装着包心菜的篮子递给我。</p>
+<p>我接过手：“油会溅起来的，你先出去吧。”<br>“哦。”又萌应了一声，躲在我身后，伸出半个头，“开始吧！”</p>
+<p>“喂！”我哭笑不得。<br>算了随她吧。<br>我把包心菜一齐往锅里倒。</p>
+<p>油溅起来了，不过没想象中四处飞溅得那么厉害，似乎某人把水份又沥干了点。</p>
+<p>余光看着躲在身后的人。<br>在奇怪的地方莫名的细心。</p>
+<p>“去洗手吧，可以吃饭了。”我说。<br>又萌应了一声，就在洗菜盆洗手：“汤可以盛了吗？”</p>
+<p>“可以了。”<br>“好。”<br>“你先盛饭。”<br>“好。”</p>
+<p>或许是出于又萌自身的审美趣味，就没有成套的碗筷。<br>所以我现在拿着一个日式陶瓷碗，黑色筷子。又萌自己捧着一个绿色的塑料碗，筷子上一边一只小猫。<br>盛汤的是一个带着手柄印满猫咪的大汤碗。</p>
+<p>从树叶形的盘子里夹起包心菜，放在白饭上，一起送进嘴里。<br>软糯的米饭和带着肉香的包心菜，沾满油脂的菜因为清脆的口感，适当的咸香称托出得丝丝甜香的大米更加可口。</p>
+<p>汤是冬瓜排骨汤，入口即化的冬瓜，排骨的肉有点老，但是蘸上酱油，却是恰到好处的鲜美。</p>
+<p>以前绝不可能体会到的滋味。<br>我看向吃得一脸满足的又萌：“你的手艺越来越好了。”</p>
+<p>我到底算是什么呢？<br>一开始能够独自行动的兴奋到现在不知如何是好的迷茫。</p>
+<p>前两天，我偷偷的去了一趟医院，兜兜转转，也算是做了一套检查。</p>
+<p>结果是正常的。<br>我是个正常的女人。</p>
+<p>我有自己的头脑，自己的心脏，自己的血管，自己的性器官。<br>甚至有自己的生理期</p>
+<p>但是，我知道，又萌也知道，我不是正常的人。<br>我的出现是非现实的。</p>
+<p>那么是不是有一天，这份非现实又重新回归现实呢？<br>我是不是又会成为江又萌的一部分，而她也将重新成为江又夏？</p>
+<p>这样的话，我又有什么资格去责怪她和其他人太过亲密呢？<br>想到这里，呼吸都变得有些困难。<br>咽下的似乎也不再是可口的饭菜，而是一个个足以将喉咙和心脏都撑破的苦涩。</p>
+<p>“又夏，江又夏。”</p>
+<p>“啊，怎么了？”我回过神来，看向她。</p>
+<p>她皱着眉，疑惑地看着我：“你在想什么？快吃，我要洗碗了。”</p>
+<p>原来是她已经吃饱了，而且碗里还有一半的饭。</p>
+<p>“嗯……我洗就好了，你去坐吧……”我心中暗叹一口气。</p>
+<p>又萌没说话，托着脸颊，看着我。<br>我默默吃着饭。</p>
+<p>“你在生气吗？”她突然问。</p>
+<p>“没有……”</p>
+<p>“没有就好。”又萌点点头，开了冰箱，拿了瓶饮料，继续在我身旁坐下，开始玩手机。</p>
+<p>我突然觉得十分不痛快：“刚吃完饭不要喝凉的！”</p>
+<p>“没喝啊，等会喝。”她说。</p>
+<p>江又萌一副满不在乎的模样，我气极：“说了很多次了！你肠胃又不好，别整天喝凉的！”</p>
+<p>“哦。”</p>
+<p>“你不要老是一副满不在乎的样子！”我放下碗筷。</p>
+<p>“我没有。”</p>
+<p>“明明就是，我那么关心你，结果你一点都不在乎！”</p>
+<p>“不在乎什么？”</p>
+<p>“不在乎……”我说了一半，在江又萌认真地注视下，那个‘我’字又觉得有点说不出口。</p>
+<p>拿起碗筷，继续吃饭，这次我不再说话。</p>
+<p>“你只吃饭吗？”她说着，用自己的筷子给我夹了菜。</p>
+<p>继续吃，没理她。</p>
+<p>“你到底在气什么？”她托着脸，语气淡淡。</p>
+<p>把最后一口吃完，抽张纸巾擦擦嘴，想走不过又被江又萌拉住。</p>
+<p>不开心地瞪着她。</p>
+<p>“我很在乎你的哦。”她突然说。</p>
+<p>“啊？”</p>
+<p>“我很在乎你的，不过你老是不把话说出来了。”她看起来有点失落，“就像之前你生理期一样，为什么不和我说呢？”</p>
+<p>“我知道，自己本来就不是特别靠谱的人，更别说现在变成这个样子。”又萌站起身，低着头，“就算你说出来，我大概也没办法帮你什么……”</p>
+<p>“但好歹让我们一起面对嘛。”又萌抬起头，大大的眼睛里透着真诚，“就算不能帮你做饭，但是帮你把菜里的水沥干一点，还是能做到的。”</p>
+<p>“我才不信。”我说着，把手挣脱开来，背过身。</p>
+<p>又萌却从后边抱住我：“说啦，为什么生气，还有几十年要生活在一起，现在不过这点时间就老是吵架，将来怎么办啊？”</p>
+<p>“我……”我深呼吸两三次，“你很喜欢柏静雅吗？”</p>
+<p>“柏静雅？这关她什么事？”</p>
+<p>“反正你回答就对了。”</p>
+<p>“可以当朋友吧？”</p>
+<p>“只是朋友吗？”</p>
+<p>“不然呢？又夏你讨厌她吗？”</p>
+<p>“没有。”</p>
+<p>“你这是吃醋了？”</p>
+<p>“没有！”因为听出她语气带笑，我下意识的反驳。</p>
+<p>“哦，没有就好。”她说，“那你还在生气吗？”</p>
+<p>“我说过没有。”</p>
+<p>“没有就好。”她手里用力，把我的腰搂的更紧，又马上松开，“没有我就去洗碗了。”</p>
+<p>“快去吧，哼哼，还有几十年的碗要洗呢！”</p>
+<p>“好……好歹生日的时候你洗嘛……”又萌边收拾边抱怨。</p>
+<p>“等你生日再说吧。”我说着往厕所走去。<br>关上门，我不禁蹲下来，把脸埋在手臂间。<br>心跳得飞快，脸也好烫。<br>但是整个人现在都似乎泡在暖洋洋的温水之中，心里兴奋却又安心得要命。</p>
+<p>“江又萌，我好喜欢你啊。”<br>我忍不住低声自言自语。</p>
+<hr>
+<pre><code>因为非日更( ﾟ∀。)
+最近下定决心把买了一堆的书一点点消化掉( `д´)9
+从前天买的《路边野餐》开始，这本最近再版了，旧版要三百多，现在再版只要二十一，还包邮，血赚啊ᕕ( ᐛ )ᕗ
+
+这篇文我必日更
+三天打鱼两天晒网，两天更一次也在允许之内
+有时三天一更，有时两天一更也是极好
+五天一更大家也能理解吧
+周更其实更规律
+还记得剧情就算胜利( ﾟ∀。)
+晚上十一点前没更新，就明天了(ノﾟ∀ﾟ)ノ
+
+错估了我的写作速度( ;´д`)
+明……明天一定ﾟ(つд`ﾟ)
+
+如果晚上十一点之前还没更新的话……( ᐛ )
+</code></pre>
+<p>刚拖完地，正想把被子拿到天台去晒一下的时候，我看了一眼qq。</p>
+<p>江又夏发来了消息。</p>
+<p>“在干嘛？”</p>
+<p>“晒被子。”我回她。</p>
+<p>今天是星期三，江又夏今天下午没课。<br>天气也越来越热，嘴上出门的时候我让她在食堂打饭回来吃，晚上凉快点再去买菜。</p>
+<p>“我下课了，要换教室了。”</p>
+<p>“哦。”<br>她下边还拍了一张换教室的照片。<br>我看了一眼，就带着被子出门上了电梯。</p>
+<p>电梯只到十二层，十三层的天台还要再爬一层楼梯。<br>我把怀里的被子紧了紧，很快就到了天台，打开门，燥热的空气扑面而来，阳光照在身上，烫得皮肤有些难受。</p>
+<p>一旁的电线已经晒了几张被子，我找了和空位，有些艰难的把被子在上铺开，夹上夹子。<br>虽然没什么风，不过还是保险一点好。</p>
+<p>淡蓝色的天空只有一条细细薄薄的云在飘着。<br>往远处望去，便能看到大学的操场，有些庆幸江又夏的体育课已经在昨天上过了，今天只有室内的课。<br>回想着课表，大约找了一下现在江又夏现在所在地教学楼。</p>
+<p>伸出食指，翘起拇指，收起其他三根手指，做出手枪的姿势对着教学。<br>“砰。”嘴里说着，对那教学楼开了一枪。<br>吹了一下‘枪口’，“你已经死啦！”<br>又因为被太阳晒得难受，连忙往回跑。</p>
+<p>我是在干什么蠢事？</p>
+<p>抱胸等着电梯从楼下升起来，穿着拖鞋在地上拍着，发出啪嗒啪嗒的声音，电梯有空调，凉凉的风吹在皮肤上，让我忍不住打了个喷嚏。<br>回到家里，现在才十点多，江又夏回来还有一会。<br>接下来要干点什么事呢？</p>
+<p>我打开电视，换了好几遍台，都没什么意思，又把电视关了。<br>回房间看了一眼电脑，大概是在上课，和江又夏的对话框静悄悄的。<br>有点无聊。<br>在家里晃悠了两圈，本来江又夏中午回家的话，我还要先煮饭，不过今天倒是不用了。</p>
+<p>打开电脑桌旁的抽屉，找到了之前买电脑的时候送的摄像的头。<br>一个球形的黑色摄像头，之前还在想这个年代这种东西还有什么用。<br>现在嘛……</p>
+<p>接上电脑，装好驱动，试拍一张。<br>像素不怎么样，放大之后更是觉得非常糊，不过毕竟是送的，能用就行。<br>拍了一张电脑桌面的发给江又夏，发送成功。<br>回了个问号。<br>看来上课不怎么认真啊。</p>
+<p>“没事，试一下摄像头。”我回她。</p>
+<p>她没有回。</p>
+<p>我又随便拍了几张，感觉也不太清晰。</p>
+<p>然后，我并起双腿，把衣服往上拉了一点，朝大腿拍了一张，发过去。</p>
+<p>连续好几个问号。<br>“你在干什么？”<br>她问。</p>
+<p>“就试试摄像头呗。”我回。</p>
+<p>“别乱试！”</p>
+<p>这是生气了？<br>感觉反应好有意思。</p>
+<p>我掀起衣摆，露出肚子，拍了一张肚脐的照片发过去。</p>
+<p>有点糊，不过还是能看出是什么的。</p>
+<p>“喂！”她回。</p>
+<p>虽然还想逗逗江又夏， 不过能拍的就这些地方吧，总不能真的拍那些过线的照片过去吧。<br>但是机会难得，这样放过她又觉得可惜，而且还有一个多小时才回来呢，我也总不能这么无聊下去吧。</p>
+<p>靠在椅背上，托着头，想着还能拍点什么发过去。<br>余光随着我的手往下看，突然发现我身上宽松的t恤短袖。<br>我想到了。</p>
+<p>“我警告你了，不准再发了！不然回去让你好看！”江又夏开始威胁我了。</p>
+<p>哼哼，那可不行。</p>
+<p>为摄像头装上自带的三脚架，放在电脑桌的一角。<br>往上伸直手臂，袖子滑落堆在肩上。<br>拍下照片。</p>
+<p>打开检查一下。<br>有些模糊的我出现在电脑里。<br>伸长了手臂，从宽松的袖口露出自己光滑的腋下。<br>被手臂挡住了一侧的脸，一只眼睛闭着对镜头吐出舌头做鬼脸。</p>
+<p>还不错。<br>发给她。</p>
+<p>等了好久，没回复。</p>
+<p>觉得有点无聊，我随便找了部老动画看。<br>“贫乳具有稀有价值。”<br>再次听到这句名言，我不禁点头表示赞同。<br>这时候，江又夏回了消息。</p>
+<p>“你完了！”</p>
+<p>管你。<br>反正我开心了。</p>
+<hr>
+<p>现在室外大概是三十五度左右。<br>已经是稍微动一下，身上就会流汗的程度了。</p>
+<p>我和江又夏现在正在房间里，空调开到二十六度，凉风吹在皮肤上，非常舒服。<br>没有开灯。<br>午间炙热的阳光，透过浅黄色的窗帘将房间蒙上一层微微朦胧的淡淡的滤镜。</p>
+<p>“呃，那个江又夏，我觉得有点冷了。”我抱着胳膊，对着坐在床上的江又夏说。</p>
+<p>“是吗？”她毫不在乎地说，伸长了腿，盯着手机，一下一下地划过去。</p>
+<p>“所以，我能先把衣服穿上吗？”我露出讨好的笑容。</p>
+<p>她抬起眼眸，上上下下的打量了我，然后笑眯眯地说：“你不是喜欢拍照吗？那就再多拍几张呗。”</p>
+<p>说完，拿起手机对着我：“来，笑一个。”</p>
+<p>“等……等一下。”我背过身，不让她拍。<br>虽然不至于完全没穿衣服，但是穿着内衣拍照也够羞耻了。<br>内衣上还印满了卡通小鹿。</p>
+<p>“呵，现在知道害羞啦？”江又夏语气不善地说，“你知道我在干什么吗？就乱发照片过来。”</p>
+<p>“你在干什么？”她这么一说，我也有点担心了，“不会被其他人看到了吧？”</p>
+<p>“你觉得呢？”她把手机丢在床上，站起身来，微凉的手贴着我的腹侧，滑到我的后背，轻轻地抚摸着我的背脊。</p>
+<p>她身上些许咸咸的汗味扑面而来，我在被她的手接触的瞬间，凉凉的感觉让我忍不住打了一个冷颤，抓住她的小臂不让她乱动，“被……被谁看到了？你身上都是汗，不……不准靠太近。”</p>
+<p>“现在知道紧张啦？”江又夏理所当然的忽略了我后半句，另一只手也将我抱住，转了个圈，让我背对着床，推着我往后一步，小腿碰到床沿，上半身的惯性让我往后倒去。</p>
+<p>猛地承受了两个人的重量，床发出巨大声响。</p>
+<p>“你……你要干嘛？”我手撑着她的肩膀，不让江又夏靠太近。</p>
+<p>“就，和你说说话呗。”江又夏微笑着说。</p>
+<p>“那去客厅坐在沙发上说不好吗？”我也强笑着说，“而且你还没洗澡，快……快去洗澡啦！”</p>
+<p>“又萌，喜欢在沙发上吗？而且等一下又是一身汗了，等会再洗就好了。”<br>“聊天！是聊天喜欢在沙发上！不要用奇怪的省略来歪曲我的意思！而且你要干什么啊！”</p>
+<p>“没事，只要是你喜欢，聊天还是其他什么想在沙发上的都可以哦。”稍微扬起的话尾，由上往下看着我的江又夏，脸隐藏在微暗的气氛中，只有那一抹带着调笑的娇艳红唇格外显眼，她强硬地靠过来，在我肩窝嗅了嗅，“又萌，你真好闻。”</p>
+<p>“我们还没吃饭呢！”我说。</p>
+<p>她快回来之前，我嫌身上都是汗，于是跑去洗澡，结果洗一半，就被刚刚回来的她用浴巾包着扛到房间里。</p>
+<p>好……好在还让我穿了内衣？</p>
+<p>“嗯……”她舔了舔嘴唇，“是猪排饭，等一下复炸一下就好了。”</p>
+<p>“你走开啦，我肚子饿了！身上还都是汗臭味！”我快被气哭了。</p>
+<p>“呵呵呵，你等一下也是。”说完，江又夏那略带湿润的唇在我视野中变大又消失。</p>
+<p>可恶，臭女人！</p>
+<p>大约是一个小时之后。<br>“蛋炒饭配猪扒饭，不错吧？”江又夏晃着勺子得意地对我说。</p>
+<p>我们刚一起洗完澡，两人身上都带着湿气。<br>穿着差不多的宽松t恤。<br>我没好气地瞪了她，不和她说话。<br>腰好酸。<br>洗澡的时候还看到了胸口好几个红点。</p>
+<p>我要报仇！</p>
+<hr>
+<p>失败了失败了失败了失败了失败了失败了失败了失败了失败了失败了失败了失败了失败了失败了失败了失败了失败了失败了失败了失败了失败了失败了失败了失败了失败了失败了失败了失败了失败了失败了。</p>
+<p>现在的我，光着身子被江又夏抱在怀里。<br>心中满是悔恨。</p>
+<p>连这平常觉得挺好看，但是现在凑到眼前的江又夏的胸都觉得分外碍眼。</p>
+<p>伸手按着她的胸，想要让她不要抱那么紧，结果睡梦中的江又夏轻轻哼了一声，调整了一下抱我的姿势，现在变成我的头被她的胸夹着。</p>
+<p>脸贴着。<br>软软的，却因为汗水而变得有些滑腻腻。</p>
+<p>我放弃挣扎了。</p>
+<p>自暴自弃的努力背过身。<br>可恶。<br>头发被压到了！</p>
+<p>结果就这样不上不下的斜靠在江又夏怀里。</p>
+<p>虽然拉着窗帘，但是依稀能够分辨窗外天还没全亮，离早上起床还是有一段时间。</p>
+<p>我在她怀里开始复盘。</p>
+<p>昨天早上，为了做准备，我让江又夏一个人去买菜。</p>
+<p>按照习惯，她回来之后会去洗澡把身上的汗都冲一下，换件衣服。</p>
+<p>我先把厕所门的钥匙藏起来。<br>虽然她洗澡不锁门，不过为了以防万一，我还是先做好另一手准备。</p>
+<p>大概是半个多小时后。<br>大门响起钥匙开门的声音，我连忙坐在沙发上，假装看电视。</p>
+<p>“你怎么在看电视，不去玩电脑吗？”江又夏提着东西，把钥匙放好，腾出手来擦了擦额头的汗。</p>
+<p>我走过去，接过她手上的菜：“嗯，电脑也……没什么好玩的……”<br>为了避免被她看出我心虚的样子，我没看她眼睛：“菜给我就好了，你……你快去洗澡吧！”</p>
+<p>江又夏提着袋子的手没有松开，我一下没拿过来。抬起头，江又夏扬起一边的眉毛：“又萌，你是打算干什么坏事吗？”</p>
+<p>我心里一颤，但马上冷静下来。<br>小场面。<br>看我忽悠过去。</p>
+<p>“哪哪哪哪……哪哪哪有，你你你回来的时候不都是去……去洗澡吗？”<br>“嗯……”江又夏沉默了一会，点点头，把袋子交给我，“也是。”</p>
+<p>我接过袋子，转身往厨房走起，把菜放在桌子上，悄悄用余光观察，结果那家伙竟然在客厅坐下来，托着下巴看手机。</p>
+<p>“你怎么不去洗澡啊？”我在她身旁坐下，装作毫不在意地问她。</p>
+<p>“等一下。”她的手指随意地在手机屏幕上划动，我悄悄看过去，不过是在上刷微博。<br>“微博有什么好看的，你快去洗澡啦。”我催促她，“满身汗臭味。”</p>
+<p>江又夏抬起头，盯着我的眼睛：“会吗？”<br>抬起手臂闻了闻：“还好吧。”</p>
+<p>“臭死了，快去洗澡。”我强调道。<br>她猛地靠过来：“我不信，你再仔细闻闻。”</p>
+<p>温热的气息扑鼻而来，并没有什么汗味，反而是熟悉的沐浴露味道比较明显。</p>
+<p>“有有有！”我装作闻了闻，捂着鼻子说，“而且你身上粘粘的不难受吗？”<br>“有点。”她在自己麦色的小臂上摸了摸。<br>“那就快去洗澡吧。”我说。</p>
+<p>她点点头，放下手机，去房间里拿衣服。</p>
+<p>我也把厕所门的钥匙拿出来，藏在手里，等着她近厕所。</p>
+<p>我们的厕所，是在楼内侧，四面都是墙，没有窗。<br>所以每天都要把浴巾毛巾拿到阳光充足的阳台晒一晒通通风，不然就会变得粘粘滑滑的，很恶心。<br>也因为没有窗，所以上厕所都要开灯，不然厕所里边就一抹黑，啥也看不到。<br>而厕所灯的开关，在门外的墙上。</p>
+<p>于我的计划就是等她进去洗澡，脱了衣服，我就在门外关灯，再用钥匙开门冲进去，趁着她慌乱的时候把她制服！<br>完美的计划。</p>
+<p>我紧盯着电视，等着江又夏进到厕所里。<br>啧。<br>今天这家伙格外磨蹭，好一会都没从房间里出来。<br>我又不好过去催她，这样就也太明显了。</p>
+<p>又过了十分漫长的一段时间，她总算从房里出来，顺手关上了房门。</p>
+<p>“干嘛？”我觉得有些奇怪。<br>“没，开一下空调，反正等会要进去。”她笑着对我说。<br>“你要睡觉吗？”我问她。<br>“不是。”江又夏说着往厕所走去。</p>
+<p>古古怪怪。</p>
+<p>不过现在重要的是我的计划！<br>江又夏进厕所了，马上传来关门声。</p>
+<p>我踮起脚尖，微弓背，悄悄的来到厕所门口，没敢靠太近，因为厕所门是磨砂玻璃的，我原地蹲下，屏息静听。</p>
+<p>说要听到脱衣服的声音还是太勉强了，不过有莲蓬头的响声。</p>
+<p>看来她要开水了，我蹲着往前走，来到厕所灯开关的墙边，站起身，时代灵活的贴着墙站，耳朵伏在墙上听。</p>
+<p>水声。<br>沙沙沙的水声。</p>
+<p>来了！</p>
+<p>我按耐着心中的激动，悄悄把钥匙插在厕所门锁孔上。</p>
+<p>一。<br>二。<br>三！</p>
+<p>关灯开门一气呵成。</p>
+<p>我来报仇啦！</p>
+<p>厕所里一片漆黑，我也没看太清楚，只听到厕所门撞在墙上发出“嘭”的一声。</p>
+<p>我正要扑倒她那边，却没想到接下来确是迎面而来的水柱冲在我身上。<br>是花洒，还是开在了强水流的那一档，我连忙闭上眼睛，伸手护在脸上，哪知道水柱调转方向冲吉我的肚子。<br>倒不是痛，只是单纯下意识为了护住自己身上的衣服而动起来，背靠着厕所门蹲下来，手护着自己的头。<br>就这样被水冲了一会，厕所里亮起来，花洒也停下水。</p>
+<p>我抹了一把脸上的水，身上已经湿透，我抬起头，看到的是还衣服干爽，手里拿着花洒，笑眯眯看着我的江又夏。</p>
+<p>“又萌。”又是语调扬起的句末，她说，“你也想洗澡啊。”<br>“你……你……你……”我想问她怎么知道我想干嘛，但是又说不出口。</p>
+<p>她只是笑着，没有继续说什么，把花洒放回架上，扶我站起来。<br>“你干什么？”我双手蜷着缩着肩膀看她。<br>她还是没说话，而是开始动手脱我衣服。<br>“等……等一下！”我握住她的手腕，“我错了，我现在出去……”<br>“唉，既然又萌你等不及想洗澡，我们就一起洗嘛。”她就像和熟练的羊毛剃毛工一样，三下五除二就脱了我的衣服。</p>
+<p>“我……我还没拿衣服。”我说。<br>“我帮你拿了。”她说。</p>
+<p>“我……我……”<br>“房间空调我也开好了，等一下，我们好好聊聊吧，江又萌小妹妹。”<br>“我……我错了！对不起！”<br>“我，不接受。”</p>
+<p>之后……<br>好在中午和晚上都让我吃了饭。</p>
+<p>……<br>臭女人！</p>
+<hr>
+<pre><code>　　　　　/ \ 　　　　　 / \
+　　　　　⎮ ⎮　　　　　⎮ ⎮
+　　　　　⎮ ⎮　　　　　⎮ ⎮
+　　　　 　\ ⎮　_____ 　 ⎮ /
+⎮￣￣￣⎮　\╱　 ,,　╲/
+⎮好家伙⎮ / 　/,丨　/,╲\　\　\
+⎮我在生⎮丨 / ︵ v\/ ︵　丨丨　l
+|产队的⎮ ⋎∨ ●　　● 丨 / /
+⎮时候可⎮　㇏　　^　　　/w/)
+⎮没po这 |　　/ΣΣΣΣΣΣ⎮ ⎮⎮⎮
+⎮么勤快 |　　\ ΣΣΣΣΣ |⎮⎮ \
+⎮_______|　　⎮⎮⎮⎮⎮⎮⎮⎮⎮\ \
+ 　　　　　　⎮⎮⎮⎮⎮⎮WV\\ \
+</code></pre>
+<hr>
+<p>星期六。</p>
+<p>我把下载好的电影拷到u盘里，到客厅把u盘插在电视上。</p>
+<p>走到厕所旁，探头问正背对着我，在洗衣服的江又夏：“你洗好了没？等你看电影。”</p>
+<p>江又夏把洗脸盆里的水排走，打开水龙头继续放水：“再过这一遍水就好了。”</p>
+<p>“好，那等你了。”</p>
+<p>“嗯。”</p>
+<p>我回到客厅，拉上窗帘，又到冰箱那里拿出冻好的冰块，一瓶大可乐，两个杯子，柜子里翻出几包薯片和牛肉干。</p>
+<p>“茶几都要被你放满了。”江又夏边说边把衣服拿到阳台晾好，在茶几上抽了两张纸擦了擦湿湿的手，在我身旁坐下。</p>
+<p>我把一杯加了冰块的可乐塞她手里：“这是气氛懂不懂！”<br>江又夏喝了一口，放在一旁：“看什么电影？”<br>“动作片。”我拆开薯片，“旧的香港片。”<br>她点点头，不说话了，认真的看着电视。</p>
+<p>说起来江又夏好像还没怎么看过电影，倒是经常陪我看动画片。<br>电影公司的标志过去，画面一下暗了下来。</p>
+<p>昏暗的小巷，老旧的砖墙建筑，几个小孩嘻嘻哈哈跑过，其中一个小孩十分淘气，脱下裤子就打算对正在烧祭品的火盆撒尿。<br>突然，一双手托着小孩转了个身，小孩堪堪没尿到火盆里。<br>托着他的警察骂了两句，把小孩赶走，又和正在烧纸钱的老人家说话。<br>就在这时，风突然刮起，熄灭勒火盆里的火。<br>场面一下变得凶险，有什么东西从火盆中冲出。<br>警察花了一番手脚才将其制服。</p>
+<p>虽然已经不是第一次看了，但是警察布局的手法，一板一眼的动作看起来还是那么精彩。<br>就在我看得认真的时候，手臂一紧，回过头，江又夏双手抓着我的手，紧盯着电视。<br>我拍拍她的手背，打算让她不要抓那么紧。<br>却没想到江又夏一下绷紧了身体，猛地转过头来，瞪大眼睛看我。<br>手把我的手臂攥得发痛。</p>
+<p>“什……什么事？”她语气有点慌。<br>“你害怕吗？”我问她。<br>“没有！”江又夏大声地说。<br>“真的？”<br>“电影很好看！”<br>“那就好……”<br>我想说，你要是那么怕我们就看别的，不过又想这种带点恐怖要素的动作电影，有点害怕才是最佳观赏体验也说不定。</p>
+<p>往江又夏身上靠了靠，她目不转睛地看电视，手上却是十分顺手的把我搂在怀里。<br>我耐着性子在她怀里调整姿势，就这样在她怀里看向电视。<br>不过这样拿吃东西就太不方便了。</p>
+<p>健身房。<br>一堆肌肉大汉和主角对打着，主角故意放走一个，等他跑远了，端来一盘香灰，施术跟踪。</p>
+<p>在江又夏怀里，听着她随着剧情紧张而变缓的呼吸，因为贴在一起而变得温热的体温。<br>感觉有点难集中精神看剧情了。</p>
+<p>停尸房。<br>已经死去的肌肉男，被操纵着尸体去攻击不断追查的主角三人组，在主角的反击之下，总算将其制服。</p>
+<p>总觉得一直维持着同样姿势也有点累。<br>“江又夏，我要去上厕所。”我在她耳边说。<br>她先是一惊，点点头，犹豫了一下：“我也去。”<br>“我先去你再去吧？”我有些奇怪，“两人又没办法一起上厕所。”<br>“走啦。”她拉着我往厕所去。<br>我拿起遥控，按了暂停。</p>
+<p>两人一起在厕所门口。<br>“你先？”我问她。<br>她点点头，进了厕所。<br>一会有了冲水声，江又夏开门出来。<br>“你先回去看电影吧。”我说。<br>她讷讷地点了点头。<br>但等我上完厕所出来，发现她还靠在厕所门外墙上。<br>和把我以前的T恤当成睡裙穿的我不同，江又夏穿着刚刚好，下身穿了一件灰色的超短裤，随意的露出着自己漂亮的麦色大长腿。<br>眼睛看着我，脚趾不安地挠着地：“你出来啦，我……我们回客厅吧。”<br>伸手拉着我回客厅。<br>走了几步，我反手拉住她：“要不看点别的？”<br>“没……没事，我想看完。”她说着。<br>回到客厅，我招呼江又夏过来帮忙。</p>
+<p>她一脸紧张地问我干嘛，我手托着茶几，让她和我一起把茶几往前抬一点，又拿了靠垫放在地上。<br>可乐薯片放在一旁，让江又夏先坐下，双腿分开。然后我坐在她双脚之间，上身靠在她怀里，头枕着她的胸口。<br>喝了口可乐，按下播放键，让电影继续播放。<br>江又夏顺势抱着我的腰。</p>
+<p>最终决战，天台上，主角和反派你来我往的斗法。<br>等到反派被烧得面目全非，江又夏微微曲起腿，缩着身子向下滑，沉缓的呼吸扑向我的后颈。<br>回过头发现她收着下巴，看得认真。</p>
+<p>等到演员列表升起，她总算松一口气，只是抱着我的手还是没松开：“还……还挺好看的。”</p>
+<p>“嗯……”我也知道好看，毕竟算是我最喜欢的电影之一，不过这次被江又夏弄得无法集中精神，倒是没看多少。<br>下次和她看电影，还是避开恐怖类的吧。</p>
+<p>“两点了，你要去睡一会吗？”我从她怀里站起身来，把吃完的薯片袋子放进垃圾桶。<br>“好啊。”她点点头。</p>
+<p>我把江又夏喝剩下的可乐一口气喝完，拿着杯子去厨房洗干净，又把没吃的牛肉干放回柜子里，可乐放回冰箱。<br>期间，江又夏一直跟在我身后。</p>
+<p>“你不是要去睡觉吗？”我有些无奈地问她。<br>“还……还不是太困啦。”她别开脸看向一旁，手背在身后，看起来有些别扭。</p>
+<p>觉得好笑。</p>
+<p>“一起睡吧。”我说。<br>“也……也好。”她说。<br>有些庆幸的语调。</p>
+<p>空调多按降低两度，让房间的温度比平时更凉一点。<br>江又夏到床上，用被子把自己裹起来，腿也藏到被子里。催促我：“快进来。”<br>看着只露出眼睛的她，好不容易才忍住没笑出声，进到被子里，她便侧身贴着我，把我的一只手臂抱在怀里，说：“睡吧。”<br>看她这样子，我又想逗逗她，给她讲个鬼故事。<br>“你……”<br>我刚出声，她从我怀里抬起头。<br>平时大姐姐模样的家伙，现在可怜兮兮地仰头看我：“什么？”<br>“可不可以抱着你？”我临时改变了一下。<br>“你，你想抱就抱呗。”她松开我的手臂，往我怀里蹭了蹭，像在让我快点一般。<br>在床上环抱着她，心里突然像被轻轻挠了挠。<br>有点痒。</p>
+<hr>
+<p>早上，下起了细雨。<br>窗外一片朦胧。</p>
+<p>“带伞了吗？”我打着哈欠问正准备出门的江又夏。<br>“书包里呢。”她扶着门穿鞋。<br>我点点头：“快八点了，你快点走吧，中午雨……算了，你中午别回来了，午饭我自己出去吃就好了。”<br>“食堂打包回来也不麻烦。”江又夏手搭在大门上，回头看我。<br>“要坐车回来就够麻烦了，再怎么样家里还有方便面呢。”我朝她摆摆手，“而且下午还有课，还要往回跑。”<br>“还好啦。”她低声说。<br>“别啰嗦啦，就算真的一顿没饭吃，也不会饿死啦。”我推着江又夏出门，说了‘晚上见’之后，我果断关上门。</p>
+<p>好了，又是剩下我一个人的时间。</p>
+<p>中午的事中午再说，我先去厕所洗漱，吃完江又夏准备好放在餐桌上的早饭，拿出拖把，我又开始做家务。<br>从房间里开始先是用吸尘器吸过一遍之后，用拖把从房间里开始拖地。<br>做到一半的时候，我停下手里的活，拄着拖把，皱着眉头望向天花板。<br>突然意识到，我这是变成家庭主妇了？</p>
+<p>稍微发了一会呆，回过神来，我手开始熟练的一手挪开椅子，另一只手握住拖把末端将桌子下边拖干净。</p>
+<p>总觉得现在的生活和我之前想的不太一样？</p>
+<p>拖完地，我拿起旧毛巾开始清理家具和家里的边边角角。<br>之前想象的大学生活，是每天都在校园里奔走上课，活跃于各个社团之间，和四五好友一起到处游玩或者做一些活动，又……或者能交上一个女朋友……</p>
+<p>等等……<br>说到女朋友，我现在在妈妈那里，好像就是江又夏的‘女朋友’来着。<br>虽然姑且我现在算半个女的，但是江又夏现在也是女的，也没听过她说爸妈那边有过什么联系，她这是糊弄过去了？</p>
+<p>晚上回来再问问江又夏好了。<br>想到这里，不免有些烦躁，心里那坠着石头的感觉又是挥之不去。<br>这件事迟早是要和爸妈那边说清楚的，就是不知道爸妈会怎么看，会不会接受不了呢？</p>
+<p>就这样边想边做家务，动作不知不觉慢了下来，等到被楼下汽车鸣笛声吓了一跳的时候，才发现自己坐在床边发呆。<br>闭上眼睛，叹口气，手撑着站起身来，继续把房间的的床头柜擦干净。<br>等到打扫完之后，重新打量了一下家里。<br>虽然不至于有动画里一样到处都有反光的特效，但是粗看过去光洁没有灰尘的家具和边角还是让人心情愉悦，再加上是自己做的，甚至还有不低的成就感。</p>
+<p>真的变成家庭主妇了！<br>我把手里的旧毛巾用力丢在地上。<br>啊，做饭是江又夏在做。<br>这样一想又觉得也不完全是家庭主妇嘛，我把毛巾从地上捡起来。<br>而且哪来的家庭主妇晚上有空的时候还要学习的。<br>姑且只是半个家庭主妇吧。</p>
+<p>这样一想心情又变好了。<br>看时间，也已经是十一点多，洗了洗手，把毛巾晾好。<br>打开往常存放零食的地方，打算把方便面拿出来把午餐解决一下。</p>
+<p>但是没有。<br>只有两瓶矿泉水和一罐薄荷糖。<br>“方便面呢？”我嘟囔着在柜子里翻了一下，又趴下身子往里看去，还是没有。<br>怎么会呢，明明记得还剩两包……<br>想起来了。<br>前几天晚上，和江又夏两人学完那天笔记的内容，觉得肚子有点饿了，就一人一包吃掉了。</p>
+<p>这下真的是应验我早上说的，要饿一顿了！<br>我不死心的打开冰箱，鉴于江又夏比较勤勉和不浪费的性格，基本买菜都是当天买当天吃完，所以冰箱基本什么都没有，除了一个鸡蛋和两颗葱。</p>
+<p>不……<br>我必不可能饿肚子，我还能叫外卖！</p>
+<p>手机自然被江又夏带去学校了，我就用电脑搜索了一下常用的两个外卖软件……<br>点击官网上的点餐按键。<br>跳出一个二维码。<br>一行小字提示我用手机扫码。</p>
+<p>我有手机还用在网上搜你的官网点餐？</p>
+<p>好的，好的，就算现在攥紧拳头对着显示器发火也无济于事，我松开拳头安慰自己。<br>想着让江又夏帮我点个外卖……<br>‘家庭主妇’这个词又从我脑海中闪过。</p>
+<p>我到窗边往外望去。<br>虽然还是阴天，但已经没在下雨，路上的行人也没有打伞，搜索了一下天气，近两三个小时也不会下雨。<br>那出去吃？</p>
+<p>少有的我打算和体内的‘neet病’做一下斗争，不再多想，换上上次和江又夏她们一起买的衣服。<br>背带裤，白T恤，背上一个单肩帆布背包，带上雨伞和钱包。<br>准备完毕！</p>
+<p>锁好门，坐上电梯来到一楼。</p>
+<p>来到楼道外，凉凉的风迎面而来，雨后的空气带着些许泥土的气味。<br>入眼的世界都被雨水所打湿，显露出和往常不同的色彩，又像被清洗过一般，世界变得格外干净。</p>
+<p>小步慢走，为了应对积水而换上的人字拖还是我以前穿的，所以有点大，我是打算先到车站那边的便利店买上一双新的之后再去别的地方，所以也就凑活着用。</p>
+<p>好不容易到了便利店，我正在挑着鞋，突然听到有人叫我名字。<br>回过头。<br>柏静雅穿着校服大踏步地朝我走过来。<br>“又萌！”</p>
+<hr>
+<p>“又萌今天逃课？”柏静雅站在我旁边问。<br>“我不用上课。”我挑了一双黑色的人字拖，全塑胶的，就算踩进积水里也不会有问题。<br>“为什么不用上课，今天不是什么节日吧？买这个粉色，比较适合你。”柏静雅拿起同款的粉色给我看。<br>“不耐脏。”我接过来过来，挂回货架上，“而且太幼稚了。”<br>“怎么会？”柏静雅跟在我身后来到柜台，“关键是适不适合，和幼稚还是成熟没什么关系吧？”<br>30块钱，不贵不便宜的价格。<br>在我付完钱之后，柏静雅顺手拿了瓶口香糖。</p>
+<p>我先出了便利店，站在门口看向公共汽车站，车还没来，就没有马上过去。<br>“你好。”这时候一个男生走过来向我搭话。<br>看起来有点眼熟，我点点头回应他：“你好。”<br>然后他就离我一人远的地方站着。</p>
+<p>我开始拆手里的拖鞋，鞋子中间被细绑带系得该紧，扣子也不是用手可以拆开的。<br>用力扯了半天，绑带还是玩好如初。<br>“让我试试？”男生伸出手来。<br>“哦……”我把拖鞋放他手上。</p>
+<p>‘啪’的轻响，拖鞋间地绑带被男生轻松扯断。<br>“不愧是年轻人，力气真大。”我轻轻鼓掌。<br>他有些疑惑地把鞋子还给我。<br>“谢谢。”<br>“不用。”</p>
+<p>我换上拖鞋，总算轻松一些了，不用再像卓别林一样走路了。<br>旧的就和包装一起丢进垃圾桶里。</p>
+<p>然后，我和他两个人就这样静静地并排站在便利店雨篷下，望着公路，没有再开口说话。<br>车辆呼啸而过，将路边积水掀起一片浪花落在人行道上，又因为人行道的的倾斜，又重新汇入那路边的积水中。<br>我突然想起这个男生是谁了，上次和柏静雅硬要和我们拼桌时，来叫她的那个男生，是叫……<br>什么来着？</p>
+<p>“又萌是在等我吗？”柏静雅笑眯眯地从便利店里出来，手里还提了一袋东西。<br>原来还去买别的，早知道我就先走了。<br>等她发现我身旁的男生时，顿了一下，把袋子往身后藏了藏，低声说：“叶伦，你没先回去啊？”</p>
+<p>哦，想起来了，是叫叶伦，唉，我这过目不忘的记性。</p>
+<p>“没呢，回去也没什么事，就等等你。”<br>我看向说话的男生。</p>
+<p>和柏静雅穿着一样的校服，头发剪的很短，但是脸很清秀，看起来精神又干净。<br>微微笑着，眼睛盯着柏静雅。</p>
+<p>“嗯……”柏静雅应了一声，“又萌，接下来打算做什么？”<br>“我要去吃饭。”我说。<br>“那……那我陪你一起去吧！”柏静雅马上说。<br>我话还没说出口，她就拉着我的手急吼吼地说：“叶伦你自己回去吧，我和又萌去吃饭。”<br>“啊……嗯，那你……你们路上小心。”叶伦看起来有点失望，但脸上还是笑着，“零食要我帮你带回去吗？带着去吃饭不方便吧？”<br>“不用不用。”柏静雅猛地摇头，“我要带到店里和又萌吃的！”<br>“好，那下午见。”叶伦微笑着和柏静雅告别，又朝我，“又萌也再见了。”</p>
+<p>“再见。”我说。<br>接下来和柏静雅一起在公车站等公车。<br>她静静的没说话。<br>我也没说什么，过了会，公车到了，等车上的人都下来，我正要上车，却发现柏静雅在发呆，于是拍拍她的手背，“上车了。”<br>“啊，哦。”柏静雅回过神来，紧跟着我上了公车，接着发呆。</p>
+<p>经过五站，拉着她下车。</p>
+<p>“吃麦当劳？”柏静雅看着我眨眨眼。<br>“我都点完餐了你才反应过来？”我没好气地说，往一旁让了半步，示意她，“轮到你点了！”</p>
+<p>牵着她走了一路，到了店里，现在点完餐，似乎这人才发现自己身处的地方。<br>因为不是星期天，人不多，所以店员也淡定地等着，没有催促。</p>
+<p>“不想吃这个还能去别的地方，我还没付账。”我看着点餐机小屏幕显示的巨无霸套餐，言不由衷地说。<br>“不用，我要板烧套餐加一份鸡块。”说完，她拿出手机，“多少钱？”<br>“不用。”我把准备好的钱递给店员，“上次你请我们吃饭，这次我来就好。”<br>柏静雅拿着手机抿嘴笑，晃晃手里的袋子：“那我请你吃零食。”</p>
+<p>等了一会，拿上餐盘，找了个四人位，我总算可以开始吃午餐，做了一早上的家务，好饿。<br>柏静雅把零食放在一旁：“唉，累死了。”<br>我拿起一根薯条放进嘴里，好吃。<br>“那刚才你那男朋友说要帮你带回去，你又不同意。”我打开盒子，拿出汉堡。<br>啧，有点歪了。<br>“男朋友啊……”柏静雅本来恢复的情绪，又变得低落，“看起来是那样吗？”<br>“不是么？”我咬了一口汉堡，牛肉碎带着微酸的清脆口感，好吃。<br>“只是朋友而已。”柏静雅叹口气，帮我把吸管插进可乐里，递给我。</p>
+<p>我接过杯子，叼着吸管喝一口可乐，好吃。<br>“但是他喜欢你对吧？”我边吃边回忆刚刚在便利店外那个叶……男生看着柏静雅的眼神。<br>“嗯……大概吧……”柏静雅也跟着拿出自己的板烧汉堡，盯着看了一会，一口咬下。<br>“大概？”我又喝了口可乐把嘴里的汉堡咽下。<br>“他没和我说过。”柏静雅说。<br>“这种事要说吗？”我问。<br>“不用吗？”柏静雅皱着眉，“不说我怎么知道？”</p>
+<p>这句话听起来更像是“不说我怎么拒绝？”。</p>
+<p>“你不喜欢他吗？”我问。<br>“不喜欢。”她说，“我只把他当朋友。”<br>“哪方面不喜欢？”我又问。<br>“性别。”<br>“什么？”<br>“我喜欢女生。”<br>“哦，那没办法了。”<br>“对呀。”</p>
+<p>我吃完了巨无霸，拿了她的一块鸡块，正要吃。<br>突然感到些许违和。</p>
+<p>“你喜欢女生？”我反应过来。<br>“嗯。”柏静雅把最后一点汉堡吃进肚子里，应道。<br>“赶时髦？”我用薯条指着她。<br>“才不是！”柏静雅反应变得有些激烈，“我有喜欢的女生！”<br>“哦。”<br>“不过不喜欢我。”她一下如同焉了的白菜，靠在椅子上。<br>一惊一乍的。<br>“天涯何处无芳草，何必单恋一枝花。”我说。<br>“她喜欢叶伦！”她说着猛地把剩下的鸡块塞进嘴里，用力吸了一口可乐，猛地咳起来。<br>“原来如此。”我想起之前看的青春伤痕电影，不禁点头，拿张纸巾递给她，“这才是青春啊！”<br>“咳……去他……咳咳……妈的青春！”她用纸腌住口鼻，边咳边大声地说，说完马上变得低落，店里的人因为这突然的话都疑惑地看向我们这边，又回过头去。</p>
+<p>“记得上次我和你们拼桌吗？”安静了一会，等我把薯条吃得差不多的时候，她突然说。<br>“记得。”我点点头，她硬是抛下几个朋友和我们一起挤。<br>“当时是她借着约我出来作借口，其实是想和叶伦一起吃饭的，还要去看电影什么的。”柏静雅眼牟低垂，“看着她对着叶伦犯花痴，我难受。”<br>这就是原因么。<br>“但叶伦不是喜欢你嘛。”我说。<br>“是吧。”她说，“但是他不说，我们就还是朋友，我也没办法去拒绝，只能尽量不和他独处。”<br>“不过叶伦这么明显，你喜欢的那人不知道吗？”<br>“肯定知道啊，所以最近对我好冷淡。”柏静雅仰着头，“又萌，我好难受啊。”</p>
+<p>嗯，恋爱真复杂，还好我没有谈过恋爱。</p>
+<p>“我要吃口香糖。”我对她说。<br>“给你。”她从袋子里把口香糖找出来递给我。</p>
+<p>薄荷味的。<br>嚼起来，连吸进鼻腔的空气都变得凉凉的了。<br>还给柏静雅，她接过手，也拿了两颗开始嚼。</p>
+<p>“你还是喜欢她吗？”我问。<br>“嗯……最近啊……”柏静雅双手捧着口香糖罐子，在手里来回搓，“最近没那么喜欢了……”<br>“毕竟她也不喜欢女生。”我说。<br>“嗯……”<br>“所以还是好好读书吧！”我说。<br>她笑了出来：“明明又萌小朋友今天也没上学。”<br>“我是不用上学！还有不准叫我小朋友！”<br>“为什么？”<br>“因为……”我说不出话了。</p>
+<p>“不想说就算了。”柏静雅倒是不在意，“不过既然你不用上课那明天也一起吃饭吧？”<br>明天，我回忆了一下江又夏的课程表，明天好像也是一整天的课。<br>于是我点点头：“明天可以，不过后天开始到下个星期一就不行。”<br>柏静雅前倾身体，笑着说：“还要预约哦。”<br>“那是。”我微扬起下巴。</p>
+<p>之后我们一起坐车回了小区附近。<br>柏静雅以去学校不方便为由，把那一袋零食都送给了我。<br>我看着她离开的背影个手里沉甸甸的零食，心想明天要再请她吃一次饭吧。</p>
+<hr>
+<pre>
+    　　　　　/ \ / \
+    　　　　　⎮ ⎮　　 ⎮ ⎮
+    　　　　　⎮ ⎮　　　 ⎮ ⎮
+    　　　　 　\ ⎮　_____ ⎮ /
+    ⎮￣￣￣⎮　\╱　 ,,　╲/
+    ⎮好家伙⎮ / 　/,丨　/,╲\　\　\
+    ⎮我在生⎮丨 / ︵ v\/ ︵　丨丨　l
+    ⎮产队的⎮ ⋎∨ ●　　● 丨 / /
+    ⎮时候可⎮　㇏　　^　　　/w/)
+    ⎮没po这 |　　/ΣΣΣΣΣΣ⎮ ⎮⎮⎮
+    ⎮么勤奋|　　\ ΣΣΣΣΣ |⎮⎮ \
+    ⎮_______|　　⎮⎮⎮⎮⎮⎮⎮⎮⎮\ \
+    　　　　　　  ⎮⎮⎮⎮⎮⎮WV\\ \
+
+昨天的台风还真是菜啊(`ε´ )
+</pre>
+<hr>
+<p>嗯……</p>
+<p>有点一言难尽。</p>
+<p>在电影最后，父子四人和自己的老婆一起穿着礼服，八个人站在教堂前唱歌。</p>
+<p>我吃完袋子里的最后一片薯片，把包装丢进垃圾桶里，刚想关了电视。<br>这时，大门响起轻微的声响。<br>江又夏背着书包，提着袋子进到家里。</p>
+<p>“回来了。”我边和她打招呼边走过去，接过她手里的袋子，看着她湿湿的头发，“先去洗一下澡吧。”<br>“等一下吧，而且只是头发有点湿而已，身上没湿。”她把伞稍微撑开，放在门口靠窗的地方晾干，“中午吃了什么？”<br>“麦当劳。”我提着袋子放在饭桌上。<br>“叫外卖了？”江又夏把书包放回房间。<br>“没有，出去吃了。”我站在房门口，看着正在脱内衣的江又夏干净光滑的后背，“本来想叫外卖的，不过电脑叫不了。”<br>“那叫我帮你叫呗。”江又夏背对着我，穿上黑色的T恤，将头发从后背的衣领拨出来。<br>“好几天没出门了，出去溜达一下。”我把桌子上的发夹递给她，她接过手之后，顺手将头发盘在头顶，用发夹固定，“而且还遇到柏静雅了，顺便请她一起吃饭，感谢她上次请我们吃饭。”</p>
+<p>“遇到柏静雅了？”江又夏转过身，皱眉看我，“你不是不喜欢她吗？”<br>“为什么这么说？”我有些不解。<br>“上次吃饭你不还说她是偷拍狂？对了，这次呢？她还是要拍你的照片吗？”江又夏抓着我的手，语速非常快的说。<br>“没有，我们就很普通的吃一顿饭而已。”<br>“真的？”<br>“嗯。”江又夏说。<br>还说了点八卦。</p>
+<p>江又夏半眯着眼，盯着我看了半天，就在我想把她推开的时候，她突然伸出舌头，舔了我的嘴角一下。<br>温软的触感让我的心脏狠狠的撞了一下胸口。</p>
+<p>“怎……怎么了？”我下意识地捂着她舔的地方。<br>她抿了抿嘴，十分理所当然地说：“嘴角粘到东西了，嗯……是薯片？”<br>“是薯片啦……”我慌乱地低头应道。<br>“吃太多零食晚上吃不下饭哦。”江又夏手捧着我的脸来回搓。<br>“不要搓！我不是汤圆！”我拍开她的手，揉着被她搓得有点痛的地方，瞪了她一眼，“而且我就吃了一点，不会吃不下你做的饭的！”<br>“那就好。”江又夏笑着往外走，“你买太多零食了。”<br>“不是我买的，柏静雅送我的。”我跟在江又夏身后，轻轻一跳，抱着她的脖子，挂在她的背上，“在便利店遇上她的。”<br>她手往后托住我，然后在我屁股上掐了一把。<br>“痛！”我轻咬了一口她的后颈，咸咸的，恶狠狠地问她“你干嘛！”<br>“哼，就突然想起，今天你出门没和我说。”江又夏说，“要是我中午回来，不就找不到你了！”<br>“嗯……那，那中午不是让你在学校了！”我说。<br>“所以呢？”<br>“下次会先说啦。”<br>“知道就好。”江又夏满意地点点头，缓缓往客厅走去，盘着的头发翘着两三条发丝，弄得我有点痒，我把头埋在江又夏的肩膀，脸贴着那略带湿气的头发，温热感从脸颊传到四肢，最后涌入心脏。</p>
+<p>心，像被攥住一般。</p>
+<p>走了一会，江又夏突然说：“对了，安芝说图书馆有一个管理员辞职了，我打算去试试。”<br>“哦。”我脚箍住她的腰，抬起头，“干嘛，你缺钱吗？”<br>说出口之后，才发觉我的口气好像有点恶劣，不过话都说出口，也收不回来，只能放轻语调继续说：“钱……钱还有吧，上次妈妈不是还加了钱给我们吗？”<br>就是那次妈妈来看我们，回去之后，似乎又多汇了钱给江又夏，还有一句‘不错，加油’。</p>
+<p>加什么油啊，老妈。</p>
+<p>江又夏背着我，来到客厅，在电视前停下。<br>电视播完刚才的电影，我去接江又夏没有关，于是app开始自动播下一部推荐的电影。<br>轻快的音乐，似乎是男女主的演员拉着手，相互注视。<br>江又夏托着我，突然原地转了一圈，家里的摆设在我眼前掠过，我紧张的抓住她的肩膀。<br>“只是觉得你有手机的话，会方便一点。”她说。<br>我一下没反应过来，好一会才意识到她说的是什么。<br>“不用啦，这样挺好的。”我说，“反正买了也就跟你联系而已。”<br>“不好吗？”她问。<br>“也行。”我喜滋滋地说。<br>“那我就去试试了。”她把我放在沙发上，“你看电视吧，我去做饭。”<br>“我帮你？”我起身。<br>“嗯……好吧。”江又夏点头。</p>
+<p>“对了，你明天也在学校吃吧。”<br>到了厨房，我帮江又夏把菜从袋子里拿出来。<br>“怎么了？”江又夏停下手，问。<br>“明天我又约了柏静雅吃饭。”我说。<br>“这样啊。”<br>江又夏回答的语气有点不善，我抬头疑惑的看她。</p>
+<p>她咧着嘴笑，头微微歪着：“我买了菠萝，晚饭后一起吃吧。”<br>嗯？<br>“哦。”我点点头，继续帮着做饭。<br>看着一旁的菠萝，总觉得好像哪里不对？</p>
+<hr>
+<p>“我觉得，我们需要在买菜这个问题上达成一点共识。”我喝了一口牛奶，对着把荷包蛋放在我面前的江又夏说。<br>“你说。”江又夏穿着围裙，在我旁边的椅子坐下。</p>
+<p>“第一，不准再买生蚝。<br>“第二，不准再买菠萝<br>“第三，睡觉就睡觉，不准乱摸脱和我衣服！”</p>
+<p>“最后这个和买菜没关系吧？”江又夏一脸纯真。<br>“那就当做约法三章！”我忍着不用手里的牛奶泼她一脸，“不要让我大声说话，现在喉咙很痛。”</p>
+<p>还有腰，我的腰。</p>
+<p>“好好，你说我听。”她讨好的用筷子把我盘子里的荷包蛋弄成几个小块，夹起一块，递到我嘴边，“你喜欢的，全熟。”</p>
+<p>“啧。”我的脚不耐烦地敲着地板，又觉得不解气，又伸过去踩了江又夏的脚，然后才稍微张开嘴，荷包蛋便小心翼翼的喂到我嘴里，我用力地嚼着，“给我记住这三条约定！”<br>她漫不经心地点点头：“但看你昨天晚上，不也挺开心的……”<br>“你再说一遍？”我捏住她的腹侧，问她。<br>她摊开手，耸了耸肩，又夹起一块荷包蛋递到我嘴边。</p>
+<p>“你中午还要和柏静雅去吃饭吧？”江又夏问。<br>“嗯，你中午也在学校吃吧。”我把荷包蛋三两下吃完，把牛掰耶一口气喝完，端着盘子和杯子一起放进洗菜盆里，打开水龙头。<br>厨房窗外，灰色的天，行人小心翼翼地避开路边的积水。<br>“嗯，昨天说好了。”水已经将锅淹没，我把水龙头关掉，拿起洗碗布接了点洗洁精开始把锅碗洗了，“记得带伞，我叠好放在大门旁的鞋柜上了。”</p>
+<p>“嗯。”声音意料之外的在我的头顶回应，盘子和杯子从天而降，落在我身前的洗菜盆里，一双手环住我的腰，下巴抵在我的肩膀上，温热的气息在我耳边，“出门和我说一下。”<br>“很痒。”我抬了抬肩，让她的嘴离我的耳朵远一点。<br>“不行。”江又夏在我腰间的手用力。<br>“我还要洗碗。”我手里停了下来，这姿势真的很难让我继续手里的工作，“你是小孩吗？”<br>“中午……嗯……你想和柏静雅去吃什么？”她问。<br>“还不知道，我打算问她。”我手撑着灶台的边，耳廓的瘙痒感似乎还传递到胸口，让我的心跳有些加速。<br>“嗯……晚上……”她犹豫着，手上的力气松了一些，我背对着她也不知道现在什么表情，就觉得她的情绪似乎不高。<br>明明比我高，看起来也应该比我年长，这种时候却让我不禁想起抱着家长大腿闹别扭的小孩。<br>“晚上，我们也一起出去吃？”我接着她的话尾说。<br>“不……不好吧，还要给你买手机。”江又夏虽然这样说，但是稍微扬起的语调还是让我觉得或许这是个不错的决定。<br>那么要用什么理由，让她答应呢？<br>我想了一下。</p>
+<p>我稍微侧过头，和她脸贴着脸：“庆祝我们相遇？”</p>
+<p>耳边，只有她的呼吸声。<br>我耐心的等待着。<br>窗外又开始下起小雨。<br>路旁的树叶在这雨的湿润下，显得青翠。</p>
+<p>“想吃椰子鸡。”她说。<br>“好。”我说。<br>于是，我们晚上要出去吃了。</p>
+<hr>
+<p>……”</p>
+<p>我耸耸肩：“等一下想吃什么？”</p>
+<p>“随便。”她答。<br>“解散。”我说。</p>
+<p>“别啊。”她拉住就要转身的我，“我真的是吃什么都可以啊。”</p>
+<p>“那你说一个。”我回过身，插着一边腰问她。<br>“那你怎恶魔不说啊？”她扬起一边眉毛问我。<br>“我也不知道要吃什么。”我两手插腰。</p>
+<p>柏静雅看着我轻笑一声，像是阴天突然放晴，说：“那去吃盖饭？我昨天晚上看到吃播拍的vlog就是吃盖饭。”</p>
+<p>“可以，去哪吃？”<br>“去离这边两站路的一个街边店吧，那家还不错。”柏静雅想了一下，说。</p>
+<p>决定之后，公车没过多久也到了。<br>今天人有点多，好不容易挤上车，但是再往里走就有些困难了，于是我们俩在车前门附近站好。<br>柏静雅在我身边紧挨着。</p>
+<p>“又萌今天穿这套很好看。”她突然说。<br>我低头看自己的衣服，T恤和短裤，脚上还是踩着拖鞋：“是么？”<br>“像个假小子，你等一下。”她松开扶手，有些艰难的伸手到背后，掏出一顶鸭舌帽，展开戴在我的头上。<br>“看，有点帅哦。”她说，语气有些兴奋，“小哥哥要女朋友吗？”<br>“不用，谢谢。”我没好气的说。</p>
+<p>我看向身旁的公车挡风玻璃，透过模糊的影子，戴着鸭舌帽的我微微歪着头，当车偶尔穿过路边的树荫时，还能看到我脸上有些疑惑的表情。<br>我觉得也差不多啊，不过确实看起来有点偏中性风？</p>
+<p>比我略高一些的柏静雅，鸭舌帽帽檐挡住我的视线，让我看不到她，只能微微仰头看柏静雅。<br>原本脸上还是笑嘻嘻的她，在我们眼神对上时，她笑容收敛，骤然愣住，双唇微张，呆呆和我我对看，一会后，她正要说什么。<br>公车突然刹得有点急，柏静雅被吓了一跳，慌乱中抱抱住我的肩膀，身体也靠过来，我顺势揽住她的腰，另一只手拉住身旁的扶手，让两人稳住身形。<br>“谢谢。”柏静雅长舒一口气。<br>“嗯。”我手松开她的腰，柏静雅却没松开我的肩膀。<br>“借……借我扶……扶一下吧。”她说，抱着我肩膀的手力气稍微松了一下。<br>“扶吧。”我戴着帽子，感觉她突然变得怪怪的。</p>
+<p>不过是错觉吧，毕竟也没做啥吧？<br>啊，扶腰也是无奈之举。<br>要不还是道个谦？<br>毕竟这个年纪的女孩好像还是挺敏感的。</p>
+<p>“抱歉。”既然决定，我便仰着头，看着她的眼睛说。<br>能听到柏静雅略微深呼吸的声音，又是呆呆的样子：“什……么？”<br>“哦，刚才抱了你的腰。”我说。<br>“呃……呃……没……没关系。”她眼瞳往一侧飘去，“你怎么做……啊不，我，这，我不介意。因为刹车嘛……嗯，刹车，不然你继续抱着也挺……挺挺好，不然等一下又急刹。”<br>“嗯。”听到她这么说，我也就放心了，“你扶着我的肩膀就好了。”<br>刚刚一时没注意就算了，现在再抱总感觉很不太好意思。</p>
+<p>然后公车也到站了。<br>因为人实在太多，前后门一起打开，门开的之后，我马上拉着柏静雅往外挤，脚踩到地面，往外小跑两步，远离人群，长舒一口气。<br>回头问柏静雅：“那家店在哪？”</p>
+<p>“我带你过去吧！”柏静雅说着，挣开我被我拉着的手肘，牵起我的手，带着我往前走去。</p>
+<p>嗯，还是有点怪？</p>
+<hr>
+<p>吃到一半的时候，开始下起雨来。</p>
+<p>这是店面有些狭窄的盖饭店，一楼只容得下收银台和厨房，堂食需要去到二楼。</p>
+<p>我和柏静雅面对面坐着，中央空调正从我的后侧呼呼地吹着风，将夏日阴天压在我们身上的闷热驱走。<br>雨滴打在落地玻璃上，颜色不同的伞从我们脚下经过。</p>
+<p>“怎么了吗？”</p>
+<p>回过头，柏静雅正再把一勺带着些许黑椒汤汁的饭送进嘴里。</p>
+<p>“在想好在早上让江又夏带了伞。”我也把咬了一口的猪排放进嘴里。<br>酸甜的番茄汁在口中漫开，咬开酥脆的外皮，肉质紧致却不难嚼，虽然甜口配上白饭对我而言有点怪，不过总体而言还是挺好吃的。</p>
+<p>就是有点贵。<br>带着对想要兼职给我买手机的江又夏的歉意，我把猪排咽下肚。</p>
+<p>“又萌真关心又夏姐啊。”柏静雅说着，身体前倾，伸出一只手指在我脸上抹了一下，又展示给我看，“番茄汁。”<br>“嗯……啊，谢谢。”我稍微愣了一下，心情有些复杂，用手背擦了擦自己的嘴角。<br>似乎是干净了。</p>
+<p>又夏姐啊……<br>虽然总有我已经能接受现实的感觉，可不经意间，现实一次有一次的提醒我，我不过是故意什么都不做的随波逐流，好让不正常的一切能够看似正常的进行下去。<br>只要我，她或者别的什么来打破的话……</p>
+<p>一声脆响，打断我的思绪。</p>
+<p>是柏静雅的勺子敲在了盘子上。<br>不过我回过神来，她却还盯着自己的手指上那一点番茄酱看。</p>
+<p>“你干嘛？”我抽了张纸巾，包着她的手指擦了擦，然后丢进桌下的垃圾桶。<br>“不，怎么擦了，多浪费……”<br>“嗯？”<br>“没，我想说也不用纸擦……没什么。”柏静雅晃着上身，脸突然也变红了，看起来有点不安分。</p>
+<p>还挺有环保意识的。</p>
+<p>啪嗒。</p>
+<p>一滴有些大的雨滴打在耳侧的玻璃上。<br>“你带伞了吗？”我问柏静雅。<br>“带了带了，又萌带了吗？”柏静雅点点头。<br>我拍了拍自己带出来的包：“带了，不过有点小，要是你没带可能就要一起抱着撑伞回去了。”<br>本还想说我幽默了一次，柏静雅却在听我说完之后，一脸悔恨，甚至没拿勺子的那只手稍稍握拳空挥了一下。</p>
+<p>“我现在说自己没带还来得及吗？”她说。<br>“说什么蠢话，没带你就自己在店里等雨停吧。”我说。<br>“那我伞挺大的，我们一起嘛。”<br>“不要，等一下淋我一身。”<br>“有什么关系嘛，又萌你等一下不是回家吗？”<br>“你要上学啊。”我尽量忍着不用关怀傻子的眼神看向对面。</p>
+<p>柏静雅失落地用勺子在吃得差不多的盘子里拌着。<br>“好啦快吃，回去坐公车还有好几站呢，别迟到了。”我把剩下的饭都拨到盘子中间，红红的饭粒看起来实在不太美观，我两三勺把饭吃完，开始吃剩下的一点猪排。<br>店家十分贴心的把一整块猪排切成条状，容易入口的模样，我把剩下的两条中的其中一条吃完，感觉有点撑。<br>而且这家店的番茄汁虽然不错，却非常甜，说实话已经有点腻了。</p>
+<p>这时候柏静雅也快吃完了，我看了看盘里的猪排，又看了看她。<br>从一旁的筷筒里抽出一双新筷子。</p>
+<p>“柏静雅。”我喊她。<br>她抬起头看我。<br>“啊……”我对着她张开嘴。<br>她有些茫然地跟着张开嘴：“啊。”<br>我夹起剩下的最后一条猪排往她嘴里塞进去。<br>她下意识的闭起嘴，刚好将猪排咬住，我收回筷子，托着下巴笑眯眯地看着她瞪大眼睛的样子。</p>
+<p>“好吃吗？”我问。<br>“嗯……”她抿了几下嘴唇，把猪排吃进嘴里，也因为这些动作，让她的嘴唇被番茄汁染得红红的。<br>因为咀嚼的动作和偏多的猪排，双颊微鼓地动着。<br>突然有点担心她会不会咽到。<br>“还……还不错。”她吞下去之后看起来有些慌地应到。<br>“啊，抱歉，我是吃不下了，就想和你开个玩笑。”<br>“没……没关系。”她低着头，继续吃着，似乎脸快要埋到盘子里了。<br>看不到她的表情，看到两侧的脸颊，嘴角的一点番茄汁似乎在脸上晕开，柏静雅的脸上一片通红。</p>
+<hr>
+<p>雨还在下。</p>
+<p>我和柏静雅各自撑着伞走。</p>
+<p>为了不让伞面叠在一起，弄湿对方，我们保持着相一定的距离。</p>
+<p>“这样走着很怪吧。”柏静雅说。<br>“还好吧？”我看了看她的伞和我的伞。</p>
+<p>我的伞是天蓝色的，因为不是防晒伞，能看到些许光透过来，柏静雅的伞表面是黑色的防晒伞，里面却是印着两个大大的眼睛。<br>感觉很有她的风格。<br>在功能和款式有些差别，只够一个人用，这点倒是都一样。</p>
+<p>“你还说你的伞很大呢，结果还不是只够你一个人用。”我避开地面的积水，顺手拉了一下正要说话的她，“别顾着说话，地上有水呢，你穿的是板鞋。”</p>
+<p>“我知道啦。”柏静雅往前大跨了一部，虽然没踩到积水，却溅起些许地上的雨水。<br>“知道就别踩那么用力啦，快溅到裤腿了。”我转过头看她，柏静雅脸上挂着傻兮兮的笑容，“干嘛？”<br>“又萌你对我挺关心的嘛。”柏静雅靠过来，雨伞微微往外倾斜。</p>
+<p>毕竟我大你三四岁。<br>不过设定上我还是初中二年级就是了。</p>
+<p>啧，一想起这个小屁孩设定我又觉得有点不爽了。</p>
+<p>“没觉得。”我没好气的回她一句，看了一眼不远的公车站，大概是因为没到上班时间，人不算多。<br>“那是你天生就很关心别人了，好乖啊。”柏静雅对我有点恶劣的态度视而不见，还是情绪略为高昂的和我聊着。<br>“滚滚滚。”我朝她嫌弃地摆摆手。</p>
+<p>我们来到公车站，站牌旁的候车亭有雨篷，我们也就把伞收了，站在一旁的等着公车来。</p>
+<p>“又萌，椅子还有位子可以坐。”<br>我顺着柏静雅指的方向看去，不锈钢的长条椅上还剩一个人能坐的空间。<br>“你坐吧。”我摇摇头。<br>“那我们一起站着等。”柏静雅没坚持，靠到我身边并排站。</p>
+<p>雨没有要停的样子，也没有变大的趋势，雨水落在塑料制的雨棚上，发出声响。<br>细密的雨水将闷热的空气所形成的氛围一点点砸碎。<br>突然。<br>微凉，带着些许湿气，轻柔又有些滑腻的触感贴上我的小臂，痒痒的感觉，让我下意识地把手往回收了一下。<br>转头看去，女孩正睁大了眼睛看向公车来的方向，脚稍微垫着脚跟，身体轻微地小幅晃了晃。<br>似乎静不下来。</p>
+<p>“赶着回学校吗？”我问。<br>“没有没有。”柏静雅听到我和她说话，马上回过头，摇了摇，“我看起来很急吗？”<br>“感觉你有点着急，一直看着公车。”我说。<br>“没什么……”柏静雅说一半停下来，纠结了一会，“其实啦……”<br>“嗯？”<br>“就是怕你无聊，想说公车快点来，我们也不用在这干等。”她有些不好意思，想低下头，撞上我的视线，又往一侧撇开脸。<br>“还好吧，如果和你在一起无聊，我就不会和你一起吃饭了。”我从包里找到江又夏买的纸巾，抽出一张给她，“你的头发有点湿了。”<br>“嗯？哪里？”柏静雅在头顶和马尾上摸了摸，似乎没摸到哪里湿了，靠过来问我，脸颊白嫩的肌肤上，几缕被打湿的头发贴着。<br>忽然看见她额头的汗珠，也许不是雨水，而是被汗水沾湿呢？</p>
+<p>打开叠好的纸巾，在她额头抹了一下，又帮她擦了擦脸，头发别在耳后。</p>
+<p>“好了。”我把湿湿纸巾展示给她看。<br>柏静雅摸了摸自己的额头，看着我手里的纸巾，笑得有点呆：“又萌……谢谢。”</p>
+<p>我捏了捏手中的纸巾，有些好奇，放在鼻子下边闻了闻。</p>
+<p>“又……又萌，你干嘛？”柏静雅突然收起傻笑，震惊地看我。<br>“有点好奇是汗还是雨水。”我说着，又闻了闻。</p>
+<p>没什么特别的味道。</p>
+<p>“等一下！”柏静雅有些急地伸手，那我手里的纸巾抢走。<br>我有些疑惑，却发现她的脸变得涨红，手忙脚乱地把纸巾塞进口袋里：“纸巾不丢吗？”<br>“我自己去丢！”她说着，公车刚好在我们旁边停下。<br>门一打开，柏静雅就一马当先的冲上车。<br>我跟上去，被她保持着一段距离，回到我家附近的公车站。</p>
+<p>“我想明白了。”柏静雅在我要和我告别的时候说，“如果你……你喜欢的话，也也也也是可以的！”</p>
+<p>说完，抱了我一下，就转身跑了。</p>
+<p>“我是不是不该乱闻呢？”吃晚饭地时候，我把事情说给江又夏听，询问她的意见。<br>“明明是个初中生竟然这么茶！”江又夏对着我说。<br>“闭嘴，我是大学生！”我扑过去，咬了她的锁骨。<br>舌头划过她的皮肤，有些咸咸的味道在口中扩散，让我在被她反过来按倒之前想明白了。</p>
+<p>那果然是雨水吧？</p>
+<hr>
+<p>早上，被抽油烟机的声音叫醒。</p>
+<p>我半睁着眼睛盯着天花板，感觉眼睛有点张不开。<br>揉了揉。<br>眼前的一切变得清晰，听着呼呼的抽油烟声，脑子放空，醒了，但是劳累感让我连一根手指都不想动。</p>
+<p>躺了好一会，脑子终于开始运转，从床上坐起身来。被子从身上滑落，身体直接暴露在空调的风之下，让我忍不住打了个寒颤，抓着被子一角，把我自己裹住。</p>
+<p>我就这样用被子披在身上，下了床，脚踩在凉凉的地砖上，打开门，往外走去。</p>
+<p>温热感让我脚步顿了一下，口中也不禁对着夏季抱怨道：“好热啊。”<br>“醒啦。”江又夏正好关上抽油烟机，端着一个盘子回过身来，看到我露出无奈的表情，“穿上衣服再出来啦。”<br>我没理她，走到客厅，坐在沙发上，就这样躺下，又转了个身，趴在沙发上。<br>一阵“唰啦啦”地声音，客厅变暗，我抬头看去江又夏拉上客厅的窗帘又朝我这边走来，在我头的这侧坐下。<br>我继续埋着头，闭上眼睛。</p>
+<p>在房间睡觉舒服还是在客厅睡觉舒服？<br>答案毋庸置疑，但是不可否认的，趴在沙发上眯上一会，让身体有种舒展开来轻松感。</p>
+<p>就在我闭着眼睛，懒懒的想睡个回笼觉。<br>头发被柔软的感觉抚弄着，睁开眼睛，是江又夏靠在沙发背上，摸着我的头。</p>
+<p>“你干嘛？”我问。<br>“手没事就会静不下来，下意识找点事情做。”她轻轻地用手掌顺着我的头发，时而透过发丝直接触到我脸和耳廓的指尖让我想要发呆的心，平静不下来。<br>“你是那我头当核桃盘啊？”我抬起头，蠕动着到她身边，把头枕在江又夏的大腿上。</p>
+<p>脸贴着光滑而温和的大腿皮肤，有点舒服。</p>
+<p>“哪有？”她伸出手，把我身上有些乱了的被子扯了扯，把露出的地方重新遮好，“算是撸猫一样。”<br>“你才是猫。”我用头顶她的肚子，然后用力转了几下。<br>她被我弄得“哈哈”笑起来，然后把我按住：“可以吃饭了，快回去换好衣服，刷牙洗脸。”<br>“不要。”我躺着不动，把脸埋在她大腿和肚子之间，闻着她衣服上，新买的洗衣液那清淡的香味，闷闷地说，“不想动。”<br>“等一下菜凉了。”<br>“凉了就当凉拌菜。”<br>“哈哈哈，凉拌菜。”江又夏笑得很开心。</p>
+<p>这家伙笑点是不是很奇怪？</p>
+<p>她托着我的头，让我离开她的大腿，又把我扶正让我坐着：“那大小姐坐好。”</p>
+<p>江又夏起身，开了电视，又走开去。<br>电视里，女主播正播报着今天的新闻，角落的显示着，11：06。</p>
+<p>中午了！<br>不过星期天，算了。<br>我正准备回房穿衣服，却看到江又夏从厕所出来。<br>她胳膊上搭着毛巾，端着我的漱口杯，另一只手则拿了牙刷和一个舀水的水瓢过来。</p>
+<p>“来，大小姐，请洗漱。”她把牙刷递到我的面前。</p>
+<p>我看了看牙刷，看了看微微弓着身的她。<br>我张开嘴：“啊……”</p>
+<p>江又夏一愣，然后把手里地水瓢和漱口杯放在茶几上。<br>牙刷在杯子里沾了沾水，往我张开的嘴伸过来。</p>
+<p>当牙刷进到口中的时，我下意识想把牙刷叼住。</p>
+<p>“别动。”江又夏说，手贴着我的脸，拇指抵住我的牙齿让我保持张嘴的状态。</p>
+<p>她先从我智齿的右内侧刷起。<br>轻柔的动作，熟悉的软毛小刷头，此时却感觉有点陌生，是因为刷牙姿势和动作的不同吗？<br>如同瘙痒一样的刷毛划过我的牙龈，些微刺刺的感觉一下又一下的挑弄我的心脏。<br>呼吸似乎也变得沉重。<br>眼前是江又夏认真的神情，似乎在仔细的保养着自己的宝物一般。<br>接着是左侧智齿。<br>口水在口中积蓄。<br>舌头被薄荷味的牙膏刺激着，脑袋也跟着嗡嗡响。</p>
+<p>思考似乎也停止了，如同被她的话语而操纵的提线木偶，乖乖的从她手里的杯子里用水漱口，又吐在她递过来的水瓢里。</p>
+<p>凉凉的毛巾覆满我的脸，也隔绝了我注视着她的视线，让我猛地回过神来。<br>我只是想让她把牙刷递我嘴里耶？</p>
+<p>“完成。”她帮我擦完脸笑眯眯地说着，又抱了我一下，用脸贴了贴我的脸，“干干净净的，真好。”<br>“哼……嗯……”我应了两声，“吃饭吧。”<br>说着率先站起身，往餐桌走去。<br>“光着身子？”她问。</p>
+<p>我才发现，被子不知道什么时候掉在地上了，我就这样光着身子走到了餐厅。</p>
+<p>我望向客厅窗户，窗帘拉上了，才松一口气，恶狠狠地对着她说：“凉快！”</p>
+<p>然后在她揶揄的目光中，我就在这种耻辱的吃完了午饭。<br>“江又萌，你好涩啊。”<br>闭嘴！</p>
+<hr>
+<p>这算是郊区么？<br>我一个外地人其实也不太懂。</p>
+<p>坐上网约车，大概是开了五十分钟左右到达目的地。<br>不过在第十分钟的时候，路上的风景我基本就都是第一次见了。<br>上车的时候，柏静雅和舒以柳还打算用我比较小的理由来让我坐中间，不过她们边说边笑的态度让我十分不爽，我坚决要坐窗边。</p>
+<p>“这样不就没惊喜了吗？”柏静雅抱怨。<br>“都说是你生日干嘛要给我惊喜？”我坐在一侧，柏静雅坐在中间，舒以柳就坐在了副驾驶后的一侧。</p>
+<p>一路上，柏静雅情绪有些高涨，不停和我说话，舒以柳身体前倾，扶着副驾的靠背，和回过头的叶伦聊天。<br>我看过去的时候，有时能和他的眼神对上，他有些不好意思的躲开，往下看，但是没一会有重新看过来。<br>我用眼角看了一眼正指着窗外，丝毫不去看副驾驶前后两人在干什么的柏静雅.<br>感觉空气都变得凝重了。</p>
+<p>等到到了目的地，柏静雅一脸得意的看着我，我则是有些茫然的看着她。</p>
+<p>我们现在正在一扇黑色的双开旧式木门前。<br>白墙瓦顶青石路，看起来十分古朴，就像……</p>
+<p>我老家乡下的房子。<br>不过看起来比较新。</p>
+<p>“怎么样厉害吧。”她拉着我往前走。<br>“还好吧……”我回头看了一眼身后的两人，他们倒是没什么惊讶感，叶伦还拿出手机拍了一下旁边的一颗树。</p>
+<p>“爷爷奶奶，我来啦！”柏静雅推开门，大步跨进去。</p>
+<p>只有我跟在后边一脸错愕。</p>
+<hr>
+<p>虽然外边看起来和我老家的老房子有点像，不过里边是天差地别，至少和我老家那已经失去居住功能的，完全不在一个档次上。</p>
+<p>没有青苔的干净墙面，盆栽随意堆在天井一旁，和那精心照料的模样不太相衬的摆法。<br>而中央则摆了一张桌子，桌上有菜有汤，非常丰盛。其他房间以“口”字形的布局围绕一圈。</p>
+<p>稍微看了一下周围的装修，简约温馨，看起来现代时尚，自门外进到屋里，颇有一种别有洞天的感觉。</p>
+<p>“柏奶奶好。”叶伦和舒以柳朝厨房喊道。</p>
+<p>“雅雅，小伦，小柳，来啦。把书包放好，快坐吧，奶奶把这个菜炒完就能吃了。”大门旁的厨房里，一个中气十足的女声对我们说。<br>往那门里看去，一位老奶奶背对我们，花白头发盘在头上，身上穿着围裙，炒菜动作干净利落。</p>
+<p>“柏奶奶好。”我也跟着叶，舒两人喊道。</p>
+<p>“哦，这位是……”听到我的声音，老奶奶回过身来，看起来精气神十足。</p>
+<p>“这是我的一个朋友，叫江又萌。”柏静雅搂着我的肩膀说，“我请她来吃饭。”<br>“柏奶奶好。”我稍微站直了一点，再次和她打招呼。<br>“欸。”柏奶奶点点头，“和雅雅一起去先坐，等会就能吃了。”</p>
+<p>“好。”柏静雅拉着我往客厅的一侧走去，“奶奶，爷爷不在吗？”<br>她说着，把自己的书包放在沙发上，叶伦和舒以柳也跟着她放一起。<br>我则把小包放在沙发扶手上。<br>“他说给你去拿蛋糕，从十点去到现在，可能又半路跑去谁家喝茶聊天了。”柏奶奶在厨房大声说，“雅雅你打电话给他，跟他说开饭了，让他快点回来。”</p>
+<p>“好。”柏静雅答应着掏出手机。<br>叶伦和舒以柳两人则是一前一后走向厨房。叶伦问：“柏奶奶有什么要帮忙的吗？”<br>“那你们帮忙盛饭吧。”柏奶奶说。</p>
+<p>叶伦到一旁哪来几个碗放在一旁，一个一个递给先站在了电饭锅旁的舒以柳手上，舒以柳盛好饭重新递还他端到饭桌上。<br>两人分工合作，倒也行云流水。</p>
+<p>我回过头看向正好挂电话的柏静雅：“你说叶伦喜欢你不会是错觉吧？”<br>“啊？”柏静雅愣了一下，望向盛饭的两人，叶伦也在这时候回过身，看到我们在看他，便对着我们微微笑了一下。<br>不过，柏静雅的眼光最后还是落在了拿着饭勺的舒以柳身上，回过头来：“你这么问，我怎么回答你？”<br>“你之前不是挺确定的吗？”我看客厅墙上挂着的书法，“和青春疼痛文学的电影主角一样一样的。”<br>“今天是我生日哦？”柏静雅指了指自己，“你不对我温柔一点吗？”<br>“再说吧。”我又四处打量了一下，“你到底怎么回事，一下就带我来你家吃饭？”<br>“不是我家，我爷爷奶奶家啦。”柏静雅说。<br>“差很多吗？”我说。<br>“帮我庆祝生日不好吗？”她抱着我的肩膀，“我可是没除他们俩之外的人来和我一起过生日的。”<br>“少来，你明明就说是怕对着那两人尴尬。”我拍掉她搭在我肩膀上的手，“别有目的！”<br>“请你一起过生日也是我的目的之一哦。”柏静雅抿着嘴，脸颊显出酒窝，表情天真而可爱。<br>我忍不住笑出声，用手指戳了戳她的酒窝：“我可没买礼物给你。”<br>“你陪我就是最好的礼物了。”她握着我的伸过去的手指，小声地说。<br>“好肉麻。”我缩回自己的手指，眼神越过她，看向她身后，舔了舔嘴唇，想了想，说“柏静雅，生日快乐。”<br>“嗯。”她说。</p>
+<p>大门一个高瘦的老人走了进来：“雅雅，爷爷回来啦。”</p>
+<p>柏静雅笑着对着门口来人喊了‘爷爷’，又拉着我跑过去。</p>
+<p>生日宴，要开始了。</p>
+<hr>
+<p>不再灼人，反倒是挤小巴更难受。<br>我时不时用余光观察又夏的表情，发现她还是一副心不在焉的样子。<br>“在想什么事情？”我问她。<br>又夏浅浅笑了一下：“中午又萌又跑出去吃饭了，我不太放心。”<br>“太夸张了。”我笑她，“又萌初中生了吧，出去吃饭很正常吧。”<br>她闷闷地应了一声。</p>
+<p>我们在人流之中慢慢走向食堂，因为人有点多，我拉住又夏的胳膊，免得走散。<br>等到了食堂门口，她才说：“今天是柏静雅生日。”<br>我忍不住抿着嘴，不让自己笑得太明显。</p>
+<p>食堂内，有些闷热，长长的队伍排了近三分之一的食堂，桌旁也都是埋头苦吃的同学们。<br>和认识的几个朋友打了招呼，婉拒她们一起吃饭的邀请，和又夏排队。</p>
+<p>“这样好吗？”又夏悄悄地探头看了看我的朋友们。<br>“没事，我们经常晚上一起吃饭的。”我说道，又看了一圈，“又夏，食堂人有多又热，等一下回我宿舍吃吧？”<br>“不太好吧？等一下打扰你们中午休息了。”又夏有些不好意思地说。<br>“没事，她们中午有事，都不在。”我说。<br>“呃……”又夏还是有些犹豫。<br>我抹了抹额头，把手给她看：“食堂好热啊，刚这一会，我就都是汗了。”<br>又夏总算点了点头：“那好吧。”<br>我点点头，对着她露出一个笑容。</p>
+<hr>
+<p>宿舍。</p>
+<p>上楼梯的时候，又夏聊到为什么我的其他三个宿友不在。</p>
+<p>“我和她们是不同专业的，她们下午没课，就跑去看电影了。”我爬着楼梯，和稍微落后我一些的又夏说。<br>“还有不用专业住一起的吗？”又夏避开下楼的人后，问。</p>
+<p>“本来是没有的，不过我那时候遇到车祸，在家多待了两天才来学校报道，我们专业的女生宿舍没位置了，就被塞进其他专业的宿舍了。”我解释说，看了一眼四楼的圆形标记，便带着又夏往上一层走去。<br>正值中午，走廊有点热闹，有些和我们一样，抱着书，手里提着饭，和身旁的人说说笑笑往自己宿舍走去。<br>“车祸。”又夏吃了一惊，“严重吗？”<br>“说是车祸，其实只是一次小碰撞，我过马路的时候被抢行的小汽车刮了一下，往后摔的时候又被后边的冒出来的电动车撞到，手骨折了。”我朝一起登上平台的又夏挥挥右手，“你看现在已经没事了，不过骨折的时候超痛的，我哭得好惨。”<br>她抓住我的胳膊，晃了晃，一脸担忧。<br>看她这样子，让我有些开心：“没事了，都已经好几月了。”<br>这下又夏有些不好意思地笑了笑：“也是。”<br>“而且还名正言顺的不用军训了。”我对着一起来到五楼楼梯口的她比了一个‘v’，“所以运气还不错。”<br>“这叫运气不错吗？”又夏无奈地看我。<br>“我可是很容易就晒黑的。”我说。</p>
+<p>一起到我宿舍门口，我拿出钥匙开门推开，让到一边，又夏好奇的走了进去。<br>“不用脱鞋吧？”又夏打量着宿舍内部。<br>四人住的上床下桌，再往里是阳台。<br>“不用。”我自己先把手里提着的饭放在门后我的桌子上：“先把饭放这里吧，我开一下空调。”<br>“好。”正往阳台看去的又夏依言把饭放好。</p>
+<p>开了空调，我去把阳台的门关上，随着‘咔擦’一声，我的脑海闪过一句歇后语，关上门捉麻雀——看你往哪里逃……</p>
+<p>啊，也不是说我有什么心思，或者想对着谁解释什么，实际上我真的只是想乘宿舍只有我一个人的时候，约又夏来我的宿舍坐坐罢了。</p>
+<p>我把平时宿舍一起来吃饭用的小桌子拿出来摆在宿舍中间，又把我的椅子给又夏让她坐下，自己则随手拿来一旁的椅子坐下。</p>
+<p>都是简单的鸡扒饭，不过和其他地方用现成鸡排炸的不同，食堂别出心裁的用了鸡胸肉现煎，虽然等的时间会久一点，但是入口十分嫩滑多汁的鸡肉配上煎得焦香的鸡皮，入口带着些许油脂却又不会让人觉得腻味，再淋上调过的黑椒酱料，风味绝佳，每一口都让人感叹那等待的时间实在超值。<br>一份还只要九块钱。</p>
+<p>当然，今天让我雀跃的不止是好吃的食物，还有坐在对面的人。<br>又夏手把垂下的发鬓别的耳后，俯下身子咬了一口鸡肉，又吃下一口饭，一脸满足。<br>特别喜欢吃。<br>这是相处下来我最早发现的，又夏的爱好之一。<br>所以陪着她等餐，看她有些高冷的脸露出期待的表情也是十分有趣。</p>
+<p>她吃着饭，突然盯着我的脸看，让我一时间有些措手不及。<br>“怎么了？”我低下头，咬了一口鸡排，好不让自己的表情被对方看到。<br>“就觉得果然女孩子还是白点好看些。”她说，“像你和又萌，还有……柏静雅，就挺好看的，我有点太黑了。”<br>“怎么会！”我抬起头。<br>“啊，嗯？”又夏似乎被我吓到，我才意识到自己似乎有点太激动了。</p>
+<p>不，不是我太激动了。<br>又夏那麦色的皮肤，颜色既不太深也不太浅，本身肤质光滑又细腻，看起来充满光泽。<br>偏中性风的打扮也因为肤色看起来充满随意的潇洒，嘴角的笑也被承托得充满野性的魅力。<br>就像是温驯的黑豹！</p>
+<p>“各人……有各人的特色嘛，又夏这样就挺好的。”我轻咳两声，“很好看。”<br>“是嘛？”又夏似乎有点不太明白，不过还是笑了笑，“谢谢。”<br>“不用。不用。”我连吃两口饭。<br>“安芝你的位置还真是干净啊。”又夏看其他三人的桌子，对着我说。<br>“还好啦。”我打着哈哈，毕竟昨天晚上连夜收拾的，本来想让其他几人也整理一下，不过一想到可能给自己加加分，而且解释很麻烦，就算了。<br>这下看来效果不错。</p>
+<p>我抿着嘴不让嘴角翘太高：“毕竟整洁看起来心情也好点。”<br>“嗯。”又夏点点头，“和又萌说的一样，她也说干净的地方才叫住的地方，不然就叫猪圈了。”<br>“这样吗？”我想起又萌板着脸一本正经地说话的可爱样子，忍不住笑出来，“不过又萌怎么好像都没去上课啊？她才初中生吧？”<br>又夏拿筷子的手顿了一下，脸色为难，我心道，不好，踩雷了。<br>“也不是啦，不过她情况有点特殊……以后有机会再和你说吧。”又夏含糊地说。<br>我点点头，看起来她不是很介意，有些放心，也有点失落，毕竟这就说明我们的关系还没好到可以说这些事情的地方。</p>
+<p>“不过也确实不能再继续这样下去了……”又夏叹一口气。<br>我不知道该怎么接下去，只能当做没听到，换了个话题：“对了，群里之前说要我们确认一下网上资料录入有没有错，你弄了吗？下午就到期了。”<br>“啊，还没有！”又夏一下有点紧张，“上次刚好要去图书馆进新书，忙过头就忘了！”<br>“那还好你跟我回宿舍了，等一下我用电脑登录一下看看你的资料吧！”我指着我桌上的笔记本电脑和她说。<br>又夏向我点头道谢。</p>
+<p>吃完饭，江又夏把帐号密码给了我，她去把一次性的饭盒和袋子丢到走廊一头的垃圾桶里。<br>这让我觉得也许自己在她的心里地位其实还是不低的。<br>江又夏打开宿舍门出去。<br>我则打开电脑，双击浏览器，点开收藏夹的网页。<br>输入江又夏的帐号密码，登录。<br>等了一会，页面刷新出来了。<br>和我意料中的不太一样。<br>刷新。<br>还是一样。<br>登录错了？<br>我退出帐号，重新登录。<br>还是一样。<br>我确认了一下资料，江又夏，班级和学号都是正确的。<br>但是，性别，男。<br>一寸的大头照也是一个男生。<br>清秀文静，带着微微的笑容。<br>这是……</p>
+<p>“啊！”一声惨叫从身后传来。<br>回过头，是瞪大了眼睛看着电脑频幕的江又夏。</p>
+<hr>
+<p>帮人吹头发可不是容易的事。</p>
+<p>江又夏坐在床边，我跪在她身后的床上，拿着吹风筒给她吹头发。</p>
+<p>我的手指在她湿湿的头发中梳过，往下到发梢，把被水沾湿变成一缕一缕的头发抓在手中，轻轻晃动着手里的吹风筒，感受着手里的黑发重新变得干燥蓬松，从指尖滑落一些，又继续一点点往上吹，到靠近头皮的地方手在发丝梳动，手里的吹风筒晃动，不在一个地方停留太久，免得烫到她。</p>
+<p>房内回响着那有些噪杂的风机声，指间，手掌都感受不到潮湿感的时候，关掉吹风筒，手将被吹乱的头发顺好。<br>“搞定。”我说着拔掉吹风筒的插头，把电线卷在把手上，在床上跪行到床头柜旁，把吹风筒放回抽屉里。</p>
+<p>“嗯。”江又夏应了声，听不出什么感情。<br>我回过身，发现她还是坐在哪里，和回来时一般的神情低落。<br>让人看着不快。<br>我往她的方向挪近些，抓住她的手然后往床上一倒。<br>“呀！”江又夏发出一声轻呼，被我一起拉着倒在床上。<br>我顺势翻身压在江又夏身上。</p>
+<p>“江又萌……干什么……”<br>我的下巴抵在她的锁骨处，她的声音在我的耳边响起。</p>
+<p>我没回答，用鼻子贴着她的颈肩吸了一口气，又轻轻地呼气，吹着她的脖子。</p>
+<p>沐浴露和洗发水的香味，被水浸得发暖发软的身体，隔着衣服也异常清晰的那胸口的触感，耳边是她有些不知所措地声音。<br>“江又萌，你干嘛？”<br>“你没用护发素。”<br>“忘了……”<br>“难得买洗发水送了。”<br>“明天用……”<br>“你明天又不洗头。”<br>“那就后天用。”<br>“记住了！”<br>“知道，哈，不放心一起洗……啊……你咬我干嘛……”<br>“不爽。”<br>“好，我错了。”<br>“哼。”</p>
+<p>就在我打算从她身上下来，江又夏却环住我的腰，我也就索性趴在她身上不动。<br>一会，江又夏说：“我和安芝说，那是我的前男友。”<br>我没说话，安静的听着，大概是因为我的耳朵贴着她的缘故，江又夏的声音有些低沉。<br>她继续说：“我说，那是高中交的男朋友，后来分手，结果对方纠缠不休，还偷改我的志愿，好在我发现了改回来。”<br>环在我腰上的手又紧了一些。<br>“这次大概也是对方改的。”江又夏脸蹭了蹭我的额头，“抱歉。”<br>我笑了笑：“现在江又夏可是你不是我，你和你自己道歉吧。”<br>然后收敛笑容问：“纪律委员会信吗？”<br>江又夏摇了摇头：“不知道，但她没有继续多问，只是说那要快点去改回来。”<br>“这样啊……”我闭上眼睛。<br>“嗯。”江又夏说。</p>
+<p>这下麻烦了。<br>我们原本的身份信息是正经录入的，而且是根据个人档案弄的，只是普通上课，是没什么问题的，毕竟很少有需要调用原本身份信息的……<br>不过教务系统毕竟简陋，身份审核最严格的大概也是只有入学那段时间，而且已经打发学生自己校验，或许能蒙混过关也说不定……</p>
+<p>“总之我们先把信息改过来再说。”我说，“至于到时候会不会有其他问题，也只能走一步看一步了。”<br>“嗯……”江又夏的声音还是充满不安，“如果过不了关怎么办……”<br>“那就只能找爸妈了。”我轻笑一声。<br>“他们会信吗？”<br>“不知道，也许要去验个dna也说不定。”<br>“要是……”<br>“没有那么多要是和如果的……最后如果全都不行，我们就一起跑路吧！”<br>“跑路？”江又夏吃惊的将我推开一些，侧过脸和我对视。<br>“对呀，不然怎么办？我和你，两个人，如果这里无法接纳我们，那我们不就只能离开了，找一个能接纳我的地方。”我粘过去，这次把脸埋在她锁骨处。<br>不过她太瘦了，有点不舒服。<br>“但……但是我……你不用……”江又夏声音带着些许哭腔。<br>“我说过，是我和你。”我轻轻地说。<br>“嗯！”江又夏用力地应了一声。<br>“啊，不过我这样看起来也算未成年，如果跑路，你得养我养到我看起来像成年为止了。”我说。<br>“我养你，我养你。”江又夏连说，“养你一辈子。”<br>“是你说的啊。”我得意地抱紧了她。</p>
+
+      </section>
+       
+    
+    
+  <div class="nav-container">
+    <!-- reverse left and right to put prev and next in a more logic postition -->
+    
+      <a class="nav-left" href="/copy/adao37978195/" target="_blank">
+        <span class="nav-arrow">← </span>
+        
+          a岛爱情故事
+        
+      </a>
+    
+    
+      <a class="nav-right" href="/tech/phone_num/" target="_blank">
+        
+          临时手机号&amp;邮箱
+        
+        <span class="nav-arrow"> →</span>
+      </a>
+    
+  </div>
+
+    
+      <div class="advertisement">
+        <p> 广告：快速学习 Crash Course十分钟速成课 <a target="_blank" rel="noopener" href="https://crashcourse.club/">字幕组网站</a></p>
+      </div>
+    
+    
+      <div id="waline"></div>
+
+<link href="https://cdn.bootcdn.net/ajax/libs/waline/2.15.5/waline.min.css" rel="stylesheet">
+<script src="//cdn.bootcdn.net/ajax/libs/waline/2.15.5/waline.min.js"></script>
+<script defer src="/js/waline-qqavatar.js"></script>
+<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/waline/2.14.9/waline.min.js"></script>-->
+<!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/waline/2.14.9/waline.min.css">-->
+
+<script>
+  // 中文默认
+  const locale = {
+    nick: '昵称',
+    nickError: '昵称不能少于3个英文字符或2个中文汉字',
+    mail: '邮箱(可用QQ邮箱获取头像)',
+    mailError: '请填写正确的邮件地址',
+    link: '网址',
+    optional: '可选',
+    placeholder: '' || '说、什么8 \n\n可使用QQ邮箱获取QQ头像，或在gravatar.com注册后使用邮箱绑定头像 \n支持Markdown语法：*斜体*, **粗体**, \# - ###### 1-6级标题, *** 或 --- = 水平分割线, ~~删除线~~, > 引用内容, `代码块`, 1. 序号列表, * 无序列表, ^上角标^, ~下角标~, <br> = 空行, [链接文字](链接地址), ![图片名称](图片地址.png), ',
+    sofa: '来发评论吧~',
+    submit: '提交',
+    like: '喜欢',
+    cancelLike: '取消喜欢',
+    reply: '回复',
+    cancelReply: '取消回复',
+    comment: '评论',
+    refresh: '刷新',
+    more: '加载更多...',
+    preview: '预览',
+    emoji: '表情',
+    uploadImage: '上传图片',
+    seconds: '秒前',
+    minutes: '分钟前',
+    hours: '小时前',
+    days: '天前',
+    now: '刚刚',
+    uploading: '正在上传',
+    login: '登录',
+    logout: '退出',
+    admin: '博主',
+    sticky: '置顶',
+    word: '字',
+    wordHint: '评论字数应在 $0 到 $1 字之间！\n当前字数：$2',
+    anonymous: '匿名',
+    level0: '潜水',
+    level1: '冒泡',
+    level2: '吐槽',
+    level3: '活跃',
+    level4: '话痨',
+    level5: '传说',
+    gif: '表情包',
+    gifSearchPlaceholder: '搜索表情包',
+    profile: '个人资料',
+    approved: '通过',
+    waiting: '待审核',
+    spam: '垃圾',
+    unsticky: '取消置顶',
+    oldest: '按倒序',
+    latest: '按正序',
+    hottest: '按热度',
+    reactionTitle: '你认为这篇文章怎么样？',
+  };
+
+  Waline.init({
+    el: "#waline",
+    serverURL: "waline.voiiu.com",
+    appId: "" || "M2JD6yGQhefhH2O0aSjFfclc-MdYXbMMI",
+    appKey: "" || "arEPHdbMnKwMjQgiWsLgw34N",
+    path:  "" || window.location.pathname,  // window.location.pathname.replace(/\/$/,''),
+    login: "disable",  // 'enable' || 'disable' || 'force'
+    avatarCDN: "https://gravatar.loli.top/avatar/",
+    //avatar: '',
+    placeholder: "",
+    pageSize: 10,
+    meta: ["nick", "mail"],
+    requiredMeta: [""],
+    pageview: "true" && "",
+    emoji: [
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/tieba",
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/weibo",
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/qq",
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/alus",
+      "https://testingcf.jsdelivr.net/gh/Saidosi/azuki-emoji-for-waline@1.0/azukisan",
+      "https://testingcf.jsdelivr.net/gh/norevi/blob-emoji-for-waline@2.0/blobs-gif",
+    ],
+    locale,
+  });
+
+  $('.wl-actions').append("<a href=https://emoji.zhuochi.org target=_blank id=wl-emoji-wrapper><img src=/images/emoji.png class=wl-action id=wl-emoji></a>")
+
+  //// Clean TEXTAREA 
+  //$(".wl-cards").change(function () {
+  //  alert('changed')
+    //('#wl-edit').html("")
+  //})
+  
+  //! Not functional
+  //$(".primary .wl-btn").click(function () {
+    //document.getElementsByClassName('wl-num')[0].innerHTML ++
+  //})
+</script>
+    
+    
+    
+      <div class="qrcode" id="qr-box">
+    <img id="share-qrcode" class="qrcode-image" src=""/>
+    <div class="qrcode-notice">保存二维码，分享此文章</div>
+</div>
+
+<!--<script type="text/javascript" src="/js/qrious.min.js"></script>-->
+<script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/qrious/4.0.2/qrious.min.js" ></script>
+<script>
+    // qrcode
+    let qr = new QRious({
+        background: '#F0FFFF',
+        backgroundAlpha: 1,
+        foreground: '#0096FF',
+        foregroundAlpha: 0.8,
+        level: 'L',
+        mime: "image/gif",
+        padding: null, // pixels
+        size: 100,
+        element: document.getElementById('share-qrcode'),
+        value: document.location.href,
+    })
+
+    $("#share-qrcode").click(function () {
+        let img = document.getElementById('share-qrcode')
+        let imgurl = img.src
+        let a = document.createElement('a')
+        let down_event = new MouseEvent('click')
+        a.download = 'a岛牛子故事-CloudPool浊池'
+        a.href = imgurl
+        a.dispatchEvent(down_event)
+    })
+</script>
+
+
+    
+  </article>
+</main>
+
+<script>
+    (function () {
+      var url = "https://zhuochi.org/copy/adao35513207/";
+      var banner = "";
+      if (banner !== "" && banner !== "undefined" && banner !== "null") {
+        $("#article-banner").css({
+          "background-image": "url(" + banner + ")",
+        });
+      } else {
+        $("#article-banner").geopattern(url);
+      }
+      $(".header").removeClass("fixed-header");
+    })();
+  </script>
+
+<script>
+  // error image
+  $(".markdown-content img").on("error", function () {
+    $(this).attr("src", "/images/error.png");
+    $(this).css({cursor: "default",});
+  });
+</script>
+ 
+    <aside class="sidebar">
+  <span class="scroll-top fa fa-arrow-up"></span>
+  <span class="fa fa-share-alt share-icon">
+    <span class="list-icon">
+      
+        <a href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=https://zhuochi.org/copy/adao35513207/index.html&title=a岛牛子故事&pics=https://zhuochi.org/images/logo.svg&desc=色情故事&summary=CloudPool浊池是由年轻人管理的博客" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659969569042" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1231"><path d="M1023.210667 395.690667c-2.005333-6.08-7.381333-10.410667-13.781333-10.944l-347.114667-29.802667L526.634667 33.984C524.117333 28.096 518.4 24.256 512 24.256s-12.181333 3.861333-14.677333 9.749333l-135.616 320.938667L14.570667 384.746667c-6.357333 0.533333-11.797333 4.864-13.781333 10.944-1.941333 6.101333-0.106667 12.778667 4.714667 16.96l263.338667 228.138667L189.888 980.16c-1.429333 6.208 1.002667 12.757333 6.122667 16.512 5.205333 3.733333 12.117333 4.010667 17.642667 0.682667L512 817.450667l298.282667 179.946667c2.581333 1.557333 5.418667 2.346667 8.32 2.346667 3.221333 0 6.528-1.002667 9.344-3.008 5.162667-3.84 7.594667-10.368 6.122667-16.576l-62.442667-268.352c26.730667-13.482667 56.277333-36.245333 56.277333-36.245333s-116.864 57.066667-536.341333 29.205333L595.626667 484.437333c0 0-11.968-18.581333-392.981333-31.872-25.408-0.917333 310.677333-63.722667 558.933333-10.645333L456.298667 660.906667c0 0 122.453333 18.197333 307.328 16.085333l-8.448-36.181333 263.36-228.16C1023.381333 408.469333 1025.216 401.792 1023.210667 395.690667z" p-id="1232" fill="#04b2f1"></path></svg>
+        </a> 
+      
+      
+        <a href="https://service.weibo.com/share/share.php?url=https://zhuochi.org/copy/adao35513207/index.html&title=a岛牛子故事&pic=https://zhuochi.org/images/logo.svg&summary=色情故事" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659970330786" class="icon" viewBox="0 0 1138 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="3639" fill="#04b2f1"><path d="M914.432 518.144q27.648 21.504 38.912 51.712t9.216 62.976-14.336 65.536-31.744 59.392q-34.816 48.128-78.848 81.92t-91.136 56.32-94.72 35.328-89.6 18.944-75.264 7.68-51.712 1.536-49.152-2.56-68.096-10.24-78.336-21.504-79.872-36.352-74.24-55.296-59.904-78.848q-16.384-29.696-22.016-63.488t-5.632-86.016q0-22.528 7.68-51.2t27.136-63.488 53.248-75.776 86.016-90.112q51.2-48.128 105.984-85.504t117.248-57.856q28.672-10.24 63.488-11.264t57.344 11.264q10.24 11.264 19.456 23.04t12.288 29.184q3.072 14.336 0.512 27.648t-5.632 26.624-5.12 25.6 2.048 22.528q17.408 2.048 33.792-1.536t31.744-9.216 31.232-11.776 33.28-9.216q27.648-5.12 54.784-4.608t49.152 7.68 36.352 22.016 17.408 38.4q2.048 14.336-2.048 26.624t-8.704 23.04-7.168 22.016 1.536 23.552q3.072 7.168 14.848 13.312t27.136 12.288 32.256 13.312 29.184 16.384zM656.384 836.608q26.624-16.384 53.76-45.056t44.032-64 18.944-75.776-20.48-81.408q-19.456-33.792-47.616-57.344t-62.976-37.376-74.24-19.968-80.384-6.144q-78.848 0-139.776 16.384t-105.472 43.008-72.192 60.416-38.912 68.608q-11.264 33.792-6.656 67.072t20.992 62.976 42.496 53.248 57.856 37.888q58.368 25.6 119.296 32.256t116.224 0.512 100.864-21.504 74.24-33.792zM522.24 513.024q20.48 8.192 38.912 18.432t32.768 27.648q10.24 12.288 17.92 30.72t10.752 39.424 1.536 42.496-9.728 38.912q-8.192 18.432-19.968 37.376t-28.672 35.328-40.448 29.184-57.344 18.944q-61.44 11.264-117.76-11.264t-88.064-74.752q-12.288-39.936-13.312-70.656t16.384-66.56q13.312-27.648 40.448-51.712t62.464-38.912 75.264-17.408 78.848 12.8zM359.424 764.928q37.888 3.072 57.856-18.432t21.504-48.128-15.36-47.616-52.736-16.896q-27.648 3.072-43.008 23.552t-17.408 43.52 9.728 42.496 39.424 21.504zM778.24 6.144q74.752 0 139.776 19.968t113.664 57.856 76.288 92.16 27.648 122.88q0 33.792-16.384 50.688t-35.328 17.408-35.328-14.336-16.384-45.568q0-40.96-22.528-77.824t-59.392-64.512-84.48-43.52-96.768-15.872q-31.744 0-47.104-15.36t-14.336-34.304 18.944-34.304 51.712-15.36zM778.24 169.984q95.232 0 144.384 48.64t49.152 146.944q0 30.72-10.24 43.52t-22.528 11.264-22.528-14.848-10.24-35.84q0-60.416-34.816-96.256t-93.184-35.84q-19.456 0-28.672-10.752t-9.216-23.04 9.728-23.04 28.16-10.752z" p-id="3640"></path></svg>
+        </a>
+      
+      
+        <a href="https://www.douban.com/recommend/?url=https://zhuochi.org/copy/adao35513207/index.html&title=a岛牛子故事&pic=https://zhuochi.org/images/logo.svg&summary=色情故事" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659970941550" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1055"><path d="M88 72.9h848v95.5H88z" p-id="1056" fill="#04b2f1"></path><path d="M88 72.9h848v95.5H88zM862.3 641.5V268H161.7v373.5h700.6zM263.4 363.4h498.4v182.5H263.4V363.4z" p-id="1057" fill="#04b2f1"></path><path d="M862.3 641.5V268H161.7v373.5h700.6zM263.4 363.4h498.4v182.5H263.4V363.4zM710.8 856.7c30.5-46.7 59.3-100.8 85.9-162.2l-102-37.2c-26.5 72.8-57.4 139.4-92.5 199.4H424.9c-29.4-77.8-62.6-144.3-99.8-199.4l-93.8 37.2c38.6 58 69.9 111.9 93.8 162.2H64v94.5h896v-94.5H710.8z" p-id="1058" fill="#04b2f1"></path><path d="M710.8 856.7c30.5-46.7 59.3-100.8 85.9-162.2l-102-37.2c-26.5 72.8-57.4 139.4-92.5 199.4H424.9c-29.4-77.8-62.6-144.3-99.8-199.4l-93.8 37.2c38.6 58 69.9 111.9 93.8 162.2H64v94.5h896v-94.5H710.8z" p-id="1059" fill="#04b2f1"></path></svg>
+        </a>
+      
+      
+        <a href="http://tieba.baidu.com/f/commit/share/openShareApi?url=https://zhuochi.org/copy/adao35513207/index.html&title=a岛牛子故事&pic=https://zhuochi.org/images/logo.svg&desc=色情故事" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659968685554" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1659"><path d="M1024 862.826667a161.152 161.152 0 0 1-161.173333 161.173333h-701.632a161.152 161.152 0 0 1-161.173334-161.173333v-701.632a161.194667 161.194667 0 0 1 161.173334-161.173334h701.632a161.194667 161.194667 0 0 1 161.173333 161.173334v701.632z" fill="#04b2f1" p-id="1660"></path><path d="M828.842667 250.261333h-173.461334v-36.522666a17.066667 17.066667 0 0 0-17.066666-17.066667h-41.941334a17.045333 17.045333 0 0 0-17.045333 17.066667v263.296h-24.896a17.066667 17.066667 0 0 0-17.045333 17.066666V810.218667a17.066667 17.066667 0 0 0 17.045333 17.088h257.365333a17.066667 17.066667 0 0 0 17.066667-17.088v-58.986667h-0.256v-198.144h0.256v-58.986667a17.066667 17.066667 0 0 0-17.066667-17.066666H655.381333v-150.72h173.461334a17.066667 17.066667 0 0 0 17.066666-17.066667v-41.941333a17.066667 17.066667 0 0 0-17.066666-17.045334z m-93.376 302.848c9.429333 0 17.045333 7.637333 17.045333 17.066667v164.010667a17.066667 17.066667 0 0 1-17.045333 17.066666h-104.981334a17.045333 17.045333 0 0 1-17.045333-17.066666v-164.010667a17.066667 17.066667 0 0 1 17.045333-17.066667h104.981334zM197.909333 657.408h41.941334a17.088 17.088 0 0 0 17.088-17.088v-358.741333h174.528v358.741333a17.066667 17.066667 0 0 0 17.045333 17.088h41.941333a17.088 17.088 0 0 0 17.088-17.088v-417.749333c0-9.408-7.658667-17.066667-17.088-17.066667h-292.522666a17.066667 17.066667 0 0 0-17.045334 17.066667v417.749333a17.024 17.024 0 0 0 17.024 17.088z" fill="#FFFFFF" p-id="1661"></path><path d="M492.970667 739.2v-0.170667a110.656 110.656 0 0 1-110.656-110.656h-0.106667v-296.042666a17.066667 17.066667 0 0 0-17.066667-17.045334h-41.941333a17.045333 17.045333 0 0 0-17.045333 17.045334v296.042666h-0.362667a110.677333 110.677333 0 0 1-110.677333 110.656v0.170667a17.045333 17.045333 0 0 0-17.045334 17.066667v42.112a17.066667 17.066667 0 0 0 17.045334 17.066666 186.602667 186.602667 0 0 0 148.928-74.176 186.624 186.624 0 0 0 148.928 74.176 17.045333 17.045333 0 0 0 17.045333-17.066666v-42.112a17.024 17.024 0 0 0-17.045333-17.066667z" fill="#FFFFFF" p-id="1662"></path><path d="M865.450667 873.685333c17.664-3.797333 15.253333-24.896 14.741333-29.504-0.874667-7.125333-9.237333-19.541333-20.586667-18.581333-14.293333 1.28-16.362667 21.930667-16.362666 21.930667-1.962667 9.557333 4.608 29.952 22.208 26.154666z m18.752 36.693334c-0.533333 1.493333-1.664 5.290667-0.682667 8.597333 1.962667 7.402667 8.405333 7.744 8.405333 7.744h9.258667v-22.613333h-9.898667a10.837333 10.837333 0 0 0-7.082666 6.272z m14.037333-72.085334c9.749333 0 17.621333-11.221333 17.621333-25.109333 0-13.866667-7.872-25.088-17.621333-25.088-9.728 0-17.642667 11.221333-17.642667 25.088 0 13.888 7.893333 25.109333 17.642667 25.109333z m41.984 1.664c13.034667 1.706667 21.418667-12.202667 23.082667-22.762666 1.706667-10.538667-6.698667-22.762667-15.936-24.853334-9.258667-2.112-20.778667 12.672-21.845334 22.357334-1.258667 11.797333 1.685333 23.573333 14.698667 25.258666z m31.936 61.973334s-20.16-15.594667-31.936-32.448c-15.957333-24.874667-38.634667-14.762667-46.208-2.112-7.552 12.650667-19.328 20.629333-20.992 22.741333-1.685333 2.090667-24.362667 14.336-19.328 36.672 5.034667 22.336 22.72 21.909333 22.72 21.909333s13.013333 1.28 28.138667-2.112c15.104-3.349333 28.117333 0.832 28.117333 0.832s35.306667 11.818667 44.970667-10.944c9.621333-22.72-5.482667-34.538667-5.482667-34.538666z m-60.394667 33.877333h-22.954666c-9.92-1.984-13.866667-8.746667-14.357334-9.898667-0.490667-1.173333-3.306667-6.613333-1.813333-15.850666 4.288-13.866667 16.490667-14.848 16.490667-14.848h12.224v-15.04l10.410666 0.149333v55.488z m42.752-0.170667h-26.410666c-10.24-2.624-10.709333-9.92-10.709334-9.92v-29.205333l10.709334-0.170667v26.261334c0.64 2.794667 4.117333 3.306667 4.117333 3.306666h10.88v-29.397333h11.413333v39.125333z m37.376-77.994666c0-5.034667-4.181333-20.224-19.733333-20.224-15.552 0-17.642667 14.336-17.642667 24.469333 0 9.685333 0.810667 23.189333 20.16 22.741333 19.328-0.426667 17.216-21.909333 17.216-26.986666z" fill="#FFFFFF" p-id="1663"></path></svg>
+        </a>
+      
+      
+        <a href="https://connect.qq.com/widget/shareqq/index.html?url=https://zhuochi.org/copy/adao35513207/index.html&title=a岛牛子故事&pic=https://zhuochi.org/images/logo.svg&desc=色情故事&summary=CloudPool浊池是由年轻人管理的博客" aria-hidden="true" target="_blank">
+        <svg t="1659969969936" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2714"><path d="M866.991 707.772c0 0-25.341 69.55-71.877 132.071 0 0 83.050 28.439 76.137 102.196 0 0 2.709 82.331-177.613 76.685 0 0-126.817-9.898-164.88-63.85h-33.53c-38.018 54.006-164.834 63.85-164.834 63.85-180.431 5.7-177.556-76.685-177.556-76.685-7.025-73.756 76.081-102.196 76.081-102.196-46.475-62.519-71.875-132.071-71.875-132.071-112.759 183.141-101.477-25.567-101.477-25.567 21.141-123.495 109.949-204.384 109.949-204.384-12.677-112.157 33.805-132.078 33.805-132.078 9.68-346.979 306.473-340.887 312.675-340.722 6.249-0.163 302.931-6.256 312.72 340.723 0 0 46.538 19.866 33.812 132.078 0 0 88.751 80.89 109.886 204.384 0.055-0.001 11.285 208.707-101.421 25.566v0 0z" p-id="2715" fill="#04b2f1"></path></svg>
+        </a>
+      
+    </span>
+  </span>
+</aside>
+    <footer class="app-footer">
+  <p class="copyright">
+    Copyright &copy; 2017 - 2023, CloudPool浊池, zhuochi.org︱voiiu.com, All Rights Reserved<br/>
+    本站为基于<a href="https://hexo.io" target="_blank">Hexo</a>的静态博客，<span id="busuanzi_container_site_pv">总访问量 <span id="busuanzi_value_site_pv"></span> 次</span><!--，来自 <span id="busuanzi_value_site_uv"></span> 个 IP--><br/>
+    主题源自 <a target="_blank" rel="noopener" href="https://github.com/yanm1ng/hexo-theme-vexo">Vexo</a> by yanm1ng，感谢 <a target="_blank" rel="noopener" href="https://github.com/MoePlayer/APlayer">APlayer</a> by DIYgod，感谢 <a target="_blank" rel="noopener" href="https://github.com/stevenjoezhang/live2d-widget">Live2D Widget</a> by stevenjoezhang & <a target="_blank" rel="noopener" href="https://github.com/xiazeyu/live2d-widget-models">live2d-widget-models</a> by xiazeyu
+  </p>
+</footer>
+
+<script>
+  function async(u, c) {
+    var d = document, t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0];
+    o.src = u;
+    if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+    s.parentNode.insertBefore(o, s);
+  }
+</script>
+
+<script src="/js/script.js"></script>
+ <!--无法移至head.js中，原因不明-->
+<script type="text/javascript" src="/js/busuanzi.min.js" async></script>
+
+
+  </body>
+</html>

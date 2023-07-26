@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta http-equiv="Access-Control-Allow-Origin" content="*">
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport" />
+  <meta name="description" content="CloudPool浊池是由年轻人管理的博客">
+  <meta name="keyword" content="浊池, CloudPool, CloudPool浊池">
+  
+  <link rel="shortcut icon" type="image/ico" href="/images/cloudpool-favicon.ico">
+  
+  <title>
+    
+      《Rain.》
+    
+  </title>
+  <!-- CSS -->
+  <!--<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/6.4.0/css/all.min.css" />-->
+  <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />-->
+  <!--<link href="https://cdn.staticfile.org/nprogress/0.2.0/nprogress.min.css" rel="stylesheet"/>-->
+  <link href="https://cdn.bootcdn.net/ajax/libs/nprogress/0.2.0/nprogress.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/aplayer/1.10.1/APlayer.min.css"/>
+  
+<link rel="stylesheet" href="/css/style.css">
+
+
+  <!-- JS -->
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/geopattern/1.2.3/js/geopattern.min.js"></script>
+  <!--<script type="text/javascript" src="https://cdn.staticfile.org/nprogress/0.2.0/nprogress.min.js"></script>-->
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/nprogress/0.2.0/nprogress.min.js"></script>
+  
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+            <span class="search-icon">
+                <i class="fa fa-search"></i>
+            </span>
+            <div class="search-input-container">
+                <input autocomplete="off" autocapitalize="off" maxlength="80"
+                    placeholder="Anything...  今天想看什么w" spellcheck="false"
+                    type="" class="search-input">
+            </div>
+            <span class="popup-btn-go">
+                <i class="fa-solid fa-arrow-circle-right"></i>
+            </span>
+            <span class="popup-btn-close">
+                <i class="fa-solid fa-circle-xmark"></i>
+            </span>
+        </div>
+        <div id="search-result" class="search-result-container">
+            <div id="no-result" class="no-result">
+                <i class="fa-solid fa-spinner fa-pulse fa-5x fa-fw"></i>
+            </div>
+        </div>
+    </div>
+</div>
+  <link rel="prefetch" href="/search.xml" crossorigin="anonymous"> 
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Popup Window
+      let isfetched = false;
+      let datas;
+      let isXml = true;
+      // Search DB path
+      let searchPath = 'search.xml'; //CONFIG.search.path
+      if (searchPath.length === 0) {
+        searchPath = 'search.xml';
+      } else if (searchPath.endsWith('json')) {
+        isXml = false;
+      }
+      const input = document.querySelector('.search-input');
+      const resultContent = document.getElementById('search-result');
+
+      const getIndexByWord = (word, text, caseSensitive) => {
+        if ('false' == false) { // CONFIG.localsearch.unescape = false
+          let div = document.createElement('div');
+          div.innerText = word;
+          word = div.innerHTML;
+        }
+        let wordLen = word.length;
+        if (wordLen === 0) return [];
+        let startPosition = 0;
+        let position = [];
+        let index = [];
+        if (!caseSensitive) {
+          text = text.toLowerCase();
+          word = word.toLowerCase();
+        }
+        while ((position = text.indexOf(word, startPosition)) > -1) {
+          index.push({ position, word });
+          startPosition = position + wordLen;
+        }
+        return index;
+      };
+
+      // Merge hits into slices
+      const mergeIntoSlice = (start, end, index, searchText) => {
+        let item = index[index.length - 1];
+        let { position, word } = item;
+        let hits = [];
+        let searchTextCountInSlice = 0;
+        while (position + word.length <= end && index.length !== 0) {
+          if (word === searchText) {
+            searchTextCountInSlice++;
+          }
+          hits.push({
+            position,
+            length: word.length
+          });
+          let wordEnd = position + word.length;
+
+          // Move to next position of hit
+          index.pop();
+          while (index.length !== 0) {
+            item = index[index.length - 1];
+            position = item.position;
+            word = item.word;
+            if (wordEnd > position) {
+              index.pop();
+            } else {
+              break;
+            }
+          }
+        }
+        return {
+          hits,
+          start,
+          end,
+          searchTextCount: searchTextCountInSlice
+        };
+      };
+
+      // Highlight title and content
+      const highlightKeyword = (text, slice) => {
+        let result = '';
+        let prevEnd = slice.start;
+        slice.hits.forEach(hit => {
+          result += text.substring(prevEnd, hit.position);
+          let end = hit.position + hit.length;
+          result += `<b class="search-keyword">${text.substring(hit.position, end)}</b>`;
+          prevEnd = end;
+        });
+        result += text.substring(prevEnd, slice.end);
+        return result;
+      };
+
+      const inputEventFunction = () => {
+        if (!isfetched) return;
+        let searchText = input.value.trim().toLowerCase();
+        let keywords = searchText.split(/[-\s]+/);
+        if (keywords.length > 1) {
+          keywords.push(searchText);
+        }
+        let resultItems = [];
+        if (searchText.length > 0) {
+          // Perform local searching
+          datas.forEach(({ title, content, url }) => {
+            let titleInLowerCase = title.toLowerCase();
+            let contentInLowerCase = content.toLowerCase();
+            let indexOfTitle = [];
+            let indexOfContent = [];
+            let searchTextCount = 0;
+            keywords.forEach(keyword => {
+              indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+              indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+            });
+
+            // Show search results
+            if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+              let hitCount = indexOfTitle.length + indexOfContent.length;
+              // Sort index by position of keyword
+              [indexOfTitle, indexOfContent].forEach(index => {
+                index.sort((itemLeft, itemRight) => {
+                  if (itemRight.position !== itemLeft.position) {
+                    return itemRight.position - itemLeft.position;
+                  }
+                  return itemLeft.word.length - itemRight.word.length;
+                });
+              });
+
+              let slicesOfTitle = [];
+              if (indexOfTitle.length !== 0) {
+                let tmp = mergeIntoSlice(0, title.length, indexOfTitle, searchText);
+                searchTextCount += tmp.searchTextCountInSlice;
+                slicesOfTitle.push(tmp);
+              }
+
+              let slicesOfContent = [];
+              while (indexOfContent.length !== 0) {
+                let item = indexOfContent[indexOfContent.length - 1];
+                let { position, word } = item;
+                // Cut out 100 characters
+                let start = position - 20;
+                let end = position + 80;
+                if (start < 0) {
+                  start = 0;
+                }
+                if (end < position + word.length) {
+                  end = position + word.length;
+                }
+                if (end > content.length) {
+                  end = content.length;
+                }
+                let tmp = mergeIntoSlice(start, end, indexOfContent, searchText);
+                searchTextCount += tmp.searchTextCountInSlice;
+                slicesOfContent.push(tmp);
+              }
+
+              // Sort slices in content by search text's count and hits' count
+              slicesOfContent.sort((sliceLeft, sliceRight) => {
+                if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                  return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                  return sliceRight.hits.length - sliceLeft.hits.length;
+                }
+                return sliceLeft.start - sliceRight.start;
+              });
+
+              // Select top N slices in content
+              let upperBound = parseInt('1', 10); // CONFIG.localsearch.top_n_per_article: 1
+              if (upperBound >= 0) {
+                slicesOfContent = slicesOfContent.slice(0, upperBound);
+              }
+
+              let resultItem = '';
+
+              if (slicesOfTitle.length !== 0) {
+                resultItem += `<li class="search-result-element"><a href="${url}" class="search-result-title" target="_blank">${highlightKeyword(title, slicesOfTitle[0])}</a>`;
+              } else {
+                resultItem += `<li class="search-result-element"><a href="${url}" class="search-result-title" target="_blank">${title}</a>`;
+              }
+
+              slicesOfContent.forEach(slice => {
+                resultItem += `<a href="${url}" target="_blank"><p class="search-result">${highlightKeyword(content, slice)}...</p></a>`;
+              });
+
+              resultItem += '</li>';
+              resultItems.push({
+                item: resultItem,
+                id: resultItems.length,
+                hitCount,
+                searchTextCount
+              });
+            }
+          });
+        }
+        if (keywords.length === 1 && keywords[0] === '') {
+          resultContent.innerHTML = '<div id="no-result"><i class="fa-sharp fa-regular fa-circle-check fa-5x"></i></div>';
+        } else if (resultItems.length === 0) {
+          resultContent.innerHTML = '<div id="no-result"><i class="fa-regular fa-face-frown-open fa-5x"></i></div>';
+        } else {
+          resultItems.sort((resultLeft, resultRight) => {
+            if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+              return resultRight.searchTextCount - resultLeft.searchTextCount;
+            } else if (resultLeft.hitCount !== resultRight.hitCount) {
+              return resultRight.hitCount - resultLeft.hitCount;
+            }
+            return resultRight.id - resultLeft.id;
+          });
+          resultContent.innerHTML = `<ul class="search-result-list">${resultItems.map(result => result.item).join('')}</ul>`;
+          window.pjax && window.pjax.refresh(resultContent);
+        }
+      };
+
+      const fetchData = () => {
+        fetch('/' + searchPath) // CONFIG.root = ''
+          .then(response => response.text())
+          .then(res => {
+            // Get the contents from search data
+            isfetched = true;
+            datas = isXml ? [...new DOMParser().parseFromString(res, 'text/xml').querySelectorAll('entry')].map(element => {
+              return {
+                title: element.querySelector('title').textContent,
+                content: element.querySelector('content').textContent,
+                url: element.querySelector('url').textContent
+              };
+            }) : JSON.parse(res);
+            // Only match articles with not empty titles
+            datas = datas.filter(data => data.title).map(data => {
+              data.title = data.title.trim();
+              data.content = data.content ? data.content.trim().replace(/<[^>]+>/g, '') : '';
+              data.url = decodeURIComponent(data.url).replace(/\/{2,}/g, '/');
+              return data;
+            });
+            // Remove loading animation
+            document.getElementById('no-result').innerHTML = '<i class="fa-sharp fa-regular fa-circle-check fa-5x"></i></i>';
+            inputEventFunction();
+          });
+      };
+
+      if (false) { // CONFIG.localsearch.preload: false
+        fetchData();
+      }
+
+      if ('auto' === 'auto') { // CONFIG.localsearch.trigger: 'auto' / 'manual'
+        input.addEventListener('input', inputEventFunction);
+      } else {
+        document.querySelector('.search-icon').addEventListener('click', inputEventFunction);
+        input.addEventListener('keypress', event => {
+          if (event.key === 'Enter') {
+            inputEventFunction();
+          }
+        });
+      }
+
+      // Handle and trigger popup window
+      document.querySelectorAll('.popup-trigger').forEach(element => {
+        element.addEventListener('click', () => {
+          document.body.style.overflow = 'hidden';
+          document.querySelector('.search-pop-overlay').classList.add('search-active');
+          input.focus();
+          if (!isfetched) fetchData();
+        });
+      });
+
+      // Monitor main search box
+      const onPopupClose = () => {
+        document.body.style.overflow = '';
+        document.querySelector('.search-pop-overlay').classList.remove('search-active');
+      };
+
+      document.querySelector('.search-pop-overlay').addEventListener('click', event => {
+        if (event.target === document.querySelector('.search-pop-overlay')) {
+          onPopupClose();
+        }
+      });
+      document.querySelector('.popup-btn-close').addEventListener('click', onPopupClose);
+      window.addEventListener('pjax:success', onPopupClose);
+      window.addEventListener('keyup', event => {
+        if (event.key === 'Escape') {
+          onPopupClose();
+        }
+      });
+
+      // PageJumper button
+      let onJumpPage = () => {
+        window.location = window.location.origin + '/' + input.value
+      };
+      document.querySelector('.popup-btn-go').addEventListener('click', onJumpPage);
+      document.querySelector('.search-input').addEventListener('keydown', event => {
+        if (event.keyCode === 13) {
+          onJumpPage();
+          return;
+        }
+      });
+      
+      // Search Preload
+      let head = document.head || document.getElementsByTagName('head')[0];
+      let searchlink = document.createElement('link');
+        searchlink.rel="search";
+        searchlink.href="/search.xml";
+        searchlink.crossOrigin="anonymous";
+      head.appendChild(searchlink);
+    });
+  </script>
+
+  <!--
+<script src="/js/local-search.js"></script>
+--> 
+
+  <script src="/live2d-widget/autoload.js"></script>
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/aplayer/1.10.1/APlayer.min.js"></script>
+  <!-- Fonts -->
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+  <body>
+    <header class="header fixed-header">
+  <nav class="header-container">
+    <a class="home-link" href="/">
+      <img class="logo" src="/images/logo.png" alt="logo"/>
+      <span class="eng_mark">CloudPool</span><span class="chn_mark">浊池</span>
+    </a>
+    <ul class="right-list">
+      
+        <li class="list-item">
+          
+            <a href="/" class="item-link">主页</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/categories/" class="item-link">分类</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/tags/" class="item-link">标签</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/archive/" class="item-link">归档</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/mag/" class="item-link">网刊</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/one/" class="item-link">一言</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a target="_blank" rel="noopener" href="//pan.zhuochi.org/CloudShare/" class="item-link">网盘</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="//<emoji>" class="item-link">( ^ω^)</a>
+          
+        </li>
+      
+      
+        <li class="list-item">
+    <a role="button" class="item-link popup-trigger">
+        <i class="fa fa-search fa-fw"></i>
+    </a>
+</li>
+      
+    </ul>
+    <div class="menu">
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+    </div>
+    <div class="menu-mask">
+      <ul class="menu-list">
+        
+          <li class="menu-item">
+            
+              <a href="/" class="menu-link">主页</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/categories/" class="menu-link">分类</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/tags/" class="menu-link">标签</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/archive/" class="menu-link">归档</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/mag/" class="menu-link">网刊</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/one/" class="menu-link">一言</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a target="_blank" rel="noopener" href="//pan.zhuochi.org/CloudShare/" class="menu-link">网盘</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="//<emoji>" class="menu-link">( ^ω^)</a>
+            
+          </li>
+        
+        
+          <li class="menu-item">
+    <a role="button" class="item-link popup-trigger">
+        <i class="fa fa-search fa-fw"></i>
+    </a>
+</li>
+        
+      </ul>
+    </div>
+  </nav>
+</header>
+
+    <div id="article-banner">
+  <h2 class="post-title">《Rain.》</h2>
+  
+   
+    <p class="post-date">2023-03-29</p>
+  
+  <div class="arrow-down">
+    <a href="javascript:;"></a>
+  </div>
+</div>
+
+  <div class="catalog-container" id="catalog">
+  <div class="toc-main">
+    <div class="toc-title">目录</div>
+    
+      <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#1"><span class="toc-nav-text">1.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#2"><span class="toc-nav-text">2.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#3"><span class="toc-nav-text">3.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#4"><span class="toc-nav-text">4.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#5"><span class="toc-nav-text">5.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#6"><span class="toc-nav-text">6.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#7"><span class="toc-nav-text">7.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#8"><span class="toc-nav-text">8.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#9"><span class="toc-nav-text">9.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#10"><span class="toc-nav-text">10.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#11"><span class="toc-nav-text">11.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#12"><span class="toc-nav-text">12.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#13"><span class="toc-nav-text">13.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#14"><span class="toc-nav-text">14.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#15"><span class="toc-nav-text">15.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#16"><span class="toc-nav-text">16.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#17"><span class="toc-nav-text">17.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#18"><span class="toc-nav-text">18.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#19"><span class="toc-nav-text">19.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#20"><span class="toc-nav-text">20.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#21"><span class="toc-nav-text">21.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#22"><span class="toc-nav-text">22.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#23"><span class="toc-nav-text">23.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#24"><span class="toc-nav-text">24.</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#2-23-1"><span class="toc-nav-text">2.23.1</span></a></li><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#2-23-2"><span class="toc-nav-text">2.23.2</span></a></li><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#2-23-3"><span class="toc-nav-text">2.23.3</span></a></li><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#2-23-4"><span class="toc-nav-text">2.23.4</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#25"><span class="toc-nav-text">25.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#26"><span class="toc-nav-text">26.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#27"><span class="toc-nav-text">27.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#28"><span class="toc-nav-text">28.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#29"><span class="toc-nav-text">29.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#30"><span class="toc-nav-text">30.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#31"><span class="toc-nav-text">31.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#32"><span class="toc-nav-text">32.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#33"><span class="toc-nav-text">33.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#34"><span class="toc-nav-text">34.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#35"><span class="toc-nav-text">35.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#36"><span class="toc-nav-text">36.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#37"><span class="toc-nav-text">37.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#38"><span class="toc-nav-text">38.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#39"><span class="toc-nav-text">39.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#40"><span class="toc-nav-text">40.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#41"><span class="toc-nav-text">41.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#42"><span class="toc-nav-text">42.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#43"><span class="toc-nav-text">43.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#44"><span class="toc-nav-text">44.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#45"><span class="toc-nav-text">45.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#46"><span class="toc-nav-text">46.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#47"><span class="toc-nav-text">47.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#48"><span class="toc-nav-text">48.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#49"><span class="toc-nav-text">49.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#50"><span class="toc-nav-text">50.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#51"><span class="toc-nav-text">51.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#52"><span class="toc-nav-text">52.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#53"><span class="toc-nav-text">53.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#54"><span class="toc-nav-text">54.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#55"><span class="toc-nav-text">55.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#56"><span class="toc-nav-text">56.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#57"><span class="toc-nav-text">57.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#58"><span class="toc-nav-text">58.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#59"><span class="toc-nav-text">59.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#60"><span class="toc-nav-text">60.</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#%E7%BB%88"><span class="toc-nav-text">终</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#%E5%90%8E%E8%AE%B0"><span class="toc-nav-text">后记</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#%E5%90%8E%E8%AE%B02"><span class="toc-nav-text">后记2</span></a></li></ol>
+    
+  </div>
+</div>
+
+<main class="app-body flex-box">
+  <article class="post-article">
+    
+      <div class="front-parent" id="front-parent">
+  <div class="front-child" id="front-fontsize">
+    <label class="front-label" for="fontsize-range">字体大小</label>
+    <input type="range" min="50" max="200" id="fontsize-slider" step="1" value="100" />
+    <span id="fontsize-value"></span>
+  </div>
+
+  <div class="front-child" id="front-fontselector">
+    <label class="front-label" for="font-select">更换字体</label>
+    <select name="font" id="font">
+      <option value="default">默认</option>
+      <option value="heiti">黑体</option>
+      <option value="light-heiti">黑体（细体）</option>
+      <option value="lighter-heiti">黑体（极细）</option>
+      <option value="songti">宋体</option>
+      <option value="light-songti">宋体（细体）</option>
+      <option value="kaiti">楷体</option>
+      <option value="fangsong">仿宋</option>
+    </select>
+  </div>
+
+  <div class="front-child" id="front-indent">
+    <label class="front-label" for="TextIndent">段首缩进</label>
+    <input type="checkbox" id="indent-checkbox" name="text-indent" value="" />
+  </div>
+</div>
+
+<h1 class="article-author">
+  
+    S54vNMZG @huanleegao.com
+      
+</h1>
+
+<script>
+  $(document).ready(
+    function () {
+      let FontChanger = function () {
+        if (this.value == "default") {
+          $(".markdown-content").css({ "font-family": "Arial, Helvetica, sans-serif" });
+          $(".markdown-content").css({ "font-weight": 'initial' });
+        } if (this.value == "heiti") {
+          $(".markdown-content").css({ "font-weight": '400' });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',STHeiti,SimHei,sans-serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400&display=swap rel=stylesheet>");
+        } else if (this.value == "light-heiti") {
+          $(".markdown-content").css({ "font-weight": '300' });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',STHeiti,SimHei,sans-serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300&display=swap rel=stylesheet>");
+        } else if (this.value == "lighter-heiti") {
+          $(".markdown-content").css({ "font-weight": '100' });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',STHeiti,SimHei,sans-serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100&display=swap rel=stylesheet>");
+        } else if (this.value == "songti") {
+          $(".markdown-content").css({ "font-weight": '400' });
+          $(".markdown-content").css({ "font-family": "'Noto Serif SC',STSong,NSimSun,SimSun,serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400&display=swap rel=stylesheet>");
+        } else if (this.value == "light-songti") {
+          $(".markdown-content").css({ "font-weight": '200' });
+          $(".markdown-content").css({ "font-family": "'Noto Serif SC',STSong,NSimSun,SimSun,serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200&display=swap rel=stylesheet>");
+        } else if (this.value == "kaiti") {
+          $(".markdown-content").css({ "font-weight": 'initial' });
+          $(".markdown-content").css({ "font-family": "'FZKai-Z03S','STKaiti','KaiTi',Serif" });
+          $("head").append("<link href=https://cdn.jsdelivr.net/npm/cn-fontsource-fz-kai-z-03-s/font.css rel=stylesheet>");
+        } else if (this.value == "fangsong") {
+          $(".markdown-content").css({ "font-weight": 'initial' });
+          $(".markdown-content").css({ "font-family": "'FZFangSong-Z02S','STFangsong','FangSong','FangSong_GB2312',Serif" });
+          $("head").append("<link href=https://cdn.jsdelivr.net/npm/cn-fontsource-fz-fang-song-z-02-s/font.css rel=stylesheet>");
+        }
+      };
+      $("#font").on('change', FontChanger);
+      $("#font").on('click', FontChanger);
+    });
+
+  $("#indent-checkbox").change(function () {
+    if (this.checked) {
+      $(".markdown-content > p").css({ "text-indent": "2em" });
+    } else {
+      $(".markdown-content > p").css({ "text-indent": "0" });
+    }
+  });
+
+  $("#fontsize-value").html("100%");
+  let rangeSwitch = function () {
+    let fontsizePercent = $("#fontsize-slider").val();
+    $(".markdown-content").css("font-size", fontsizePercent + "%")
+    $("#fontsize-value").html(fontsizePercent + "%")
+  }
+  $("#fontsize-slider").on("input", rangeSwitch)
+</script>
+      <section class="markdown-content" id="content">
+        <ul>
+<li><a target="_blank" rel="noopener" href="https://huanleegao.com/p/114">来源: 欢乐恶狗岛 huanleegao.com - S54vNMZG</a> 串号：114 原串时间：2022-04-06</li>
+</ul>
+<h3 id="1"><a href="#1" class="headerlink" title="1."></a>1.</h3><p>雨，已经下了很久了。<br>这座城市经常下雨，不如说晴朗才是少见的。<br>如果长时间没有阳光的话，人会变的有些阴郁。<br>这座城市就是这样。<br>我也不例外。<br>每天在这家咖啡馆中，擦拭已十分干净的杯子。<br>每天十点钟开门，打扫整理。<br>午饭时间过后，会有一些白领来店里，点一杯拿铁或是红茶，戴着耳机，或是玩游戏，或是看电视剧。<br>也有些只是倚靠在沙发上，看着窗外的雨，享受着宁静。<br>周末时，常有一些中学生来，聚在一起，三五成群，吵吵闹闹。<br>让我感受到难得的朝气。<br>到了我这个年纪的独身男人，总会有一套奇怪的哲学与超然物外的与世隔绝感。<br>看着吵闹的学生们，我也会时常想起自己的学生时代。<br>与现在不同，甚至可以说是完全相反了。<br>健康，阳光，身边有要好的朋友，心中有喜欢的女孩。<br>一切都像是朝日初生。<br>那个年纪的一切都是美好的，因为未来有无限的可能性。<br>雨，还在下。</p>
+<hr>
+<h3 id="2"><a href="#2" class="headerlink" title="2."></a>2.</h3><p>雨，已经下了很久了。<br>阴霾天气，阴霾心情。<br>虽然听雨很浪漫，但是现在可是完全浪漫不起来。<br>到了这座城市之后，不知道为什么，总是时不时的会有些感伤。<br>当初填报志愿来这里读大学的时候可是抱着“小榭听风雨，依栏观山雾”的大浪漫主义。<br>可现在包括每天的课程，什么事都完全提不起精神。<br>我也老了啊……<br>不如出去随便走走吧，没有目的地的出发。<br>不知为何，心里突然冒出这个想法。<br>是啊，如果城市不浪漫，那我为什么不浪漫起来。<br>说走就走，披上大衣，拿上雨伞，踩着雨点出发。<br>只有天马行空，才是真正的浪漫主义!<br>雨，还在下。</p>
+<hr>
+<h3 id="3"><a href="#3" class="headerlink" title="3."></a>3.</h3><p>雨，已经下了很久了。<br>从家到这里，并不远，步行十分钟。<br>收起雨伞，像往常一样，打开店门，打扫卫生，准备材料。<br>一切都是那么的普通。<br>在旁边的兰州拉面解决了午饭，白领们还没有下班。<br>我靠在窗边，看着雨滴，点燃一支香烟。<br>三十岁之后，我就很少抽烟了。<br>现在点燃香烟，更多的是点燃心情。<br>火星燃着，烟雾飘着，就像有个人在陪着我一样。<br>时常我会想到以前，更早些时候。<br>那时候还有人每天在我耳边唠叨，不要喝酒啦，不要抽烟啦。<br>那时的我是十分厌烦。<br>现在才知道，有个人唠叨，是多么幸福的事情。<br>熄灭烟蒂，回到柜台后面。<br>如今陪伴我的，是杯子，沙发，风铃，咖啡机和享受安静的人们。<br>雨，还在下。</p>
+<hr>
+<h3 id="4"><a href="#4" class="headerlink" title="4."></a>4.</h3><p>雨，已经下了很久了。<br>无目的的行走，无目的的时间，无目的的思考。<br>踩着雨水，行走在公路上。<br>路人大多来去匆匆，也有三三两两聊着天的女孩子，牵着手的情侣，或是刚刚下班的白领。<br>或忙碌，或闲散，或忧郁，或欢快。<br>人人不同。<br>我有多久没有像这样放空了呢？<br>什么都不想，什么都不做。<br>只是踩着雨水走路。<br>学校中的课业，社交，焦虑，疲惫。<br>似乎都在这一刻放空了。<br>我情不自禁的步履轻快，像童年一样，边走边跳。<br>小街小巷，大路大厦，都不过是伴奏罢。<br>整个天空，在为我伴奏。<br>整个城市，在为我伴舞。<br>不如，就在这里停下吧。<br>我抬头。<br>晴天咖啡馆。<br>我收起雨伞，推开店门，风铃响动。<br>雨，还在下。</p>
+<hr>
+<h3 id="5"><a href="#5" class="headerlink" title="5."></a>5.</h3><p>雨，已经下了很久了。<br>响着音乐的旋律，飘着咖啡的香味。<br>店里零零散散的坐着一些白领，享受着只属于自己的时间。<br>门口传来了风铃响。<br>是个女孩子，大概十八九岁，正是最美好的年华。<br>白衬衫，红领结，浅棕色的呢子大衣。<br>披肩长发，身形略显单薄。<br>“老板，有没有什么推荐的吗？”<br>“没有推荐，咖啡是现磨，茶是现煮，其他饮料都是瓶装的成品。”<br>没有推荐，就是最好的推荐。<br>这里很少有这个年纪的学生来。<br>高中生忙于学业，大学生忙于社交。<br>而且他们都更喜欢快消饮品店，而且不需要像大人一样躲避现实，像小孩子一样躲避家长。<br>“那你就给我随便做一杯吧，你觉得我适合什么？”<br>这样的要求还是第一次听到。<br>“好，稍等片刻。”<br>我转过身去。<br>她也许很温和。<br>她也许想要逃避现实。<br>她也许想从学业和社交的压迫中松口气。<br>她也许会在关寝之前十分钟跑出去，忍着寒风在江边等待日出。<br>这样思考着，我打开很久没用的手磨咖啡机。<br>咖啡豆，开水，牛奶。<br>结束简单的拉花，放上小勺子。<br>在小盘子中放上三颗方糖。<br>“请慢用，小心烫。”<br>“你给我做了什么呀？”<br>“还没有名字，不如你来起一个。”<br>“我来吗，我最不擅长起名字了。”<br>“不如就叫，‘雨过’吧。”<br>“雨过吗……是个好名字。”<br>雨，还在下。</p>
+<hr>
+<h3 id="6"><a href="#6" class="headerlink" title="6."></a>6.</h3><p>雨，已经下了很久了<br>这间店不大，左右摆着六张沙发。<br>往里走是吧台，前面摆着几张转椅。<br>吧台对面是照片墙，上面有依偎的情侣，害羞的女孩，大笑的朋友们。<br>照片很多已经泛黄褪色了，大概挂了很久吧。<br>木头桌子上刻着明显的使用痕迹，木头磨掉了漆面，再被包上时间。<br>店老板大概三十多岁，话有点少。头发很长且微微卷曲。戴着眼镜，留着胡子。格子衫外套着棕色的围裙。<br>我想起了很久没玩过的“人类观察”。<br>围裙有些脏，大概很久没洗了。衬衫上也有着污渍。<br>一个人守着店，没有请服务生。<br>手上没有戒指。<br>柜台上放着已开封的香烟和铜色打火机。<br>音乐舒缓，是上世纪八九十年代的风格。<br>有咖啡机却还进行手磨。<br>直白的说话方式。<br>我坐在吧台前的木质高脚椅上，闻着咖啡的香气。<br>三四十岁的单身文艺青年。<br>我将方糖放进咖啡中，轻轻搅动。<br>雨，还在下。</p>
+<hr>
+<h3 id="7"><a href="#7" class="headerlink" title="7."></a>7.</h3><p>我已经很久没和人说过这么多话了。<br>她真的很健谈。<br>从询问我是哪一年开的店开始，一直聊到了她喜欢的动画。<br>我还以为现在很少年轻人看EVA了。<br>“你叫顾济？你的名字好有意思啊!”<br>“以前有人还叫我重施。”<br>“哈哈哈，真的吗，你的朋友都好损!”<br>已经过了下午的上班时间，店里只剩下了我们两个。<br>我知道了她是雨城师范大学汉语言文学的大二学生，马上要过十九岁生日，名字是白砚，外号是燕子。<br>我也告诉她，我是雨城工业大学化工制药的毕业生。<br>“哎？真的嘛，可是你看起来完全不像理工男啊？”<br>“大家都这么说。他们说我应该去你们专业。”<br>“虽然精密机械很性感，但我果然还是更喜欢艺术一点。”<br>“一般来说不会用性感形容机械吧？”<br>“这就是语言艺术的美妙之处。”<br>我给自己也做了一杯咖啡。<br>果然我还是更喜欢手磨，带着些许的金属和木头的香气。<br>雨，还在下。</p>
+<hr>
+<h3 id="8"><a href="#8" class="headerlink" title="8."></a>8.</h3><p>没怎么和中年男人聊过天，而且也不喜欢和他们聊天。<br>因为中年的他们，精力不足，就会在其他的地方试图凸显自己的强大。<br>比如吹牛。<br>不过中年文艺青年还是第一次遇到。<br>他说话还挺有趣的，起码比学校里那些刚刚高中毕业什么都不懂的小男孩们有意思多了。<br>我听他讲着二十岁时在车间写文章被领导痛批，然后文章还没发出去还差点丢了工作的惨事，虽然我在笑，但是真的蛮同情他的。<br>我问他为什么不好好上班说不定现在也是研究组长了。<br>他说虽然仪器很性感，但是人类才是最浪漫的。<br>我知道了新的观点。<br>他的原话就是这样说的。<br>无论是自己喜欢的人还是讨厌的人，都是他们用生命的每一秒钟来篆刻出的艺术品，与人类本身比起来，雕塑，绘画，音乐，都只是承载浪漫的道具而已，人类才是浪漫本身。<br>虽然有些傻逼叫艺术品简直是侮辱艺术这个词，但他说的还是有一定道理的。<br>向内心寻求浪漫，而不是向外界寻求。<br>有点心学那味了。<br>他似乎很久没和人聊天了，一开口就滔滔不绝，口若悬河，一发不可收拾。<br>我搅动着已经凉了的咖啡，听他讲述。<br>雨，还在下。</p>
+<hr>
+<h3 id="9"><a href="#9" class="headerlink" title="9."></a>9.</h3><p>雨，已经下了很久了。<br>我拉上卷帘门，结束一天的工作。<br>今天买芹菜吧，冰箱里还有五花肉。<br>菜市场并不远，走路过去就可以。<br>路上的每个人都打着伞，从伞间看世界，别有一番风味。<br>从那一年开始，我决定做一个生活家。<br>将生活变成艺术。<br>这是世界上最渺小，也是最宏大的艺术。<br>过好生活并不容易，将生活过好就更难了。<br>扪心自问，我现在大概还是没有做到。<br>如果我还像那个女孩子一样，十七八岁，大概会觉得这样的事情很可笑吧。<br>年少轻狂并非没有道理。<br>在熟识的老板那里买了菜，在他的热烈推荐下，还多买了一把葱和两根胡萝卜。<br>独身生活也有好处，不需要存储食物。<br>想吃什么蔬菜，就去菜市场买最新鲜的，肉食也最多只用买三天的量。<br>新鲜的食物才是最棒的。<br>蒸上米饭，我拿出红茶，给自己沏上一壶。<br>靠在沙发上，看着吊灯发呆。<br>雨，还在下。</p>
+<hr>
+<h3 id="10"><a href="#10" class="headerlink" title="10."></a>10.</h3><p>雨，已经下了很久了。<br>耳机里放着着音乐，窗外滴着水珠。<br>下一站，第二小学。<br>公交车传来报站声，离学校还很远。<br>今天就在校门口吃吧，想吃水饺了。<br>如果我也能开个咖啡店，每天和客人吹牛打屁，给客人狂暴轰入自己的音乐品味，还要他们一百块买成本价三毛的速溶咖啡那该多爽。<br>顾济，确实是个有趣的人。<br>他说他年轻的时候也是很帅气的，而且还在杂志上发过文章。<br>下次你再来提前跟我讲，我把书带来给你看，我家里还存着呢。<br>他这么跟我说，还加了联系方式。<br>我讽刺他，这么要联系方式也太奇怪了吧。<br>他干笑着说，我都快四十了，我在要人联系方式的时候你还是个小朋友。只是和你聊的挺投缘的，而且以后有什么新品也能及时通知你啊。<br>他说的不无道理，我俩的年龄都差一个我了。<br>而且我也不喜欢大叔型的，尤其是不修边幅的。<br>耳机里切到了一首rap，感觉一下就嘻哈起来了。<br>白砚啊白砚，你在想些什么，还是快回去准备六级考试吧。<br>我打开单词软件，虽然只有眼睛在背，但也是背啊。<br>雨，还在下。</p>
+<hr>
+<h3 id="11"><a href="#11" class="headerlink" title="11."></a>11.</h3><p>雨，停了。<br>虽然天空没有放晴，但是也没有在下雨。<br>阴云压在头顶，让人喘不过气<br>但我还是在出门的时候拿上一把伞。<br>这是这座城市一贯的尿性，先停一会，然后再下个大的。<br>打开店门，用第一声风铃叫我的咖啡馆起床。<br>她也用风铃声回应我。<br>打扫地面，擦拭座椅。开始了普通的一天。<br>一般来说，经常来这里的大部分都是离得近图方便的上班族。<br>在两年前，有一个熟客。<br>他是刚刚大学毕业来这里工作的，住在这附近，一周会来一两次。<br>他来这里，就点一壶红茶，在窗边坐一下午。<br>他是跑销售的，所以工作时间也没那么严格，偶尔四点多他回家前就回来我这里，单要一杯冰水，因为我告诉他冰块免费，水也免费。<br>一般这时候他都会坐在吧台，和我闲扯上个把小时。<br>但他只呆了半年，突然有一天他来跟我说他辞职了，三天后就离开这座城市，回去继续读书。<br>他说他女朋友要他继续读书，否则他们很难长久的在一起。<br>他的女朋友我见过一面，很可爱的女大学生。<br>我对他说，选择了这条路就要一直走下去，可不能半途而废。<br>他说“我想做的事就一定能做到，因为我是我。”<br>我很喜欢他的这句话，充满了年轻人的狂放不羁自信满满。<br>我对面前的女孩子讲了这个故事，她托着腮说，“他们一定很相爱吧，要是我也有这么心爱的恋人就好了。”<br>天，还是阴的。</p>
+<hr>
+<h3 id="12"><a href="#12" class="headerlink" title="12."></a>12.</h3><p>雨，停了。<br>周末，无事可做。<br>等我回过神来，我已经在和老板聊天了。<br>他说这家店里已经很久都没有熟客了。<br>我问他为什么。<br>他没有回答，给我讲了个故事。<br>故事里的那位男生说走就走的感觉还是真让人羡慕。<br>他们两个一定很相爱，那个男生应该是很不爱学习的那种类型，但是还是可以义无反顾的去为了爱情努力。<br>如果是我，大概是做不到的。<br>我问老板，他说他要是能做到的话现在估计娃都上初中了。<br>这让我很惊讶，我还以为他是智者不入爱河的类型。<br>他说谁还没有青春期呢，他像我这么大的时候也是个恋爱脑。<br>他给我看了他的相册，很复古的款式，虽然保存的很好，但里面的照片也稍微泛旧了。<br>年轻时的他和现在很不一样，不论是他一个人的照片还是很多人的合影他都笑的很开心。<br>他给我讲述照片的故事。<br>这张是在长城，这张是在天安门，这张是在黄浦江，这张是在广州塔。<br>他慢慢的讲，我慢慢的听。<br>一张双人合影出现，他愣了一下神说怎么放在这个相册里了，真是不小心。<br>我想，他曾经的恋人大概是很可爱的，不然的话他嘴角也不会有那个遗憾的笑容。<br>天，还是阴的。</p>
+<hr>
+<h3 id="13"><a href="#13" class="headerlink" title="13."></a>13.</h3><p>雨，停了。<br>她最近每周都会来一两次。<br>有时候和我聊聊她同学们的奇妙操作，有时和我说说学校里的猫猫狗狗，偶尔还会跟我聊聊她的家庭。<br>我大概是做着一个倾听者，偶尔发表一些中性的意见，不过绝大多数时候还是她在讲。<br>她身边并没有一个可以随意倾诉的好朋友。<br>不过这种事也是经营的一部分，无数的顾客都曾经向我倾吐过很多积压在心中的难以对身边人开口的事，我早就习惯了。<br>“昨天啊，有个男生跟我说他喜欢我来着。”<br>“好事啊，你喜欢他么？”<br>“他？？我们两个只见过一面哎，说的话加起来不超过十句，他连我哪个专业的都没记住就喜欢我？这种钓鱼的男人可真没福气。”<br>“那最好还是多考虑考虑”<br>“老板你是不知道啊，现在的大学生简直就是爱情快餐的最大消费群体，我室友上个月十二号谈了个男朋友，这周一分的手。”<br>“那时间是不长。”<br>“我最受不了快餐了，谈快餐的多少都沾点。”<br>“爱情的意义不在于见色起意和青春躁动，而在于珠联璧合细水长流。”<br>“文化人说得好，我就希望我未来的男朋友会是那种会写万字情书，作曲填词弹琴唱歌，在给我画七十二种花的。”<br>“那种确实不错。”<br>就这么有一搭没一搭的，她就把他的朋友们让她保守的秘密全都告诉了我。<br>其实也没什么关系，我只是个店老板，脱离学生时代很多年，这些秘密除了或许在某个夜里会成为我发呆时的遐想，也就只会被忘记，直到当事人都说“还有这回事啊。”<br>记忆就是用来遗忘的，一件事，当所有人都忘记的时候，是否也就不曾存在呢？<br>天，还是阴的。</p>
+<hr>
+<h3 id="14"><a href="#14" class="headerlink" title="14."></a>14.</h3><p>雨，停了。<br>又在这里坐了一下午，能找到一个愿意听我说话又不用担心会暴露我是个大嘴巴的人真棒真好。<br>如果开家店，专门找一些和当事人没有任何关系的人来当听众，随便诉苦，按小时收费那一定赚大发了。<br>店名就叫鼹鼠洞或者袋熊洞之类的。<br>不过好像也不是很恰当，对不起鼹鼠，你什么都没做错。<br>回到宿舍，把外套丢在椅子上。<br>最近气温是在下降了，总感觉一层外套有些许冷。<br>把吸管扎进纸杯，随便翻翻小说。<br>当我提出要外带的时候顾济脸上的表情真的很精彩。<br>什么做菜讲究锅气咖啡讲究磨气你拿纸杯带走就失去了我给你冷泡的意义还不如去买罐雀巢还便宜很多如果想让别人尝就让他来店里喝才能体会到环境和饮品契合度高的美妙之处。<br>这些莫名其妙但又好像很有道理的话好像天生就该从他嘴里说出来。<br>拗不过我的坚持，他还是边叹气边给我装了杯套了袋子。<br>捉弄顾济作战大胜利，砚砚绝赞大成功!<br>今天心情绝佳咯!<br>天，还没有晴。</p>
+<hr>
+<h3 id="15"><a href="#15" class="headerlink" title="15."></a>15.</h3><p>雨，停了。<br>早早关店，今天是每月的休闲日。<br>去菜市场买了两斤猪肉，一斤土豆，半斤胡萝卜，再加上几颗菜心。<br>在楼下的小店买了一包香烟，还有薯片和汽水。<br>回到家，将肉切块，焯水，然后再把土豆胡萝卜块和肉块一股脑的丢进电饭煲，放上生姜和大蒜，再倒上酱油上色。<br>放上音乐，打开冰箱，拿出啤酒。<br>每个男人都该有自己的专享时间才会有幸福感。<br>喝着酒抽着烟唱着歌，手中的香烟如同指挥棒，奏响全世界的交响乐。<br>忘记心中的她，忘记尘世浮华，忘记生活重压。<br>用热量，酒精，摇滚和尼古丁来给自己放个假。<br>怎么这也压上韵了，我不禁哑然。<br>清洗菜心，烧热油锅，放入姜丝蒜末爆香，短短的入锅，在青菜变色前乘出。<br>电饭煲发出响声，我将美食乘进盆中。<br>其实是吃不完的，做了大概有三餐的量，明天也要吃这个咯。<br>端上白米饭，再打开一罐啤酒，享受进食时间。<br>如果只有肉食和淀粉，那吃不了几口就会腻，加上清炒菜心才会完美。<br>将剩下的菜放入冰箱，清洗碗筷。<br>果然不出我所料，只吃完了菜心，炖肉吃了三分之一就已经超级饱了。<br>明天买点蘑菇吧，想喝蘑菇汤了。<br>家里鸡蛋和大米也不多了，干脆直接去东边的粮店大补充好了。<br>我点上香薰，惬意的卧在沙发里。<br>天，还是阴的。</p>
+<hr>
+<h3 id="16"><a href="#16" class="headerlink" title="16."></a>16.</h3><p>雨，停了。<br>我大抵是昏了头了。<br>我就不该加入这什么莎闭学生会。<br>大中午叫来开会，讲的全是废话。<br>我不想听什么这个老师那个主任的，我想吃饭然后回去睡午觉。<br>我下午四五节还有课，不要再说了!<br>但也不好拂了人面子，都是抬头不见低头见的同学。<br>我在纸上画着画，天狼伽罗是真的好看啊，不如今年忽悠一下老爹搞点钱，我整个cosplay好了。<br>当我已经思考到如果有晟跟我搭讪的话该怎么回复的时候，会议结束了。<br>我合上本子，向大家伙打完招呼就赶紧跑向食堂。<br>拜托李晓雨给我拿书之后，我开始猛干麻辣香锅。<br>“悲也好，喜也好，每天找到新发现。”<br>我哼着歌走进了教室，不得不说，顾济虽然人土了一点，但听歌的品味是真的棒。<br>我把他的歌单要了过来，大多是一些很有年代感的上世纪末90年代金曲之类的，真是有够符合他的人设。<br>明天周六，没什么事，再去他那里坐坐好了。<br>但现在要认真学习了，只有努力的砚砚才能出迷迭香。<br>我这么想着，便开始学习。<br>天，还没有晴。</p>
+<hr>
+<h3 id="17"><a href="#17" class="headerlink" title="17."></a>17.</h3><p>又开始下雨了。<br>昨晚梦到以前的事，梦中赏雪，雪中赏花，花中见故人。<br>醒来时心中不免三分惆怅。<br>不过又如何，伤春悲秋怀念故人这种事一夜旧梦就够了。<br>姑且梳洗过后，我撑起伞，踩着雨水去叫我的小店起床。<br>白砚已经有段时间没来过了，不过也没什么所谓，很多顾客都会说，我以后一定每月都来每周都来。但都会因为雨也好风也好工作学业繁忙也好或者是单纯的不想而忘记这个小店。<br>我耸耸肩，拉开卷帘门，开始晨间打扫。<br>但是出乎我意料，在今天下午四点多钟，她却出现在我面前。<br>“呼，我终于考完了！”她今天穿着白衬衣，亚麻色毛衣外套，咖啡色的阔腿裤，还有棕色的格子领带，大概还化了淡妆。<br>“恭喜假期迎来，今天很漂亮啊。”<br>“恭维我？不如送我杯喝的。”她坐在吧台前，这里好像已经成了她的专属座位。<br>“好啊，请稍等。”<br>“哎？真的吗？铁公鸡拔毛了？”<br>“说人铁公鸡很不礼貌啊，考得怎么样。”<br>“稳过的，别看我经常混迹在你这，我可是学习很棒的。”<br>“不要说得我这里好像红灯区一样，请慢用，小心烫。”我将红茶摆在她的面前。<br>“马上就可以回家咯～哎，顾济，你没有假期的么？”<br>“年关的时候会放两天假。”<br>“哎，那不是还要很久吗？要不明天就放个假？”<br>“为什么？”<br>“我只抢到了后天回家的票，明天很无聊，朋友们也都回去了，所以呢，这个和十八岁美少女约会的机会就便宜你了，如何？”<br>“不要。”<br>我拒绝的斩钉截铁。<br>“我就知道。”<br>她耸耸肩，也回答的理所当然。<br>我已不想再发展新的社交关系了。<br>与其在结束后再惋惜，不如不开始，没有开始的感情是风险最低的。无论何种。<br>雨，还在下。</p>
+<hr>
+<h3 id="18"><a href="#18" class="headerlink" title="18."></a>18.</h3><p>又开始下雨了。<br>下午两点半，考试结束。<br>陈清和宋艳华早就把行李箱带在身侧考完试就溜了，陶欣欣也牵着男友不知去哪约会。<br>冷酷无情的世界又徒留砚砚一人孑然一身了。<br>不过没甚么干系，独行自有独行妙。<br>放个音乐化个妆，且梳洗打扮一下，被考试折磨到油光发亮的砚砚又回光返照光彩照人人人为我我为人人了。<br>容虽归容了，不过说到悦己者，还真没有。<br>总不至于去找那个年近四十胡子拉碴的理工男吧。<br>不过能免费喝茶，也算是我打扮一番给他看的报酬了。<br>眼前要完成的事一结束，人就会不由自主放松下来，被古代当代和现代文学折磨结束后，神经也放松下来。做出什么怪事都合理异常。<br>比如邀请一个肯定会拒绝我邀请的老男人约会之类的。<br>顾济的反应完全在我意料之中，这个弔人好像是种在这里的老槐树，谨遵他十年树木百年树人前人栽树后人乘凉树挪活人挪死的原则。<br>不过我也就是随口一问罢，卧在宿舍打游戏挺好的。<br>走出店门，寒气扑脸。<br>“你不也要关门了吗？干嘛要拒绝我？”我转头问他。<br>“因为我要去吃蛋糕。”他回答我。<br>不由自主的搓搓手心，天真的冷下来了。<br>我撑起伞，迈向雨幕。<br>雨，还在下。</p>
+<hr>
+<h3 id="19"><a href="#19" class="headerlink" title="19."></a>19.</h3><p>雨，已经下了很久了。<br>十点钟，起床。<br>年关将至。<br>我和小店都开始我们的假期。<br>拿出挂面，清水下锅，打上一个荷包蛋。<br>出锅前撒上一小把葱花，点上两滴香油，在撒入几粒盐。<br>鲜美的食物不一定很复杂，最简单的往往也就是最好的。<br>换好衣服，整理一下围巾和表情。<br>马上要过年了，邻里四处都洋溢着喜庆的味道。<br>旧的一年结束，新的一年即将到来。<br>人为制定的日期计量时间对于线性运行的时间本身并无意义。<br>但是对人们来说有意义，且意义重大。<br>不过所谓人，不就是在无意义中寻找意义的生物么。<br>看着眼前的车流，我不禁陷入了无边际的遐思。<br>下午一点半，终于来到了我的目的地。<br>雨城海洋馆。<br>从某一年开始，我每年都会抽一天到这里来转转。<br>虽然现在是旺季，但队伍并不长，说到底这里也有十几年的历史了，比不上新开的甚么海洋乐园和海洋世界。<br>来这里的大多是带着孩子的中年人。<br>听着小朋友们兴奋的声音我的心情也好了起来。<br>进入水族馆第一个看到的就是这条巨骨舌鱼了。<br>十多年前，我们就见过。那时它就是这样，在对于它来说十分狭小的玻璃缸中游动。<br>也无甚区别，无非是它被困在缸中而我被困在现实中罢了。都是困兽，它或许也会怜悯我罢。<br>“叔，可以帮我们拍张照吗？”<br>一个看起来十八九岁的男孩子拿着手机有些不好意思的对我说。<br>我点点头，接过手机。<br>他们大概是大学生情侣罢，刚在一起还不久，简单的牵手都显得很局促。<br>“说，巧克力～”我举起镜头对准他们。<br>“巧克力～”他们的笑容青涩且美好。<br>我不很会拍照，那个女孩子好像不怎么满意。<br>我任由鱼儿在身边游过，不知为何，想起了奶油蛋糕和阳光下挑着花苞待放的芍药花。<br>雨，还在下。</p>
+<hr>
+<h3 id="20"><a href="#20" class="headerlink" title="20."></a>20.</h3><p>万！里！晴！空！<br>好天气总是让人欢欣。<br>街边的小狗和春联，水果店的橘子和穿新衣的小朋友。<br>热气腾腾的火锅，许久未见的好友，饺子和红烧鱼，又长高了一些的表妹。<br>一觉醒来的积雪，老爹呛人的烟味，人挤人的商场，冻得发红的手指。<br>一切的一切，都是那么的，那么的让人欢欣！<br>把年夜饭的照片发给顾济，过了很久他才回复了句新年快乐以及播放着不知道什么老港片的电视还有一盘饺子。<br>老男人，真是无趣。<br>雪好像停了。</p>
+<hr>
+<h3 id="21"><a href="#21" class="headerlink" title="21."></a>21.</h3><p>雨，已经下了很久了。<br>雨城的冬天很冷。<br>是标准南方的雨滴溅落，寒气入髓的法术伤害。<br>而且这里没有暖气。<br>不过也无甚关系，毕竟冬天来了春天也就不远了。<br>今天闲来无事，本想着出门逛逛街。<br>出来就后悔了，只要是有店面的地方都是人挤人挤人挤人。<br>我现在就不像年轻时那样喜欢热闹了，人太多的地方多少会感觉有些无法适从。<br>说到底年轻时也没有多喜欢，不过是醉翁之意不在酒。<br>不知何时，走到了老街。<br>雨城的老街在早些年很出名，似是什么大型玉石还是古玩交易市场。上大学的时候刘冠宇喜欢文玩，常叫我陪他来看。<br>不过我不懂这些，也没钱玩，只在这买过一个三十块的摩托罗拉BP机。比起古玩，买卖双方的博弈对我来说更有趣。<br>正听着这尊佛像是来自西藏大昭寺还是河南平顶山的争辩，一个绿色的小杯子映入我的视线。<br>青白色的杯身，浮雕着一株兰草。<br>我躺在沙发上对着灯光欣赏今天的收获。<br>白砚大概会喜欢吧。<br>雨，还在下。</p>
+<hr>
+<h3 id="22"><a href="#22" class="headerlink" title="22."></a>22.</h3><p>今天又是好天气。<br>阳光从窗户照进房间，相当温暖。<br>叫了王白瑜来家玩猫。<br>她好似一个痴汉，抱着我家空调又是抱又是亲。<br>你不知道他每天都要舔屁股的吗？<br>她说她最近谈恋爱了，每天和男朋友一起吃饭一起打游戏生活愉快的很，我说那简直是太好了终于不用被你这个臭婆娘每天烦着打电话了。<br>“嗯，其实吧，有个喜欢的人陪着说话陪着玩感觉还真挺好的，不如你也试试嘛，你现在有喜欢的吗？”<br>“硬说有倒是也有吧，只是有点感觉，说不上喜欢啦。”<br>“嗯？有情况！快老实交代！”说着她就要来挠我的痒痒。<br>打闹一番过后，我抱着空调，靠在白瑜的身上，享受着午后的阳光。<br>“就是，一个比较成熟，有点闷的吧…”<br>我说，空调在我怀里舒展着身体，柔软的毛蹭的手臂很痒。<br>阳光很好。</p>
+<hr>
+<h3 id="23"><a href="#23" class="headerlink" title="23."></a>23.</h3><p>雨，已经下了很久了<br>三月初，气温开始回升，雨则下的更大了。<br>把香烟掐灭，面前许久未见的女孩正在对着我新添的装饰叽叽喳喳。<br>“你店里重新搞装修了啊，还挺漂亮的嘛。”<br>“只是新添了个书柜，稍微改了一下布局。”<br>“这些都是旧书？你从哪里淘来的吗？”<br>她穿着咖色大衣，内里则是一件米色毛衣，下身则一件普通的黑色打底裤再加上黑色短靴。<br>“不是，是我从家里拿过来的。”<br>“这么多书都是你的啊。”<br>她语气有些惊讶，弯腰看着下层。<br>“嗯，从大学到现在，这差不多是三分之一。”<br>“那我可以借走嘛？顾管理员？”<br>“可以，但要记得还。”<br>“那你给我推荐几本好书咯，我看看这都是什么，《如何给狮子剥皮》《地下室手记》《血字的研究》《肉类料理的194种做法》，这一串书你是要作案吗！”<br>“巧合而已，要说推荐的话，如果你没看过的话我推荐你看看倚天屠龙记。”<br>“哦，这我倒只看过电视剧。你放在哪里了？”<br>“第二格左边。”<br>“好旧！怪不得你把它放在这里。”<br>“这个是我上大学时候买的平装，现在我又买了一部精装收藏。好书就是要读一份收藏一份才足够。你的红茶好了。”<br>我把泡好的红茶放在吧台上。<br>“那我先借走第一卷，等我看完再来拿第二卷咯？”<br>她把书放进挎包里，坐在我的面前。<br>“嗯。”<br>她轻轻端起杯子，轻酌一口。<br>“很烫哎。”<br>雨，还在下。</p>
+<hr>
+<h3 id="24"><a href="#24" class="headerlink" title="24."></a>24.</h3><p>雨，已经下了很久了。<br>我靠在床上，耳机里放送着一首不知名粤语歌。<br>不知不觉，已经读到少林寺大战三渡了。<br>读完第一卷，第二天我就去拿了二三四卷回来。<br>我从没想过武侠小说能如此吸引人，怪不得老爹前两年还在跟他的老同学捶胸顿足那本被高中班主任收走的天龙八部。<br>实现人家三个愿望，还真是够浪漫的。张无忌，你是大元神灯侠吗。<br>上次我去取书顾济对我说张无忌是一个复杂的人，但又是一个简单的人。<br>他纠结不清，优柔寡断，但同时又深明大义，当机立断。<br>顾济说人是矛盾的，多面的，现在的文学人物塑造往往趋于扁平，卡片化，而好的文学作品是能写出立体的变化的人，并且人的变化往往是没有逻辑的往往是意料之外情理之中的。<br>我深以为然。<br>中学时，我也写过一些东西，而且写的是得心应手洋洋洒洒。<br>而现在，我读了更多书，见了更多人之后却不敢再拿起笔。<br>大概是因为没有能力去写出一个真正的活着的“人”。<br>等到能做到“取余心而注于手”时，也许我会再次拿起笔吧。<br>雨，还在下。</p>
+<hr>
+<h4 id="2-23-1"><a href="#2-23-1" class="headerlink" title="2.23.1"></a>2.23.1</h4><p>雨，已经下了很久了。<br>下午四点，早早关了店门。<br>听着YMCA，驱车来到了红房子。<br>今天是我的四十岁生日，也是一年一度的独享蛋糕日。<br>起锅烧油，将改好刀的鲫鱼放入锅内煎至双面金黄后取出，再切两块羊肉借着热油微炒。<br>滤掉油，再把鱼放入，倒入半锅水煮汤。<br>鲜字何解，一鱼一羊。<br>二者相叠，正所谓美味情缘，天下第一鲜。<br>又在说些什么啊我。<br>正在酒柜面前想着今天喝点甚么，手机却突然响了。<br>“这才五点半哎，你怎么关门了？”<br>是杨素莹。我高中时代起的好友，今年大概也有四十岁了。<br>“亏我还给你买了生日礼物还特地来找你，真是养儿防老，养济挨咬啊。”<br>“啊，你在我店吗，我不知道你会来，已经回家了。”<br>“算啦算啦，我也没提前跟你说，那我现在去你家吧。”<br>“好，你慢点，我很快做好饭了。”<br>话虽是这么说，但我只做了自己的那份。<br>打开电饭煲，重新下米，点上加速煮。<br>还好准备了青菜，化冻的肉也有多余的，大概也是够两人吃了。<br>抽油烟机嗡嗡作响，锅中溢出香气。<br>雨，大概还在下。</p>
+<hr>
+<h4 id="2-23-2"><a href="#2-23-2" class="headerlink" title="2.23.2"></a>2.23.2</h4><p>雨，已经下了很久了。<br>“那，吃饭吧。”我对着桌子对面的两人说。<br>据杨素莹所说，她在正准备走，就看见这个女孩徘徊在我的店门口，怀里还抱着三本倚天屠龙记。于是就去问了问发现她是来还书的。于是在她的盛情邀请下白砚也来到了我家。<br>她原话是“人小姑娘为了还你书在外面饭都没吃万一饿坏了冻坏了都是你顾济的责任，我这是帮你。”<br>虽然我还是不能理解个中缘由，但也只能由她。<br>“虽然你小子百无一用但这厨艺还是不错的。”杨素莹喝着鲜汤说。<br>“哇，这个汤好好喝，这是什么做的？”白砚也惊呼。<br>“问得好，鲜字怎么写？”我说<br>“鱼羊…我知道了，这是鱼羊汤！”白砚稍作思考便答了出来。<br>“答对了！那么现在奖金来到了五百万。”<br>和熟悉的人在一起总会使人心情变好，不知不觉，我和杨素莹都有些醉了。<br>“那年也是你过生，李望蜀刚好从部队回来，你俩喝的在南门街上睡着了你记得不。”<br>“记得记得，那年我二十五生日吗，你不也是烂醉，你老公后来还找我事来着。”<br>“要不是丁方典咱们三个就冻死街头了，他找你事是应该的！”<br>我们大笑，青年时代我们也相当疯狂，做事不考虑后果，一切为了快乐。<br>“小白，我跟你说，别看这货现在人模狗样像个知识分子，我们那时候也是坏事做尽”<br>“啊真的吗，具体是什么呢我很有兴趣。”白砚喝了一罐啤酒，脸颊也开始红了起来。<br>“我跟你讲啊，那时候……”<br>“哎呀，我都忘了，我还买了蛋糕来着。来素莹，帮我把盘子收一下，我去拿蛋糕。”我赶忙打断这个大嘴巴，免得又抖搂出什么乱七八糟的事。<br>本来是打算一个人吃，所以蛋糕并不大，而且也是按照我自己的口味，巧克力奶油，无甚花哨的点缀，造型也不很美观，有的只是糖分给人带来的愉悦与放松。<br>“我们直接吃还是要我们给你唱个生日歌？”<br>杨素莹边说边给蜡烛点火。<br>“小白，去关下灯。来吧老男人，许个愿吧。”<br>烛火摇曳，她们的面孔在烛光明灭中隐现。<br>简单拍手伴奏的生日歌。<br>有人陪着我。<br>气氛都烘托到这了，不许个愿就有点说不过去了。<br>我闭上眼，双手合十。<br>“希望我的生活平静如水，波澜不惊，一切事情都可以顺其自然。”<br>在心中默念的小小愿望伴着雨声与歌声，我也迈向了新的一岁。<br>雨，还在下。</p>
+<hr>
+<h4 id="2-23-3"><a href="#2-23-3" class="headerlink" title="2.23.3"></a>2.23.3</h4><p>雨，已经下了很久了<br>在素莹姐邀请我来的时候，我是本能的想拒绝的。<br>我该以什么身份去呢？我和顾济只不过是顾客和商家的关系。<br>说是朋友都有些勉强。<br>说是去给他庆祝生日，礼物都没有准备。<br>总不能把人家的书再送回去当做生日礼物吧？<br>而且素莹姐也真是厉害啊，她怎么知道我是来找顾济的。<br>我还在不断纠结，素莹姐一句“到了哦<br>小白。”将我从思绪中拉回来。<br>我抱着书，撑起伞下车。<br>不管了，来都来了。<br>一个年轻又漂亮的女孩子来为他庆祝生日不就是最好的礼物吗。<br>让我惊讶的是顾济做饭真的很好吃，不像老爹，两耳不闻窗外事，十指不沾阳春水。还美其名曰什么“君子远庖厨。”<br>不知道是因为拍手还是唱歌，烛火摇晃。<br>看着烛光后的顾济，双手合十，闭着眼睛。<br>居然真的有认真在许愿啊。<br>那我也悄悄的许个愿好了，毕竟没有人规定生日愿望只能本人许，顺便把我的也带过去又不会有什么损失。<br>蛋糕很很朴素。<br>而且很甜。<br>顾济帮我撑着伞，走出了楼门。<br>“我送你到门口吧。”<br>“好。”<br>他给我撑着伞，我看着鞋尖溅出水花。<br>许是时间稍微有点晚，小区里没什么人。<br>只有我们两个踩着雨幕前行。<br>“已经帮你叫了车了，他马上就到，我们再稍微等一下。”<br>“今天，麻烦了，谢谢你请我吃饭。”<br>“这没什么，我还要谢谢你陪我过生日呢。”他从衣袋里拿出香烟，想了想，又放了回去。<br>“已经有好多年没有朋友陪我过生日了，今天我真的很开心。谢谢你能来。”<br>“哎，素莹姐没有吗？”<br>“她啊，她是今年才搬到雨城来的，因为她爱人工作的原因。”<br>“是这样啊。”<br>雨声打着树叶，拍着车顶，路边有一只黄色的小狗不知从哪跑出来，身上的毛都湿透了。<br>发动机的声音传来，车轮溅起一片水花。<br>“p10…嗯对，就是这辆，本来我是想开车送你的，但是今天喝酒了，委屈你坐滴滴咯。”<br>“没关系，那我走咯，生日快乐。”<br>“谢谢，你也快乐，再见。”<br>“再见。”<br>他向我轻轻挥手，撑起他的那把巨大的黑红格子伞。<br>忘记在哪里看到过一句话。<br>“人总是在希望被理解，与害怕被看穿之间矛盾。”<br>雨，还在下。</p>
+<hr>
+<h4 id="2-23-4"><a href="#2-23-4" class="headerlink" title="2.23.4"></a>2.23.4</h4><p>雨，已经下了很久了。<br>将白砚送上出租车，我收起雨伞进入电梯。<br>杨素莹正以很不雅观的姿势倚在我的沙发上抽烟。<br>“啊，小白走了？”<br>“嗯，坐上出租车了。”我坐在她旁边，也点了一支香烟。<br>“这小姑娘真漂亮，你小子艳福不浅啊。”<br>“什么艳福不浅。不过确实是挺可爱的小孩。”<br>“我可没跟你说着玩，你可不能对小孩伸出魔爪啊。”<br>“欲加之罪是吧？”<br>“她看你的眼神就跟当初燕齐心看你的眼神差不多，你不要觉得我在瞎说啊，女人是很敏感的。”<br>她吐出一口烟，坐的直了一点。<br>“她喜欢你，你看不出吗？”<br>我没有回答。<br>是又如何，不是又如何。<br>青色的烟雾在灯光下升腾，雨点打击着窗沿。<br>房间里只剩香烟上的萤火明明灭灭。<br>“真是去年今日此门中啊。”杨素莹没来由的说了一句<br>“行了，丁方典差不多该到了，我走咯。”<br>“好，那你慢点。”我站起身，给她打开房门。<br>杨素莹走进电梯，忽而又转头对我说<br>“顾济啊顾济，你差不多该走出来了，都他妈十五年了。”<br>“或许吧。”<br>从冰箱里拿出冰块，给自己倒了一杯山崎。<br>“是啊，好一个人面桃花相映红。”<br>麦芽的香味混着酒精的辛辣。<br>我又点起一支香烟，看着远处还亮着灯的几处人家。<br>雨，还在下。</p>
+<hr>
+<h3 id="25"><a href="#25" class="headerlink" title="25."></a>25.</h3><p>雨，已经下了很久了。<br>天气渐暖，人也会慵懒起来。<br>春雨不在如冬雨那样寒冷刺骨。<br>微雨挟着新春暖意，心情也会变好。<br>树梢发起新芽，枯黄的绿化带似有春风。<br>好一个天街小雨润如酥，草色遥看近却无。<br>我哼着歌问候她早安，她也用风铃声回答我。<br>许是同我一样，心情畅快，今天店里少见的满座了。<br>“你看你混的多惨，没地方坐都不来你面前。”<br>“那是理所当然的吧。”<br>我将咖啡倾入拭净的浅绿杯子中，递给面前的女孩。<br>今天她穿着一件黑色的夹克，里面是米色的薄毛衣。扎着两股麻花辫，带着“中”和“發”造型的麻将耳坠。<br>“顾济，我们来玩个游戏吧？”白砚从包里拿出一副看起来做工就很棒的扑克牌。<br>“两个人怎么斗地主？”<br>“什么斗地主，最近我在学魔术，但是没什么信心，拿你练练手咯。”<br>她稍微洗了两下，开始表演花式切牌。<br>绿粉色的扑克牌在她白皙而修长的手指间上下翻飞，最后在桌子上一字拉开。<br>看得出来她下了苦功夫。<br>“选一张你喜欢的牌，记住，但不要告诉我。”<br>随意选了一张，又放了回去。<br>她拿起牌，在手中快速切牌。<br>“不如来个赌约吧，没有彩头不好玩哎！”她说。<br>“可以，那赌什么？”<br>“我想想，那就如果我猜对了的话你要实现我三个愿望。”<br>她把牌放在桌子上，再次拉开。<br>“相应的，如果我猜错了，我就实现你三个愿望。”<br>“可以，白敏穆特尔郡主。”<br>鬼使神差的，我答应了。<br>雨，还在下。</p>
+<hr>
+<h3 id="26"><a href="#26" class="headerlink" title="26."></a>26.</h3><p>雨，已经下了很久了。<br>赌约当然是我赢了，这个猜牌魔术我已经练了两个月，没理由输的。<br>赌约本是为了转移注意力随口一说，没想到顾济居然真的答应了。<br>赌神砚砚大成功！！！<br>该作点什么妖捉弄顾济呢。<br>让他给我免单一周？或者让他唱首歌给我听？还是让他拿个大顶？<br>我突然想到了那天相册里那个和他站在一起的女孩子。<br>“喂，顾济，我第一个愿望是……”<br>雨，还在下。</p>
+<hr>
+<h3 id="27"><a href="#27" class="headerlink" title="27."></a>27.</h3><p>雨，已经下了很久了。<br>雨刮反复清扫着窗上的水滴。<br>晚高峰已经过去，路上车并不算多。<br>雨城师范大学和我家的距离并不算远，大约七公里，二十分钟就能到。<br>“顾济，我的第一个愿望是……”<br>她好像想说什么，但又停住了。<br>“嗯？你说。”<br>“我不想坐公交了，今天你给我当司机送我回学校。”<br>“我的车在家里哦？”<br>“那我就当散步了嘛，往你那走一趟。不也不远吗？总之你要送我回去。”<br>她坐在副驾驶，双目远眺，不知望向何方。<br>“到了。”<br>“好。”<br>我打开车锁，她解开安全带，拿起座位下方那把透明的雨伞。<br>“顾济。”<br>“嗯。”<br>雨滴打在车窗上，三三两两的学生们谈笑着走进校门。<br>“一望你，眼里温馨已通电。”<br>音响依然放着歌曲。<br>她好像想说些什么。<br>“你路上慢点。”<br>“好。”<br>她打开车门，撑起雨伞，后头像我微微摆了摆手。<br>“再见。”<br>车门关闭，我看着她离去的背影，打开车窗，点燃一支香烟。<br>“当年情，此刻是添上新鲜。”<br>一曲终了，车里只剩引擎和香烟燃烧的声音。<br>雨，还在下。</p>
+<hr>
+<h3 id="28"><a href="#28" class="headerlink" title="28."></a>28.</h3><p>雨，已经下了很久了。<br>我撑着伞，走在校园的水泥路上。<br>雨滴打在树叶上，沙沙作响。<br>我大概是想问些什么的。<br>可是我没有。<br>我想知道，却又不想知道。<br>他的车看起来有些年头了，虽不是豪车，但也干净。<br>像他自己一样，散发着烟草和茶叶混合的味道。<br>我抬起头，雨滴落在伞面，落在行道树，落在看不到月光的乌云之下。<br>不知从哪里飘来一阵花香。<br>我猛然想起，春天到了。<br>雨，还在下。</p>
+<hr>
+<h3 id="29"><a href="#29" class="headerlink" title="29."></a>29.</h3><p>雨，停了。<br>我把车停在雨城师范大学门口。<br>靠在车门上，点燃一支香烟。<br>最近抽烟变多了。<br>晚上八点钟，说早不早说晚也不晚。<br>七点半，我刚把菜放进冰箱，电话响起，是白砚。<br>“顾济，第二个愿望，过来接我去万达看电影。”<br>“可以是可以，不过也不用把我当司机吧。”<br>“怎么就把你当司机了！我还付钱给你买了电影票哎。”<br>“我也要看吗？”<br>“十九岁美少女邀请你看电影哎，你居然不乐意吗？”<br>“好吧，既然是你的愿望。那我现在过去？”<br>“来吧来吧，八点四十场的，我已经定好了。”<br>“好，我很快就到。”<br>校门口很热闹，几个小吃摊支在路边，蒸汽升腾，学生们来来往往，一些是入校的，一些是出校的。<br>大学生活可以说是人生中最幸福的一段时间了。精力旺盛，不用为生机发愁，学业也很轻松。有充足的时间和自由来做自己想做的事。<br>“嘿！”<br>我正看着学生们神游，白砚不知从哪跳到我面前。<br>她上身穿着一件红蓝绿紫五颜六色的扎染卫衣，下身则是浅色牛仔短裤。双马尾垂在胸前，上面别着两个棕色小熊发卡。<br>“啊，抱歉，没注意到你。”<br>我反应过来后丢掉手中的半支香烟并对它施以碾碎之刑，并挥手驱散面前残留的烟雾。<br>“嗯哼，不会在欣赏女大学生的青春靓丽吧。”<br>“也许吧，上车，我们出发。”<br>她耸耸肩，进入车内。<br>天，还是阴的。</p>
+<hr>
+<h3 id="30"><a href="#30" class="headerlink" title="30."></a>30.</h3><p>雨，停了。<br>到了万达，八点二十。<br>周末，商场人不少，看到人满为患摩肩接踵的奶茶店还是决定继续我的控糖健康生活。<br>倒是顾济到便利店买了瓶冰红茶，给我买了瓶AD钙。<br>他说冰红茶无论在口感口味和甜度上都比可乐好，并且也没有碳酸腐蚀牙齿的忧虑。<br>相爱的两个人是多么艰辛啊。就算是灵魂无比契合可现实还是摆在眼前。<br>不过我还是相信爱情的力量，天不允许这段恋爱那就把天捅破，地不允许就把地干烂。如果艰苦的生活都过不去那就是还不够爱。<br>散场后，顾济看起来情绪有些低落。<br>我拍拍他的背，问他是不是触景生情想起当年造的孽他说这是部好电影，让他想起了菲利普和翔太郎。<br>我耸耸肩，这人说话一直都很莫名其妙。<br>我们一起走出了商场。<br>雨，又开始下了。</p>
+<hr>
+<h3 id="31"><a href="#31" class="headerlink" title="31."></a>31.</h3><p>雨，又开始下了。<br>意料之中，这个城市的天气就像十几岁情感丰富的小女孩，一句话不和就开始落泪。<br>“糟了，我的伞在车上哎。”<br>“好消息，我的伞在陪着她。”<br>“好消息，我饿了。”<br>她玩着自己的辫梢，一双眼睛眨了又眨，睫毛是那么长，唇又是那样红。<br>“你宿舍几点关寝。”我问。<br>“坏消息，十一点。”<br>“那没有时间了，你现在还有三分钟去吃东西，不然就很难回去了。”<br>“好消息，我和朋友定了酒店，今天我要玩到很晚。”<br>她将手伸入雨幕，雨水落在她手心。<br>“你的任务呢，就是陪我吃东西，然后把我送到酒店。”<br>她看着掌心的雨水。<br>“放心吧，一个小时之内结束，不会耽误你太久的。”<br>我点点头，把视线从她身上移开。<br>“那你想吃点什么？”<br>“让我想想，嗯，章鱼小丸子和钵仔糕。”<br>雨，还在下。</p>
+<hr>
+<h3 id="32"><a href="#32" class="headerlink" title="32."></a>32.</h3><p>又开始下雨了。<br>我和顾济站在小摊前。大娘拿着两根竹签翻动着丸子，散出阵阵香气。<br>我的钵仔糕是百香果味，里面浮着几颗百香果籽。<br>刚刚淋雨过街肩膀和头发都有些湿了，还好吃的没沾到水。<br>我问顾济要不要吃小丸子，他没有回答我。<br>顺着他的目光看去。<br>是一对母女。<br>妈妈正领着看起来像是初中生的小朋友。<br>他们两个很醒目。<br>因为是女儿在吵妈妈。<br>“家里我爸不是做了饭吗，还要在外面吃小吃，回家你还吃不吃饭了！”<br>“吃吃，妈妈想吃小丸子了嘛，你不要告诉爸爸嘛。”<br>而且那个妈妈，看起来总觉得有些眼熟。<br>“来，小姑娘，你的好了。”<br>接过小丸子，我对顾济说走吧但是顾济没有动，我有些疑惑，但我马上就知道原因了。<br>“哎呀，这不是顾济吗？这么巧呀。”<br>“嗯，嗯。好巧。”<br>那个妈妈走过来，看到顾济也十分惊讶，我想起了她是谁。<br>“我要一份加墨鱼仔的，多给我放点番茄酱哦。”<br>她对老板说。<br>“哎呀，我们该有十几年没见过了吧。”<br>她撩了撩耳边的波浪卷长发。<br>“看看，我女儿，今年都上初二了。乖乖，这是妈妈的大学同学，叫叔叔。”<br>小女孩稍微低了低头，说了句叔叔好。<br>“这位是……？”她看看我。<br>“我，我是顾济的…”<br>是啊，我是顾济的什么呢？<br>“我的好朋友，白砚，这位是燕齐心，我的…大学同学。”<br>顾济说。<br>她亲切的走过来，挽住我的胳膊。<br>“是小白啊，你看你多漂亮呢，哎呀年轻真好，别看我现在老了，我跟你这么大的时候可跟你不相上下呢。”<br>她眼角已经有条条皱纹，但目光明朗，皮肤光亮，说是美女绝不为过。<br>“小白现在在哪上学呢？还是毕业了？”<br>“我，我在雨城师范。”<br>我看向顾济，他的表情和眼光在胡子和头发的遮掩下看不清楚。不过能想象到和我现在一样拘束。<br>“雨城师范好啊，乖乖，你可要向姐姐学习。”<br>女孩敷衍的嗯了一声，将手中的伞甩来甩去。<br>雨点从小棚的边角滴下，小丸子有些微烫手。<br>“那我们先走了，不耽误你们咯，乖乖，跟叔叔姐姐说再见。”<br>小女孩挥挥手说叔叔姐姐再见燕齐心捧着小丸子呼呼的吹着我一手举着钵仔糕一手举着小丸子看着她们远去的背影。<br>雨，还在下。</p>
+<hr>
+<h3 id="33"><a href="#33" class="headerlink" title="33."></a>33.</h3><p>雨，已经下了很久了。<br>雨刮器在挡风玻璃上驱赶着落下的雨水。<br>现在我心乱如麻，但又空明如水。<br>或许现在的我可以学会左右互搏。<br>偶尔一辆车经过，在窗上划出一道光痕。<br>“谁都只得那双手靠拥抱亦难任你拥有”<br>音响里放着音乐，与引擎奏着二重唱。<br>“要拥有必先懂失去怎接受 ”<br>我握着方向盘，马上就要到白砚说她住的酒店了。<br>“顾济，我要许第三个愿望。”<br>“嗯，你说吧。”<br>我踩下刹车，汽车缓慢减速，停在路边。<br>“何不把悲哀感觉假设是来自你虚构”<br>“和我约会一次，正式一点。”<br>她拿起座位下的小花伞，打开车门。<br>“这就是最后的愿望了，时间就定在五月二号。”<br>她撑起伞，转头对我说。<br>“我便化乌有”<br>“我走了，再见。”<br>她关上车门。<br>我摇下车窗，点燃一支香烟。<br>“我把这陈年风褛 送赠你解咒。”<br>一曲终了，车里只剩引擎和香烟燃烧的声音。<br>雨，还在下。</p>
+<hr>
+<h3 id="34"><a href="#34" class="headerlink" title="34."></a>34.</h3><p>雨，已经下了很久了。<br>我心里很乱，但又空空如也。<br>也许我就是下一个任然。<br>我把自己摔在酒店柔软的大床上，打开空调。<br>我该开冷风还是热风呢。<br>不知道，关上好了。<br>窗外的城市还下着雨，还能看到那辆白车停在楼下。<br>我在做些什么啊……<br>雨，还在下。</p>
+<hr>
+<h3 id="35"><a href="#35" class="headerlink" title="35."></a>35.</h3><p>雨，已经下了很久了。<br>今天是四月二十六日，星期二。<br>距五月二日还有一周。<br>本来只是玩笑似的小赌约，如今却像道诅咒在我心里徘徊搅得我心神不宁。<br>喝下杯中残酒，拿起雨伞，走出家门。<br>“美发店？你是病了么？有病去医院去。”<br>电话那头的声音显然很惊讶。<br>我向她道明事情原委，她沉默着听完。<br>“你认真的？”<br>我表达肯定。<br>“那好吧，你去桉瑟广场那家吧，我在那里有卡，找小杨，我跟他说一声。”<br>杨素莹叹了口气。<br>“顾济，你…罢了，你想清楚就行。”<br>我挂断了电话，雨点落在车窗上，开出片片花朵。<br>走出理发店，已经是晚上九点了。<br>一阵风吹来，不禁觉得头皮发冷，毕竟已经留了多年的长发，剪掉还真有些不习惯。<br>点起一支烟，青色的烟雾穿过雨幕，正如世间行人，来时浓烈，转瞬便消散。<br>雨，还在下。</p>
+<hr>
+<h3 id="36"><a href="#36" class="headerlink" title="36."></a>36.</h3><p>雨，已经下了很久了。<br>走出教学楼，撑起伞，迈入雨幕。<br>我不理解，为什么汉语言还要学他妈的高数，我要是会数学我何不去学理科呢？任老师讲的天花乱坠生动形象我也不会，不会就是不会。<br>我从口袋拿出耳机戴上，穿行在校园中。<br>在食堂点了一份十五块的隆江猪脚饭，去他妈的控制饮食健康生活，学完数学我只想要高热量食物填补肚中空虚以慰精神崩溃。<br>都四月二十六了，马上要放假了。<br>到时再说吧，反正车到山前必有路船到桥头自然直条条大路通罗马一日看尽长安花谁知盘中餐粒粒皆辛苦。<br>吃饭最重要。<br>雨，还在下。</p>
+<hr>
+<h3 id="37"><a href="#37" class="headerlink" title="37."></a>37.</h3><p>雨，已经下了很久了。<br>离开家前，我很久没用过的剃须刀，就着肥皂又刮了一次胡子。<br>看着自己光洁的下巴和耳鬓的短发，还真有些不习惯。<br>对着镜子整理了一下衬衫领和翘起的头发，换个形象，倒是精神多了。<br>五月二日，周一。<br>今天没有开店，也就当五一放个假吧。<br>拿上雨伞离开家，外面依然淅淅沥沥的下着雨。<br>我把车停在路边，白砚打开车门坐在副驾驶。<br>今天她穿的很简单，白色的及膝长裙，黑色长发如瀑垂下，耳上一个小小的星星耳钉。<br>“我们去哪里？”我问。<br>“雨城游乐园。”她答。<br>我启动车子，引擎声响起。<br>雨城游乐园不大，甚至可以说是有些老了。<br>我来到雨城的时候它刚刚建成，十多年光景过去，虽经历几次翻修，但也不可避免的落后于新建的方特。<br>十几年前它可是雨城地标之一，现在却是行将就木，垂垂老矣。<br>我没有开口，选择这里肯定有她的理由。<br>毕竟这可是她的愿望。<br>雨，还在下。</p>
+<hr>
+<h3 id="38"><a href="#38" class="headerlink" title="38."></a>38.</h3><p>雨，已经下了很久了。<br>今天醒的很早，睡眠质量极高。<br>轻声起床，刷牙洗脸。<br>这条白裙子自从买来还没穿出门过，前两天鬼使神差的将它从柜底翻出来洗了洗。莫名的觉得今天就该穿这身。<br>对着镜子想了很久。<br>最后只是把睡乱的头发梳顺，再涂了个口红。<br>随心所欲，我本是如此，我本该如此。<br>回复了顾济的消息，我拿起伞，走出宿舍。<br>天穹被乌云遮蔽，人间唯剩我与诗。<br>雨，还在下。</p>
+<hr>
+<h3 id="39"><a href="#39" class="headerlink" title="39."></a>39.</h3><p>雨，已经下了很久了。<br>就算是假期，这里也不算热闹。<br>将车子停下，我和白砚进入了雨城游乐园。<br>我们之间的气氛有些微妙。<br>在玩了一圈各式各样的娱乐项目后，坐在店铺伞下喝饮料的白砚选择破除元直的诅咒，先开口了。<br>“你真的换了发型啊。”她说。<br>“毕竟是你的愿望。”我答。<br>“你完全可以当成一个玩笑的。”<br>“答应了别人的事就一定要做到，更何况我们已经击掌为誓了。”<br>“你还真是……”<br>她轻轻摇摇头，一副苦笑。<br>“你还是短发好看一点，不要再留长发了，像高晓松。”<br>“也许吧。”<br>她素面朝天，眼神透亮，睫毛翘曲，历历可数。<br>雨，还在下。</p>
+<hr>
+<h3 id="40"><a href="#40" class="headerlink" title="40."></a>40.</h3><p>雨，已经下了很久了。<br>我望着伞沿落下的雨水，远处一对情侣正在并肩行走，男生正不知说着什么逗得女生咯咯直笑。<br>没了长发的遮挡，他眼角的皱纹能看的一清二楚。<br>左眼三条，右眼四条。<br>“我们去坐摩天轮吧。”我说。<br>“好。”他答。<br>摩天轮缓缓启动，地面景色越来越远。<br>顾济与我相对而坐，与我一样，看着窗外的景色。<br>淡淡的雾气萦绕着雨幕笼罩的城市，看不清远处。<br>近处，便能看清吗？<br>雨，还在下。</p>
+<hr>
+<h3 id="41"><a href="#41" class="headerlink" title="41."></a>41.</h3><p>雨，已经下了很久了。<br>摩天轮一圈的时间大约是十分钟。<br>这十分钟里可能会发生很多事，比如真情流露，告白心迹，相互密谋，忘情拥吻。<br>摩天轮是很浪漫的，说是少数能真正独处的地方也不为过。<br>我走下摩天轮，顺手扶了一下身后的白砚。<br>在这十分钟里什么也没有发生。<br>是的，什么也没有发生。<br>我们沉默着将雨中的城市收入眼底。<br>或许这不肯停止的雨知道一切，可她只是落下着，不断的落下，一切故事对她来说也只是故事。<br>她是雨，也只能是雨。<br>雨，还在下。</p>
+<hr>
+<h3 id="42"><a href="#42" class="headerlink" title="42."></a>42.</h3><p>雨，已经下了很久了。<br>摩天轮许是浪漫的，如此狭小，如此私密。<br>远离城市远离人群远离人间的烟火气。<br>只有美景和心跳存于眼中耳中。<br>这九分钟什么也没有发生。<br>或许我有一万句话想说，但是我没有说。<br>雾蒙蒙的城市知道一切，但他只是沉默，任凭雨滴落入，不见踪影。<br>雨城是多么的美，多么的浪漫。<br>但他也只是城市罢了，再多的惊涛骇浪也只会被他沉默的听闻，接纳，然后化为虚无。<br>我走下了摩天轮。<br>雨，还在下。</p>
+<hr>
+<h3 id="43"><a href="#43" class="headerlink" title="43."></a>43.</h3><p>雨，已经下了很久了。<br>“我送你回学校吧。”我系上安全带，对白砚说。<br>“带我去你的店里吧。”她系上安全带，对我说。<br>“这也是你的愿望吗？”<br>“不，我的三个愿望已经完成了。”<br>她撩起耳边的秀发。<br>“这只是我的邀请。”<br>我没有回答，发动汽车，向我的小店驶去。<br>雨，还在下。</p>
+<hr>
+<h3 id="44"><a href="#44" class="headerlink" title="44."></a>44.</h3><p>雨，已经下了很久了。<br>我看着窗外掠过的城市，行色匆匆却又生机勃勃。<br>顾济汽车的音响里放着一首日文歌。<br>我不懂日语，但我懂英文。<br>“Nothing but you’re the part of me”<br>“What a good thing we lose”<br>“What a bad thing we knew”<br>“I wanna sleep in your feel”<br>“I wanna see you in the deep”<br>看久了窗外，有些晕车。<br>我收起目光，靠在座椅上。<br>雨，还在下。</p>
+<hr>
+<h3 id="45"><a href="#45" class="headerlink" title="45."></a>45.</h3><p>雨，已经下了很久了。<br>从这个停车场到店里并不算远。<br>白砚撑着她的透明雨伞走在我身侧。<br>不远处就是我的小店。<br>我们沉默着走着。<br>忽然，白砚停下了脚步<br>我疑惑的转头看向她。<br>雨滴溅落下，她撑着透明雨伞，肤白如脂发丝如瀑。一袭白裙如上天芙蕖花瓣飘落凡尘，一双眸子亮闪闪如乡村静夜之星光。<br>她看着我，丢掉了雨伞。<br>雨，还在下。</p>
+<hr>
+<h3 id="46"><a href="#46" class="headerlink" title="46."></a>46.</h3><p>我不想再玩什么寂静游戏了。<br>顾济有些疑惑的看向我。<br>去他妈的，我想干嘛就干嘛。<br>随心所欲，我本是如此，我本该如此，我向来如此，我今后也要如此。<br>我丢掉手中的伞，任凭雨点落在我的裙摆和头顶。</p>
+<hr>
+<h3 id="47"><a href="#47" class="headerlink" title="47."></a>47.</h3><p>她抱住我。</p>
+<hr>
+<h3 id="48"><a href="#48" class="headerlink" title="48."></a>48.</h3><p>我抱住他。</p>
+<hr>
+<h3 id="49"><a href="#49" class="headerlink" title="49."></a>49.</h3><p>我回抱住她。</p>
+<hr>
+<h3 id="50"><a href="#50" class="headerlink" title="50."></a>50.</h3><p>他回抱住我。</p>
+<hr>
+<h3 id="51"><a href="#51" class="headerlink" title="51."></a>51.</h3><p>雨滴落在我们脸上手上衣上发上。</p>
+<hr>
+<h3 id="52"><a href="#52" class="headerlink" title="52."></a>52.</h3><p>雨滴落在我们脸上手上衣上发上。</p>
+<hr>
+<h3 id="53"><a href="#53" class="headerlink" title="53."></a>53.</h3><p>少女的呼吸和体温是如此的贴切，如此的靠近。<br>她的怀抱如此温暖。</p>
+<hr>
+<h3 id="54"><a href="#54" class="headerlink" title="54."></a>54.</h3><p>他的衬衫上散发着淡淡的烟草味，他环抱着我。<br>他的怀抱如此温暖。</p>
+<hr>
+<h3 id="55"><a href="#55" class="headerlink" title="55."></a>55.</h3><p>不知道过了多久，可能是十秒，也可能是一个世纪。<br>她手臂上的力量缓缓的减弱，我也慢慢松开她。<br>“走吧，雨淋湿了，可不要感冒了。”<br>“好。”</p>
+<hr>
+<h3 id="56"><a href="#56" class="headerlink" title="56."></a>56.</h3><p>顾济拿出钥匙，打开门锁。<br>风铃轻响，电灯被依次打开。<br>他走到吧台后面，找出一条毛巾。<br>“这个是没有用过的，擦擦头发吧。”<br>我接过毛巾，轻声道谢。<br>“喝点东西暖暖身子吧。想喝点什么？”<br>“给我随便做一杯吧，你觉得我适合什么？”<br>他微微一怔，打开了手磨咖啡机。</p>
+<hr>
+<h3 id="57"><a href="#57" class="headerlink" title="57."></a>57.</h3><p>我将咖啡豆放入咖啡机，缓缓转动。<br>将磨好的咖啡倒入青色兰草陶瓷杯中，简单拉花，放上小勺子，在盘子中放上三块方糖。<br>“请慢用，小心烫。”</p>
+<hr>
+<h3 id="58"><a href="#58" class="headerlink" title="58."></a>58.</h3><p>“它叫什么名字啊？”<br>“还没有名字，不如你来取一个吧。”<br>“那它就叫‘天晴’好了。”<br>我把方糖放入咖啡中，细细品味。</p>
+<hr>
+<h3 id="59"><a href="#59" class="headerlink" title="59."></a>59.</h3><p>雨，已经下了很久了。<br>白砚慢慢的喝完了咖啡，把杯子轻轻放在桌子上。<br>“谢谢款待，今天我可不会付钱的哦。”<br>她摸了摸还未干透的发梢。<br>“顾济，我走咯，这个杯子真好看，我很喜欢。”<br>她起身向外走。<br>“谢谢你。”<br>她回过头，向我眨了眨眼。<br>我不知她是在向什么道谢。<br>雨，还在下。</p>
+<hr>
+<h3 id="60"><a href="#60" class="headerlink" title="60."></a>60.</h3><p>雨，已经下了很久了。<br>咖啡很香很暖。<br>青色的小杯子上雕着一株兰草，上面挑着一朵小小红花。<br>忽然，我感到音乐停了。<br>我放下杯子，今天也让铁公鸡拔根毛吧。<br>我离开座位，向顾济道谢。<br>我也不知道我在向什么道谢。<br>雨，还在下。</p>
+<hr>
+<h3 id="终"><a href="#终" class="headerlink" title="终"></a>终</h3><p>白砚推门走出小店。<br>我看见座位边靠着的她的透明雨伞。<br>没有雨伞可不行，我拿起雨伞，向外走去。<br>“你的伞忘记拿了。”我边开门边说。<br>她转身，眉眼如丝，笑靥如花。<br>夕阳照在她的侧脸，她一字一句的说。<br>“没关系啊，反正雨已经停了。”<br>我抬头望天，乌云已然散去。<br>天，晴了。</p>
+<p>全文      完</p>
+<hr>
+<h3 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h3><p>本篇是于2021年11月24日第一次发表于a岛，于今年4月5日完结。<br>总历时129天，全文19375字。<br>a岛还在时我就立志要把这篇只给我的几个亲密朋友和肥肥们看的文章写完。<br>我写完了。<br>但是a岛不在了。<br>可以在这里和各位肥肥们重聚真的很幸运，感谢xij花费时间和精力写了这个huanleegao岛。<br>《Rain.》也很荣幸成为huanleegao岛小说版的第一篇小说。<br>也给鸽版开个好头，绝对不鸽。<br>写这篇小说的契机是那天晚上网易云听日推听到了纯音版本的《ref:rain》并顺手翻了翻评论区。<br>一个女孩子在雨过天晴后的夕阳下微笑的场景就浮现在我脑海。<br>为了这个场景和这首歌，我写下了这篇小说。<br>就是为了这点醋，我才包的这顿饺子！（振声）<br>我是灵感写作派，于是每个灵感光顾的凌晨我都会在钢琴和提琴声中写下这每一个字。<br>它也成功的冲上了我年度歌单的榜首。<br>说完了我，说说顾济和白砚。<br>也许看过的各位会有个疑问，白砚为什么会喜欢顾济。<br>答案很简单，我不知道，顾济不知道，就连白砚自己也不知道。<br>前两天在空间看到一个词语解析，我觉得很适合白砚的心态。<br>英文里有个词，叫crush。如果查字典，它会告诉你，这是“压碎、碾碎、压垮”的意思。后来才知道它作为名词，还有一层意思：就是“短暂地、热烈地但又是羞涩地爱恋”。比如，“I had a crush on him”，就是“我曾经短暂地、热烈地、但又羞涩地喜欢过他”。<br>Crush和爱的区别就在于，那份幻想还来不及变成行动，它就已经烟消云散。它之所以没有转化成行动，也许是因为你很羞涩，不好意思表达，然后一不小心就错过了这个人。也许是因为你们没有“发展”的机会，时间或者空间的距离，让那份“心动”慢慢因为缺氧而窒息。也许是因为等到对方走得更近，你看清他的全部，他身上那个“亮点”慢慢被他的其他缺点稀释，以至于那份感情还来不及升华，就已经腐朽了下去。<br>以上内容为复制粘贴。<br>这次crush是有意义的。<br>一个长长的拥抱，将白砚身上的青春，元气和活力，伴随着相识以来的种种经历，深刻地印进顾济的生命，就像阳光刺破雨城上空的积云。<br>白砚改变了心境，在以后很长一段时间会是单身，因为她明白爱情并不是理想化的，而是理想与现实三七开。<br>一个长大了，一个年轻了。<br>最后，一个拥抱就是这段感情最好的归宿。<br>也是我心目中唯一的归宿<br>这是一场没有来由，没有过程，没有结果的恋爱。<br>来的快而猛烈，去的无声无息。<br>恋爱，总是美好的。<br>正如一直下雨的雨城，短暂而瑰丽的晴天。</p>
+<p>于正在喝康师傅茉莉清茶的S54。</p>
+<hr>
+<h3 id="后记2"><a href="#后记2" class="headerlink" title="后记2"></a>后记2</h3><p>Rain.这个故事是源自于动画《恋如雨止》<br>虽然我只粗略的看了两集不到。<br>《ref:rain》这首歌早在高中时期我就已经每晚听着它入眠了。<br>我不懂歌词，也不懂音乐，但早在那时我大概就已经隐约体会到了它的内容。<br>日本人总是爱搞一些挂在嘴边的“约定”“成长”“羁绊”这种东西也只适合日本人搞，一直念叨着羁绊约定的我唯二知道的中国作品就是三国演义和中华人民共和国合同法。<br>我理解的中国文化的情感内核，尤其爱情的内核，往往是含蓄的，克制的。<br>不然那些想要破除封建礼教的人物也不必在文学中被歌颂。<br>顾济和白砚的感情即是如此。<br>含蓄，克制，隐忍，不显山不露水，即使内心惊涛骇浪表面也要无事发生。<br>这也是我为什么除了在半彩蛋的生日回借杨素莹之口直接吐露过情感，其它内容中基本没有任何直接的情感描写。<br>好吧，主要还是因为我不会写心理，真的不会，不会就是不会。<br>crush的感情是莫名其妙的灵光乍现。<br>来的快去的也快。<br>终章其实是一个假开放结局，结局早在第十节就已经暗示了。<br>因为这段感情本身就是错误的，低劣的，突兀的，不合时宜的，不该存在的，值得唾弃的。<br>文学是文学的，但现实是现实的。<br>于是我创作了燕齐心。<br>一一说燕齐心是她心中的No.1，塑造的饱满美好，激烈的释放爱，又能在爱情即将变质时潇洒离开，将感情封存在最美好的时间。<br>但她还说过，燕齐心是一个极其小说化理想化的人。<br>正是如此。<br>燕齐心过于美好了，美好的不真实，现实中基本不可能有这样的人。<br>她也是我在努力描写现实的文章中对于美好的一点遐思。<br>不过这样的人，让顾济念念不忘十五年很合理。</p>
+<p>第一次真正的写完一篇文章，真的很爽，超爽，有种持续性高潮般的快感。<br>我有些爱上写作的感觉了。<br>于在宿舍床上向右侧躺着喝美汁源果粒橙的S54</p>
+
+      </section>
+       
+    
+    
+  <div class="nav-container">
+    <!-- reverse left and right to put prev and next in a more logic postition -->
+    
+      <a class="nav-left" href="/copying/nmbxd51414457-1/" target="_blank">
+        <span class="nav-arrow">← </span>
+        
+          《兔耳魔王》(一)
+        
+      </a>
+    
+    
+      <a class="nav-right" href="/copy/huanleegao205/" target="_blank">
+        
+          《heart.》
+        
+        <span class="nav-arrow"> →</span>
+      </a>
+    
+  </div>
+
+    
+      <div class="advertisement">
+        <p> 广告：快速学习 Crash Course十分钟速成课 <a target="_blank" rel="noopener" href="https://crashcourse.club/">字幕组网站</a></p>
+      </div>
+    
+    
+      <div id="waline"></div>
+
+<link href="https://cdn.bootcdn.net/ajax/libs/waline/2.15.5/waline.min.css" rel="stylesheet">
+<script src="//cdn.bootcdn.net/ajax/libs/waline/2.15.5/waline.min.js"></script>
+<script defer src="/js/waline-qqavatar.js"></script>
+<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/waline/2.14.9/waline.min.js"></script>-->
+<!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/waline/2.14.9/waline.min.css">-->
+
+<script>
+  // 中文默认
+  const locale = {
+    nick: '昵称',
+    nickError: '昵称不能少于3个英文字符或2个中文汉字',
+    mail: '邮箱(可用QQ邮箱获取头像)',
+    mailError: '请填写正确的邮件地址',
+    link: '网址',
+    optional: '可选',
+    placeholder: '' || '说、什么8 \n\n可使用QQ邮箱获取QQ头像，或在gravatar.com注册后使用邮箱绑定头像 \n支持Markdown语法：*斜体*, **粗体**, \# - ###### 1-6级标题, *** 或 --- = 水平分割线, ~~删除线~~, > 引用内容, `代码块`, 1. 序号列表, * 无序列表, ^上角标^, ~下角标~, <br> = 空行, [链接文字](链接地址), ![图片名称](图片地址.png), ',
+    sofa: '来发评论吧~',
+    submit: '提交',
+    like: '喜欢',
+    cancelLike: '取消喜欢',
+    reply: '回复',
+    cancelReply: '取消回复',
+    comment: '评论',
+    refresh: '刷新',
+    more: '加载更多...',
+    preview: '预览',
+    emoji: '表情',
+    uploadImage: '上传图片',
+    seconds: '秒前',
+    minutes: '分钟前',
+    hours: '小时前',
+    days: '天前',
+    now: '刚刚',
+    uploading: '正在上传',
+    login: '登录',
+    logout: '退出',
+    admin: '博主',
+    sticky: '置顶',
+    word: '字',
+    wordHint: '评论字数应在 $0 到 $1 字之间！\n当前字数：$2',
+    anonymous: '匿名',
+    level0: '潜水',
+    level1: '冒泡',
+    level2: '吐槽',
+    level3: '活跃',
+    level4: '话痨',
+    level5: '传说',
+    gif: '表情包',
+    gifSearchPlaceholder: '搜索表情包',
+    profile: '个人资料',
+    approved: '通过',
+    waiting: '待审核',
+    spam: '垃圾',
+    unsticky: '取消置顶',
+    oldest: '按倒序',
+    latest: '按正序',
+    hottest: '按热度',
+    reactionTitle: '你认为这篇文章怎么样？',
+  };
+
+  Waline.init({
+    el: "#waline",
+    serverURL: "waline.voiiu.com",
+    appId: "" || "M2JD6yGQhefhH2O0aSjFfclc-MdYXbMMI",
+    appKey: "" || "arEPHdbMnKwMjQgiWsLgw34N",
+    path:  "" || window.location.pathname,  // window.location.pathname.replace(/\/$/,''),
+    login: "disable",  // 'enable' || 'disable' || 'force'
+    avatarCDN: "https://gravatar.loli.top/avatar/",
+    //avatar: '',
+    placeholder: "",
+    pageSize: 10,
+    meta: ["nick", "mail"],
+    requiredMeta: [""],
+    pageview: "true" && "",
+    emoji: [
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/tieba",
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/weibo",
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/qq",
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/alus",
+      "https://testingcf.jsdelivr.net/gh/Saidosi/azuki-emoji-for-waline@1.0/azukisan",
+      "https://testingcf.jsdelivr.net/gh/norevi/blob-emoji-for-waline@2.0/blobs-gif",
+    ],
+    locale,
+  });
+
+  $('.wl-actions').append("<a href=https://emoji.zhuochi.org target=_blank id=wl-emoji-wrapper><img src=/images/emoji.png class=wl-action id=wl-emoji></a>")
+
+  //// Clean TEXTAREA 
+  //$(".wl-cards").change(function () {
+  //  alert('changed')
+    //('#wl-edit').html("")
+  //})
+  
+  //! Not functional
+  //$(".primary .wl-btn").click(function () {
+    //document.getElementsByClassName('wl-num')[0].innerHTML ++
+  //})
+</script>
+    
+    
+    
+      <div class="qrcode" id="qr-box">
+    <img id="share-qrcode" class="qrcode-image" src=""/>
+    <div class="qrcode-notice">保存二维码，分享此文章</div>
+</div>
+
+<!--<script type="text/javascript" src="/js/qrious.min.js"></script>-->
+<script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/qrious/4.0.2/qrious.min.js" ></script>
+<script>
+    // qrcode
+    let qr = new QRious({
+        background: '#F0FFFF',
+        backgroundAlpha: 1,
+        foreground: '#0096FF',
+        foregroundAlpha: 0.8,
+        level: 'L',
+        mime: "image/gif",
+        padding: null, // pixels
+        size: 100,
+        element: document.getElementById('share-qrcode'),
+        value: document.location.href,
+    })
+
+    $("#share-qrcode").click(function () {
+        let img = document.getElementById('share-qrcode')
+        let imgurl = img.src
+        let a = document.createElement('a')
+        let down_event = new MouseEvent('click')
+        a.download = '《Rain.》-CloudPool浊池'
+        a.href = imgurl
+        a.dispatchEvent(down_event)
+    })
+</script>
+
+
+    
+  </article>
+</main>
+
+<script>
+    (function () {
+      var url = "https://zhuochi.org/copy/huanleegao114/";
+      var banner = "";
+      if (banner !== "" && banner !== "undefined" && banner !== "null") {
+        $("#article-banner").css({
+          "background-image": "url(" + banner + ")",
+        });
+      } else {
+        $("#article-banner").geopattern(url);
+      }
+      $(".header").removeClass("fixed-header");
+    })();
+  </script>
+
+<script>
+  // error image
+  $(".markdown-content img").on("error", function () {
+    $(this).attr("src", "/images/error.png");
+    $(this).css({cursor: "default",});
+  });
+</script>
+ 
+    <aside class="sidebar">
+  <span class="scroll-top fa fa-arrow-up"></span>
+  <span class="fa fa-share-alt share-icon">
+    <span class="list-icon">
+      
+        <a href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=https://zhuochi.org/copy/huanleegao114/index.html&title=《Rain.》&pics=https://zhuochi.org/images/logo.svg&desc=作者：欢乐恶狗岛 huanleegao.com - S54vNMZG&summary=CloudPool浊池是由年轻人管理的博客" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659969569042" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1231"><path d="M1023.210667 395.690667c-2.005333-6.08-7.381333-10.410667-13.781333-10.944l-347.114667-29.802667L526.634667 33.984C524.117333 28.096 518.4 24.256 512 24.256s-12.181333 3.861333-14.677333 9.749333l-135.616 320.938667L14.570667 384.746667c-6.357333 0.533333-11.797333 4.864-13.781333 10.944-1.941333 6.101333-0.106667 12.778667 4.714667 16.96l263.338667 228.138667L189.888 980.16c-1.429333 6.208 1.002667 12.757333 6.122667 16.512 5.205333 3.733333 12.117333 4.010667 17.642667 0.682667L512 817.450667l298.282667 179.946667c2.581333 1.557333 5.418667 2.346667 8.32 2.346667 3.221333 0 6.528-1.002667 9.344-3.008 5.162667-3.84 7.594667-10.368 6.122667-16.576l-62.442667-268.352c26.730667-13.482667 56.277333-36.245333 56.277333-36.245333s-116.864 57.066667-536.341333 29.205333L595.626667 484.437333c0 0-11.968-18.581333-392.981333-31.872-25.408-0.917333 310.677333-63.722667 558.933333-10.645333L456.298667 660.906667c0 0 122.453333 18.197333 307.328 16.085333l-8.448-36.181333 263.36-228.16C1023.381333 408.469333 1025.216 401.792 1023.210667 395.690667z" p-id="1232" fill="#04b2f1"></path></svg>
+        </a> 
+      
+      
+        <a href="https://service.weibo.com/share/share.php?url=https://zhuochi.org/copy/huanleegao114/index.html&title=《Rain.》&pic=https://zhuochi.org/images/logo.svg&summary=作者：欢乐恶狗岛 huanleegao.com - S54vNMZG" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659970330786" class="icon" viewBox="0 0 1138 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="3639" fill="#04b2f1"><path d="M914.432 518.144q27.648 21.504 38.912 51.712t9.216 62.976-14.336 65.536-31.744 59.392q-34.816 48.128-78.848 81.92t-91.136 56.32-94.72 35.328-89.6 18.944-75.264 7.68-51.712 1.536-49.152-2.56-68.096-10.24-78.336-21.504-79.872-36.352-74.24-55.296-59.904-78.848q-16.384-29.696-22.016-63.488t-5.632-86.016q0-22.528 7.68-51.2t27.136-63.488 53.248-75.776 86.016-90.112q51.2-48.128 105.984-85.504t117.248-57.856q28.672-10.24 63.488-11.264t57.344 11.264q10.24 11.264 19.456 23.04t12.288 29.184q3.072 14.336 0.512 27.648t-5.632 26.624-5.12 25.6 2.048 22.528q17.408 2.048 33.792-1.536t31.744-9.216 31.232-11.776 33.28-9.216q27.648-5.12 54.784-4.608t49.152 7.68 36.352 22.016 17.408 38.4q2.048 14.336-2.048 26.624t-8.704 23.04-7.168 22.016 1.536 23.552q3.072 7.168 14.848 13.312t27.136 12.288 32.256 13.312 29.184 16.384zM656.384 836.608q26.624-16.384 53.76-45.056t44.032-64 18.944-75.776-20.48-81.408q-19.456-33.792-47.616-57.344t-62.976-37.376-74.24-19.968-80.384-6.144q-78.848 0-139.776 16.384t-105.472 43.008-72.192 60.416-38.912 68.608q-11.264 33.792-6.656 67.072t20.992 62.976 42.496 53.248 57.856 37.888q58.368 25.6 119.296 32.256t116.224 0.512 100.864-21.504 74.24-33.792zM522.24 513.024q20.48 8.192 38.912 18.432t32.768 27.648q10.24 12.288 17.92 30.72t10.752 39.424 1.536 42.496-9.728 38.912q-8.192 18.432-19.968 37.376t-28.672 35.328-40.448 29.184-57.344 18.944q-61.44 11.264-117.76-11.264t-88.064-74.752q-12.288-39.936-13.312-70.656t16.384-66.56q13.312-27.648 40.448-51.712t62.464-38.912 75.264-17.408 78.848 12.8zM359.424 764.928q37.888 3.072 57.856-18.432t21.504-48.128-15.36-47.616-52.736-16.896q-27.648 3.072-43.008 23.552t-17.408 43.52 9.728 42.496 39.424 21.504zM778.24 6.144q74.752 0 139.776 19.968t113.664 57.856 76.288 92.16 27.648 122.88q0 33.792-16.384 50.688t-35.328 17.408-35.328-14.336-16.384-45.568q0-40.96-22.528-77.824t-59.392-64.512-84.48-43.52-96.768-15.872q-31.744 0-47.104-15.36t-14.336-34.304 18.944-34.304 51.712-15.36zM778.24 169.984q95.232 0 144.384 48.64t49.152 146.944q0 30.72-10.24 43.52t-22.528 11.264-22.528-14.848-10.24-35.84q0-60.416-34.816-96.256t-93.184-35.84q-19.456 0-28.672-10.752t-9.216-23.04 9.728-23.04 28.16-10.752z" p-id="3640"></path></svg>
+        </a>
+      
+      
+        <a href="https://www.douban.com/recommend/?url=https://zhuochi.org/copy/huanleegao114/index.html&title=《Rain.》&pic=https://zhuochi.org/images/logo.svg&summary=作者：欢乐恶狗岛 huanleegao.com - S54vNMZG" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659970941550" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1055"><path d="M88 72.9h848v95.5H88z" p-id="1056" fill="#04b2f1"></path><path d="M88 72.9h848v95.5H88zM862.3 641.5V268H161.7v373.5h700.6zM263.4 363.4h498.4v182.5H263.4V363.4z" p-id="1057" fill="#04b2f1"></path><path d="M862.3 641.5V268H161.7v373.5h700.6zM263.4 363.4h498.4v182.5H263.4V363.4zM710.8 856.7c30.5-46.7 59.3-100.8 85.9-162.2l-102-37.2c-26.5 72.8-57.4 139.4-92.5 199.4H424.9c-29.4-77.8-62.6-144.3-99.8-199.4l-93.8 37.2c38.6 58 69.9 111.9 93.8 162.2H64v94.5h896v-94.5H710.8z" p-id="1058" fill="#04b2f1"></path><path d="M710.8 856.7c30.5-46.7 59.3-100.8 85.9-162.2l-102-37.2c-26.5 72.8-57.4 139.4-92.5 199.4H424.9c-29.4-77.8-62.6-144.3-99.8-199.4l-93.8 37.2c38.6 58 69.9 111.9 93.8 162.2H64v94.5h896v-94.5H710.8z" p-id="1059" fill="#04b2f1"></path></svg>
+        </a>
+      
+      
+        <a href="http://tieba.baidu.com/f/commit/share/openShareApi?url=https://zhuochi.org/copy/huanleegao114/index.html&title=《Rain.》&pic=https://zhuochi.org/images/logo.svg&desc=作者：欢乐恶狗岛 huanleegao.com - S54vNMZG" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659968685554" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1659"><path d="M1024 862.826667a161.152 161.152 0 0 1-161.173333 161.173333h-701.632a161.152 161.152 0 0 1-161.173334-161.173333v-701.632a161.194667 161.194667 0 0 1 161.173334-161.173334h701.632a161.194667 161.194667 0 0 1 161.173333 161.173334v701.632z" fill="#04b2f1" p-id="1660"></path><path d="M828.842667 250.261333h-173.461334v-36.522666a17.066667 17.066667 0 0 0-17.066666-17.066667h-41.941334a17.045333 17.045333 0 0 0-17.045333 17.066667v263.296h-24.896a17.066667 17.066667 0 0 0-17.045333 17.066666V810.218667a17.066667 17.066667 0 0 0 17.045333 17.088h257.365333a17.066667 17.066667 0 0 0 17.066667-17.088v-58.986667h-0.256v-198.144h0.256v-58.986667a17.066667 17.066667 0 0 0-17.066667-17.066666H655.381333v-150.72h173.461334a17.066667 17.066667 0 0 0 17.066666-17.066667v-41.941333a17.066667 17.066667 0 0 0-17.066666-17.045334z m-93.376 302.848c9.429333 0 17.045333 7.637333 17.045333 17.066667v164.010667a17.066667 17.066667 0 0 1-17.045333 17.066666h-104.981334a17.045333 17.045333 0 0 1-17.045333-17.066666v-164.010667a17.066667 17.066667 0 0 1 17.045333-17.066667h104.981334zM197.909333 657.408h41.941334a17.088 17.088 0 0 0 17.088-17.088v-358.741333h174.528v358.741333a17.066667 17.066667 0 0 0 17.045333 17.088h41.941333a17.088 17.088 0 0 0 17.088-17.088v-417.749333c0-9.408-7.658667-17.066667-17.088-17.066667h-292.522666a17.066667 17.066667 0 0 0-17.045334 17.066667v417.749333a17.024 17.024 0 0 0 17.024 17.088z" fill="#FFFFFF" p-id="1661"></path><path d="M492.970667 739.2v-0.170667a110.656 110.656 0 0 1-110.656-110.656h-0.106667v-296.042666a17.066667 17.066667 0 0 0-17.066667-17.045334h-41.941333a17.045333 17.045333 0 0 0-17.045333 17.045334v296.042666h-0.362667a110.677333 110.677333 0 0 1-110.677333 110.656v0.170667a17.045333 17.045333 0 0 0-17.045334 17.066667v42.112a17.066667 17.066667 0 0 0 17.045334 17.066666 186.602667 186.602667 0 0 0 148.928-74.176 186.624 186.624 0 0 0 148.928 74.176 17.045333 17.045333 0 0 0 17.045333-17.066666v-42.112a17.024 17.024 0 0 0-17.045333-17.066667z" fill="#FFFFFF" p-id="1662"></path><path d="M865.450667 873.685333c17.664-3.797333 15.253333-24.896 14.741333-29.504-0.874667-7.125333-9.237333-19.541333-20.586667-18.581333-14.293333 1.28-16.362667 21.930667-16.362666 21.930667-1.962667 9.557333 4.608 29.952 22.208 26.154666z m18.752 36.693334c-0.533333 1.493333-1.664 5.290667-0.682667 8.597333 1.962667 7.402667 8.405333 7.744 8.405333 7.744h9.258667v-22.613333h-9.898667a10.837333 10.837333 0 0 0-7.082666 6.272z m14.037333-72.085334c9.749333 0 17.621333-11.221333 17.621333-25.109333 0-13.866667-7.872-25.088-17.621333-25.088-9.728 0-17.642667 11.221333-17.642667 25.088 0 13.888 7.893333 25.109333 17.642667 25.109333z m41.984 1.664c13.034667 1.706667 21.418667-12.202667 23.082667-22.762666 1.706667-10.538667-6.698667-22.762667-15.936-24.853334-9.258667-2.112-20.778667 12.672-21.845334 22.357334-1.258667 11.797333 1.685333 23.573333 14.698667 25.258666z m31.936 61.973334s-20.16-15.594667-31.936-32.448c-15.957333-24.874667-38.634667-14.762667-46.208-2.112-7.552 12.650667-19.328 20.629333-20.992 22.741333-1.685333 2.090667-24.362667 14.336-19.328 36.672 5.034667 22.336 22.72 21.909333 22.72 21.909333s13.013333 1.28 28.138667-2.112c15.104-3.349333 28.117333 0.832 28.117333 0.832s35.306667 11.818667 44.970667-10.944c9.621333-22.72-5.482667-34.538667-5.482667-34.538666z m-60.394667 33.877333h-22.954666c-9.92-1.984-13.866667-8.746667-14.357334-9.898667-0.490667-1.173333-3.306667-6.613333-1.813333-15.850666 4.288-13.866667 16.490667-14.848 16.490667-14.848h12.224v-15.04l10.410666 0.149333v55.488z m42.752-0.170667h-26.410666c-10.24-2.624-10.709333-9.92-10.709334-9.92v-29.205333l10.709334-0.170667v26.261334c0.64 2.794667 4.117333 3.306667 4.117333 3.306666h10.88v-29.397333h11.413333v39.125333z m37.376-77.994666c0-5.034667-4.181333-20.224-19.733333-20.224-15.552 0-17.642667 14.336-17.642667 24.469333 0 9.685333 0.810667 23.189333 20.16 22.741333 19.328-0.426667 17.216-21.909333 17.216-26.986666z" fill="#FFFFFF" p-id="1663"></path></svg>
+        </a>
+      
+      
+        <a href="https://connect.qq.com/widget/shareqq/index.html?url=https://zhuochi.org/copy/huanleegao114/index.html&title=《Rain.》&pic=https://zhuochi.org/images/logo.svg&desc=作者：欢乐恶狗岛 huanleegao.com - S54vNMZG&summary=CloudPool浊池是由年轻人管理的博客" aria-hidden="true" target="_blank">
+        <svg t="1659969969936" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2714"><path d="M866.991 707.772c0 0-25.341 69.55-71.877 132.071 0 0 83.050 28.439 76.137 102.196 0 0 2.709 82.331-177.613 76.685 0 0-126.817-9.898-164.88-63.85h-33.53c-38.018 54.006-164.834 63.85-164.834 63.85-180.431 5.7-177.556-76.685-177.556-76.685-7.025-73.756 76.081-102.196 76.081-102.196-46.475-62.519-71.875-132.071-71.875-132.071-112.759 183.141-101.477-25.567-101.477-25.567 21.141-123.495 109.949-204.384 109.949-204.384-12.677-112.157 33.805-132.078 33.805-132.078 9.68-346.979 306.473-340.887 312.675-340.722 6.249-0.163 302.931-6.256 312.72 340.723 0 0 46.538 19.866 33.812 132.078 0 0 88.751 80.89 109.886 204.384 0.055-0.001 11.285 208.707-101.421 25.566v0 0z" p-id="2715" fill="#04b2f1"></path></svg>
+        </a>
+      
+    </span>
+  </span>
+</aside>
+    <footer class="app-footer">
+  <p class="copyright">
+    Copyright &copy; 2017 - 2023, CloudPool浊池, zhuochi.org︱voiiu.com, All Rights Reserved<br/>
+    本站为基于<a href="https://hexo.io" target="_blank">Hexo</a>的静态博客，<span id="busuanzi_container_site_pv">总访问量 <span id="busuanzi_value_site_pv"></span> 次</span><!--，来自 <span id="busuanzi_value_site_uv"></span> 个 IP--><br/>
+    主题源自 <a target="_blank" rel="noopener" href="https://github.com/yanm1ng/hexo-theme-vexo">Vexo</a> by yanm1ng，感谢 <a target="_blank" rel="noopener" href="https://github.com/MoePlayer/APlayer">APlayer</a> by DIYgod，感谢 <a target="_blank" rel="noopener" href="https://github.com/stevenjoezhang/live2d-widget">Live2D Widget</a> by stevenjoezhang & <a target="_blank" rel="noopener" href="https://github.com/xiazeyu/live2d-widget-models">live2d-widget-models</a> by xiazeyu
+  </p>
+</footer>
+
+<script>
+  function async(u, c) {
+    var d = document, t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0];
+    o.src = u;
+    if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+    s.parentNode.insertBefore(o, s);
+  }
+</script>
+
+<script src="/js/script.js"></script>
+ <!--无法移至head.js中，原因不明-->
+<script type="text/javascript" src="/js/busuanzi.min.js" async></script>
+
+
+  </body>
+</html>
