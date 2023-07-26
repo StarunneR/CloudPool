@@ -849,16 +849,16 @@
         
           <div class="post-tags">
             
-  <a href="/tags#安装" >
-    <span class="tag-code">安装</span>
-  </a>
-
   <a href="/tags#实用" >
     <span class="tag-code">实用</span>
   </a>
 
   <a href="/tags#软件" >
     <span class="tag-code">软件</span>
+  </a>
+
+  <a href="/tags#安装" >
+    <span class="tag-code">安装</span>
   </a>
 
           </div>
@@ -919,6 +919,19 @@
 </div>
   
 </main>
+
+<script type="text/javascript">
+  let origin = document.title;
+  window.onblur = function () {
+    document.title = "| - ` ) 看不见我看不见我看不见我";
+  };
+  window.onfocus = function () {
+    document.title = "( ´ ∀ ` ) 欢迎回来！"
+    window.setTimeout(function () {
+      document.title = origin;
+    }, 1500)
+  };
+</script>
 
 
 
