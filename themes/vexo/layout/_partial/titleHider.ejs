@@ -1,0 +1,17 @@
+<script type="text/javascript">
+  !function () {
+    var originTitle = document.title;
+    var titleTime;
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) {
+        document.title = "<%- theme.hider.hidden %>";
+        clearTimeout(titleTime);
+      } else {
+        document.title = "<%- theme.hider.return %>";
+        titleTime = setTimeout(function () {
+          document.title = originTitle;
+        }, "<%- theme.hider.timeout %>");
+      }
+    });
+  }();
+</script>
