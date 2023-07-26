@@ -96,7 +96,6 @@
     $('html, body').animate({ scrollTop: 0 }, 600)
   })
 
-
   document.addEventListener('scroll', function () {
     var scrollTop = document.documentElement.scrollTop || document.body.scrollTop
     if (banner) {
@@ -133,5 +132,5 @@
     $("div.fold_content").css("display", "none");
   })
 
-  $("a[href*='<emoji>']").attr({href: "//emoji."+window.location.hostname, target: "_blank"})
+  $("a[href*='<emoji>']").attr({href: "//emoji."+window.location.hostname, target: "_blank",}).addClass("emoji")
 })(jQuery)
