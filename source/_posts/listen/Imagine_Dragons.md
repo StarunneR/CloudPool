@@ -83,13 +83,6 @@ cover: 'Night_Visions/cover\.webp',
 lrc: 'Night_Visions/Underdog\.lrc',
 },
 {
-name: 'Underdog',
-artist: 'Imagine Dragons',
-url: 'HOST/Imagine_Dragons/2012_NV/CD1/Underdog\.m4a',
-cover: 'Night_Visions/cover\.webp',
-lrc: 'Night_Visions/Underdog\.lrc',
-},
-{
 name: 'Nothing Left To Say / Rocks (Medley)',
 artist: 'Imagine Dragons',
 url: 'HOST/Imagine_Dragons/2012_NV/CD1/Nothing Left To Say - Rocks (Medley)\.m4a',
