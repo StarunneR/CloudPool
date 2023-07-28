@@ -1,152 +1,166 @@
 ---
 title: Imagine Dragons
-date: 2023-07-28
+date: 2023-07-08
 author: m1
 tags: 音乐
 categories: 浊音
-main: 5 Albums, 100 Songs
+main: 5 Albums, 103 Songs
 ---
 
-### Night Visions 2013
+### Night Visions 2012
 
-{% aplayer 1 %}
+#### CD1
+
+{% aplayer 1A %}
 {
 name: 'Radioactive',
 artist: 'Imagine Dragons',
-url: 'HOST/Imagine_Dragons/2013_NV/Radioactive\.m4a',
+url: 'HOST/Imagine_Dragons/2012_NV/CD1/Radioactive\.m4a',
 cover: 'Night_Visions/cover\.webp',
 lrc: 'Night_Visions/Radioactive\.lrc',
 },
 {
 name: 'Tiptoe',
 artist: 'Imagine Dragons',
-url: 'HOST/Imagine_Dragons/2013_NV/Tiptoe\.m4a',
+url: 'HOST/Imagine_Dragons/2012_NV/CD1/Tiptoe\.m4a',
 cover: 'Night_Visions/cover\.webp',
 lrc: 'Night_Visions/Tiptoe\.lrc',
 },
 {
 name: 'It\'s Time',
 artist: 'Imagine Dragons',
-url: 'HOST/Imagine_Dragons/2013_NV/It\'s Time\.m4a',
+url: 'HOST/Imagine_Dragons/2012_NV/CD1/It\'s Time\.m4a',
 cover: 'Night_Visions/cover\.webp',
 lrc: 'Night_Visions/It\'s Time\.lrc',
 },
 {
 name: 'Demons',
 artist: 'Imagine Dragons',
-url: 'HOST/Imagine_Dragons/2013_NV/Demons\.m4a',
+url: 'HOST/Imagine_Dragons/2012_NV/CD1/Demons\.m4a',
 cover: 'Night_Visions/cover\.webp',
 lrc: 'Night_Visions/Demons\.lrc',
 },
 {
 name: 'On Top Of The World',
 artist: 'Imagine Dragons',
-url: 'HOST/Imagine_Dragons/2013_NV/On Top Of The World\.m4a',
+url: 'HOST/Imagine_Dragons/2012_NV/CD1/On Top Of The World\.m4a',
 cover: 'Night_Visions/cover\.webp',
 lrc: 'Night_Visions/On Top Of The World\.lrc',
 },
 {
 name: 'Amsterdam',
 artist: 'Imagine Dragons',
-url: 'HOST/Imagine_Dragons/2013_NV/Amsterdam\.m4a',
+url: 'HOST/Imagine_Dragons/2012_NV/CD1/Amsterdam\.m4a',
 cover: 'Night_Visions/cover\.webp',
 lrc: 'Night_Visions/Amsterdam\.lrc',
 },
 {
 name: 'Hear Me',
 artist: 'Imagine Dragons',
-url: 'HOST/Imagine_Dragons/2013_NV/Hear Me\.m4a',
+url: 'HOST/Imagine_Dragons/2012_NV/CD1/Hear Me\.m4a',
 cover: 'Night_Visions/cover\.webp',
 lrc: 'Night_Visions/Hear Me\.lrc',
 },
 {
 name: 'Every Night',
 artist: 'Imagine Dragons',
-url: 'HOST/Imagine_Dragons/2013_NV/Every Night\.m4a',
+url: 'HOST/Imagine_Dragons/2012_NV/CD1/Every Night\.m4a',
 cover: 'Night_Visions/cover\.webp',
 lrc: 'Night_Visions/Every Night\.lrc',
 },
 {
 name: 'Bleeding Out',
 artist: 'Imagine Dragons',
-url: 'HOST/Imagine_Dragons/2013_NV/Bleeding Out\.m4a',
+url: 'HOST/Imagine_Dragons/2012_NV/CD1/Bleeding Out\.m4a',
 cover: 'Night_Visions/cover\.webp',
 lrc: 'Night_Visions/Bleeding Out\.lrc',
 },
 {
 name: 'Underdog',
 artist: 'Imagine Dragons',
-url: 'HOST/Imagine_Dragons/2013_NV/Underdog\.m4a',
+url: 'HOST/Imagine_Dragons/2012_NV/CD1/Underdog\.m4a',
+cover: 'Night_Visions/cover\.webp',
+lrc: 'Night_Visions/Underdog\.lrc',
+},
+{
+name: 'Underdog',
+artist: 'Imagine Dragons',
+url: 'HOST/Imagine_Dragons/2012_NV/CD1/Underdog\.m4a',
 cover: 'Night_Visions/cover\.webp',
 lrc: 'Night_Visions/Underdog\.lrc',
 },
 {
 name: 'Nothing Left To Say / Rocks (Medley)',
 artist: 'Imagine Dragons',
-url: 'HOST/Imagine_Dragons/2013_NV/Nothing Left To Say - Rocks (Medley)\.m4a',
+url: 'HOST/Imagine_Dragons/2012_NV/CD1/Nothing Left To Say - Rocks (Medley)\.m4a',
 cover: 'Night_Visions/cover\.webp',
 lrc: 'Night_Visions/Nothing Left To Say - Rocks (Medley)\.lrc',
-},
+}
+{% endaplayer %}
+
+#### CD2
+
+{% aplayer 1B %}
 {
 name: 'Cha-Ching (Till We Grow Older)',
 artist: 'Imagine Dragons',
-url: 'HOST/Imagine_Dragons/2013_NV/Cha-Ching (Till We Grow Older)\.m4a',
+url: 'HOST/Imagine_Dragons/2012_NV/CD2/Cha-Ching (Till We Grow Older)\.m4a',
 cover: 'Night_Visions/cover\.webp',
 lrc: 'Night_Visions/Cha-Ching (Till We Grow Older)\.lrc',
 },
 {
 name: 'Working Man',
 artist: 'Imagine Dragons',
-url: 'HOST/Imagine_Dragons/2013_NV/Working Man\.m4a',
+url: 'HOST/Imagine_Dragons/2012_NV/CD2/Working Man\.m4a',
 cover: 'Night_Visions/cover\.webp',
 lrc: 'Night_Visions/Working Man\.lrc',
 },
 {
 name: 'My Fault',
 artist: 'Imagine Dragons',
-url: 'HOST/Imagine_Dragons/2013_NV/My Fault\.m4a',
+url: 'HOST/Imagine_Dragons/2012_NV/CD2/My Fault\.m4a',
 cover: 'Night_Visions/cover\.webp',
 lrc: 'Night_Visions/My Fault\.lrc',
 },
 {
 name: 'Round And Round',
 artist: 'Imagine Dragons',
-url: 'HOST/Imagine_Dragons/2013_NV/Round And Round\.m4a',
+url: 'HOST/Imagine_Dragons/2012_NV/CD2/Round And Round\.m4a',
 cover: 'Night_Visions/cover\.webp',
 lrc: 'Night_Visions/Round And Round\.lrc',
 },
 {
 name: 'The River',
 artist: 'Imagine Dragons',
-url: 'HOST/Imagine_Dragons/2013_NV/The River\.m4a',
+url: 'HOST/Imagine_Dragons/2012_NV/CD2/The River\.m4a',
 cover: 'Night_Visions/cover\.webp',
 lrc: 'Night_Visions/The River\.lrc',
 },
 {
 name: 'America',
 artist: 'Imagine Dragons',
-url: 'HOST/Imagine_Dragons/2013_NV/America\.m4a',
+url: 'HOST/Imagine_Dragons/2012_NV/CD2/America\.m4a',
 cover: 'Night_Visions/cover\.webp',
 lrc: 'Night_Visions/America\.lrc',
 },
 {
 name: 'Selene',
 artist: 'Imagine Dragons',
-url: 'HOST/Imagine_Dragons/2013_NV/Selene\.m4a',
+url: 'HOST/Imagine_Dragons/2012_NV/CD2/Selene\.m4a',
 cover: 'Night_Visions/cover\.webp',
 lrc: 'Night_Visions/Selene\.lrc',
 },
 {
 name: 'Cover Up',
 artist: 'Imagine Dragons',
-url: 'HOST/Imagine_Dragons/2013_NV/Cover Up\.m4a',
+url: 'HOST/Imagine_Dragons/2012_NV/CD2/Cover Up\.m4a',
 cover: 'Night_Visions/cover\.webp',
 lrc: 'Night_Visions/Cover Up\.lrc',
 },
 {
 name: 'I Don\'t Mind',
 artist: 'Imagine Dragons',
-url: 'HOST/Imagine_Dragons/2013_NV/I Don\'t Mind\.m4a',
+url: 'HOST/Imagine_Dragons/2012_NV/CD2/I Don\'t Mind\.m4a',
 cover: 'Night_Visions/cover\.webp',
 lrc: 'Night_Visions/I Don\'t Mind\.lrc',
 }
