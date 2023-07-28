@@ -9,9 +9,7 @@ main: Songs
 
 ### Homework 1997
 
-#### CD A
-
-{% aplayer 1A %}
+{% aplayer 1 %}
 {
 name: 'Daftendirekt',
 artist: 'Daft Punk',
@@ -21,5 +19,19 @@ lrc: 'Homework/Album/Daftendirekt.lrc',
 },
 
 {% endaplayer %}
+
+### Homework 1997
+
+{% aplayer 1 %}
+{
+name: 'Daftendirekt',
+artist: 'Daft Punk',
+url: 'HOST/Daft_Punk/Homework/Daftendirekt.m4a',
+cover: 'Homework/cover.webp',
+lrc: 'Homework/Album/Daftendirekt.lrc',
+},
+
+{% endaplayer %}
+
 
 ---
