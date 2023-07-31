@@ -24,12 +24,12 @@ post:
 hider:
   hidden: (つェ⊂) 看不见我看不见我~
   return: ᕕ( ᐛ )ᕗ 欢迎回来！
-  timeout: 1500 ## ms
+  timeout: 2000 ## ms
 
 # Comment
 comment:
   waline:
-    serverURL: waline.voiiu.com
+    serverURL: waline.zhuochi.org
     appId: M2JD6yGQhefhH2O0aSjFfclc-MdYXbMMI
     appKey: arEPHdbMnKwMjQgiWsLgw34N
     requiredMeta: ''
