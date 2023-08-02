@@ -1,6 +1,6 @@
 ---
 title: 每日一句2023
-date: 2023-07-01
+date: 2023-08-01
 author: m1
 tags:
     - BB
@@ -320,3 +320,35 @@ used to be a dreeeeeeemer
 
 **6.28**
 I is fish.
+
+**7.2**
+月亮与六万块及日冕时期的爱情
+'Work out your body but not your legs. Sooner or later you’ll regret it.'
+
+**7.4**
+撒酷拉啥时候开呀？
+故乡的撒库拉开了，我已不再是小鹅刺猿。
+
+**7.8**
+“明白地过度分析过度想象为了安抚脱缰的不安全感”
+“为了征途和星辰大海”
+
+**7.9**
+“用哲学弥补软软的牛牛”
+
+**7.11**
+“比起阅读更像是在暴食。”
+
+**7.12**
+'Fast-food eaters, news anchors, text messengers, all smiling, smiling, smiling.'
+米兰·昆德拉去世了，又使我想起了一些美好旧时光。
+
+**7.13**
+一只min1jiao1(蚊子)在眼前一瞬，转而消失不见。我意识到一些久远的东西好像也没有改变太多（例如很毒很毒的蚊）
+
+**7.17**
+需要用于提升生活趣味性的金点子
+
+**7.21**
+ᐕ)⁾⁾ 明天吃什么呢
+希望我的胃肠道禁得住这种生活
