@@ -300,7 +300,7 @@ used to be a dreeeeeeemer
 “喜欢熬夜，喜欢拖延，喜欢抬杠，喜欢独处，不善于交际，思维活跃，具有同理心，想象力丰富，容易焦虑悲观和抑郁，喜欢依靠直觉来判断...”
 
 **6.13**
-我在食堂吃意面为了晚餐用筷子，当它滑动倒下。
+我在食堂吃意面为了晚餐用筷子，当它们滑动倒下。
 
 **6.14**
 来日方loooooooooooooooooooooooooooooooooooooooooooooong
