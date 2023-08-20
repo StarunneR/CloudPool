@@ -29,7 +29,7 @@ hider:
 # Comment
 comment:
   waline:
-    serverURL: waline.zhuochi.org
+    serverURL: walinecf.zhuochi.org
     appId: M2JD6yGQhefhH2O0aSjFfclc-MdYXbMMI
     appKey: arEPHdbMnKwMjQgiWsLgw34N
     requiredMeta: ''

@@ -3,8 +3,7 @@ title: 一言
 layout: one
 avatar: mp
 placeholder: 一言以蔽之，曰：“思无邪”。
-appId: M2JD6yGQhefhH2O0aSjFfclc-MdYXbMMI
-appKey: arEPHdbMnKwMjQgiWsLgw34N
+walineURL: walinecf.zhuochi.org
 counting: 
 required: ['nick']
 ---

@@ -1,7 +1,7 @@
 <div id="waline"></div>
 
-<link href="https://cdn.bootcdn.net/ajax/libs/waline/2.15.5/waline.min.css" rel="stylesheet">
-<script src="//cdn.bootcdn.net/ajax/libs/waline/2.15.5/waline.min.js"></script>
+<link href="https://cdn.bootcdn.net/ajax/libs/waline/2.15.6/waline.min.css" rel="stylesheet">
+<script src="//cdn.bootcdn.net/ajax/libs/waline/2.15.6/waline.min.js"></script>
 <script defer src="/js/waline-qqavatar.js"></script>
 <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/waline/2.14.9/waline.min.js"></script>-->
 <!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/waline/2.14.9/waline.min.css">-->
@@ -62,7 +62,7 @@
 
   Waline.init({
     el: "#waline",
-    serverURL: "<%- theme.comment.waline.serverURL %>",
+    serverURL: "<%- page.walineURL %>" || "<%- theme.comment.waline.serverURL %>",
     appId: "<%- page.appId %>" || "<%- theme.comment.waline.appId %>",
     appKey: "<%- page.appKey %>" || "<%- theme.comment.waline.appKey %>",
     path:  "<%- page.pathname %>" || window.location.pathname,  // window.location.pathname.replace(/\/$/,''),

@@ -4,12 +4,10 @@
  */
 !(function () {
   "use strict";
-
   function e(e) {
     return Array.isArray(e) ? e[Math.floor(Math.random() * e.length)] : e;
   }
   let t;
-
   function o(o, s, i) {
     if (
       !o ||
@@ -154,10 +152,8 @@
       },
     },
   };
-
   function n(t) {
     const n = new s(t);
-
     function a(t) {
       let s,
         i = !1,
@@ -172,6 +168,7 @@
                 o(n, 6e3, 9);
               }, 2e4));
         }, 1e3),
+       /** Error Point */  
         o(
           (function (e) {
             if ("/" === location.pathname)
@@ -203,6 +200,7 @@
           7e3,
           11
         ),
+        
         window.addEventListener("mouseover", (s) => {
           for (let { selector: i, text: n } of t.mouseover)
             if (s.target.matches(i))
