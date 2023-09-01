@@ -5,6 +5,7 @@ author: m1
 tags: 音乐
 categories: 浊音
 main: 2 Albums, 12 + 11 Songs & 1 EP
+catalog: true
 ---
 
 ### 醜奴兒(丑奴儿)  2016

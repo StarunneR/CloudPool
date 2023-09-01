@@ -5,6 +5,7 @@ author: m1
 tags: 音乐
 categories: 浊音
 main: 5 Albums, 15 + 8 + 16 + 6 + 12 Songs
+catalog: true
 ---
 
 ### True 2013

@@ -5,6 +5,7 @@ author: m1
 tags: 音乐
 categories: 浊音
 main: 2 Albums, 9 + 8 Songs
+catalog: true
 ---
 
 ### 万年青年旅店 2010
