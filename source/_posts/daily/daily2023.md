@@ -1,6 +1,6 @@
 ---
 title: 每日一句2023
-date: 2023-08-01
+date: 2023-09-01
 author: m1
 tags:
     - BB
@@ -352,3 +352,76 @@ I is fish.
 **7.21**
 ᐕ)⁾⁾ 明天吃什么呢
 希望我的胃肠道禁得住这种生活
+
+**8.1**
+有时候一滴油落在裤子上溅不起一丝涟漪。
+
+**8.2**
+Life is everywhere.
+
+**8.4**
+Love is a necessity, kinda.
+不要害怕不要害怕不要害怕
+势必达成势必达成势必达成
+Everything has to get better if I could make small progress.
+
+**8.7**
+东北口炸酱面香香 ( ´ρ`)
+
+**8.8**
+City walk with Rock ↙(`ヮ´ )↗
+
+**8.9**
+City walk day 2:
+With Pink Floyd, hoping to piss on the dark side of the moon.
+
+**8.10**
+City walk day 3:
+‘Boy, when you're with me, I'll give you a taste
+Make it like your birthday every day
+I know you like it sweet, so you can have your cake
+Give you something good to celebrate’
+ᕕ( ᐛ )ᕗ ᕕ( ᐛ )ᕗ ᕕ( ᐛ )ᕗ
+明媚如春的日子里
+
+**8.11**
+长夜初明，如一孔春水。
+
+**8.14**
+City walk day 5:
+Not hungry, just want something to fulfill inward.
+
+**8.16**
+思念如一阵风，往往会使得幻想胀气。
+City Walk Day 7:
+你看刚刚过去笑着的那对，好像两只大马猴！
+
+**8.17**
+Good night and sleep tight!
+需要一双发现美的眼睛
+City Walk Day 8:
+I wish I remembered to buy some bread, but it was Coldplay…
+
+**8.19**
+Citywalk Day 9:
+At the edge of the city with too little cool and too much reflection.
+
+**8.22**
+City Walk Day 11:
+嘛，听着日本語好想去海边…
+夏がそうさせた - Never young beach
+
+**8.23**
+City Walk Day 12:
+I’m falling into pieces ↙(\`ヮ´ )↗ ↙(\`  ヮ´ )↗  ↙   (\`  ヮ´   )    ↗
+
+**8.24**
+“别聊那个核辐射了，我宁愿所有人都玩原神”
+
+**8.28**
+City Walk Day 14:
+原来地铁是按行驶里程定价的而不是按站点
+
+**8.29**
+City Walk Day 15:
+粉色的月之暗面后面是郎的滑板鞋着实荒诞( ´ρ`)
