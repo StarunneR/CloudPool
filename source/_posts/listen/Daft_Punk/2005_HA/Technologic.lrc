@@ -1,48 +1,251 @@
-﻿[id: lc_nwhqiuqi]
-[ar:Daft Punk]
-[ti:Technologic]
-[00:00.73][00:30.88][01:00.16][01:33.95][02:45.86][03:19.59][03:58.95]Buy it, use it, break it, fix it,
-
-[00:02.27][00:31.90][01:09.39][01:35.72][02:48.67][03:22.40][04:01.76]Trash it, change it, melt - upgrade it,
-
-[00:03.79][00:33.78][01:11.21][02:17.75][02:51.48][03:25.21][04:04.57]Charge it, pawn it, zoom it, press it,
-
-[00:05.76][00:35.81][01:13.29][02:20.56][02:54.29][03:28.02][04:07.38]Snap it, work it, quick - erase it,
-
-[00:07.50][00:37.53][01:15.11][02:23.37][02:57.10][03:30.84][04:10.19]Write it, cut it, paste it, save it,
-
-[00:09.47][00:39.51][01:17.04][02:26.18][02:59.91][03:33.65][04:13.00]Load it, check it, quick - rewrite it,
-
-[00:11.30][00:41.23][01:18.87][03:02.73][03:36.46][04:15.81]Plug it, play it, burn it, rip it,
-
-[00:13.17][00:43.32][03:05.54][03:39.27][04:18.62]Drag and drop it, zip - unzip it,
-
-[00:14.95][00:45.08][01:30.35][04:21.43]Lock it, fill it, curl it, find it,
-
-[00:16.98][00:47.02][01:31.87][04:24.24]View it, coat it, jam - unlock it,
-
-[00:18.81][00:48.86][01:29.02][02:28.99][03:08.35][03:42.08][04:27.06]Surf it, scroll it, pose it, click it,
-
-[00:20.84][00:50.73][02:31.80][03:11.16][03:44.89][04:29.87]Cross it, crack it, twitch - update it,
-
-[00:22.72][00:52.50][02:34.62][03:13.97][03:47.70][04:32.68]Name it, rate it, tune it, print it,
-
-[00:24.50][02:37.43][03:50.51][04:35.49]Scan it, send it, fax - rename it,
-
-[00:26.32][00:56.26][01:26.22][02:40.24][03:53.32][04:38.30]Touch it, bring it, obey it, watch it,
-
-[00:28.25]Turn it, leave it, stop - format it. [2x]
-
-[00:30.03]Technologic [4x]
-
-[00:54.48]Scan it, send it, fax - rename it
-
-[00:58.18][01:28.66][02:43.05][03:56.13][04:41.11]Turn it, leave it, stop - format it.
-
-[01:22.67]Drag and drop it, zip - unzip it
-
-[01:29.83]Cross it, crack it, twitch - update it
-
-[03:16.78]Scan it, send it, fax - rename it.
-
-[04:43.92]Technologic [12x]
+[00:00.00] 作词 : Thomas Bangalter/Guy-Manuel de Homem-Christo
+[00:00.10] 作曲 : Thomas Bangalter/Guy-Manuel de Homem-Christo
+[00:00.21] 器乐 : Thomas Bangalter/Guy-Manuel de Homem-Christo
+[00:00.31] 制作 : Cédric Hervet/Gildas Loaëc
+[00:00.42] 母带工程师 : Nilesh Patel
+[00:00.53]Buy it, use it, break it, fix it,
+[00:02.27]trash it, change it, mail - upgrade it,
+[00:04.08]charge it, point it, zoom it, press it,
+[00:05.83]snap it, work it, quick - erase it,
+[00:07.83]write it, cut it, paste it, save it,
+[00:09.57]load it, check it, quick - rewrite it,
+[00:11.45]plug it, play it, burn it, rip it,
+[00:13.32]drag and drop it, zip - unzip it,
+[00:15.25]lock it, fill it, call it, find it,
+[00:17.14]view it, code it, jam - unlock it,
+[00:18.97]surf it, scroll it, pause it, click it,
+[00:20.90]cross it, crack it, switch - update it,
+[00:22.73]name it, read it, tune it, print it,
+[00:24.74]scan it, send it, fax - rename it,
+[00:26.49]touch it, bring it, pay it, watch it,
+[00:28.44]turn it, leave it, start - format it.
+[00:30.25]Buy it, use it, break it, fix it,
+[00:32.18]trash it, change it, mail - upgrade it,
+[00:34.05]charge it, point it, zoom it, press it,
+[00:35.92]snap it, work it, quick - erase it,
+[00:37.73]write it, cut it, paste it, save it,
+[00:39.48]load it, check it, quit - rewrite it,
+[00:41.35]plug it, play it, burn it, rip it,
+[00:43.29]drag and drop it, zip - unzip it,
+[00:45.10]lock it, fill it, call it, find it,
+[00:47.09]view it, code it, jam - unlock it,
+[00:48.90]surf it, scroll it, pause it, click it,
+[00:50.84]cross it, crack it, switch - update it,
+[00:52.65]name it, read it, tune it, print it,
+[00:54.60]scan it, send it, fax - rename it,
+[00:56.41]touch it, bring it, pay it, watch it,
+[00:58.05]
+[00:58.79]turn it, leave it, start - format it.
+[01:00.98]
+[01:01.60]Technologic,
+[01:02.35]
+[01:03.48]technologic,
+[01:05.29]technologic,
+[01:07.22]technologic.
+[01:08.22]Buy it, use it, break it, fix it,
+[01:09.84]trash it, change it, mail - upgrade it,
+[01:11.47]charge it, point it, zoom it, press it,
+[01:13.21]snap it, work it, quick - erase it,
+[01:14.96]write it, cut it, paste it, save it,
+[01:16.96]load it, check it, quit - rewrite it,
+[01:18.89]plug it, play it, burn it, rip it,
+[01:21.01]drag and drop it, zip - unzip it,
+[01:22.82]lock it, fill it, call it, find it,
+[01:24.76]view it, code it, jam - unlock it,
+[01:26.57]surf it, scroll it, pause it, click it,
+[01:28.33]cross it, crack it, switch - update it,
+[01:30.09]name it, read it, tune it, print it,
+[01:31.90]scan it, send it, fax - rename it,
+[01:33.73]touch it, bring it, pay it, watch it,
+[01:35.62]turn it, leave it, start - format it.
+[01:37.52]Buy it, use it, break it, fix it,
+[01:39.77]trash it, change it, mail - upgrade it,
+[01:41.72]charge it, point it, zoom it, press it,
+[01:43.59]snap it, work it, quick - erase it,
+[01:45.40]write it, cut it, paste it, save it,
+[01:47.27]load it, check it, quit - rewrite it,
+[01:49.08]plug it, play it, burn it, rip it,
+[01:50.97]drag and drop it, zip - unzip it,
+[01:52.81]touch it, bring it, pay it, watch it,
+[01:54.74]turn it, leave it, start - format it.
+[01:56.10]
+[02:01.30]touch it, scroll it, pause it, click it,
+[02:02.94]cross it, crack it, switch - update it,
+[02:04.05]
+[02:08.55]lock it, fill it, call it, find it,
+[02:10.17]view it, code it, jam - unlock it,
+[02:12.17]Buy it, use it, break it, fix it,
+[02:13.97]trash it, change it, mail - upgrade it,
+[02:15.72]charge it, point it, zoom it, press it,
+[02:17.59]snap it, work it, quick - erase it,
+[02:19.36]write it, cut it, paste it, save it,
+[02:21.31]load it, check it, quit - rewrite it,
+[02:23.30]surf it, scroll it, pause it, click it,
+[02:25.18]cross it, crack it, switch - update it,
+[02:26.92]name it, read it, tune it, print it,
+[02:28.86]scan it, send it, fax - rename it,
+[02:30.60]touch it, bring it, pay it, watch it,
+[02:32.54]turn it, leave it, start - format it.
+[02:34.36]Buy it, use it, break it, fix it,
+[02:36.19]trash it, change it, mail - upgrade it,
+[02:38.06]charge it, point it, zoom it, press it,
+[02:40.12]snap it, work it, quick - erase it,
+[02:42.02]write it, cut it, paste it, save it,
+[02:43.97]load it, check it, quit - rewrite it,
+[02:45.78]plug it, play it, burn it, rip it,
+[02:47.72]drag and drop it, zip - unzip it,
+[02:49.56]surf it, scroll it, pause it, click it,
+[02:51.49]cross it, crack it, switch - update it,
+[02:53.30]name it, read it, tune it, print it,
+[02:55.17]scan it, send it, fax - rename it,
+[02:56.98]touch it, bring it, pay it, watch it,
+[02:58.79]turn it, leave it, start - format it.
+[03:00.60]Buy it, use it, break it, fix it,
+[03:02.54]trash it, change it, mail - upgrade it,
+[03:04.35]charge it, point it, zoom it, press it,
+[03:06.30]snap it, work it, quick - erase it,
+[03:08.17]write it, cut it, paste it, save it,
+[03:10.12]load it, check it, quit - rewrite it,
+[03:11.99]plug it, play it, burn it, rip it,
+[03:13.88]drag and drop it, zip - unzip it,
+[03:15.75]surf it, scroll it, pause it, click it,
+[03:17.69]cross it, crack it, switch - update it,
+[03:19.50]name it, read it, tune it, print it,
+[03:21.43]scan it, send it, fax - rename it,
+[03:23.24]Buy it, use it, break it, fix it,
+[03:25.17]trash it, change it, mail - upgrade it,
+[03:26.98]charge it, point it, zoom it, press it,
+[03:28.92]snap it, work it, quick - erase it,
+[03:30.79]write it, cut it, paste it, save it,
+[03:32.79]load it, check it, quit - rewrite it,
+[03:34.78]plug it, play it, burn it, rip it,
+[03:36.66]drag and drop it, zip - unzip it,
+[03:38.53]lock it, fill it, call it, find it,
+[03:40.41]view it, code it, jam - unlock it,
+[03:42.22]surf it, scroll it, pause it, click it,
+[03:43.99]cross it, crack it, switch - update it,
+[03:45.81]name it, read it, tune it, print it,
+[03:47.75]scan it, send it, fax - rename it,
+[03:49.57]touch it, bring it, pay it, watch it,
+[03:51.35]turn it, leave it, start - format it. Technologic Technologic Technologic Technologic Technologic Technologic Technologi Technologic
+[by:StevenRCE0]
+[00:00.53]购买，使用，损坏，修复
+[00:02.27]废弃，改变，邮件升级
+[00:04.08]充电，指出，缩放，按压
+[00:05.83]折断，工作，快速擦除
+[00:07.83]写下，剪切，粘贴，保存
+[00:09.57]加载，检查，退出重写
+[00:11.45]插入，播放，烧录，转码
+[00:13.32]拖放，压缩解压
+[00:15.25]锁定，填充，呼叫，搜寻
+[00:17.14]查看，编码，卡住解锁
+[00:18.97]浏览，滚动，暂停，点击
+[00:20.90]跨过，破解，切换更新
+[00:22.73]命名，阅读，调和，打印
+[00:24.74]扫描，发送，传真重命名
+[00:26.49]触摸，携带，支付，观看
+[00:28.44]转变，离开，开始格式化
+[00:30.25]购买，使用，损坏，修复
+[00:32.18]废弃，改变，邮件升级
+[00:34.05]充电，指出，缩放，按压
+[00:35.92]折断，工作，快速擦除
+[00:37.73]写下，剪切，粘贴，保存
+[00:39.48]加载，检查，退出重写
+[00:41.35]插入，播放，烧录，转码
+[00:43.29]拖放，压缩解压
+[00:45.10]锁定，填充，呼叫，搜寻
+[00:47.09]查看，编码，卡住解锁
+[00:48.90]浏览，滚动，暂停，点击
+[00:50.84]跨过，破解，切换更新
+[00:52.65]命名，阅读，调和，打印
+[00:54.60]扫描，发送，传真重命名
+[00:56.41]触摸，携带，支付，观看
+[00:58.79]转变，离开，开始格式化
+[01:01.60]科技
+[01:03.48]科技
+[01:05.29]科技啊
+[01:07.22]这就是科技
+[01:08.22]购买，使用，损坏，修复
+[01:09.84]废弃，改变，邮件升级
+[01:11.47]充电，指出，缩放，按压
+[01:13.21]折断，工作，快速擦除
+[01:14.96]写下，剪切，粘贴，保存
+[01:16.96]加载，检查，退出重写
+[01:18.89]插入，播放，烧录，转码
+[01:21.01]拖放，压缩解压
+[01:22.82]锁定，填充，呼叫，搜寻
+[01:24.76]查看，编码，卡住解锁
+[01:26.57]浏览，滚动，暂停，点击
+[01:28.33]跨过，破解，切换更新
+[01:30.09]命名，阅读，调和，打印
+[01:31.90]扫描，发送，传真重命名
+[01:33.73]触摸，携带，支付，观看
+[01:35.62]转变，离开，开始格式化
+[01:37.52]购买，使用，损坏，修复
+[01:39.77]废弃，改变，邮件升级
+[01:41.72]充电，指出，缩放，按压
+[01:43.59]折断，工作，快速擦除
+[01:45.40]写下，剪切，粘贴，保存
+[01:47.27]加载，检查，退出重写
+[01:49.08]插入，播放，烧录，转码
+[01:50.97]拖放，压缩解压
+[01:52.81]触摸，携带，支付，观看
+[01:54.74]转变，离开，开始格式化
+[02:01.30]触摸，滚动，暂停，点击
+[02:02.94]跨过，破解，切换更新
+[02:08.55]锁定，填充，呼叫，搜寻
+[02:10.17]查看，编码，卡住解锁
+[02:12.17]购买，使用，损坏，修复
+[02:13.97]废弃，改变，邮件升级
+[02:15.72]充电，指出，缩放，按压
+[02:17.59]折断，工作，快速擦除
+[02:19.36]写下，剪切，粘贴，保存
+[02:21.31]加载，检查，退出重写
+[02:23.30]浏览，滚动，暂停，点击
+[02:25.18]跨过，破解，切换更新
+[02:26.92]命名，阅读，调和，打印
+[02:28.86]扫描，发送，传真重命名
+[02:30.60]触摸，携带，支付，观看
+[02:32.54]转变，离开，开始格式化
+[02:34.36]购买，使用，损坏，修复
+[02:36.19]废弃，改变，邮件升级
+[02:38.06]充电，指出，缩放，按压
+[02:40.12]折断，工作，快速擦除
+[02:42.02]写下，剪切，粘贴，保存
+[02:43.97]加载，检查，退出重写
+[02:45.78]插入，播放，烧录，转码
+[02:47.72]拖放，压缩解压
+[02:49.56]浏览，滚动，暂停，点击
+[02:51.49]跨过，破解，切换更新
+[02:53.30]命名，阅读，调和，打印
+[02:55.17]扫描，发送，传真重命名
+[02:56.98]触摸，携带，支付，观看
+[02:58.79]转变，离开，开始格式化
+[03:00.60]购买，使用，损坏，修复
+[03:02.54]废弃，改变，邮件升级
+[03:04.35]充电，指出，缩放，按压
+[03:06.30]折断，工作，快速擦除
+[03:08.17]写下，剪切，粘贴，保存
+[03:10.12]加载，检查，退出重写
+[03:11.99]插入，播放，烧录，转码
+[03:13.88]拖放，压缩解压
+[03:15.75]浏览，滚动，暂停，点击
+[03:17.69]跨过，破解，切换更新
+[03:19.50]命名，阅读，调和，打印
+[03:21.43]扫描，发送，传真重命名
+[03:23.24]购买，使用，损坏，修复
+[03:25.17]废弃，改变，邮件升级
+[03:26.98]充电，指出，缩放，按压
+[03:28.92]折断，工作，快速擦除
+[03:30.79]写下，剪切，粘贴，保存
+[03:32.79]加载，检查，退出重写
+[03:34.78]插入，播放，烧录，转码
+[03:36.66]拖放，压缩解压
+[03:38.53]锁定，填充，呼叫，搜寻
+[03:40.41]查看，编码，卡住解锁
+[03:42.22]浏览，滚动，暂停，点击
+[03:43.99]跨过，破解，切换更新
+[03:45.81]命名，阅读，调和，打印
+[03:47.75]扫描，发送，传真重命名
+[03:49.57]触摸，携带，支付，观看
+[03:51.35]转变，离开，开始格式化。 这就是科技。

@@ -413,7 +413,7 @@ City Walk Day 11:
 
 **8.23**
 City Walk Day 12:
-I’m falling into pieces ↙(\`ヮ´ )↗ ↙(\`  ヮ´ )↗  ↙   (\`  ヮ´   )    ↗
+I’m falling into pieces ↙(\`ヮ´ )↗ ↙(\` ヮ´ )↗  ↙   (\`　ヮ´　)    ↗
 
 **8.24**
 “别聊那个核辐射了，我宁愿所有人都玩原神”
