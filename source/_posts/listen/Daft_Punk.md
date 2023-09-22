@@ -682,8 +682,6 @@ lrc: '',
 
 {% endaplayer %}
 
-[Apple Music - Daft Punk](https://music.apple.com/cn/artist/daft-punk/5468295)
-
 ---
 
 ### Wiki
@@ -809,3 +807,7 @@ Romanthony和Edwards后来也有参与下张专辑《迪斯科银河大作战》
 ，其MV获得MTV欧洲音乐奖最佳音乐录影带奖，该曲于年底取得美国公告牌百强单曲榜冠军；11月，发行与威肯合作的单曲《I Feel It Coming》，该曲取得了美国公告牌百强单曲榜第4名。2017年2月，联手威肯在第59届格莱美奖颁奖典礼上表演《Starboy》、《I Feel It Coming》串烧；同年，为澳大利亚乐队Parcels制作歌曲《Overnight》。
 
 2021年2月22日，蠢朋克宣布解散。该组合分享最新视频，视频中两人渐行渐远，然后爆炸，其公关人员也对媒体确认了解散消息。
+
+---
+
+**[Apple Music - Daft Punk](https://music.apple.com/cn/artist/daft-punk/5468295)**

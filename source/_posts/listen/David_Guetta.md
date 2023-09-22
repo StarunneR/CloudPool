@@ -849,4 +849,6 @@ lrc: '2018_7/CD2/Just A Little More Love (Jack Back 2018 Remix)',
 
 库塔的父母皆为餐馆老板，库塔于1992年与名媛及夜店经理凯西·库塔（Cathy Guetta）结婚，并于2012年举办庆祝结婚20周年的典礼。两人育有两子，分别为2004年出生的Tim Elvis Eric与2007年出生的Angie。
 
+---
+
 **[Apple Music - David Guetta](https://music.apple.com/cn/artist/david-guetta/5557599)**
