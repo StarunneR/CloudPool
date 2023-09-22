@@ -1589,7 +1589,6 @@ header:hover .chn_mark {
   width: min-content;
 }
 .aplayer {
-  margin-bottom: 20px !important;
   font-size: initial;
   font-family: initial;
   font-weight: initial;
@@ -1599,29 +1598,32 @@ header:hover .chn_mark {
   width: 106px !important;
 }
 .aplayer.aplayer-withlrc .aplayer-body .aplayer-pic:hover {
-  height: 300px !important;
-  width: 300px !important;
+  height: 350px !important;
+  width: 350px !important;
 }
 @media screen and (max-width: 768px) {
   .aplayer.aplayer-withlrc .aplayer-body .aplayer-pic:hover {
-    height: 200px !important;
-    width: 200px !important;
+    height: 250px !important;
+    width: 250px !important;
   }
 }
 .aplayer.aplayer-withlrc .aplayer-body .aplayer-info {
   height: 106px !important;
   margin-left: 106px !important;
 }
-.aplayer.aplayer-withlrc .aplayer-body .aplayer-lrc {
+.aplayer.aplayer-withlrc .aplayer-body .aplayer-info .aplayer-music .aplayer-title {
+  padding-left: 4px !important;
+}
+.aplayer.aplayer-withlrc .aplayer-body .aplayer-info .aplayer-lrc {
   height: 48px !important;
 }
-.aplayer.aplayer-withlrc .aplayer-body .aplayer-lrc .aplayer-lrc-contents {
+.aplayer.aplayer-withlrc .aplayer-body .aplayer-info .aplayer-lrc .aplayer-lrc-contents {
   margin-top: 17px !important;
 }
-.aplayer.aplayer-withlrc .aplayer-body .aplayer-lrc .aplayer-lrc-contents p {
+.aplayer.aplayer-withlrc .aplayer-body .aplayer-info .aplayer-lrc .aplayer-lrc-contents p {
   opacity: 0.75 !important;
 }
-.aplayer.aplayer-withlrc .aplayer-body .aplayer-lrc .aplayer-lrc-contents .aplayer-lrc-current {
+.aplayer.aplayer-withlrc .aplayer-body .aplayer-info .aplayer-lrc .aplayer-lrc-contents .aplayer-lrc-current {
   opacity: 1 !important;
 }
 .aplayer.aplayer-withlrc .aplayer-list > ol {
