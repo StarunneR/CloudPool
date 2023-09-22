@@ -19,5 +19,6 @@
       "path": "../hexo-theme-vexo"
     }
   ],
-	"settings": {}
+  "settings": {
+  }
 }
