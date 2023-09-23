@@ -9,8 +9,8 @@
         height: 106px !important
         width: 106px !important
         &:hover
-          height: 350px !important
-          width: 350px !important
+          height: 356px !important
+          width: 356px !important
           @media m-mobile
             height: 250px !important
             width: 250px !important
@@ -29,5 +29,8 @@
               opacity: 1 !important
     .aplayer-list > ol
       scrollbar-width: thin !important
-      scrollbar-color: initial
+      scrollbar-color: auto
       margin: 0
+      overflow-y: auto !important
+    .aplayer-list > ol::-webkit-scrollbar
+      display: none !important
