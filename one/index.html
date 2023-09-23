@@ -553,13 +553,15 @@
     
 
 <div id="waline"></div>
-
 <script defer src="/js/waline-qqavatar.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/waline/2.15.6/waline.min.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/waline/2.15.6/waline.min.css">
 
-<script>
-  // 中文默认
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/@waline/client@v2/dist/waline.css"
+/>
+<script type="module">
+  import { init } from 'https://unpkg.com/@waline/client@v2/dist/waline.mjs';
+
   const locale = {
     nick: '昵称',
     nickError: '昵称不能少于3个英文字符或2个中文汉字',
@@ -612,7 +614,7 @@
     reactionTitle: '你认为这篇文章怎么样？',
   };
 
-  Waline.init({
+  init({
     el: "#waline",
     serverURL: "walinecf.zhuochi.org" || "walinecf.zhuochi.org",
     appId: "" || "M2JD6yGQhefhH2O0aSjFfclc-MdYXbMMI",
@@ -639,17 +641,22 @@
 
   $('.wl-actions').append("<a href=https://emoji.zhuochi.org target=_blank id=wl-emoji-wrapper><img src=/images/emoji.png class=wl-action id=wl-emoji></a>")
 
-  //// Clean TEXTAREA 
-  //$(".wl-cards").change(function () {
-  //  alert('changed')
-    //('#wl-edit').html("")
-  //})
-  
-  //! Not functional
-  //$(".primary .wl-btn").click(function () {
-    //document.getElementsByClassName('wl-num')[0].innerHTML ++
-  //})
+//// Clean TEXTAREA 
+//$(".wl-cards").change(function () {
+//  alert('changed')
+  //('#wl-edit').html("")
+//})
+
+//! Not functional
+//$(".primary .wl-btn").click(function () {
+  //document.getElementsByClassName('wl-num')[0].innerHTML ++
+//})
 </script>
+
+<!--
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/waline/2.15.6/waline.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/waline/2.15.6/waline.min.css">
+-->
     <p><strong><a href="/one">“一言”</a></strong> 接口来自: <a target="_blank" rel="noopener" href="https://hitokoto.cn/">一言 hijikoto.cn</a></p>
 <hr>
 <h3 id="评论区头像设定"><a href="#评论区头像设定" class="headerlink" title="评论区头像设定"></a>评论区头像设定</h3><ul>
