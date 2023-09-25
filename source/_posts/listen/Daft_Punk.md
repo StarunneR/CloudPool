@@ -9,9 +9,14 @@ main: 5 Albums, 84 Songs
 
 ### Homework 1997
 
-#### A
-
-{% aplayer 1A %}
+{% aplayer 1 %}
+{
+name: 'A',
+artist: 'Daft Punk',
+url: '',
+cover: '1997_Ho/cover.webp',
+lrc: '',
+},
 {
 name: 'Daftendirekt',
 artist: 'Daft Punk',
@@ -48,11 +53,13 @@ cover: '1997_Ho/cover.webp',
 lrc: '',
 },
 
-{% endaplayer %}
-
-#### B
-
-{% aplayer 1B %}
+{
+name: 'B',
+artist: 'Daft Punk',
+url: '',
+cover: '1997_Ho/cover.webp',
+lrc: '',
+},
 {
 name: 'Fresh',
 artist: 'Daft Punk',
@@ -75,11 +82,13 @@ cover: '1997_Ho/cover.webp',
 lrc: '',
 },
 
-{% endaplayer %}
-
-#### C
-
-{% aplayer 1C %}
+{
+name: 'C',
+artist: 'Daft Punk',
+url: '',
+cover: '1997_Ho/cover.webp',
+lrc: '',
+},
 {
 name: 'Teachers',
 artist: 'Daft Punk',
@@ -108,12 +117,13 @@ url: 'HOST/Daft_Punk/1997_Ho/Oh Yeah.m4a',
 cover: '1997_Ho/cover.webp',
 lrc: '1997_Ho/Oh Yeah.lrc',
 },
-
-{% endaplayer %}
-
-#### D
-
-{% aplayer 1d %}
+{
+name: 'D',
+artist: 'Daft Punk',
+url: '',
+cover: '1997_Ho/cover.webp',
+lrc: '',
+},
 {
 name: 'Burnin\'',
 artist: 'Daft Punk',
@@ -251,10 +261,14 @@ lrc: '2001_Di/Too Long.lrc',
 
 ### Human After All 2005
 
-#### A
-
-{% aplayer 3a %}
-
+{% aplayer 3 %}
+{
+name: 'A',
+artist: 'Daft Punk',
+url: '',
+cover: '2005_HA/cover.webp',
+lrc: '',
+},
 {
 name: 'Human After All',
 artist: 'Daft Punk',
@@ -276,11 +290,14 @@ url: 'HOST/Daft_Punk/2005_HA/Robot Rock.m4a',
 cover: '2005_HA/cover.webp',
 lrc: '2005_HA/Robot Rock.lrc',
 },
-{% endaplayer %}
 
-#### B
-
-{% aplayer 3b %}
+{
+name: 'B',
+artist: 'Daft Punk',
+url: '',
+cover: '2005_HA/cover.webp',
+lrc: '',
+},
 {
 name: 'Steam Machine',
 artist: 'Daft Punk',
@@ -295,11 +312,14 @@ url: 'HOST/Daft_Punk/2005_HA/Make Love.m4a',
 cover: '2005_HA/cover.webp',
 lrc: '2005_HA/Make Love.lrc',
 },
-{% endaplayer %}
 
-#### C
-
-{% aplayer 3c %}
+{
+name: 'C',
+artist: 'Daft Punk',
+url: '',
+cover: '2005_HA/cover.webp',
+lrc: '',
+},
 {
 name: 'The Brainwasher',
 artist: 'Daft Punk',
@@ -321,11 +341,14 @@ url: 'HOST/Daft_Punk/2005_HA/Television Rules the Nation.m4a',
 cover: '2005_HA/cover.webp',
 lrc: '2005_HA/Television Rules the Nation.lrc',
 },
-{% endaplayer %}
 
-#### D
-
-{% aplayer 3d %}
+{
+name: 'D',
+artist: 'Daft Punk',
+url: '',
+cover: '2005_HA/cover.webp',
+lrc: '',
+},
 {
 name: 'Technologic',
 artist: 'Daft Punk',
@@ -344,9 +367,14 @@ lrc: '2005_HA/Emotion.lrc',
 
 ### Tron Legacy 2011
 
-#### A
-
-{% aplayer 4a %}
+{% aplayer 4 %}
+{
+name: 'A',
+artist: 'Daft Punk',
+url: '',
+cover: '2011_TL/cover.webp',
+lrc: '',
+},
 {
 name: 'Overture',
 artist: 'Daft Punk',
@@ -411,11 +439,13 @@ cover: '2011_TL/cover.webp',
 lrc: '',
 },
 
-{% endaplayer %}
-
-#### B
-
-{% aplayer 4b %}
+{
+name: 'B',
+artist: 'Daft Punk',
+url: '',
+cover: '2011_TL/cover.webp',
+lrc: '',
+},
 {
 name: 'Adagio For Tron',
 artist: 'Daft Punk',
@@ -473,11 +503,13 @@ cover: '2011_TL/cover.webp',
 lrc: '',
 },
 
-{% endaplayer %}
-
-#### C
-
-{% aplayer 4c %}
+{
+name: 'C',
+artist: 'Daft Punk',
+url: '',
+cover: '2011_TL/cover.webp',
+lrc: '',
+},
 {
 name: 'C.L.U',
 artist: 'Daft Punk',
@@ -514,11 +546,13 @@ cover: '2011_TL/cover.webp',
 lrc: '',
 },
 
-{% endaplayer %}
-
-#### D
-
-{% aplayer 4d %}
+{
+name: 'D',
+artist: 'Daft Punk',
+url: '',
+cover: '2011_TL/cover.webp',
+lrc: '',
+},
 {
 name: 'Sea Of Simulation',
 artist: 'Daft Punk',
