@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta http-equiv="Access-Control-Allow-Origin" content="*">
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport" />
+  <meta name="description" content="CloudPool浊池是由年轻人管理的博客">
+  <meta name="keyword" content="浊池, CloudPool, CloudPool浊池">
+  
+  <link rel="shortcut icon" type="image/ico" href="/images/cloudpool-favicon.ico">
+  
+  <title>
+    
+      Zedd
+    
+  </title>
+  <!-- CSS -->
+  <!--<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/6.4.0/css/all.min.css" />-->
+  <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />-->
+  <!--<link href="https://cdn.staticfile.org/nprogress/0.2.0/nprogress.min.css" rel="stylesheet"/>-->
+  <link href="https://cdn.bootcdn.net/ajax/libs/nprogress/0.2.0/nprogress.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/aplayer/1.10.1/APlayer.min.css"/>
+  <!--<link href="//cdn.bootcdn.net/ajax/libs/waline/2.15.6/waline.min.css" rel="stylesheet">-->
+  
+<link rel="stylesheet" href="/css/style.css">
+
+
+  <!-- JS -->
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/geopattern/1.2.3/js/geopattern.min.js"></script>
+  <!--<script type="text/javascript" src="https://cdn.staticfile.org/nprogress/0.2.0/nprogress.min.js"></script>-->
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/nprogress/0.2.0/nprogress.min.js"></script>
+  
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+            <span class="search-icon">
+                <i class="fa fa-search"></i>
+            </span>
+            <div class="search-input-container">
+                <input autocomplete="off" autocapitalize="off" maxlength="80"
+                    placeholder="Anything...  今天想看什么w" spellcheck="false"
+                    type="" class="search-input">
+            </div>
+            <span class="popup-btn-go">
+                <i class="fa-solid fa-arrow-circle-right"></i>
+            </span>
+            <span class="popup-btn-close">
+                <i class="fa-solid fa-circle-xmark"></i>
+            </span>
+        </div>
+        <div id="search-result" class="search-result-container">
+            <div id="no-result" class="no-result">
+                <i class="fa-solid fa-spinner fa-pulse fa-5x fa-fw"></i>
+            </div>
+        </div>
+    </div>
+</div>
+  <link rel="prefetch" href="/search.xml" crossorigin="anonymous"> 
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Popup Window
+      let isfetched = false;
+      let datas;
+      let isXml = true;
+      // Search DB path
+      let searchPath = 'search.xml'; //CONFIG.search.path
+      if (searchPath.length === 0) {
+        searchPath = 'search.xml';
+      } else if (searchPath.endsWith('json')) {
+        isXml = false;
+      }
+      const input = document.querySelector('.search-input');
+      const resultContent = document.getElementById('search-result');
+
+      const getIndexByWord = (word, text, caseSensitive) => {
+        if ('false' == false) { // CONFIG.localsearch.unescape = false
+          let div = document.createElement('div');
+          div.innerText = word;
+          word = div.innerHTML;
+        }
+        let wordLen = word.length;
+        if (wordLen === 0) return [];
+        let startPosition = 0;
+        let position = [];
+        let index = [];
+        if (!caseSensitive) {
+          text = text.toLowerCase();
+          word = word.toLowerCase();
+        }
+        while ((position = text.indexOf(word, startPosition)) > -1) {
+          index.push({ position, word });
+          startPosition = position + wordLen;
+        }
+        return index;
+      };
+
+      // Merge hits into slices
+      const mergeIntoSlice = (start, end, index, searchText) => {
+        let item = index[index.length - 1];
+        let { position, word } = item;
+        let hits = [];
+        let searchTextCountInSlice = 0;
+        while (position + word.length <= end && index.length !== 0) {
+          if (word === searchText) {
+            searchTextCountInSlice++;
+          }
+          hits.push({
+            position,
+            length: word.length
+          });
+          let wordEnd = position + word.length;
+
+          // Move to next position of hit
+          index.pop();
+          while (index.length !== 0) {
+            item = index[index.length - 1];
+            position = item.position;
+            word = item.word;
+            if (wordEnd > position) {
+              index.pop();
+            } else {
+              break;
+            }
+          }
+        }
+        return {
+          hits,
+          start,
+          end,
+          searchTextCount: searchTextCountInSlice
+        };
+      };
+
+      // Highlight title and content
+      const highlightKeyword = (text, slice) => {
+        let result = '';
+        let prevEnd = slice.start;
+        slice.hits.forEach(hit => {
+          result += text.substring(prevEnd, hit.position);
+          let end = hit.position + hit.length;
+          result += `<b class="search-keyword">${text.substring(hit.position, end)}</b>`;
+          prevEnd = end;
+        });
+        result += text.substring(prevEnd, slice.end);
+        return result;
+      };
+
+      const inputEventFunction = () => {
+        if (!isfetched) return;
+        let searchText = input.value.trim().toLowerCase();
+        let keywords = searchText.split(/[-\s]+/);
+        if (keywords.length > 1) {
+          keywords.push(searchText);
+        }
+        let resultItems = [];
+        if (searchText.length > 0) {
+          // Perform local searching
+          datas.forEach(({ title, content, url }) => {
+            let titleInLowerCase = title.toLowerCase();
+            let contentInLowerCase = content.toLowerCase();
+            let indexOfTitle = [];
+            let indexOfContent = [];
+            let searchTextCount = 0;
+            keywords.forEach(keyword => {
+              indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+              indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+            });
+
+            // Show search results
+            if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+              let hitCount = indexOfTitle.length + indexOfContent.length;
+              // Sort index by position of keyword
+              [indexOfTitle, indexOfContent].forEach(index => {
+                index.sort((itemLeft, itemRight) => {
+                  if (itemRight.position !== itemLeft.position) {
+                    return itemRight.position - itemLeft.position;
+                  }
+                  return itemLeft.word.length - itemRight.word.length;
+                });
+              });
+
+              let slicesOfTitle = [];
+              if (indexOfTitle.length !== 0) {
+                let tmp = mergeIntoSlice(0, title.length, indexOfTitle, searchText);
+                searchTextCount += tmp.searchTextCountInSlice;
+                slicesOfTitle.push(tmp);
+              }
+
+              let slicesOfContent = [];
+              while (indexOfContent.length !== 0) {
+                let item = indexOfContent[indexOfContent.length - 1];
+                let { position, word } = item;
+                // Cut out 100 characters
+                let start = position - 20;
+                let end = position + 80;
+                if (start < 0) {
+                  start = 0;
+                }
+                if (end < position + word.length) {
+                  end = position + word.length;
+                }
+                if (end > content.length) {
+                  end = content.length;
+                }
+                let tmp = mergeIntoSlice(start, end, indexOfContent, searchText);
+                searchTextCount += tmp.searchTextCountInSlice;
+                slicesOfContent.push(tmp);
+              }
+
+              // Sort slices in content by search text's count and hits' count
+              slicesOfContent.sort((sliceLeft, sliceRight) => {
+                if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                  return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                  return sliceRight.hits.length - sliceLeft.hits.length;
+                }
+                return sliceLeft.start - sliceRight.start;
+              });
+
+              // Select top N slices in content
+              let upperBound = parseInt('1', 10); // CONFIG.localsearch.top_n_per_article: 1
+              if (upperBound >= 0) {
+                slicesOfContent = slicesOfContent.slice(0, upperBound);
+              }
+
+              let resultItem = '';
+
+              if (slicesOfTitle.length !== 0) {
+                resultItem += `<li class="search-result-element"><a href="${url}" class="search-result-title" target="_blank">${highlightKeyword(title, slicesOfTitle[0])}</a>`;
+              } else {
+                resultItem += `<li class="search-result-element"><a href="${url}" class="search-result-title" target="_blank">${title}</a>`;
+              }
+
+              slicesOfContent.forEach(slice => {
+                resultItem += `<a href="${url}" target="_blank"><p class="search-result">${highlightKeyword(content, slice)}...</p></a>`;
+              });
+
+              resultItem += '</li>';
+              resultItems.push({
+                item: resultItem,
+                id: resultItems.length,
+                hitCount,
+                searchTextCount
+              });
+            }
+          });
+        }
+        if (keywords.length === 1 && keywords[0] === '') {
+          resultContent.innerHTML = '<div id="no-result"><i class="fa-sharp fa-regular fa-circle-check fa-5x"></i></div>';
+        } else if (resultItems.length === 0) {
+          resultContent.innerHTML = '<div id="no-result"><i class="fa-regular fa-face-frown-open fa-5x"></i></div>';
+        } else {
+          resultItems.sort((resultLeft, resultRight) => {
+            if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+              return resultRight.searchTextCount - resultLeft.searchTextCount;
+            } else if (resultLeft.hitCount !== resultRight.hitCount) {
+              return resultRight.hitCount - resultLeft.hitCount;
+            }
+            return resultRight.id - resultLeft.id;
+          });
+          resultContent.innerHTML = `<ul class="search-result-list">${resultItems.map(result => result.item).join('')}</ul>`;
+          window.pjax && window.pjax.refresh(resultContent);
+        }
+      };
+
+      const fetchData = () => {
+        fetch('/' + searchPath) // CONFIG.root = ''
+          .then(response => response.text())
+          .then(res => {
+            // Get the contents from search data
+            isfetched = true;
+            datas = isXml ? [...new DOMParser().parseFromString(res, 'text/xml').querySelectorAll('entry')].map(element => {
+              return {
+                title: element.querySelector('title').textContent,
+                content: element.querySelector('content').textContent,
+                url: element.querySelector('url').textContent
+              };
+            }) : JSON.parse(res);
+            // Only match articles with not empty titles
+            datas = datas.filter(data => data.title).map(data => {
+              data.title = data.title.trim();
+              data.content = data.content ? data.content.trim().replace(/<[^>]+>/g, '') : '';
+              data.url = decodeURIComponent(data.url).replace(/\/{2,}/g, '/');
+              return data;
+            });
+            // Remove loading animation
+            document.getElementById('no-result').innerHTML = '<i class="fa-sharp fa-regular fa-circle-check fa-5x"></i></i>';
+            inputEventFunction();
+          });
+      };
+
+      if (false) { // CONFIG.localsearch.preload: false
+        fetchData();
+      }
+
+      if ('auto' === 'auto') { // CONFIG.localsearch.trigger: 'auto' / 'manual'
+        input.addEventListener('input', inputEventFunction);
+      } else {
+        document.querySelector('.search-icon').addEventListener('click', inputEventFunction);
+        input.addEventListener('keypress', event => {
+          if (event.key === 'Enter') {
+            inputEventFunction();
+          }
+        });
+      }
+
+      // Handle and trigger popup window
+      document.querySelectorAll('.popup-trigger').forEach(element => {
+        element.addEventListener('click', () => {
+          document.body.style.overflow = 'hidden';
+          document.querySelector('.search-pop-overlay').classList.add('search-active');
+          input.focus();
+          if (!isfetched) fetchData();
+        });
+      });
+
+      // Monitor main search box
+      const onPopupClose = () => {
+        document.body.style.overflow = '';
+        document.querySelector('.search-pop-overlay').classList.remove('search-active');
+      };
+
+      document.querySelector('.search-pop-overlay').addEventListener('click', event => {
+        if (event.target === document.querySelector('.search-pop-overlay')) {
+          onPopupClose();
+        }
+      });
+      document.querySelector('.popup-btn-close').addEventListener('click', onPopupClose);
+      window.addEventListener('pjax:success', onPopupClose);
+      window.addEventListener('keyup', event => {
+        if (event.key === 'Escape') {
+          onPopupClose();
+        }
+      });
+
+      // PageJumper button
+      let onJumpPage = () => {
+        window.location = window.location.origin + '/' + input.value
+      };
+      document.querySelector('.popup-btn-go').addEventListener('click', onJumpPage);
+      document.querySelector('.search-input').addEventListener('keydown', event => {
+        if (event.keyCode === 13) {
+          onJumpPage();
+          return;
+        }
+      });
+      
+      // Search Preload
+      let head = document.head || document.getElementsByTagName('head')[0];
+      let searchlink = document.createElement('link');
+        searchlink.rel="search";
+        searchlink.href="/search.xml";
+        searchlink.crossOrigin="anonymous";
+      head.appendChild(searchlink);
+    });
+  </script>
+
+  <!--
+<script src="/js/local-search.js"></script>
+--> 
+
+  <script src="/live2d-widget/autoload.js"></script>
+  <script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/aplayer/1.10.1/APlayer.min.js"></script>
+  <!--<script type="text/javascript" src="//cdn.bootcdn.net/ajax/libs/waline/2.15.6/waline.min.js"></script>-->
+  <!-- Fonts -->
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+  <body>
+    <header class="header fixed-header">
+  <nav class="header-container">
+    <a class="home-link" href="/">
+      <img class="logo" src="/images/logo.png" alt="logo"/>
+      <span class="eng_mark">CloudPool</span><span class="chn_mark">浊池</span>
+    </a>
+    <ul class="right-list">
+      
+        <li class="list-item">
+          
+            <a href="/" class="item-link">主页</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/categories/" class="item-link">分类</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/tags/" class="item-link">标签</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/archive/" class="item-link">归档</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/mag/" class="item-link">网刊</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/one/" class="item-link">一言</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a target="_blank" rel="noopener" href="//pan.zhuochi.org/CloudShare/" class="item-link">网盘</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="//<emoji>" class="item-link">( ^ω^)</a>
+          
+        </li>
+      
+      
+        <li class="list-item">
+    <a role="button" class="item-link popup-trigger">
+        <i class="fa fa-search fa-fw"></i>
+    </a>
+</li>
+      
+    </ul>
+    <div class="menu">
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+    </div>
+    <div class="menu-mask">
+      <ul class="menu-list">
+        
+          <li class="menu-item">
+            
+              <a href="/" class="menu-link">主页</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/categories/" class="menu-link">分类</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/tags/" class="menu-link">标签</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/archive/" class="menu-link">归档</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/mag/" class="menu-link">网刊</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/one/" class="menu-link">一言</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a target="_blank" rel="noopener" href="//pan.zhuochi.org/CloudShare/" class="menu-link">网盘</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="//<emoji>" class="menu-link">( ^ω^)</a>
+            
+          </li>
+        
+        
+          <li class="menu-item">
+    <a role="button" class="item-link popup-trigger">
+        <i class="fa fa-search fa-fw"></i>
+    </a>
+</li>
+        
+      </ul>
+    </div>
+  </nav>
+</header>
+
+    <div id="article-banner">
+  <h2 class="post-title">Zedd</h2>
+  
+   
+    <p class="post-date">2023-09-29</p>
+  
+  <div class="arrow-down">
+    <a href="javascript:;"></a>
+  </div>
+</div>
+
+<main class="app-body flex-box">
+  <article class="post-article">
+    
+      <div class="front-parent" id="front-parent">
+  <div class="front-child" id="front-fontsize">
+    <label class="front-label" for="fontsize-range">字体大小</label>
+    <input type="range" min="50" max="200" id="fontsize-slider" step="1" value="100" />
+    <span id="fontsize-value"></span>
+  </div>
+
+  <div class="front-child" id="front-fontselector">
+    <label class="front-label" for="font-select">更换字体</label>
+    <select name="font" id="font">
+      <option value="default">默认</option>
+      <option value="heiti">黑体</option>
+      <option value="light-heiti">黑体（细体）</option>
+      <option value="lighter-heiti">黑体（极细）</option>
+      <option value="songti">宋体</option>
+      <option value="light-songti">宋体（细体）</option>
+      <option value="kaiti">楷体</option>
+      <option value="fangsong">仿宋</option>
+    </select>
+  </div>
+
+  <div class="front-child" id="front-indent">
+    <label class="front-label" for="TextIndent">段首缩进</label>
+    <input type="checkbox" id="indent-checkbox" name="text-indent" value="" />
+  </div>
+</div>
+
+<h1 class="article-author">
+  
+        StʌrunneR
+        
+</h1>
+
+<script>
+  $(document).ready(
+    function () {
+      let FontChanger = function () {
+        if (this.value == "default") {
+          $(".markdown-content").css({ "font-family": "Arial, Helvetica, sans-serif" });
+          $(".markdown-content").css({ "font-weight": 'initial' });
+        } if (this.value == "heiti") {
+          $(".markdown-content").css({ "font-weight": '400' });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',STHeiti,SimHei,sans-serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400&display=swap rel=stylesheet>");
+        } else if (this.value == "light-heiti") {
+          $(".markdown-content").css({ "font-weight": '300' });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',STHeiti,SimHei,sans-serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300&display=swap rel=stylesheet>");
+        } else if (this.value == "lighter-heiti") {
+          $(".markdown-content").css({ "font-weight": '100' });
+          $(".markdown-content").css({ "font-family": "'Noto Sans SC',STHeiti,SimHei,sans-serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100&display=swap rel=stylesheet>");
+        } else if (this.value == "songti") {
+          $(".markdown-content").css({ "font-weight": '400' });
+          $(".markdown-content").css({ "font-family": "'Noto Serif SC',STSong,NSimSun,SimSun,serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400&display=swap rel=stylesheet>");
+        } else if (this.value == "light-songti") {
+          $(".markdown-content").css({ "font-weight": '200' });
+          $(".markdown-content").css({ "font-family": "'Noto Serif SC',STSong,NSimSun,SimSun,serif" });
+          $("head").append("<link href=https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200&display=swap rel=stylesheet>");
+        } else if (this.value == "kaiti") {
+          $(".markdown-content").css({ "font-weight": 'initial' });
+          $(".markdown-content").css({ "font-family": "'FZKai-Z03S','STKaiti','KaiTi',Serif" });
+          $("head").append("<link href=https://cdn.jsdelivr.net/npm/cn-fontsource-fz-kai-z-03-s/font.css rel=stylesheet>");
+        } else if (this.value == "fangsong") {
+          $(".markdown-content").css({ "font-weight": 'initial' });
+          $(".markdown-content").css({ "font-family": "'FZFangSong-Z02S','STFangsong','FangSong','FangSong_GB2312',Serif" });
+          $("head").append("<link href=https://cdn.jsdelivr.net/npm/cn-fontsource-fz-fang-song-z-02-s/font.css rel=stylesheet>");
+        }
+      };
+      $("#font").on('change', FontChanger);
+      $("#font").on('click', FontChanger);
+    });
+
+  $("#indent-checkbox").change(function () {
+    if (this.checked) {
+      $(".markdown-content > p").css({ "text-indent": "2em" });
+    } else {
+      $(".markdown-content > p").css({ "text-indent": "0" });
+    }
+  });
+
+  $("#fontsize-value").html("100%");
+  let rangeSwitch = function () {
+    let fontsizePercent = $("#fontsize-slider").val();
+    $(".markdown-content").css("font-size", fontsizePercent + "%")
+    $("#fontsize-value").html(fontsizePercent + "%")
+  }
+  $("#fontsize-slider").on("input", rangeSwitch)
+</script>
+      <section class="markdown-content" id="content">
+        <h3 id="Clarity-2013"><a href="#Clarity-2013" class="headerlink" title="Clarity 2013"></a>Clarity 2013</h3><div id="aplayer1"></div></script><script>const ap1 = new APlayer({container: document.getElementById("aplayer1"),lrcType: 3,loop: "all",mutex: true,preload:"auto",audio: [{
+name: 'Hourglass (feat. LIZ)',
+artist: 'Zedd',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/Zedd/2013_Cl/Hourglass (feat. LIZ).mp3',
+cover: '2013_Cl/cover.webp',
+lrc: '2013_Cl/Hourglass (feat. LIZ).lrc',
+},
+{
+name: 'Shave It Up',
+artist: 'Zedd',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/Zedd/2013_Cl/Shave It Up.mp3',
+cover: '2013_Cl/cover.webp',
+lrc: '2013_Cl/Shave It Up.lrc',
+},
+{
+name: 'Spectrum (feat. Matthew Koma)',
+artist: 'Zedd',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/Zedd/2013_Cl/Spectrum (feat. Matthew Koma).mp3',
+cover: '2013_Cl/cover.webp',
+lrc: '2013_Cl/Spectrum (feat. Matthew Koma).lrc',
+},
+{
+name: 'Lost At Sea (feat. Ryan Tedder)',
+artist: 'Zedd',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/Zedd/2013_Cl/Lost At Sea (feat. Ryan Tedder).mp3',
+cover: '2013_Cl/cover.webp',
+lrc: '2013_Cl/Lost At Sea (feat. Ryan Tedder).lrc',
+},
+{
+name: 'Clarity (feat. Foxes)',
+artist: 'Zedd',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/Zedd/2013_Cl/Clarity (feat. Foxes).mp3',
+cover: '2013_Cl/cover.webp',
+lrc: '2013_Cl/Clarity (feat. Foxes).lrc',
+},
+{
+name: 'Codec',
+artist: 'Zedd',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/Zedd/2013_Cl/Codec.mp3',
+cover: '2013_Cl/cover.webp',
+lrc: '2013_Cl/Codec.lrc',
+},
+{
+name: 'Stache',
+artist: 'Zedd',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/Zedd/2013_Cl/Stache.mp3',
+cover: '2013_Cl/cover.webp',
+lrc: '2013_Cl/Stache.lrc',
+},
+{
+name: 'Fall Into The Sky (feat. Ellie Goulding)',
+artist: 'Lucky Date & Zedd',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/Zedd/2013_Cl/Fall Into The Sky (Lucky Date & Zedd) (feat. Ellie Goulding).mp3',
+cover: '2013_Cl/cover.webp',
+lrc: '2013_Cl/Fall Into The Sky (Lucky Date & Zedd) (feat. Ellie Goulding).lrc',
+},
+{
+name: 'Follow You Down (feat. Bright Lights)',
+artist: 'Zedd',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/Zedd/2013_Cl/Follow You Down (feat. Bright Lights).mp3',
+cover: '2013_Cl/cover.webp',
+lrc: '2013_Cl/Follow You Down (feat. Bright Lights).lrc',
+},
+{
+name: 'Epos',
+artist: 'Zedd',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/Zedd/2013_Cl/Epos.mp3',
+cover: '2013_Cl/cover.webp',
+lrc: '2013_Cl/Epos.lrc',
+},
+{
+name: 'Stay The Night (feat. Hayley Williams Of Paramore)',
+artist: 'Zedd',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/Zedd/2013_Cl/Stay The Night (feat. Hayley Williams Of Paramore).mp3',
+cover: '2013_Cl/cover.webp',
+lrc: '2013_Cl/Stay The Night (feat. Hayley Williams Of Paramore).lrc',
+},
+{
+name: 'Push Play (feat. Miriam Bryant)',
+artist: 'Zedd',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/Zedd/2013_Cl/Push Play (feat. Miriam Bryant).mp3',
+cover: '2013_Cl/cover.webp',
+lrc: '2013_Cl/Push Play (feat. Miriam Bryant).lrc',
+},
+{
+name: 'Alive',
+artist: 'Empire Of The Sun & Zedd',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/Zedd/2013_Cl/Alive (Empire Of The Sun & Zedd).mp3',
+cover: '2013_Cl/cover.webp',
+lrc: '2013_Cl/Alive (Empire Of The Sun & Zedd).lrc',
+},
+{
+name: 'Breakn\' A Sweat (Zedd Remix)',
+artist: 'Skrillex & The Doors, Zedd',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/Zedd/2013_Cl/Breakn\' A Sweat (Skrillex & The Doors) (Zedd Remix).mp3',
+cover: '2013_Cl/cover.webp',
+lrc: '2013_Cl/Breakn\' A Sweat (Skrillex & The Doors) (Zedd Remix).lrc',
+},
+{
+name: 'Spectrum (feat. Matthew Koma) (Acoustic Guitar Version)',
+artist: 'Zedd',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/Zedd/2013_Cl/Spectrum (feat. Matthew Koma) (Acoustic Guitar Version).mp3',
+cover: '2013_Cl/cover.webp',
+lrc: '2013_Cl/Spectrum (feat. Matthew Koma) (Acoustic Guitar Version).lrc',
+},
+{
+name: 'Clarity (feat. Foxes) (Acoustic Version)',
+artist: 'Zedd',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/Zedd/2013_Cl/Clarity (feat. Foxes) (Acoustic Version).mp3',
+cover: '2013_Cl/cover.webp',
+lrc: '2013_Cl/Clarity (feat. Foxes) (Acoustic Version).lrc',
+},
+]});</script>
+
+<h3 id="Ture-Colors-2015"><a href="#Ture-Colors-2015" class="headerlink" title="Ture Colors 2015"></a>Ture Colors 2015</h3><div id="aplayer2"></div></script><script>const ap2 = new APlayer({container: document.getElementById("aplayer2"),lrcType: 3,loop: "all",mutex: true,preload:"auto",audio: [{
+name: 'Addicted To A Memory (Feat. Bahari)',
+artist: 'Zedd',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/Zedd/2015_TC/Addicted To A Memory (Feat. Bahari).mp3',
+cover: '2015_TC/cover.webp',
+lrc: '2015_TC/Addicted To A Memory (Feat. Bahari).lrc',
+},
+{
+name: 'I Want You To Know (Feat. Selena Gomez)',
+artist: 'Zedd',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/Zedd/2015_TC/I Want You To Know (Feat. Selena Gomez).mp3',
+cover: '2015_TC/cover.webp',
+lrc: '2015_TC/I Want You To Know (Feat. Selena Gomez).lrc',
+},
+{
+name: 'Beautiful Now (Feat. Jon Bellion)',
+artist: 'Zedd',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/Zedd/2015_TC/Beautiful Now (Feat. Jon Bellion).mp3',
+cover: '2015_TC/cover.webp',
+lrc: '2015_TC/Beautiful Now (Feat. Jon Bellion).lrc',
+},
+{
+name: 'Transmission (Feat. Logic & X Ambassadors)',
+artist: 'Zedd',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/Zedd/2015_TC/Transmission (Feat. Logic & X Ambassadors).mp3',
+cover: '2015_TC/cover.webp',
+lrc: '2015_TC/Transmission (Feat. Logic & X Ambassadors).lrc',
+},
+{
+name: 'Done With Love',
+artist: 'Zedd',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/Zedd/2015_TC/Done With Love.mp3',
+cover: '2015_TC/cover.webp',
+lrc: '2015_TC/Done With Love.lrc',
+},
+{
+name: 'True Colors',
+artist: 'Zedd',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/Zedd/2015_TC/True Colors.mp3',
+cover: '2015_TC/cover.webp',
+lrc: '2015_TC/True Colors.lrc',
+},
+{
+name: 'Straight Into The Fire',
+artist: 'Zedd',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/Zedd/2015_TC/Straight Into The Fire.mp3',
+cover: '2015_TC/cover.webp',
+lrc: '2015_TC/Straight Into The Fire.lrc',
+},
+{
+name: 'Papercut (Feat. Troye Sivan)',
+artist: 'Zedd',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/Zedd/2015_TC/Papercut (Feat. Troye Sivan).mp3',
+cover: '2015_TC/cover.webp',
+lrc: '2015_TC/Papercut (Feat. Troye Sivan).lrc',
+},
+{
+name: 'Bumble Bee',
+artist: 'Zedd',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/Zedd/2015_TC/Bumble Bee.mp3',
+cover: '2015_TC/cover.webp',
+lrc: '',
+},
+{
+name: 'Daisy',
+artist: 'Zedd',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/Zedd/2015_TC/Daisy.mp3',
+cover: '2015_TC/cover.webp',
+lrc: '2015_TC/Daisy.lrc',
+},
+{
+name: 'Illusion (Feat. Echosmith)',
+artist: 'Zedd',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/Zedd/2015_TC/Illusion (Feat. Echosmith).mp3',
+cover: '2015_TC/cover.webp',
+lrc: '2015_TC/Illusion (Feat. Echosmith).lrc',
+},
+{
+name: 'I Want You To Know (Feat. Selena Gomez) (Marc Benjamin Remix)',
+artist: 'Zedd, Marc Benjamin',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/Zedd/2015_TC/I Want You To Know (Feat. Selena Gomez) (Marc Benjamin Remix).mp3',
+cover: '2015_TC/cover.webp',
+lrc: '',
+},
+{
+name: 'I Want You To Know (Feat. Selena Gomez) (Fox Stevenson Remix)',
+artist: 'Zedd, Fox Stevenson',
+url: 'https://cps3storage.s3.ap-southeast-1.amazonaws.com/Zedd/2015_TC/I Want You To Know (Feat. Selena Gomez) (Fox Stevenson Remix).mp3',
+cover: '2015_TC/cover.webp',
+lrc: '2015_TC/I Want You To Know (Feat. Selena Gomez) (Fox Stevenson Remix).lrc',
+},
+]});</script>
+
+<hr>
+<h3 id="Wiki"><a href="#Wiki" class="headerlink" title="Wiki"></a>Wiki</h3><p>安东·伊戈列维奇·扎斯拉夫斯基（俄语：Антон Игоревич Заславский，德语：Anton Igorevich Zaslavski，1989年9月2日—），以艺名捷德（英语：Zedd）更为人知，是一名德籍俄裔DJ、唱片制作人及词曲作家。他最初制作电子浩室音乐，但后来转向其他风格，吸收了前卫浩室、Complextro、Dubstep和古典音乐的影响。捷德在德国凯撒斯劳滕长大并开启自己的音乐事业。其最著名的作品是与Foxes合作的《Clarity》，这支单曲在公告牌百强单曲榜上最高登上第8位，并获得美国夜店舞曲榜的冠军。捷德还凭借这首单曲获得了第56届格莱美奖“最佳舞曲唱片”的奖项。2015年，他的第二张录音室专辑《True Colors》发行，由Selena Gomez客串的单曲“I Want You to Know”主打。随后的著名歌曲包括与Alessia Cara合作的在美国排名第7的“Stay”，与Maren Morris和Gray合作的“The Middle”，以及与Ariana Grande合作的在美国排名第4的“Break Free”。</p>
+<h4 id="Zedd名字由来"><a href="#Zedd名字由来" class="headerlink" title="Zedd名字由来"></a>Zedd名字由来</h4><p>他的舞台名称Zedd来自zed，这是英文的英文名字Z，是他姓氏的第一个字母，在德国Z的发音念zed，所以他就叫Zedd。</p>
+<h4 id="生活及事业之初"><a href="#生活及事业之初" class="headerlink" title="生活及事业之初"></a>生活及事业之初</h4><p>捷德出生于苏联萨拉托夫，1992年举家迁至德国后，捷德在莱茵兰-普法尔茨州凯撒斯劳滕市的城区丹森贝格长大。他是一位得到过古典训练的音乐家，父母都是音乐家，四岁起便开始演奏钢琴和鼓。2002年，他开始为Lifeforce Records签约旗下的德国乐队Dioramic演奏。他对制作电子音乐的兴趣是从听到法国电子音乐组合Justice的专辑《†》后被激发出来的。2009年起，他开始制作电子音乐。他的才华被Skrillex发掘了后来Skrillex的帮助。</p>
+<h4 id="音乐制作"><a href="#音乐制作" class="headerlink" title="音乐制作"></a>音乐制作</h4><p>安东以“Zedd”的艺名制作了一系列的混音及原创音乐。他赢得两次Beatport混音比赛，在现场掀起波澜；他的第一支原创单曲《The Anthem》进入了Beatport电子浩室音乐榜20强。他制作的Skrillex的《Scary Monsters and Nice Sprites》的重混版进入了Beatport电子浩室音乐十强榜的第2位。从此他便开始为许多知名艺人制作重混，包括黑眼豆豆、嘎嘎小姐、Skrillex等。</p>
+<p>2011年，捷德制作的嘎嘎小姐的单曲《天生完美》和《夜的嫁衣》重混版被收录到嘎嘎小姐本人第三张录音室专辑《天生完美》的豪华版中。9月，捷德的单曲《Shave It Up》在Skrillex的YouTube页面首先放出了30秒的试听首播，这也是捷德在OWSLA Records唱片公司的第一支单曲。</p>
+<p>2012年，捷德与Interscope Records唱片公司签约，并发行了他在这家厂牌的第一支单曲《Spectrum》，由Matthew Koma演唱。随后，他制作了Eva Simons的歌曲《I Don’t Like You》，也在Interscope发行。他还与Max Martin共同为贾斯汀·比伯创作并制作了第三张录音室专辑《Believe》中的单曲《Beauty and a Beat》。这支单曲在美国公告牌百强单曲榜中最高排名第5位，是捷德参与制作的单曲中排名最高的一支。</p>
+<p>2012年10月，捷德发行个人第一张录音室专辑《Clarity》，在美国电子舞曲专辑排行榜上最高排名第三。2013年9月，发行《Clarity》豪华版，比原版专辑增加四首歌曲，其中包括与帕拉摩尔乐队主唱海莉·威廉斯合作的《Stay the Night》。</p>
+<p>除此以外，2013年，捷德还参与制作了嘎嘎小姐的第4张录音室专辑《ARTPOP》。他也是安室奈美惠的专辑《FEEL》中《Heaven》一曲的制作人。</p>
+<p>2014年1月26日，捷德发行了与马修·柯玛和米莉雅姆·布莱恩特合作的单曲《Find You》，这支单曲收录于同年电影《分歧者》的原声碟中。</p>
+<p>2015年3月10日,捷德发行与Selena Gomez合作的单曲《I Want You To Know》。已在Youtube有超过140,000,000的点阅率。2016年，捷德为美国网络游戏英雄联盟2016赛季全球总决赛作主题曲《ignite》 2017年，捷德与阿莱西娅·卡拉合作的单曲《Stay》。2017年7月7日，Zedd与Liam Payne合作单曲《Get Low》。 2021年与《特战英豪》合作，推出冠军赛单曲《Die for you》</p>
+<h3 id="Baidu"><a href="#Baidu" class="headerlink" title="Baidu"></a>Baidu</h3><p>Zedd，原名安东·斯拉夫斯基（Anton Zaslavski），1989年9月2日出生于俄罗斯萨拉托夫，德国DJ、音乐制作人。</p>
+<p>2010年，取艺名为“Zedd”，并发行首支个人单曲《The Anthem》。2011年3月，发行首张EP《Autonomy》。2012年，与新视镜唱片公司签约，并发行首张个人录音室专辑《Clarity》，专辑内的歌曲《Clarity》获得第56届格莱美奖最佳舞曲录制奖。2013年，第28届国际舞曲音乐大奖最佳突破艺人奖。2014年，与海莉·威廉姆斯合作的歌曲《Stay The Night》获得MTV音乐录影带大奖MTV俱乐部大奖。2015年，发行第二张个人录音室专辑《True Colors》。2016年，制作网络游戏《英雄联盟》S6全球总决赛主题曲《Ignite》。2017年，发行与阿莱西娅·卡拉合作的单曲《Stay》，二人凭借该歌曲入围了第60届格莱美奖最佳流行组合奖。2019年，其制作的单曲《The Middle》在第61届格莱美奖中获得三项提名。</p>
+<h4 id="早年经历"><a href="#早年经历" class="headerlink" title="早年经历"></a>早年经历</h4><p>Zedd原名安东·斯拉夫斯基，出生在俄罗斯的萨拉托夫，三岁随家人搬到德国的凯泽斯劳滕。他从4岁开始学习弹钢琴，12岁开始在一个乐队中担任鼓手。2002年，开始担任德国死核乐队Dioramic的演奏人员。在听了法国电子音乐组合Justice的专辑《†》后，产生了对电子音乐的兴趣。2010年，以“Zedd”的艺名制作了一系列的混音作品及原创音乐，还赢得两次Beatport混音比赛。从此他开始为黑眼豆豆、Lady Gaga、Skrillex等艺人制作歌曲重混音。</p>
+<h4 id="演艺经历"><a href="#演艺经历" class="headerlink" title="演艺经历"></a>演艺经历</h4><p>2010年，发行首支个人单曲《The Anthem》，该曲排到了Beatport电子浩室音乐榜前20名，被收录在同名EP中；同年，他制作的Skrillex的歌曲《Scary Monsters and Nice Sprites》重混版取得了Beatport电子浩室音乐榜的第二名。</p>
+<p>2011年3月，发行个人首张EP《Autonomy》；10月，制作的Lady Gaga的歌曲《Born This Way》重混版被被收录到Lady Gaga第三张录音室专辑《Born This Way》的Remix合辑版本中；10月，签约由Skrillex创立的音乐厂牌OWSLA；11月，发行EP《Shave It – The Aftershave》。<br>2012年，与新视镜唱片公司签约；7月，发行个人EP《Spectrum》；10月，发行首张个人录音室专辑《Clarity》，该专辑以1.2万张的首周销量排在公告牌专辑榜第38名，该专辑入围了公告牌音乐奖最佳舞曲电子乐专辑奖；专辑中，由女歌手Foxes献唱的歌曲《Clarity》在美国公告牌百强单曲榜取得了第八名，获得了第56届格莱美奖最佳舞曲录制奖，入围公告牌音乐奖最佳舞曲电子乐歌曲奖，Zedd凭借该曲入围MTV音乐录影带大奖最具潜力艺人奖；同年，Zedd为贾斯汀·比伯制作了歌曲《Beauty and a Beat》。<br>2013年3月，获得第28届国际舞曲音乐大奖最佳突破艺人奖；7月，为日本歌手安室奈美惠制作的歌曲《Heaven》发布；9月，发布由帕拉摩尔主唱海莉·威廉姆斯献唱的歌曲《Stay the Night》开始，该歌曲取得了英国流行音乐排行榜的亚军，并获得了MTV音乐录影带大奖MTV俱乐部大奖，其MV提名MTV音乐录影带大奖最佳剪辑奖；11月，Lady Gaga发行第三张个人录音室专辑《ARTPOP》，Zedd担任了专辑歌曲《G.U.Y》、《Aura》和《Donatella》的词曲作者以及制作人；同年，入围第41届全美音乐奖最受欢迎电子舞曲艺人奖；此外，他还为魔术犯罪电影《惊天魔盗团》制作了原声歌曲《Codec》。</p>
+<p>2014年1月，发行由Matthew Koma、Miriam Bryant合唱的单曲《Find You》，该歌曲被收录在动作电影《分歧者：异类觉醒》的原声带中；7月，发行与爱莉安娜·格兰德合作的单曲《Break Free》，该歌曲在公告牌百强单曲榜取得了第四名，入围了第16届青少年选择奖最佳分手歌曲奖 、公告牌音乐奖最佳舞曲电子乐歌曲奖；8月，入围第16届青少年选择奖最佳电子舞曲艺人奖；11月9日，入围MTV欧洲音乐奖最佳推荐新人奖；11月23日，入围第42届全美音乐奖最受欢迎电子舞曲艺人奖；12月，推出个人纪录片《Moment of Clarity》。</p>
+<p>2015年2月，发行与赛琳娜·戈麦斯合作的歌曲《I Want You to Know》，该曲获得了第17届青少年选择奖最佳排队歌曲奖的提名；5月，发行第二张个人录音室专辑《True Colors》，《I Want You to Know》被收录其中，该专辑以约5万张的首周销量取得公告牌专辑榜第4名；该专辑获得了公告牌音乐奖最佳最佳舞曲电子乐专辑奖；11月，入围第43届全美音乐奖最受欢迎电子舞曲艺人奖。</p>
+<p>2016年2月，发行由美国灵魂乐歌手Aloe Blacc献唱的单曲《Candyman》；4月，发行与美国女歌手凯莎合作的歌曲《True Colors》；5月，入围公告牌音乐奖最佳最佳舞曲电子乐艺人奖；7月，发行与海莉·斯坦菲尔德、Grey合作的单曲《Starving》；9月，发行为网络游戏《英雄联盟》S6全球总决赛制作的主题曲《Ignite》。</p>
+<p>2017年2月，发行与加拿大女歌手阿莱西娅·卡拉合作的单曲《Stay》，该歌曲在公告牌百强单曲榜取得了第7名，其MV获得了MTV音乐录影带大奖最佳舞曲录影带奖，Zedd与阿莱西娅·卡拉凭借该歌曲入围了第60届格莱美奖最佳流行组合奖，该歌曲获得了第5届iHeartRadio音乐奖-年度最佳舞曲音乐奖，还入围了第19届青少年选择奖最佳合作歌曲奖、最佳夏日歌曲奖和最佳流行歌曲奖；8月，入围第19届青少年选择奖最佳电子舞曲艺人奖和最佳夏日男艺人奖；同年，他发行了与利亚姆·佩恩合作的歌曲《Get Low》。</p>
+<p>2018年1月23日，发行与玛伦·莫里斯、Grey合作的单曲《The Middle，该曲在公告牌百强单曲榜的最好成绩是第五名；该曲在61届格莱美奖获得了年度制作、年度单曲和最佳流行组合三项提名；7月，发行由Elley Duhé演唱的歌曲《Happy Now》。2019年，发行与凯蒂·佩里合作的歌曲《365》。</p>
+<h4 id="个人生活"><a href="#个人生活" class="headerlink" title="个人生活"></a>个人生活</h4><h5 id="家庭"><a href="#家庭" class="headerlink" title="家庭"></a>家庭</h5><p>Zedd的父亲伊戈尔·斯拉夫斯基是一名吉他手兼教师，母亲是一名钢琴老师。</p>
+<h5 id="感情"><a href="#感情" class="headerlink" title="感情"></a>感情</h5><p>2015年1月，Zedd与美国女歌手赛琳娜·戈麦斯开始交往，二人于同年4月分手。</p>
+<hr>
+<p><a target="_blank" rel="noopener" href="https://music.apple.com/cn/artist/zedd/368433979">Apple Music - Zedd</a></p>
+
+      </section>
+      
+        <div class="post-tags">
+          <span>标签：</span>
+          
+  <a href="/tags#音乐" >
+    <span class="tag-code">音乐</span>
+  </a>
+
+        </div>
+       
+    
+    
+  <div class="nav-container">
+    <!-- reverse left and right to put prev and next in a more logic postition -->
+    
+      <a class="nav-left" href="/listen/Daft_Punk/" target="_blank">
+        <span class="nav-arrow">← </span>
+        
+          Daft Punk
+        
+      </a>
+    
+    
+      <a class="nav-right" href="/about/top/" target="_blank">
+        
+          【手动置顶】新的开始？
+        
+        <span class="nav-arrow"> →</span>
+      </a>
+    
+  </div>
+
+    
+      <div class="advertisement">
+        <p> 广告：快速学习 Crash Course十分钟速成课 <a target="_blank" rel="noopener" href="https://crashcourse.club/">字幕组网站</a></p>
+      </div>
+    
+    
+      
+
+<div id="waline"></div>
+<script defer src="/js/waline-qqavatar.js"></script>
+
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/@waline/client@v2/dist/waline.css"
+/>
+<script type="module">
+  import { init } from 'https://unpkg.com/@waline/client@v2/dist/waline.mjs';
+
+  const locale = {
+    nick: '昵称',
+    nickError: '昵称不能少于3个英文字符或2个中文汉字',
+    mail: '邮箱(可用QQ邮箱获取头像)',
+    mailError: '请填写正确的邮件地址',
+    link: '网址',
+    optional: '可选',
+    placeholder: '' || '说、什么8 \n\n可使用QQ邮箱获取QQ头像，或在gravatar.com注册后使用邮箱绑定头像 \n支持Markdown语法：*斜体*, **粗体**, \# - ###### 1-6级标题, *** 或 --- = 水平分割线, ~~删除线~~, > 引用内容, `代码块`, 1. 序号列表, * 无序列表, ^上角标^, ~下角标~, <br> = 空行, [链接文字](链接地址), ![图片名称](图片地址.png), ',
+    sofa: '来发评论吧~',
+    submit: '提交',
+    like: '喜欢',
+    cancelLike: '取消喜欢',
+    reply: '回复',
+    cancelReply: '取消回复',
+    comment: '评论',
+    refresh: '刷新',
+    more: '加载更多...',
+    preview: '预览',
+    emoji: '表情',
+    uploadImage: '上传图片',
+    seconds: '秒前',
+    minutes: '分钟前',
+    hours: '小时前',
+    days: '天前',
+    now: '刚刚',
+    uploading: '正在上传',
+    login: '登录',
+    logout: '退出',
+    admin: '博主',
+    sticky: '置顶',
+    word: '字',
+    wordHint: '评论字数应在 $0 到 $1 字之间！\n当前字数：$2',
+    anonymous: '匿名',
+    level0: '潜水',
+    level1: '冒泡',
+    level2: '吐槽',
+    level3: '活跃',
+    level4: '话痨',
+    level5: '传说',
+    gif: '表情包',
+    gifSearchPlaceholder: '搜索表情包',
+    profile: '个人资料',
+    approved: '通过',
+    waiting: '待审核',
+    spam: '垃圾',
+    unsticky: '取消置顶',
+    oldest: '按倒序',
+    latest: '按正序',
+    hottest: '按热度',
+    reactionTitle: '你认为这篇文章怎么样？',
+  };
+
+  init({
+    el: "#waline",
+    serverURL: "" || "walinecf.zhuochi.org",
+    appId: "" || "M2JD6yGQhefhH2O0aSjFfclc-MdYXbMMI",
+    appKey: "" || "arEPHdbMnKwMjQgiWsLgw34N",
+    path:  "" || window.location.pathname,  // window.location.pathname.replace(/\/$/,''),
+    login: "disable",  // 'enable' || 'disable' || 'force'
+    avatarCDN: "https://gravatar.loli.top/avatar/",
+    //avatar: '',
+    placeholder: "",
+    pageSize: 10,
+    meta: ["nick", "mail"],
+    requiredMeta: [""],
+    pageview: "true" && "",
+    emoji: [
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/tieba",
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/weibo",
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/qq",
+      "https://testingcf.jsdelivr.net/gh/walinejs/emojis/alus",
+      "https://testingcf.jsdelivr.net/gh/Saidosi/azuki-emoji-for-waline@1.0/azukisan",
+      "https://testingcf.jsdelivr.net/gh/norevi/blob-emoji-for-waline@2.0/blobs-gif",
+    ],
+    locale,
+  });
+
+  $('.wl-actions').append("<a href=https://emoji.zhuochi.org target=_blank id=wl-emoji-wrapper><img src=/images/emoji.png class=wl-action id=wl-emoji></a>")
+
+//// Clean TEXTAREA 
+//$(".wl-cards").change(function () {
+//  alert('changed')
+  //('#wl-edit').html("")
+//})
+
+//! Not functional
+//$(".primary .wl-btn").click(function () {
+  //document.getElementsByClassName('wl-num')[0].innerHTML ++
+//})
+</script>
+
+<!--
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/waline/2.15.6/waline.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/waline/2.15.6/waline.min.css">
+-->
+    
+    
+    
+      <div class="qrcode" id="qr-box">
+    <img id="share-qrcode" class="qrcode-image" src=""/>
+    <div class="qrcode-notice">保存二维码，分享此文章</div>
+</div>
+
+<!--<script type="text/javascript" src="/js/qrious.min.js"></script>-->
+<script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/qrious/4.0.2/qrious.min.js" ></script>
+<script>
+    // qrcode
+    let qr = new QRious({
+        background: '#F0FFFF',
+        backgroundAlpha: 1,
+        foreground: '#0096FF',
+        foregroundAlpha: 0.8,
+        level: 'L',
+        mime: "image/gif",
+        padding: null, // pixels
+        size: 100,
+        element: document.getElementById('share-qrcode'),
+        value: document.location.href,
+    })
+
+    $("#share-qrcode").click(function () {
+        let img = document.getElementById('share-qrcode')
+        let imgurl = img.src
+        let a = document.createElement('a')
+        let down_event = new MouseEvent('click')
+        a.download = 'Zedd-CloudPool浊池'
+        a.href = imgurl
+        a.dispatchEvent(down_event)
+    })
+</script>
+
+
+    
+  </article>
+</main>
+
+<script>
+    (function () {
+      var url = "https://zhuochi.org/listen/Zedd/";
+      var banner = "";
+      if (banner !== "" && banner !== "undefined" && banner !== "null") {
+        $("#article-banner").css({
+          "background-image": "url(" + banner + ")",
+        });
+      } else {
+        $("#article-banner").geopattern(url);
+      }
+      $(".header").removeClass("fixed-header");
+    })();
+  </script>
+
+<script>
+  // error image
+  $(".markdown-content img").on("error", function () {
+    $(this).attr("src", "/images/error.png");
+    $(this).css({cursor: "default",});
+  });
+</script>
+ 
+    <aside class="sidebar">
+  <span class="scroll-top fa fa-arrow-up"></span>
+  <span class="fa fa-share-alt share-icon">
+    <span class="list-icon">
+      
+        <a href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=https://zhuochi.org/listen/Zedd/index.html&title=Zedd&pics=https://zhuochi.org/images/logo.svg&desc=2 Albums, 29 Songs&summary=CloudPool浊池是由年轻人管理的博客" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659969569042" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1231"><path d="M1023.210667 395.690667c-2.005333-6.08-7.381333-10.410667-13.781333-10.944l-347.114667-29.802667L526.634667 33.984C524.117333 28.096 518.4 24.256 512 24.256s-12.181333 3.861333-14.677333 9.749333l-135.616 320.938667L14.570667 384.746667c-6.357333 0.533333-11.797333 4.864-13.781333 10.944-1.941333 6.101333-0.106667 12.778667 4.714667 16.96l263.338667 228.138667L189.888 980.16c-1.429333 6.208 1.002667 12.757333 6.122667 16.512 5.205333 3.733333 12.117333 4.010667 17.642667 0.682667L512 817.450667l298.282667 179.946667c2.581333 1.557333 5.418667 2.346667 8.32 2.346667 3.221333 0 6.528-1.002667 9.344-3.008 5.162667-3.84 7.594667-10.368 6.122667-16.576l-62.442667-268.352c26.730667-13.482667 56.277333-36.245333 56.277333-36.245333s-116.864 57.066667-536.341333 29.205333L595.626667 484.437333c0 0-11.968-18.581333-392.981333-31.872-25.408-0.917333 310.677333-63.722667 558.933333-10.645333L456.298667 660.906667c0 0 122.453333 18.197333 307.328 16.085333l-8.448-36.181333 263.36-228.16C1023.381333 408.469333 1025.216 401.792 1023.210667 395.690667z" p-id="1232" fill="#04b2f1"></path></svg>
+        </a> 
+      
+      
+        <a href="https://service.weibo.com/share/share.php?url=https://zhuochi.org/listen/Zedd/index.html&title=Zedd&pic=https://zhuochi.org/images/logo.svg&summary=2 Albums, 29 Songs" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659970330786" class="icon" viewBox="0 0 1138 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="3639" fill="#04b2f1"><path d="M914.432 518.144q27.648 21.504 38.912 51.712t9.216 62.976-14.336 65.536-31.744 59.392q-34.816 48.128-78.848 81.92t-91.136 56.32-94.72 35.328-89.6 18.944-75.264 7.68-51.712 1.536-49.152-2.56-68.096-10.24-78.336-21.504-79.872-36.352-74.24-55.296-59.904-78.848q-16.384-29.696-22.016-63.488t-5.632-86.016q0-22.528 7.68-51.2t27.136-63.488 53.248-75.776 86.016-90.112q51.2-48.128 105.984-85.504t117.248-57.856q28.672-10.24 63.488-11.264t57.344 11.264q10.24 11.264 19.456 23.04t12.288 29.184q3.072 14.336 0.512 27.648t-5.632 26.624-5.12 25.6 2.048 22.528q17.408 2.048 33.792-1.536t31.744-9.216 31.232-11.776 33.28-9.216q27.648-5.12 54.784-4.608t49.152 7.68 36.352 22.016 17.408 38.4q2.048 14.336-2.048 26.624t-8.704 23.04-7.168 22.016 1.536 23.552q3.072 7.168 14.848 13.312t27.136 12.288 32.256 13.312 29.184 16.384zM656.384 836.608q26.624-16.384 53.76-45.056t44.032-64 18.944-75.776-20.48-81.408q-19.456-33.792-47.616-57.344t-62.976-37.376-74.24-19.968-80.384-6.144q-78.848 0-139.776 16.384t-105.472 43.008-72.192 60.416-38.912 68.608q-11.264 33.792-6.656 67.072t20.992 62.976 42.496 53.248 57.856 37.888q58.368 25.6 119.296 32.256t116.224 0.512 100.864-21.504 74.24-33.792zM522.24 513.024q20.48 8.192 38.912 18.432t32.768 27.648q10.24 12.288 17.92 30.72t10.752 39.424 1.536 42.496-9.728 38.912q-8.192 18.432-19.968 37.376t-28.672 35.328-40.448 29.184-57.344 18.944q-61.44 11.264-117.76-11.264t-88.064-74.752q-12.288-39.936-13.312-70.656t16.384-66.56q13.312-27.648 40.448-51.712t62.464-38.912 75.264-17.408 78.848 12.8zM359.424 764.928q37.888 3.072 57.856-18.432t21.504-48.128-15.36-47.616-52.736-16.896q-27.648 3.072-43.008 23.552t-17.408 43.52 9.728 42.496 39.424 21.504zM778.24 6.144q74.752 0 139.776 19.968t113.664 57.856 76.288 92.16 27.648 122.88q0 33.792-16.384 50.688t-35.328 17.408-35.328-14.336-16.384-45.568q0-40.96-22.528-77.824t-59.392-64.512-84.48-43.52-96.768-15.872q-31.744 0-47.104-15.36t-14.336-34.304 18.944-34.304 51.712-15.36zM778.24 169.984q95.232 0 144.384 48.64t49.152 146.944q0 30.72-10.24 43.52t-22.528 11.264-22.528-14.848-10.24-35.84q0-60.416-34.816-96.256t-93.184-35.84q-19.456 0-28.672-10.752t-9.216-23.04 9.728-23.04 28.16-10.752z" p-id="3640"></path></svg>
+        </a>
+      
+      
+        <a href="https://www.douban.com/recommend/?url=https://zhuochi.org/listen/Zedd/index.html&title=Zedd&pic=https://zhuochi.org/images/logo.svg&summary=2 Albums, 29 Songs" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659970941550" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1055"><path d="M88 72.9h848v95.5H88z" p-id="1056" fill="#04b2f1"></path><path d="M88 72.9h848v95.5H88zM862.3 641.5V268H161.7v373.5h700.6zM263.4 363.4h498.4v182.5H263.4V363.4z" p-id="1057" fill="#04b2f1"></path><path d="M862.3 641.5V268H161.7v373.5h700.6zM263.4 363.4h498.4v182.5H263.4V363.4zM710.8 856.7c30.5-46.7 59.3-100.8 85.9-162.2l-102-37.2c-26.5 72.8-57.4 139.4-92.5 199.4H424.9c-29.4-77.8-62.6-144.3-99.8-199.4l-93.8 37.2c38.6 58 69.9 111.9 93.8 162.2H64v94.5h896v-94.5H710.8z" p-id="1058" fill="#04b2f1"></path><path d="M710.8 856.7c30.5-46.7 59.3-100.8 85.9-162.2l-102-37.2c-26.5 72.8-57.4 139.4-92.5 199.4H424.9c-29.4-77.8-62.6-144.3-99.8-199.4l-93.8 37.2c38.6 58 69.9 111.9 93.8 162.2H64v94.5h896v-94.5H710.8z" p-id="1059" fill="#04b2f1"></path></svg>
+        </a>
+      
+      
+        <a href="http://tieba.baidu.com/f/commit/share/openShareApi?url=https://zhuochi.org/listen/Zedd/index.html&title=Zedd&pic=https://zhuochi.org/images/logo.svg&desc=2 Albums, 29 Songs" style="position:relative" aria-hidden="true" target="_blank">
+        <svg t="1659968685554" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1659"><path d="M1024 862.826667a161.152 161.152 0 0 1-161.173333 161.173333h-701.632a161.152 161.152 0 0 1-161.173334-161.173333v-701.632a161.194667 161.194667 0 0 1 161.173334-161.173334h701.632a161.194667 161.194667 0 0 1 161.173333 161.173334v701.632z" fill="#04b2f1" p-id="1660"></path><path d="M828.842667 250.261333h-173.461334v-36.522666a17.066667 17.066667 0 0 0-17.066666-17.066667h-41.941334a17.045333 17.045333 0 0 0-17.045333 17.066667v263.296h-24.896a17.066667 17.066667 0 0 0-17.045333 17.066666V810.218667a17.066667 17.066667 0 0 0 17.045333 17.088h257.365333a17.066667 17.066667 0 0 0 17.066667-17.088v-58.986667h-0.256v-198.144h0.256v-58.986667a17.066667 17.066667 0 0 0-17.066667-17.066666H655.381333v-150.72h173.461334a17.066667 17.066667 0 0 0 17.066666-17.066667v-41.941333a17.066667 17.066667 0 0 0-17.066666-17.045334z m-93.376 302.848c9.429333 0 17.045333 7.637333 17.045333 17.066667v164.010667a17.066667 17.066667 0 0 1-17.045333 17.066666h-104.981334a17.045333 17.045333 0 0 1-17.045333-17.066666v-164.010667a17.066667 17.066667 0 0 1 17.045333-17.066667h104.981334zM197.909333 657.408h41.941334a17.088 17.088 0 0 0 17.088-17.088v-358.741333h174.528v358.741333a17.066667 17.066667 0 0 0 17.045333 17.088h41.941333a17.088 17.088 0 0 0 17.088-17.088v-417.749333c0-9.408-7.658667-17.066667-17.088-17.066667h-292.522666a17.066667 17.066667 0 0 0-17.045334 17.066667v417.749333a17.024 17.024 0 0 0 17.024 17.088z" fill="#FFFFFF" p-id="1661"></path><path d="M492.970667 739.2v-0.170667a110.656 110.656 0 0 1-110.656-110.656h-0.106667v-296.042666a17.066667 17.066667 0 0 0-17.066667-17.045334h-41.941333a17.045333 17.045333 0 0 0-17.045333 17.045334v296.042666h-0.362667a110.677333 110.677333 0 0 1-110.677333 110.656v0.170667a17.045333 17.045333 0 0 0-17.045334 17.066667v42.112a17.066667 17.066667 0 0 0 17.045334 17.066666 186.602667 186.602667 0 0 0 148.928-74.176 186.624 186.624 0 0 0 148.928 74.176 17.045333 17.045333 0 0 0 17.045333-17.066666v-42.112a17.024 17.024 0 0 0-17.045333-17.066667z" fill="#FFFFFF" p-id="1662"></path><path d="M865.450667 873.685333c17.664-3.797333 15.253333-24.896 14.741333-29.504-0.874667-7.125333-9.237333-19.541333-20.586667-18.581333-14.293333 1.28-16.362667 21.930667-16.362666 21.930667-1.962667 9.557333 4.608 29.952 22.208 26.154666z m18.752 36.693334c-0.533333 1.493333-1.664 5.290667-0.682667 8.597333 1.962667 7.402667 8.405333 7.744 8.405333 7.744h9.258667v-22.613333h-9.898667a10.837333 10.837333 0 0 0-7.082666 6.272z m14.037333-72.085334c9.749333 0 17.621333-11.221333 17.621333-25.109333 0-13.866667-7.872-25.088-17.621333-25.088-9.728 0-17.642667 11.221333-17.642667 25.088 0 13.888 7.893333 25.109333 17.642667 25.109333z m41.984 1.664c13.034667 1.706667 21.418667-12.202667 23.082667-22.762666 1.706667-10.538667-6.698667-22.762667-15.936-24.853334-9.258667-2.112-20.778667 12.672-21.845334 22.357334-1.258667 11.797333 1.685333 23.573333 14.698667 25.258666z m31.936 61.973334s-20.16-15.594667-31.936-32.448c-15.957333-24.874667-38.634667-14.762667-46.208-2.112-7.552 12.650667-19.328 20.629333-20.992 22.741333-1.685333 2.090667-24.362667 14.336-19.328 36.672 5.034667 22.336 22.72 21.909333 22.72 21.909333s13.013333 1.28 28.138667-2.112c15.104-3.349333 28.117333 0.832 28.117333 0.832s35.306667 11.818667 44.970667-10.944c9.621333-22.72-5.482667-34.538667-5.482667-34.538666z m-60.394667 33.877333h-22.954666c-9.92-1.984-13.866667-8.746667-14.357334-9.898667-0.490667-1.173333-3.306667-6.613333-1.813333-15.850666 4.288-13.866667 16.490667-14.848 16.490667-14.848h12.224v-15.04l10.410666 0.149333v55.488z m42.752-0.170667h-26.410666c-10.24-2.624-10.709333-9.92-10.709334-9.92v-29.205333l10.709334-0.170667v26.261334c0.64 2.794667 4.117333 3.306667 4.117333 3.306666h10.88v-29.397333h11.413333v39.125333z m37.376-77.994666c0-5.034667-4.181333-20.224-19.733333-20.224-15.552 0-17.642667 14.336-17.642667 24.469333 0 9.685333 0.810667 23.189333 20.16 22.741333 19.328-0.426667 17.216-21.909333 17.216-26.986666z" fill="#FFFFFF" p-id="1663"></path></svg>
+        </a>
+      
+      
+        <a href="https://connect.qq.com/widget/shareqq/index.html?url=https://zhuochi.org/listen/Zedd/index.html&title=Zedd&pic=https://zhuochi.org/images/logo.svg&desc=2 Albums, 29 Songs&summary=CloudPool浊池是由年轻人管理的博客" aria-hidden="true" target="_blank">
+        <svg t="1659969969936" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2714"><path d="M866.991 707.772c0 0-25.341 69.55-71.877 132.071 0 0 83.050 28.439 76.137 102.196 0 0 2.709 82.331-177.613 76.685 0 0-126.817-9.898-164.88-63.85h-33.53c-38.018 54.006-164.834 63.85-164.834 63.85-180.431 5.7-177.556-76.685-177.556-76.685-7.025-73.756 76.081-102.196 76.081-102.196-46.475-62.519-71.875-132.071-71.875-132.071-112.759 183.141-101.477-25.567-101.477-25.567 21.141-123.495 109.949-204.384 109.949-204.384-12.677-112.157 33.805-132.078 33.805-132.078 9.68-346.979 306.473-340.887 312.675-340.722 6.249-0.163 302.931-6.256 312.72 340.723 0 0 46.538 19.866 33.812 132.078 0 0 88.751 80.89 109.886 204.384 0.055-0.001 11.285 208.707-101.421 25.566v0 0z" p-id="2715" fill="#04b2f1"></path></svg>
+        </a>
+      
+    </span>
+  </span>
+</aside>
+    <footer class="app-footer">
+  <p class="copyright">
+    Copyright &copy; 2017 - 2023, CloudPool浊池, All Rights Reserved. <a href="https://zhuochi.org" target="_blank">zhuochi.org</a> || <a href="https://voiiu.com" target="_blank">voiiu.com</a><br/> 本站为基于<a href="https://hexo.io" target="_blank">Hexo</a>的静态博客，<span id="busuanzi_container_site_pv">总访问量 <span id="busuanzi_value_site_pv"></span> 次</span><!--，来自 <span id="busuanzi_value_site_uv"></span> 个 IP--><br/> 主题源自 <a target="_blank" rel="noopener" href="https://github.com/yanm1ng/hexo-theme-vexo">Vexo</a> by yanm1ng，感谢 <a target="_blank" rel="noopener" href="https://github.com/MoePlayer/APlayer">APlayer</a> by DIYgod，感谢 <a target="_blank" rel="noopener" href="https://github.com/stevenjoezhang/live2d-widget">Live2D Widget</a> by stevenjoezhang & <a target="_blank" rel="noopener" href="https://github.com/xiazeyu/live2d-widget-models">live2d-widget-models</a> by xiazeyu<br/>
+  </p>
+</footer>
+
+<script>
+  function async(u, c) {
+    var d = document, t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0];
+    o.src = u;
+    if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+    s.parentNode.insertBefore(o, s);
+  }
+</script>
+
+<script src="/js/script.js"></script>
+ <!--无法移至head.js中，原因不明-->
+<script type="text/javascript" src="/js/busuanzi.min.js" async></script>
+
+
+  </body>
+</html>
