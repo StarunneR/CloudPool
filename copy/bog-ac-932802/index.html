@@ -512,14 +512,29 @@
   </div>
 </div>
 
-  <div class="catalog-container" id="catalog">
+<script>
+  (function () {
+    var url = "https://zhuochi.org/copy/bog-ac-932802/";
+    var banner = "";
+    if (banner !== "" && banner !== "undefined" && banner !== "null") {
+      $("#article-banner").css({
+        "background-image": "url(" + banner + ")",
+      });
+    } else {
+      $("#article-banner").geopattern(url);
+    }
+    $(".header").removeClass("fixed-header");
+  })();
+</script>
+
+  <aside class="catalog-container" id="catalog">
   <div class="toc-main">
     <div class="toc-title">目录</div>
     
       <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#1"><span class="toc-nav-text">1</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#2"><span class="toc-nav-text">2</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#3"><span class="toc-nav-text">3</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#4"><span class="toc-nav-text">4</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#5"><span class="toc-nav-text">5</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#6"><span class="toc-nav-text">6</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#7"><span class="toc-nav-text">7</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#8"><span class="toc-nav-text">8</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#9"><span class="toc-nav-text">9</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#10"><span class="toc-nav-text">10</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#11"><span class="toc-nav-text">11</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#12"><span class="toc-nav-text">12</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#13"><span class="toc-nav-text">13</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#14"><span class="toc-nav-text">14</span></a></li></ol>
     
   </div>
-</div>
+</aside>
 
 <main class="app-body flex-box">
   <article class="post-article">
@@ -846,20 +861,31 @@
   </article>
 </main>
 
+<div id="article-banner">
+  <h2 class="post-title">《故事新编》（拟题）</h2>
+  
+   
+    <p class="post-date">2023-03-16</p>
+  
+  <div class="arrow-down">
+    <a href="javascript:;"></a>
+  </div>
+</div>
+
 <script>
-    (function () {
-      var url = "https://zhuochi.org/copy/bog-ac-932802/";
-      var banner = "";
-      if (banner !== "" && banner !== "undefined" && banner !== "null") {
-        $("#article-banner").css({
-          "background-image": "url(" + banner + ")",
-        });
-      } else {
-        $("#article-banner").geopattern(url);
-      }
-      $(".header").removeClass("fixed-header");
-    })();
-  </script>
+  (function () {
+    var url = "https://zhuochi.org/copy/bog-ac-932802/";
+    var banner = "";
+    if (banner !== "" && banner !== "undefined" && banner !== "null") {
+      $("#article-banner").css({
+        "background-image": "url(" + banner + ")",
+      });
+    } else {
+      $("#article-banner").geopattern(url);
+    }
+    $(".header").removeClass("fixed-header");
+  })();
+</script>
 
 <script>
   // error image

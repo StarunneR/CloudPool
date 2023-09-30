@@ -512,14 +512,29 @@
   </div>
 </div>
 
-  <div class="catalog-container" id="catalog">
+<script>
+  (function () {
+    var url = "https://zhuochi.org/tech/ac-dump/";
+    var banner = "";
+    if (banner !== "" && banner !== "undefined" && banner !== "null") {
+      $("#article-banner").css({
+        "background-image": "url(" + banner + ")",
+      });
+    } else {
+      $("#article-banner").geopattern(url);
+    }
+    $(".header").removeClass("fixed-header");
+  })();
+</script>
+
+  <aside class="catalog-container" id="catalog">
   <div class="toc-main">
     <div class="toc-title">目录</div>
     
       <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#MOOC%E5%B9%B3%E5%8F%B0"><span class="toc-nav-text">MOOC平台</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#%E4%B8%AD%E5%9B%BD%E5%A4%A7%E5%AD%A6"><span class="toc-nav-text">中国大学</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#%E4%B8%96%E7%95%8C%E5%A4%A7%E5%AD%A6"><span class="toc-nav-text">世界大学</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#%E5%85%B6%E4%BB%96%E5%AD%A6%E4%B9%A0%E5%B9%B3%E5%8F%B0"><span class="toc-nav-text">其他学习平台</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#%E6%90%9C%E7%B4%A2"><span class="toc-nav-text">搜索</span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#%E8%BD%AF%E4%BB%B6"><span class="toc-nav-text">软件</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#%E5%86%B0%E7%82%B9%E6%96%87%E5%BA%93%E4%B8%8B%E8%BD%BD%E5%99%A8-or-%E8%B1%86%E4%B8%81%E5%BD%93%E5%BD%93%E4%B8%8B%E8%BD%BD%E5%99%A8"><span class="toc-nav-text">冰点文库下载器 or 豆丁当当下载器</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#PandaOCR-or-PandaOCR-Pro%E4%B8%93%E4%B8%9A%E7%89%88-or-%E5%A4%A9%E8%8B%A5OCR%E5%BC%80%E6%BA%90%E7%89%88V5-0-0"><span class="toc-nav-text">PandaOCR or PandaOCR.Pro专业版 or 天若OCR开源版V5.0.0</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#%E5%AD%A6%E4%B9%A0%E8%B5%84%E6%BA%90%E6%8E%A8%E8%8D%90"><span class="toc-nav-text">学习资源推荐</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#Crash-Course"><span class="toc-nav-text">Crash Course</span></a></li></ol></li></ol>
     
   </div>
-</div>
+</aside>
 
 <main class="app-body flex-box">
   <article class="post-article">
@@ -843,20 +858,31 @@
   </article>
 </main>
 
+<div id="article-banner">
+  <h2 class="post-title">学术垃圾场</h2>
+  
+   
+    <p class="post-date">2022-03-30</p>
+  
+  <div class="arrow-down">
+    <a href="javascript:;"></a>
+  </div>
+</div>
+
 <script>
-    (function () {
-      var url = "https://zhuochi.org/tech/ac-dump/";
-      var banner = "";
-      if (banner !== "" && banner !== "undefined" && banner !== "null") {
-        $("#article-banner").css({
-          "background-image": "url(" + banner + ")",
-        });
-      } else {
-        $("#article-banner").geopattern(url);
-      }
-      $(".header").removeClass("fixed-header");
-    })();
-  </script>
+  (function () {
+    var url = "https://zhuochi.org/tech/ac-dump/";
+    var banner = "";
+    if (banner !== "" && banner !== "undefined" && banner !== "null") {
+      $("#article-banner").css({
+        "background-image": "url(" + banner + ")",
+      });
+    } else {
+      $("#article-banner").geopattern(url);
+    }
+    $(".header").removeClass("fixed-header");
+  })();
+</script>
 
 <script>
   // error image

@@ -512,14 +512,29 @@
   </div>
 </div>
 
-  <div class="catalog-container" id="catalog">
+<script>
+  (function () {
+    var url = "https://zhuochi.org/copy/adao33006693-4/";
+    var banner = "";
+    if (banner !== "" && banner !== "undefined" && banner !== "null") {
+      $("#article-banner").css({
+        "background-image": "url(" + banner + ")",
+      });
+    } else {
+      $("#article-banner").geopattern(url);
+    }
+    $(".header").removeClass("fixed-header");
+  })();
+</script>
+
+  <aside class="catalog-container" id="catalog">
   <div class="toc-main">
     <div class="toc-title">目录</div>
     
       <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#%E7%AC%AC%E4%B8%89%E5%8D%B7"><span class="toc-nav-text">第三卷</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#01"><span class="toc-nav-text">01</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#02"><span class="toc-nav-text">02</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#03"><span class="toc-nav-text">03</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#04"><span class="toc-nav-text">04</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#05"><span class="toc-nav-text">05</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#06"><span class="toc-nav-text">06</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#07"><span class="toc-nav-text">07</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#08"><span class="toc-nav-text">08</span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#09"><span class="toc-nav-text">09</span></a></li></ol></li></ol>
     
   </div>
-</div>
+</aside>
 
 <main class="app-body flex-box">
   <article class="post-article">
@@ -822,20 +837,31 @@
   </article>
 </main>
 
+<div id="article-banner">
+  <h2 class="post-title">《我的室友虽然是个福利姬但是她贼喜欢吃我做的饭》第三卷（咕咕咕中）</h2>
+  
+   
+    <p class="post-date">2021-04-24</p>
+  
+  <div class="arrow-down">
+    <a href="javascript:;"></a>
+  </div>
+</div>
+
 <script>
-    (function () {
-      var url = "https://zhuochi.org/copy/adao33006693-4/";
-      var banner = "";
-      if (banner !== "" && banner !== "undefined" && banner !== "null") {
-        $("#article-banner").css({
-          "background-image": "url(" + banner + ")",
-        });
-      } else {
-        $("#article-banner").geopattern(url);
-      }
-      $(".header").removeClass("fixed-header");
-    })();
-  </script>
+  (function () {
+    var url = "https://zhuochi.org/copy/adao33006693-4/";
+    var banner = "";
+    if (banner !== "" && banner !== "undefined" && banner !== "null") {
+      $("#article-banner").css({
+        "background-image": "url(" + banner + ")",
+      });
+    } else {
+      $("#article-banner").geopattern(url);
+    }
+    $(".header").removeClass("fixed-header");
+  })();
+</script>
 
 <script>
   // error image

@@ -512,6 +512,21 @@
   </div>
 </div>
 
+<script>
+  (function () {
+    var url = "https://zhuochi.org/404.html";
+    var banner = "";
+    if (banner !== "" && banner !== "undefined" && banner !== "null") {
+      $("#article-banner").css({
+        "background-image": "url(" + banner + ")",
+      });
+    } else {
+      $("#article-banner").geopattern(url);
+    }
+    $(".header").removeClass("fixed-header");
+  })();
+</script>
+
 <main class="app-body flex-box">
   <article class="post-article">
     
@@ -631,20 +646,31 @@
   </article>
 </main>
 
+<div id="article-banner">
+  <h2 class="post-title">留言板</h2>
+  
+    <h3 class="post-subtitle">说些什么</h3>
+  
+  
+  <div class="arrow-down">
+    <a href="javascript:;"></a>
+  </div>
+</div>
+
 <script>
-    (function () {
-      var url = "https://zhuochi.org/404.html";
-      var banner = "";
-      if (banner !== "" && banner !== "undefined" && banner !== "null") {
-        $("#article-banner").css({
-          "background-image": "url(" + banner + ")",
-        });
-      } else {
-        $("#article-banner").geopattern(url);
-      }
-      $(".header").removeClass("fixed-header");
-    })();
-  </script>
+  (function () {
+    var url = "https://zhuochi.org/404.html";
+    var banner = "";
+    if (banner !== "" && banner !== "undefined" && banner !== "null") {
+      $("#article-banner").css({
+        "background-image": "url(" + banner + ")",
+      });
+    } else {
+      $("#article-banner").geopattern(url);
+    }
+    $(".header").removeClass("fixed-header");
+  })();
+</script>
 
 <script>
   // error image

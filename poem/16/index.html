@@ -512,6 +512,21 @@
   </div>
 </div>
 
+<script>
+  (function () {
+    var url = "https://zhuochi.org/poem/16/";
+    var banner = "";
+    if (banner !== "" && banner !== "undefined" && banner !== "null") {
+      $("#article-banner").css({
+        "background-image": "url(" + banner + ")",
+      });
+    } else {
+      $("#article-banner").geopattern(url);
+    }
+    $(".header").removeClass("fixed-header");
+  })();
+</script>
+
 <main class="app-body flex-box">
   <article class="post-article">
     
@@ -615,10 +630,10 @@
   <div class="nav-container">
     <!-- reverse left and right to put prev and next in a more logic postition -->
     
-      <a class="nav-left" href="/copy/atan-mmmddy/" target="_blank">
+      <a class="nav-left" href="/copy/atan-bgr/" target="_blank">
         <span class="nav-arrow">← </span>
         
-          《魅魔们的地狱》
+          《捕光人》
         
       </a>
     
@@ -786,20 +801,31 @@
   </article>
 </main>
 
+<div id="article-banner">
+  <h2 class="post-title">16（突然）</h2>
+  
+   
+    <p class="post-date">2022-09-03</p>
+  
+  <div class="arrow-down">
+    <a href="javascript:;"></a>
+  </div>
+</div>
+
 <script>
-    (function () {
-      var url = "https://zhuochi.org/poem/16/";
-      var banner = "";
-      if (banner !== "" && banner !== "undefined" && banner !== "null") {
-        $("#article-banner").css({
-          "background-image": "url(" + banner + ")",
-        });
-      } else {
-        $("#article-banner").geopattern(url);
-      }
-      $(".header").removeClass("fixed-header");
-    })();
-  </script>
+  (function () {
+    var url = "https://zhuochi.org/poem/16/";
+    var banner = "";
+    if (banner !== "" && banner !== "undefined" && banner !== "null") {
+      $("#article-banner").css({
+        "background-image": "url(" + banner + ")",
+      });
+    } else {
+      $("#article-banner").geopattern(url);
+    }
+    $(".header").removeClass("fixed-header");
+  })();
+</script>
 
 <script>
   // error image

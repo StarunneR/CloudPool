@@ -512,14 +512,29 @@
   </div>
 </div>
 
-  <div class="catalog-container" id="catalog">
+<script>
+  (function () {
+    var url = "https://zhuochi.org/story/《SECOND LIFE》翻译 by 缀理/";
+    var banner = "";
+    if (banner !== "" && banner !== "undefined" && banner !== "null") {
+      $("#article-banner").css({
+        "background-image": "url(" + banner + ")",
+      });
+    } else {
+      $("#article-banner").geopattern(url);
+    }
+    $(".header").removeClass("fixed-header");
+  })();
+</script>
+
+  <aside class="catalog-container" id="catalog">
   <div class="toc-main">
     <div class="toc-title">目录</div>
     
       <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-5"><a class="toc-nav-link" href="#%E2%96%BC-1-%E4%B8%8A"><span class="toc-nav-text">▼ 1 上</span></a></li><li class="toc-nav-item toc-nav-level-5"><a class="toc-nav-link" href="#%E2%96%BC-1-%E4%B8%8B"><span class="toc-nav-text">▼ 1 下</span></a></li><li class="toc-nav-item toc-nav-level-5"><a class="toc-nav-link" href="#%E2%96%BC-2-%E4%B8%8A"><span class="toc-nav-text">▼ 2 上</span></a></li><li class="toc-nav-item toc-nav-level-5"><a class="toc-nav-link" href="#%E2%96%BC-2-%E4%B8%8B"><span class="toc-nav-text">▼ 2 下</span></a></li><li class="toc-nav-item toc-nav-level-5"><a class="toc-nav-link" href="#%E2%96%BC-3-%E4%B8%8A"><span class="toc-nav-text">▼ 3 上</span></a></li><li class="toc-nav-item toc-nav-level-5"><a class="toc-nav-link" href="#%E2%96%BC-3-%E4%B8%AD"><span class="toc-nav-text">▼ 3 中</span></a></li><li class="toc-nav-item toc-nav-level-5"><a class="toc-nav-link" href="#%E2%96%BC-3-%E4%B8%8B"><span class="toc-nav-text">▼ 3 下</span></a></li><li class="toc-nav-item toc-nav-level-5"><a class="toc-nav-link" href="#%E2%96%BC-4-%E4%B8%8A"><span class="toc-nav-text">▼ 4 上</span></a></li></ol>
     
   </div>
-</div>
+</aside>
 
 <main class="app-body flex-box">
   <article class="post-article">
@@ -837,20 +852,31 @@
   </article>
 </main>
 
+<div id="article-banner">
+  <h2 class="post-title">《SECOND LIFE》翻译</h2>
+  
+   
+    <p class="post-date">2018-07-21</p>
+  
+  <div class="arrow-down">
+    <a href="javascript:;"></a>
+  </div>
+</div>
+
 <script>
-    (function () {
-      var url = "https://zhuochi.org/story/《SECOND LIFE》翻译 by 缀理/";
-      var banner = "";
-      if (banner !== "" && banner !== "undefined" && banner !== "null") {
-        $("#article-banner").css({
-          "background-image": "url(" + banner + ")",
-        });
-      } else {
-        $("#article-banner").geopattern(url);
-      }
-      $(".header").removeClass("fixed-header");
-    })();
-  </script>
+  (function () {
+    var url = "https://zhuochi.org/story/《SECOND LIFE》翻译 by 缀理/";
+    var banner = "";
+    if (banner !== "" && banner !== "undefined" && banner !== "null") {
+      $("#article-banner").css({
+        "background-image": "url(" + banner + ")",
+      });
+    } else {
+      $("#article-banner").geopattern(url);
+    }
+    $(".header").removeClass("fixed-header");
+  })();
+</script>
 
 <script>
   // error image

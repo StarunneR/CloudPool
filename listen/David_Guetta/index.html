@@ -512,14 +512,29 @@
   </div>
 </div>
 
-  <div class="catalog-container" id="catalog">
+<script>
+  (function () {
+    var url = "https://zhuochi.org/listen/David_Guetta/";
+    var banner = "";
+    if (banner !== "" && banner !== "undefined" && banner !== "null") {
+      $("#article-banner").css({
+        "background-image": "url(" + banner + ")",
+      });
+    } else {
+      $("#article-banner").geopattern(url);
+    }
+    $(".header").removeClass("fixed-header");
+  })();
+</script>
+
+  <aside class="catalog-container" id="catalog">
   <div class="toc-main">
     <div class="toc-title">目录</div>
     
       <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#One-More-Love-2010"><span class="toc-nav-text">One More Love 2010</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#CD1"><span class="toc-nav-text">CD1</span></a></li><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#CD2"><span class="toc-nav-text">CD2</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#Nothing-But-the-Beat-2011"><span class="toc-nav-text">Nothing But the Beat 2011</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#CD1-1"><span class="toc-nav-text">CD1</span></a></li><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#CD2-1"><span class="toc-nav-text">CD2</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#Listen-2014"><span class="toc-nav-text">Listen 2014</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#CD1-2"><span class="toc-nav-text">CD1</span></a></li><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#CD2-2"><span class="toc-nav-text">CD2</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#7-2018"><span class="toc-nav-text">7 2018</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#CD1-3"><span class="toc-nav-text">CD1</span></a></li><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#CD2-3"><span class="toc-nav-text">CD2</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#Baidu"><span class="toc-nav-text">Baidu</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#%E6%BC%94%E8%89%BA%E7%BB%8F%E5%8E%86"><span class="toc-nav-text">演艺经历</span></a></li><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#%E4%BA%BA%E7%89%A9%E8%AF%84%E4%BB%B7"><span class="toc-nav-text">人物评价</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#Wiki"><span class="toc-nav-text">Wiki</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#%E7%94%9F%E5%B9%B3"><span class="toc-nav-text">生平</span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-5"><a class="toc-nav-link" href="#%E6%97%A9%E5%B9%B4"><span class="toc-nav-text">早年</span></a></li><li class="toc-nav-item toc-nav-level-5"><a class="toc-nav-link" href="#%E4%B8%89%E5%BC%A0%E4%B8%93%E8%BE%91%E5%92%8C%E9%80%90%E6%B8%90%E6%88%90%E5%90%8D%EF%BC%882001%EF%BC%8D2008%E5%B9%B4%EF%BC%89"><span class="toc-nav-text">三张专辑和逐渐成名（2001－2008年）</span></a></li><li class="toc-nav-item toc-nav-level-5"><a class="toc-nav-link" href="#%E3%80%8A%E8%88%9E%E5%8A%A8%E7%9C%9F%E7%88%B1%E3%80%8B%EF%BC%882009%EF%BC%8D2010%E5%B9%B4%EF%BC%89"><span class="toc-nav-text">《舞动真爱》（2009－2010年）</span></a></li><li class="toc-nav-item toc-nav-level-5"><a class="toc-nav-link" href="#%E3%80%8A%E8%88%9E%E5%8A%A8%E5%85%A8%E4%B8%96%E7%95%8C%E3%80%8B%EF%BC%882011%E5%B9%B4%EF%BC%8D%E8%87%B3%E4%BB%8A%EF%BC%89"><span class="toc-nav-text">《舞动全世界》（2011年－至今）</span></a></li></ol></li><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#%E4%B8%AA%E4%BA%BA%E7%94%9F%E6%B4%BB"><span class="toc-nav-text">个人生活</span></a></li></ol></li></ol>
     
   </div>
-</div>
+</aside>
 
 <main class="app-body flex-box">
   <article class="post-article">
@@ -1556,20 +1571,31 @@ lrc: '2018_7/CD2/Just A Little More Love (Jack Back 2018 Remix)',
   </article>
 </main>
 
+<div id="article-banner">
+  <h2 class="post-title">David Guetta</h2>
+  
+   
+    <p class="post-date">2023-07-16</p>
+  
+  <div class="arrow-down">
+    <a href="javascript:;"></a>
+  </div>
+</div>
+
 <script>
-    (function () {
-      var url = "https://zhuochi.org/listen/David_Guetta/";
-      var banner = "";
-      if (banner !== "" && banner !== "undefined" && banner !== "null") {
-        $("#article-banner").css({
-          "background-image": "url(" + banner + ")",
-        });
-      } else {
-        $("#article-banner").geopattern(url);
-      }
-      $(".header").removeClass("fixed-header");
-    })();
-  </script>
+  (function () {
+    var url = "https://zhuochi.org/listen/David_Guetta/";
+    var banner = "";
+    if (banner !== "" && banner !== "undefined" && banner !== "null") {
+      $("#article-banner").css({
+        "background-image": "url(" + banner + ")",
+      });
+    } else {
+      $("#article-banner").geopattern(url);
+    }
+    $(".header").removeClass("fixed-header");
+  })();
+</script>
 
 <script>
   // error image
