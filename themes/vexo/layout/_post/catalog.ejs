@@ -1,8 +1,8 @@
-<div class="catalog-container" id="catalog">
+<aside class="catalog-container" id="catalog">
   <div class="toc-main">
     <div class="toc-title">目录</div>
     <% if (toc(page.content) !== ""){ %>
       <%- toc(page.content, { "class": "toc-nav", "list_number": false }) %>
     <% } %>
   </div>
-</div>
+</aside>

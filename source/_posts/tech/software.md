@@ -164,27 +164,27 @@ CAJ 转 PDF 转换器，写论文必备
 
 ### 其他工具
 
-[Dism++](https://github.com/Chuyu-Team/Dism-Multi-language/releases) 实用系统管理小工具集合
+* [Dism++](https://github.com/Chuyu-Team/Dism-Multi-language/releases) 实用系统管理小工具集合
 
-[图吧工具箱](http://www.tbtool.cn/) DIY爱好者的必备工具合集
+* [图吧工具箱](http://www.tbtool.cn/) DIY爱好者的必备工具合集
 
-[卡硬工具箱](http://www.kbtool.cn/) 硬件检测、管理、性能测试工具以及各种实用软件。但已有两年未更新
+* [卡硬工具箱](http://www.kbtool.cn/) 硬件检测、管理、性能测试工具以及各种实用软件。但已有两年未更新
 
-[AppNee Freeware Group.](https://appnee.com) 一个各类破解版软件非常多的网站
+* [AppNee Freeware Group.](https://appnee.com) 一个各类破解版软件非常多的网站
 
-[waifu2x-caffe](https://github.com/lltcggie/waifu2x-caffe/releases) 更好地放大图片
+* [waifu2x-caffe](https://github.com/lltcggie/waifu2x-caffe/releases) 更好地放大图片
 
 <!-- - [AgentNEO](https://neoladder.org/) + [Clash for Windows](https://github.com/Fndroid/clash_for_windows_pkg)-->
 
-[ChipGenius v4.20.1107](ChipGenius_v4_20_1107_fix.rar)  可用于查看各接口协议版本（如判断是否正常运行USB3.1）  
+* [ChipGenius v4.20.1107](ChipGenius_v4_20_1107_fix.rar)  可用于查看各接口协议版本（如判断是否正常运行USB3.1）  
 Ref: <https://www.mydigit.cn/forum.php?mod=viewthread&tid=209287>
 
-[垃圾清理工具 CCleaner](https://www.ccleaner.com/ccleaner/download)
+* [垃圾清理工具 CCleaner](https://www.ccleaner.com/ccleaner/download)
 ~~可在[AppNee](https://appnee.com/ccleaner-professional/)找到破解版下载链接。~~
 注册机：[CCleaner Pro 6 crack](CCleaner_Patch22.exe)  来自 [rsload.net - CCleaner Professional](https://rsload.net/soft/cleaner-disk/8306-ccleaner.html) [备份](https://pan.zhuochi.org/CloudShare/Software/cc612Patch22.rar)
 注册机需放置在软件安装目录下，安装CCleaner后请直接使用注册机注册，不要点击开始试用许可证。
 
-[驱动更新工具Driver Booster](https://www.iobit.com/en/driver-booster.php) [下载直链](https://cdn.iobit.com/dl/driver_booster_setup.exe)
+* [驱动更新工具 Driver Booster](https://www.iobit.com/en/driver-booster.php) [下载直链](https://cdn.iobit.com/dl/driver_booster_setup.exe)
 
     Driver Booster（驱动加速器）是IObit公司推出的一款针对Windows操作系统的电脑的驱动程序更新工具。更新驱动可以提升电脑硬件性能，减少系统崩溃降低硬件冲突。该驱动加速器软件可以通过智能的检测引擎有效识别电脑上过期的驱动程式（如，显卡驱动，声卡驱动，网卡驱动，打印机驱动等），并将结果呈现出来供查看。您可以选择要更新的驱动，然后点击更新按钮，程序就会自动下载安装最新驱动。 —— Driver Booster  百度百科
 
@@ -203,7 +203,7 @@ Ref: <https://www.mydigit.cn/forum.php?mod=viewthread&tid=209287>
     Ref: https://theipfire.com/driver-booster-pro-9-free-license-key/
          https://www.52pojie.cn/thread-1756715-1-1.html
 
-[Wi-Fi Scanner](https://lizardsystems.com/wi-fi-scanner/)  一款功能强大的WIFI扫描工具，能够帮助用户轻松完成各种信号的扫描。可用于获取WiFi详细参数、信号强度等信息
+* [Wi-Fi Scanner](https://lizardsystems.com/wi-fi-scanner/)  一款功能强大的WIFI扫描工具，能够帮助用户轻松完成各种信号的扫描。可用于获取WiFi详细参数、信号强度等信息
 注册名：任意
 注册码：000GQ8-2BC30B-YF5W1N-K0Q3Q8-4MZ2N5-R88EKC
 

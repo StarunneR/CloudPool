@@ -5,6 +5,7 @@ author: m1
 tags: 音乐
 categories: 浊音
 main: 2 Albums, 29 Songs
+catalog: true
 ---
 
 ### Clarity 2013
@@ -268,7 +269,9 @@ Zedd原名安东·斯拉夫斯基，出生在俄罗斯的萨拉托夫，三岁�
 2010年，发行首支个人单曲《The Anthem》，该曲排到了Beatport电子浩室音乐榜前20名，被收录在同名EP中；同年，他制作的Skrillex的歌曲《Scary Monsters and Nice Sprites》重混版取得了Beatport电子浩室音乐榜的第二名。
 
 2011年3月，发行个人首张EP《Autonomy》；10月，制作的Lady Gaga的歌曲《Born This Way》重混版被被收录到Lady Gaga第三张录音室专辑《Born This Way》的Remix合辑版本中；10月，签约由Skrillex创立的音乐厂牌OWSLA；11月，发行EP《Shave It – The Aftershave》。
+
 2012年，与新视镜唱片公司签约；7月，发行个人EP《Spectrum》；10月，发行首张个人录音室专辑《Clarity》，该专辑以1.2万张的首周销量排在公告牌专辑榜第38名，该专辑入围了公告牌音乐奖最佳舞曲电子乐专辑奖；专辑中，由女歌手Foxes献唱的歌曲《Clarity》在美国公告牌百强单曲榜取得了第八名，获得了第56届格莱美奖最佳舞曲录制奖，入围公告牌音乐奖最佳舞曲电子乐歌曲奖，Zedd凭借该曲入围MTV音乐录影带大奖最具潜力艺人奖；同年，Zedd为贾斯汀·比伯制作了歌曲《Beauty and a Beat》。
+
 2013年3月，获得第28届国际舞曲音乐大奖最佳突破艺人奖；7月，为日本歌手安室奈美惠制作的歌曲《Heaven》发布；9月，发布由帕拉摩尔主唱海莉·威廉姆斯献唱的歌曲《Stay the Night》开始，该歌曲取得了英国流行音乐排行榜的亚军，并获得了MTV音乐录影带大奖MTV俱乐部大奖，其MV提名MTV音乐录影带大奖最佳剪辑奖；11月，Lady Gaga发行第三张个人录音室专辑《ARTPOP》，Zedd担任了专辑歌曲《G.U.Y》、《Aura》和《Donatella》的词曲作者以及制作人；同年，入围第41届全美音乐奖最受欢迎电子舞曲艺人奖；此外，他还为魔术犯罪电影《惊天魔盗团》制作了原声歌曲《Codec》。
 
 2014年1月，发行由Matthew Koma、Miriam Bryant合唱的单曲《Find You》，该歌曲被收录在动作电影《分歧者：异类觉醒》的原声带中；7月，发行与爱莉安娜·格兰德合作的单曲《Break Free》，该歌曲在公告牌百强单曲榜取得了第四名，入围了第16届青少年选择奖最佳分手歌曲奖 、公告牌音乐奖最佳舞曲电子乐歌曲奖；8月，入围第16届青少年选择奖最佳电子舞曲艺人奖；11月9日，入围MTV欧洲音乐奖最佳推荐新人奖；11月23日，入围第42届全美音乐奖最受欢迎电子舞曲艺人奖；12月，推出个人纪录片《Moment of Clarity》。

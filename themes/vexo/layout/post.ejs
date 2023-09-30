@@ -1,15 +1,4 @@
-<div id="article-banner">
-  <h2 class="post-title"><%- page.title %></h2>
-  <% if (page.subtitle) { %>
-    <h3 class="post-subtitle"><%- page.subtitle %></h3>
-  <% } %>
-  <% if (!page.nodate) { %> 
-    <p class="post-date"><%- date(page.date, "YYYY-MM-DD") %></p>
-  <% } %>
-  <div class="arrow-down">
-    <a href="javascript:;"></a>
-  </div>
-</div>
+<%- partial('_partial/banner') %>
 <% if (page.catalog == true) { %>
   <%- partial('_post/catalog') %>
 <% } %>
