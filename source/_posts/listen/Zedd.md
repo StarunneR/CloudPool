@@ -79,7 +79,7 @@ name: 'Epos',
 artist: 'Zedd',
 url: 'HOST/Zedd/2013_Cl/Epos.mp3',
 cover: '2013_Cl/cover.webp',
-lrc: '2013_Cl/Epos.lrc',
+lrc: '',
 },
 {
 name: 'Stay The Night (feat. Hayley Williams Of Paramore)',
