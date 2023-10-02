@@ -10,10 +10,7 @@
         <%- page.content %>
       </section>
       <% if (page.tags && page.tags.length) { %>
-        <div class="post-tags">
-          <span>标签：</span>
-          <%- partial('_partial/tag', { tags: page.tags }) %>
-        </div>
+        <%- partial('_partial/tag', { tags: page.tags }) %>
       <% } %> 
     <% } %>
     <%- partial('_post/nav') %>
