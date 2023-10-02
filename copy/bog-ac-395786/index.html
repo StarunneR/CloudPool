@@ -850,32 +850,6 @@
   </article>
 </main>
 
-<div id="article-banner">
-  <h2 class="post-title">《韭菜盒子》</h2>
-  
-   
-    <p class="post-date">2022-05-24</p>
-  
-  <div class="arrow-down">
-    <a href="javascript:;"></a>
-  </div>
-</div>
-
-<script>
-  (function () {
-    var url = "https://zhuochi.org/copy/bog-ac-395786/";
-    var banner = "";
-    if (banner !== "" && banner !== "undefined" && banner !== "null") {
-      $("#article-banner").css({
-        "background-image": "url(" + banner + ")",
-      });
-    } else {
-      $("#article-banner").geopattern(url);
-    }
-    $(".header").removeClass("fixed-header");
-  })();
-</script>
-
 <script>
   // error image
   $(".markdown-content img").on("error", function () {
