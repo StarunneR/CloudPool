@@ -512,20 +512,6 @@
   </div>
 </div>
 
-<script>
-  (function () {
-    var url = "https://zhuochi.org/listen/Avicii/";
-    var banner = "";
-    if (banner !== "" && banner !== "undefined" && banner !== "null") {
-      $("#article-banner").css({
-        "background-image": "url(" + banner + ")",
-      });
-    } else {
-      $("#article-banner").geopattern(url);
-    }
-    $(".header").removeClass("fixed-header");
-  })();
-</script>
 
   <aside class="catalog-container" id="catalog">
   <div class="toc-main">
@@ -1256,6 +1242,21 @@ lrc: 'TIM/Fades Away (feat. Noonie Bao).lrc',
     $(this).attr("src", "/images/error.png");
     $(this).css({cursor: "default",});
   });
+</script>
+
+<script>
+  (function () {
+    var url = "https://zhuochi.org/listen/Avicii/";
+    var banner = "";
+    if (banner !== "" && banner !== "undefined" && banner !== "null") {
+      $("#article-banner").css({
+        "background-image": "url(" + banner + ")",
+      });
+    } else {
+      $("#article-banner").geopattern(url);
+    }
+    $(".header").removeClass("fixed-header");
+  })();
 </script>
  
     <aside class="sidebar">

@@ -512,20 +512,6 @@
   </div>
 </div>
 
-<script>
-  (function () {
-    var url = "https://zhuochi.org/poem/问与答03/";
-    var banner = "";
-    if (banner !== "" && banner !== "undefined" && banner !== "null") {
-      $("#article-banner").css({
-        "background-image": "url(" + banner + ")",
-      });
-    } else {
-      $("#article-banner").geopattern(url);
-    }
-    $(".header").removeClass("fixed-header");
-  })();
-</script>
 
 <main class="app-body flex-box">
   <article class="post-article">
@@ -809,6 +795,21 @@
     $(this).attr("src", "/images/error.png");
     $(this).css({cursor: "default",});
   });
+</script>
+
+<script>
+  (function () {
+    var url = "https://zhuochi.org/poem/问与答03/";
+    var banner = "";
+    if (banner !== "" && banner !== "undefined" && banner !== "null") {
+      $("#article-banner").css({
+        "background-image": "url(" + banner + ")",
+      });
+    } else {
+      $("#article-banner").geopattern(url);
+    }
+    $(".header").removeClass("fixed-header");
+  })();
 </script>
  
     <aside class="sidebar">

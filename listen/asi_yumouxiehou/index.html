@@ -512,20 +512,6 @@
   </div>
 </div>
 
-<script>
-  (function () {
-    var url = "https://zhuochi.org/listen/asi_yumouxiehou/";
-    var banner = "";
-    if (banner !== "" && banner !== "undefined" && banner !== "null") {
-      $("#article-banner").css({
-        "background-image": "url(" + banner + ")",
-      });
-    } else {
-      $("#article-banner").geopattern(url);
-    }
-    $(".header").removeClass("fixed-header");
-  })();
-</script>
 
 <main class="app-body flex-box">
   <article class="post-article">
@@ -725,10 +711,10 @@
   <div class="nav-container">
     <!-- reverse left and right to put prev and next in a more logic postition -->
     
-      <a class="nav-left" href="/copy/atan-rgjnb/" target="_blank">
+      <a class="nav-left" href="/copy/atan-mmmddy/" target="_blank">
         <span class="nav-arrow">← </span>
         
-          《人工纪念碑》
+          《魅魔们的地狱》
         
       </a>
     
@@ -902,6 +888,21 @@
     $(this).attr("src", "/images/error.png");
     $(this).css({cursor: "default",});
   });
+</script>
+
+<script>
+  (function () {
+    var url = "https://zhuochi.org/listen/asi_yumouxiehou/";
+    var banner = "";
+    if (banner !== "" && banner !== "undefined" && banner !== "null") {
+      $("#article-banner").css({
+        "background-image": "url(" + banner + ")",
+      });
+    } else {
+      $("#article-banner").geopattern(url);
+    }
+    $(".header").removeClass("fixed-header");
+  })();
 </script>
  
     <aside class="sidebar">

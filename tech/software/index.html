@@ -512,20 +512,6 @@
   </div>
 </div>
 
-<script>
-  (function () {
-    var url = "https://zhuochi.org/tech/software/";
-    var banner = "";
-    if (banner !== "" && banner !== "undefined" && banner !== "null") {
-      $("#article-banner").css({
-        "background-image": "url(" + banner + ")",
-      });
-    } else {
-      $("#article-banner").geopattern(url);
-    }
-    $(".header").removeClass("fixed-header");
-  })();
-</script>
 
 <main class="app-body flex-box">
   <article class="post-article">
@@ -761,6 +747,12 @@ DSP管理器 - 激活 重采样器 (PPHS) - 配置 目标采样 48000 Hz　　[�
         <div class="post-tags">
   <span>标签：</span>
   
+    <a href="/tags#安装">
+      <span class="tag-code">
+        安装
+      </span>
+    </a>
+    
     <a href="/tags#实用">
       <span class="tag-code">
         实用
@@ -770,12 +762,6 @@ DSP管理器 - 激活 重采样器 (PPHS) - 配置 目标采样 48000 Hz　　[�
     <a href="/tags#软件">
       <span class="tag-code">
         软件
-      </span>
-    </a>
-    
-    <a href="/tags#安装">
-      <span class="tag-code">
-        安装
       </span>
     </a>
     
@@ -963,6 +949,21 @@ DSP管理器 - 激活 重采样器 (PPHS) - 配置 目标采样 48000 Hz　　[�
     $(this).attr("src", "/images/error.png");
     $(this).css({cursor: "default",});
   });
+</script>
+
+<script>
+  (function () {
+    var url = "https://zhuochi.org/tech/software/";
+    var banner = "";
+    if (banner !== "" && banner !== "undefined" && banner !== "null") {
+      $("#article-banner").css({
+        "background-image": "url(" + banner + ")",
+      });
+    } else {
+      $("#article-banner").geopattern(url);
+    }
+    $(".header").removeClass("fixed-header");
+  })();
 </script>
  
     <aside class="sidebar">

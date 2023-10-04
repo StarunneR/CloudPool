@@ -512,20 +512,6 @@
   </div>
 </div>
 
-<script>
-  (function () {
-    var url = "https://zhuochi.org/tech/windows/";
-    var banner = "";
-    if (banner !== "" && banner !== "undefined" && banner !== "null") {
-      $("#article-banner").css({
-        "background-image": "url(" + banner + ")",
-      });
-    } else {
-      $("#article-banner").geopattern(url);
-    }
-    $(".header").removeClass("fixed-header");
-  })();
-</script>
 
 <main class="app-body flex-box">
   <article class="post-article">
@@ -707,15 +693,15 @@
         <div class="post-tags">
   <span>标签：</span>
   
-    <a href="/tags#安装">
-      <span class="tag-code">
-        安装
-      </span>
-    </a>
-    
     <a href="/tags#Windows">
       <span class="tag-code">
         Windows
+      </span>
+    </a>
+    
+    <a href="/tags#安装">
+      <span class="tag-code">
+        安装
       </span>
     </a>
     
@@ -909,6 +895,21 @@
     $(this).attr("src", "/images/error.png");
     $(this).css({cursor: "default",});
   });
+</script>
+
+<script>
+  (function () {
+    var url = "https://zhuochi.org/tech/windows/";
+    var banner = "";
+    if (banner !== "" && banner !== "undefined" && banner !== "null") {
+      $("#article-banner").css({
+        "background-image": "url(" + banner + ")",
+      });
+    } else {
+      $("#article-banner").geopattern(url);
+    }
+    $(".header").removeClass("fixed-header");
+  })();
 </script>
  
     <aside class="sidebar">
