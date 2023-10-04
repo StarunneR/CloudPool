@@ -982,10 +982,13 @@ header:hover .chn_mark {
   width: 145px;
   white-space: nowrap;
   overflow: auto;
-  scrollbar-width: thin;
+  scrollbar-width: none;
   box-sizing: border-box;
   position: absolute;
   max-height: 550px;
+}
+.catalog-container .toc-main ::-webkit-scrollbar {
+  display: none;
 }
 @media screen and (max-width: 768px) {
   .catalog-container .toc-main {
@@ -1018,7 +1021,6 @@ header:hover .chn_mark {
 }
 .catalog-container .toc-main .toc-nav {
   padding-top: 1em;
-  padding-left: 1em;
 }
 @media screen and (max-width: 768px) {
   .catalog-container .toc-main .toc-nav {
