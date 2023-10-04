@@ -1,6 +1,6 @@
 ---
 title: 每日一句2023
-date: 2023-09-01
+date: 2023-10-01
 author: m1
 tags:
     - BB
@@ -425,3 +425,90 @@ City Walk Day 14:
 **8.29**
 City Walk Day 15:
 粉色的月之暗面后面是郎的滑板鞋着实荒诞( ´ρ`)
+
+**9.1**
+City Walk Day 17:
+Déjà Vu
+
+**9.3**
+City Walk Day 18:
+Am I tooooooooooooooo serious?
+
+**9.4**
+City Walk Day 19:
+I got twisted and made such timid steps
+
+**9.5**
+City Walk Day 20:
+Twisting hurts!!!
+
+**9.6**
+就算狂风吹断了冰雪，念想也会恬留下来。
+City Walk Day 21:
+“麦地
+神秘的质问者啊
+当我痛苦地站在你的面前
+你不能说我一无所有
+你不能说我两手空空”
+—— 海子 《答复》
+
+**9.8**
+Abort productivity, be effective.
+
+**9.10**
+“但是他们并没有国家”
+
+**9.11**
+AVG. SPEED: 102km/h
+MAX. SPEED: 155km/h
+
+**9.12**
+City Walk Day 23:
+身处美丽的闪光的湖与路与桥与路上时，还有什么不满意的呢？
+也许还需要一个充电宝（
+
+**9.16**
+No City Walk Day 25:
+我只想回到有一天
+每一天都可以是有一天
+先从今天的有一天开始
+
+**9.17**
+“如果你不信仰某个比自我更大的事物，将来某一刻你会自毁。”
+City Walk Day 26:
+为什么要在意图问为什么的时候思考为什么会想问为什么呢？
+
+**9.19**
+If I want to be suspicious to the big brother, I should be skeptical of myself at first
+I’d like to call it ‘Mosquito’s Carnival’
+@StʌrunneR: Wish you could fiiind that- looove is a fragile thing 🎶
+Avicii - For a Better Day
+
+**9.20**
+City Walk Day 27:
+可以走慢一点吗？不过确实热得还像个培养皿（
+@StʌrunneR: 需要一些有微观分子式的快乐
+
+**9.24**
+“1.专注力2.好胜心3.情绪稳定4.运气”
+
+**9.25**
+我的愿望与理想是什么呢？
+好耶😆我可以打出很响的响指🫰
+City Walk Day 29:
+Why are there always people rushing through me?
+
+**9.26**
+‘他人与自己存在绝对的隔绝’ ，‘我们永远无法拥有或控制他人’
+City Walk Day 30:
+Nothing new but I did.
+
+**9.27**
+“你跋山涉水去见的人根本不会牢记你，他只会记得自己跋山涉水见过的人。”
+City Walk Day 31:
+想找的怎么也找不回来，因为地铁把回忆拦腰截断
+- - -
+“繁华之下是无数破碎的心”
+
+**9.28**
+“灵魂却先一步舒展开了”
