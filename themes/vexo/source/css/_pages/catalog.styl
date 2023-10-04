@@ -18,10 +18,12 @@
     width: 145px 
     white-space: nowrap
     overflow: auto
-    scrollbar-width: thin
+    scrollbar-width: none
     box-sizing: border-box
     position: absolute
     max-height: 550px
+    ::-webkit-scrollbar
+      display: none
     @media m-mobile
       padding-left: 0.3em
       width: auto
@@ -45,7 +47,7 @@
         background-size: contain
     .toc-nav
       padding-top: 1em
-      padding-left: 1em
+      //padding-left: 1em
       @media m-mobile
         max-height: 200px
       @media m-pad
