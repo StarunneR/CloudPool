@@ -1,21 +1,20 @@
 <div id="article-banner">
-    <h2 class="page-title">文章归档</h2>
-    <p class="page-subtitle">按时间排序</p>
+  <h2 class="page-title">文章归档</h2>
+  <p class="page-subtitle">按时间排序</p>
 </div>
 <main class="app-body" id="archive">
-    <% let years = {}; %>
-    <%
-      site.posts.each(post => {
-        const y = post.date.year();
-        if (!years[y]) {
-          years[y] = [];
-        }
-        years[y].push(post);
+  <% let years={}; %>
+    <% site.posts.each(post=> {
+      const y = post.date.year();
+      if (!years[y]) {
+      years[y] = [];
+      }
+      years[y].push(post);
       })
-    %>
-    <% for (let year of Object.keys(years).reverse()) { %>
-      <%- partial('_partial/archive', { year: year, posts: years[year].reverse() }) %>
-    <% } %>
+      %>
+      <% for (let year of Object.keys(years).reverse()) { %>
+        <%- partial('_partial/archive', { year: year, posts: years[year].reverse() }) %>
+          <% } %>
 </main>
 
 <%- partial('_partial/banner') %>
