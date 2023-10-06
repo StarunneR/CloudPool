@@ -981,7 +981,6 @@ header:hover .chn_mark {
   border-left: 1px solid #e5e4e2;
   width: 145px;
   white-space: nowrap;
-  overflow: auto;
   scrollbar-width: none;
   box-sizing: border-box;
   position: absolute;
