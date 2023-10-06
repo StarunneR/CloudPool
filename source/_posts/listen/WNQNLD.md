@@ -4,7 +4,7 @@ date: 2023-06-23
 author: m1
 tags: 音乐
 categories: 浊音
-main: 2 Albums, 9 + 8 Songs
+main: 2 Albums, 17 Songs
 catalog: true
 ---
 
@@ -76,57 +76,57 @@ lrc: '2010_WN/杀死那个石家庄人.lrc',
 name: '早',
 artist: '万能青年旅店',
 url: 'HOST/WNQNLD/2020_JX/早.mp3',
-cover: 'jxnllx/cover.png',
-lrc: 'jxnllx/早.lrc',
+cover: '2020_JX/cover.png',
+lrc: '2020_JX/早.lrc',
 },
 {
 name: '泥河',
 artist: '万能青年旅店',
 url: 'HOST/WNQNLD/2020_JX/泥河.mp3',
-cover: 'jxnllx/cover.png',
-lrc: 'jxnllx/泥河.lrc',
+cover: '2020_JX/cover.png',
+lrc: '2020_JX/泥河.lrc',
 },
 {
 name: '平等云雾',
 artist: '万能青年旅店',
 url: 'HOST/WNQNLD/2020_JX/平等云雾.mp3',
-cover: 'jxnllx/cover.png',
-lrc: 'jxnllx/平等云雾.lrc',
+cover: '2020_JX/cover.png',
+lrc: '2020_JX/平等云雾.lrc',
 },
 {
 name: '采石',
 artist: '万能青年旅店',
 url: 'HOST/WNQNLD/2020_JX/采石.mp3',
-cover: 'jxnllx/cover.png',
-lrc: 'jxnllx/采石.lrc',
+cover: '2020_JX/cover.png',
+lrc: '2020_JX/采石.lrc',
 },
 {
 name: '山雀',
 artist: '万能青年旅店',
 url: 'HOST/WNQNLD/2020_JX/山雀.mp3',
-cover: 'jxnllx/cover.png',
-lrc: 'jxnllx/山雀.lrc',
+cover: '2020_JX/cover.png',
+lrc: '2020_JX/山雀.lrc',
 },
 {
 name: '绕越',
 artist: '万能青年旅店',
 url: 'HOST/WNQNLD/2020_JX/绕越.mp3',
-cover: 'jxnllx/cover.png',
-lrc: 'jxnllx/绕越.lrc',
+cover: '2020_JX/cover.png',
+lrc: '2020_JX/绕越.lrc',
 },
 {
 name: '河北墨麒麟',
 artist: '万能青年旅店',
 url: 'HOST/WNQNLD/2020_JX/河北墨麒麟.mp3',
-cover: 'jxnllx/cover.png',
-lrc: 'jxnllx/河北墨麒麟.lrc',
+cover: '2020_JX/cover.png',
+lrc: '2020_JX/河北墨麒麟.lrc',
 },
 {
 name: '郊眠寺',
 artist: '万能青年旅店',
 url: 'HOST/WNQNLD/2020_JX/郊眠寺.mp3',
-cover: 'jxnllx/cover.png',
-lrc: 'jxnllx/郊眠寺.lrc',
+cover: '2020_JX/cover.png',
+lrc: '2020_JX/郊眠寺.lrc',
 }
 {% endaplayer %}
 
