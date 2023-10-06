@@ -992,14 +992,14 @@ header:hover .chn_mark {
 @media screen and (max-width: 768px) {
   .catalog-container .toc-main {
     padding-left: 0.3em;
-    width: auto;
+    max-width: 80%;
     position: static;
   }
 }
 @media screen and (max-width: 1480px) and (min-width: 768px) {
   .catalog-container .toc-main {
     padding-left: 0.3em;
-    width: auto;
+    max-width: 80%;
     position: static;
   }
 }
