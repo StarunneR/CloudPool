@@ -979,19 +979,18 @@ header:hover .chn_mark {
 .catalog-container .toc-main {
   padding: 1em 0.5em;
   border-left: 1px solid #e5e4e2;
-  width: 145px;
   white-space: nowrap;
+  overflow: auto;
   scrollbar-width: none;
   box-sizing: border-box;
   position: absolute;
   max-height: 550px;
-}
-.catalog-container .toc-main ::-webkit-scrollbar {
-  display: none;
+  max-width: 160px;
 }
 @media screen and (max-width: 768px) {
   .catalog-container .toc-main {
     padding-left: 0.3em;
+    width: auto;
     max-width: 80%;
     position: static;
   }
@@ -999,9 +998,13 @@ header:hover .chn_mark {
 @media screen and (max-width: 1480px) and (min-width: 768px) {
   .catalog-container .toc-main {
     padding-left: 0.3em;
+    width: auto;
     max-width: 80%;
     position: static;
   }
+}
+.catalog-container .toc-main::-webkit-scrollbar {
+  display: none;
 }
 .catalog-container .toc-main .toc-title {
   font-size: 1.2em;
