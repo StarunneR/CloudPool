@@ -15,22 +15,27 @@
   .toc-main
     padding: 1em 0.5em
     border-left: 1px solid color-border
-    width: 145px 
+    //width: 145px 
     white-space: nowrap
+    overflow: auto
     scrollbar-width: none
     box-sizing: border-box
     position: absolute
     max-height: 550px
-    ::-webkit-scrollbar
-      display: none
+    max-width: 160px
     @media m-mobile
       padding-left: 0.3em
+      width: auto
       max-width: 80%
       position: static 
     @media m-pad
       padding-left: 0.3em
+      width: auto
       max-width: 80%
       position: static
+  .toc-main::-webkit-scrollbar
+    display: none
+  .toc-main
     .toc-title
       font-size: 1.2em
       position: relative

@@ -7,6 +7,8 @@ categories: 浊音
 main: Songs
 ---
 
+### 
+
 {% aplayer 1A %}
 
 {
@@ -14,7 +16,7 @@ name: 'Music',
 artist: '',
 url: 'HOST/Artist/Album/Music.m4a',
 cover: 'Album/cover.webp',
-lrc: 'Artist/Album/Music.lrc',
+lrc: 'Album/Music.lrc',
 },
 
 {% endaplayer %}
