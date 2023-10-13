@@ -1606,12 +1606,6 @@ header:hover .chn_mark {
   height: 356px !important;
   width: 356px !important;
 }
-@media screen and (max-width: 768px) {
-  .aplayer.aplayer-withlrc .aplayer-body .aplayer-pic:hover {
-    height: 250px !important;
-    width: 250px !important;
-  }
-}
 .aplayer.aplayer-withlrc .aplayer-body .aplayer-info {
   height: 106px !important;
   margin-left: 106px !important;
