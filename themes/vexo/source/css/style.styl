@@ -2,7 +2,21 @@
 
 html
   scrollbar-width: thin
-  scrollbar-color: color-gray color-white 
+  scrollbar-color: color-primary color-white
+
+::-webkit-scrollbar
+  width: 10px
+  background-color: color-white
+
+::-webkit-scrollbar-thumb
+  background-color: color-primary
+  background-image: -webkit-linear-gradient(30deg,rgba(255,255,255,.4) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.4) 50%,rgba(255,255,255,.4) 75%,transparent 75%,transparent);
+  -webkit-border-radius: 5em
+  -moz-border-radius: 5em
+  border-radius: 5em
+
+::-webkit-scrollbar-track
+  background-color: transparent
 
 ::selection
   background: color-primary
@@ -71,21 +85,6 @@ pre
 
 .article-card .article-summary
   font-family: system-ui, -apple-system, Arial, 'Helvetica Neue'
-
-
-::-webkit-scrollbar
-  width: 10px
-  background-color: color-white
-
-::-webkit-scrollbar-thumb
-  background-color: color-gray
-  //background-image: -webkit-linear-gradient(90deg,rgba(255,255,255,.4) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.4) 50%,rgba(255,255,255,.4) 75%,transparent 75%,transparent);
-  -webkit-border-radius: 5em
-  -moz-border-radius: 5em
-  border-radius: 5em
-
-::-webkit-scrollbar-track
-  background-color: transparent
 
 @keyframes shine
   0%, 100%
