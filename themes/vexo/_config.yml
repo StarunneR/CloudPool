@@ -98,7 +98,7 @@ live2d:
   pluginJsPath: lib/
   pluginModelPath: assets/
   tagMode: true
-  debug: true
+  debug: false
   model:
     use: live2d-widget-model-hijiki #这里改为你模型的名字
   display:
