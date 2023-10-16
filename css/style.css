@@ -986,7 +986,7 @@ header:hover .chn_mark {
   box-sizing: border-box;
   position: absolute;
   max-height: 550px;
-  max-width: 160px;
+  max-width: calc((100% - 1200px) / 2);
 }
 @media screen and (max-width: 768px) {
   .catalog-container .toc-main {
