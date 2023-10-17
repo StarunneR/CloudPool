@@ -41,12 +41,12 @@
 
 <script>
   function getYiju() {
-    let osource = "https://v1.hitokoto.cn?";
-    let source = ""
+    let url = "https://v1.hitokoto.cn?";
+    let path = ""
     let htypes = document.getElementsByName("hijikoto_type");
     for (var i = 0; i < htypes.length; i++) {
       if (htypes[i].checked === true) {
-        source = source + "c=" + htypes[i].value + "&";
+        path = path + "c=" + htypes[i].value + "&";
       }
     }
 
@@ -69,7 +69,7 @@
       };
     }
 
-    fetch(osource + source)
+    fetch(url + path)
       .then((response) => response.json())
       .then((data) => {
         const hitokoto = document.getElementById("hitokoto_text");
@@ -93,7 +93,7 @@
 <script>
   function copyYiju() {
     // Create a new textarea element as cache for copying
-    let text = document.getElementById("hitokoto").innerText
+    let text = document.getElementById("hitokoto").innerText;
     const cache_area = document.createElement('textarea');
     document.body.appendChild(cache_area);
     cache_area.innerHTML = text;

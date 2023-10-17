@@ -98,6 +98,13 @@
               setTimeout(() => {
                 o(t, 4e3, 9);
               }, 6e3);
+            // Copy Function
+            const cache_area = document.createElement('textarea');
+            document.body.appendChild(cache_area);
+            cache_area.innerHTML = `${e.hitokoto}\n————  ${e.from}`;
+            cache_area.select();
+            document.execCommand('copy');
+            document.body.removeChild(cache_area);
           });
       },
     },
@@ -168,7 +175,7 @@
                 o(n, 6e3, 9);
               }, 2e4));
         }, 1e3),
-       /** Error Point */  
+       /* Error Point */  
         o(
           (function (e) {
             if ("/" === location.pathname)
