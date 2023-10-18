@@ -101,7 +101,10 @@
             // Copy Function
             const cache_area = document.createElement('textarea');
             document.body.appendChild(cache_area);
-            cache_area.innerHTML = `${e.hitokoto}\n——  ${e.author}  ${e.from}`;
+            let hito_from;
+            if (e.from_who==undefined||e.from_who==e.from) {hito_from = '  '+e.from}
+            else {hito_from ='  '+e.from_who+'  '+e.from}
+            cache_area.innerHTML = `${e.hitokoto}\n——${hito_from}`;
             cache_area.select();
             document.execCommand('copy');
             document.body.removeChild(cache_area);
