@@ -101,7 +101,7 @@
             // Copy Function
             const cache_area = document.createElement('textarea');
             document.body.appendChild(cache_area);
-            cache_area.innerHTML = `${e.hitokoto}\n————  ${e.from}`;
+            cache_area.innerHTML = `${e.hitokoto}\n——  ${e.author}  ${e.from}`;
             cache_area.select();
             document.execCommand('copy');
             document.body.removeChild(cache_area);
