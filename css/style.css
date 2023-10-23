@@ -474,7 +474,6 @@ header:hover .chn_mark {
 }
 .post-article .markdown-content p {
   line-height: 1.6em;
-  margin-bottom: 0.7em;
 }
 .post-article .markdown-content p code {
   background-color: #fff;
@@ -539,7 +538,6 @@ header:hover .chn_mark {
   margin: 1em 0;
   padding: 15px 20px;
   border-left: 4px solid #00bfff;
-  background: #fff;
   border-bottom-right-radius: 2px;
   border-top-right-radius: 2px;
 }
@@ -547,6 +545,9 @@ header:hover .chn_mark {
 .post-article .markdown-content ol {
   overflow: auto;
   margin: 15px 0;
+}
+.post-article .markdown-content li {
+  line-height: 2em;
 }
 .post-article .markdown-content .small-img {
   display: inline;
@@ -642,13 +643,13 @@ header:hover .chn_mark {
   font-size: 1em;
   font-style: oblique;
   font-weight: bold;
-  background-color: #0096ff;
-  color: #fcf5e5;
+  background-color: #f9f6ee;
+  color: #6495ed;
   border-radius: 4px;
-  padding-left: 2px;
-  padding-right: 5px;
+  cursor: pointer;
 }
 .post-article .markdown-content .fold .fold_content {
+  padding-left: 0.5em;
   background-color: #e5e4e2;
   font-family: 'Times New Roman', 'Noto Serif SC', serif;
   font-display: swap;
@@ -670,7 +671,7 @@ header:hover .chn_mark {
   color: #add8e6;
 }
 .post-article .post-tags {
-  margin-top: 1em;
+  margin-top: 2em;
 }
 .post-article .nav-container {
   width: 100%;
