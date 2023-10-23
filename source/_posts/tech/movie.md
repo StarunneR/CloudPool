@@ -7,7 +7,8 @@ categories: 浊技术
 main: 授人以渔
 catalog: on
 ---
-## [豆瓣电影](https://movie.douban.com/)
+
+#### [豆瓣电影](https://movie.douban.com/)
 
 ---
 
@@ -67,7 +68,7 @@ BluRay(蓝光原盘)＞Remux(蓝光无损提取)＞BluRay/BRRip/BD/BDRip(蓝光�
 * [LoadBt](https://www.loadbt.com/files)
 * [Furk.net](https://www.furk.net/)
 
-    Reference: https://zhuanlan.zhihu.com/p/153555873
+    Reference: <https://zhuanlan.zhihu.com/p/153555873>
 
 ---
 
