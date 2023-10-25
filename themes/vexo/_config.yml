@@ -111,4 +111,5 @@ live2d:
     opacity: 0.7
 
 aplayer:
-  host: https://cps3storage.s3.ap-southeast-1.amazonaws.com
+  host: https://hkstcp.s3.ap-east-1.amazonaws.com
+  #host: https://cps3storage.s3.ap-southeast-1.amazonaws.com
