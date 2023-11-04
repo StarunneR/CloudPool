@@ -113,3 +113,4 @@ live2d:
 aplayer:
   #host0: https://hkstcp.s3.ap-east-1.amazonaws.com
   host: https://cps3storage.s3.ap-southeast-1.amazonaws.com
+  host1: https://cp-bitiful1.s3.bitiful.net

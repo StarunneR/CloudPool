@@ -1,6 +1,6 @@
 ---
 title: 每日一句2023
-date: 2023-10-01
+date: 2023-11-01
 author: m1
 tags:
     - BB
@@ -512,3 +512,66 @@ City Walk Day 31:
 
 **9.28**
 “灵魂却先一步舒展开了”
+
+**10.4**
+Be energetic, even the left is better than the ‘Right’
+even the left is tougher than the ‘Right’
+‘Believe what you see, not what you’re told’
+—— Elon Musk
+也不要看得那么那么坏。
+
+**10.7**
+搬家很累很累很累，尤其是物多房小没电梯
+
+**10.11**
+City Walk Day 33:
+New days to cover, with new ways to discover.
+
+**10.14**
+City Walk Day 34:
+走那么快干嘛，赶着上班啊（
+
+**10.15**
+City Walk Day 35:
+Keep going and going and going, till the sun goes back and the lights turn green.
+
+**10.16**
+“放松，然后坠落，记住发力方式，在控制与不加控制之间，缓缓弹琴。”
+twi: @littlenovum
+City Walk Day 36:
+Deja Vu city walk with Japanese songs on streets in CS.
+However they’re Vsinger instead of Vocaloid.
+And my TF card has been 64 GB instead of 16 GB yet (
+
+哭哭🥹 水果店都不卖柿饼了吗
+还有 通胀打我了 不怎么起眼的店子蓝莓要16一盒了吗 原来一直有九块九的 贵一点的也就12 13😭
+
+**10.17**
+City Walk Day 37:
+Obtained the card with 128 GB to contain all.
+Sooner or later it will reach full again.
+Though my old buddy only endures 128 for good.
+I’ll not leave u, I murmured, for good.
+
+**10.19**
+City Walk Day 38:
+感谢生命中的那些不期而遇
+　　　　灭火器 灭火器
+
+故事只会留给有开头的角色
+
+**10.22**
+问题都摆在眼前了，活得认真一点好不好啊？
+
+**10.27**
+保持眼睛睁开睁大点很重要！
+
+City Walk Day 41:
+Evaporate, condense, drop down, and then seep into.
+
+**10.30**
+City Walk Day 42:
+地上的卡片也不是都该捡起来看一眼
+比如今天散落一地的小纸片上面只有
+铅笔的7多希望还有张6就答案是一切
+42
