@@ -1610,10 +1610,9 @@ header:hover .chn_mark {
 }
 .aplayer.aplayer-withlrc .aplayer-body .aplayer-info {
   height: 106px !important;
-  margin-left: 106px !important;
 }
 .aplayer.aplayer-withlrc .aplayer-body .aplayer-info .aplayer-music .aplayer-title {
-  padding-left: 4px !important;
+  padding-left: 10px !important;
 }
 .aplayer.aplayer-withlrc .aplayer-body .aplayer-info .aplayer-lrc {
   height: 48px !important;
@@ -1635,6 +1634,33 @@ header:hover .chn_mark {
 }
 .aplayer.aplayer-withlrc .aplayer-list > ol::-webkit-scrollbar {
   display: none !important;
+}
+.slider {
+  width: 60px;
+  height: 30px;
+  background-color: #ccc;
+  border-radius: 15px;
+  position: relative;
+}
+.slider input[type="checkbox"] {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider label {
+  display: block;
+  width: 30px;
+  height: 30px;
+  background-color: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.slider input[type="checkbox"]:checked + label {
+  left: calc(100% - 30px);
 }
 @-moz-keyframes shine {
   0%, 100% {

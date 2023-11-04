@@ -133,4 +133,18 @@
   })
 
   $("a[href*='<emoji>']").attr({href: "//emoji."+window.location.hostname, target: "_blank",}).addClass("emoji")
+
+  /*
+  var toggle = document.getElementById('toggle');
+
+  toggle.addEventListener('change', function() {
+    if (this.checked) {
+      $("https://cp-bitiful1.s3.bitiful.net").replaceAll("https://cps3storage.s3.ap-southeast-1.amazonaws.com");
+      console.log('开关已打开');
+    } else {
+      $("#aplayerJS").replaceAll('https://cp-bitiful1.s3.bitiful.net','https://cps3storage.s3.ap-southeast-1.amazonaws.com');
+      console.log('开关已关闭');
+    }
+  });
+  */
 })(jQuery)
