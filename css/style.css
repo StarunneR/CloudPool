@@ -638,6 +638,7 @@ header:hover .chn_mark {
   color: #add8e6;
 }
 .post-article .markdown-content .fold .fold_hider .hider_title {
+  margin: 1em 0;
   font-family: initial;
   width: fit-content;
   font-size: 1em;
@@ -649,7 +650,6 @@ header:hover .chn_mark {
   cursor: pointer;
 }
 .post-article .markdown-content .fold .fold_content {
-  padding-left: 0.5em;
   background-color: #e5e4e2;
   font-family: 'Times New Roman', 'Noto Serif SC', serif;
   font-display: swap;
