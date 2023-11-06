@@ -35,7 +35,7 @@ comment:
     appId: M2JD6yGQhefhH2O0aSjFfclc-MdYXbMMI
     appKey: arEPHdbMnKwMjQgiWsLgw34N
     requiredMeta: ''
-    placeholder: '说、什么8 \n\n可使用QQ邮箱获取QQ头像，或在gravatar.com注册后使用邮箱绑定头像 \n支持Markdown语法：*斜体*, **粗体**, \# - ###### 1-6级标题, *** 或 --- = 水平分割线, ~~删除线~~, > 引用内容, `代码块`, 1. 序号列表, * 无序列表, ^上角标^, ~下角标~, <br> = 空行, [链接文字](链接地址), ![图片名称](图片地址.png), '
+    placeholder: '说、什么8 \n\n可使用QQ邮箱获取QQ头像，或在gravatar.com注册后使用邮箱绑定头像 \n\n支持Markdown语法：*斜体*, **粗体**, \# - ###### 1-6级标题, *** 或 --- = 水平分割线, ~~删除线~~, > 引用内容, `代码块`, 1. 序号列表, * 无序列表, ^上角标^, ~下角标~, <br> = 空行, [链接文字](链接地址), ![图片名称](图片地址.png), '
     meta: ['nick','mail']
     counting: true
 
