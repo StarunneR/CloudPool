@@ -470,7 +470,7 @@ header:hover .chn_mark {
   margin: 2px 0;
 }
 .post-article .markdown-content img {
-  width: 50vmax;
+  max-width: 100%;
 }
 .post-article .markdown-content p {
   line-height: 1.6em;
