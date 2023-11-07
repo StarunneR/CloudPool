@@ -1099,35 +1099,35 @@ lrc: '2023_IS/ネトカノ at I SCREAM LIVE2 (Cover).lrc',
 name: 'Beyond META',
 artist: '花譜 / MIYAVI',
 url: 'HOST/kaf/SINGLES/Beyond META.mp3',
-cover: '',
+cover: 'SINGLES/Beyond META.webp',
 lrc: 'SINGLES/Beyond META.lrc',
 },
 {
 name: 'CAN-VERSE',
 artist: '花譜 / ORESAMA',
 url: 'HOST/kaf/SINGLES/CAN-VERSE.mp3',
-cover: '',
+cover: 'SINGLES/CAN-VERSE.webp',
 lrc: 'SINGLES/CAN-VERSE.lrc',
 },
 {
 name: 'あさひ',
 artist: '花譜 / 佐倉綾音',
 url: 'HOST/kaf/SINGLES/あさひ.mp3',
-cover: '',
+cover: 'SINGLES/あさひ.webp',
 lrc: 'SINGLES/あさひ.lrc',
 },
 {
 name: 'あるふぁYOU(prompt αU ver\.)',
 artist: '花譜 / EMA',
 url: 'HOST/kaf/SINGLES/あるふぁYOU(prompt αU ver\.).mp3',
-cover: '',
+cover: 'SINGLES/あるふぁYOU(prompt αU ver\.).webp',
 lrc: 'SINGLES/あるふぁYOU(prompt αU ver\.).lrc',
 },
 {
 name: 'イマジナリーフレンド',
 artist: '花譜',
 url: 'HOST/kaf/SINGLES/イマジナリーフレンド.mp3',
-cover: '',
+cover: 'SINGLES/イマジナリーフレンド.webp',
 lrc: 'SINGLES/イマジナリーフレンド.lrc',
 },
 {
@@ -1363,3 +1363,7 @@ lrc: 'SINGLES/深淵 feat.花譜.lrc',
 
 阅读更多：花谱（https://zh.moegirl.org.cn/%E8%8A%B1%E8%B0%B1 ）
 本文引自萌娘百科(https://zh.moegirl.org.cn )，文字内容默认使用《知识共享 署名-非商业性使用-相同方式共享 3.0 中国大陆》协议。
+
+---
+[Apple Music](https://music.apple.com/cn/artist/kaf/1503255391)
+[网易云音乐](https://music.163.com/artist?id=32062601)
