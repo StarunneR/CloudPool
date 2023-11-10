@@ -1610,9 +1610,7 @@ header:hover .chn_mark {
 }
 .aplayer.aplayer-withlrc .aplayer-body .aplayer-info {
   height: 106px !important;
-}
-.aplayer.aplayer-withlrc .aplayer-body .aplayer-info .aplayer-music .aplayer-title {
-  padding-left: 10px !important;
+  padding-left: 20px !important;
 }
 .aplayer.aplayer-withlrc .aplayer-body .aplayer-info .aplayer-lrc {
   height: 48px !important;
