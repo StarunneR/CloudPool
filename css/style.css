@@ -1612,6 +1612,9 @@ header:hover .chn_mark {
   height: 106px !important;
   padding-left: 20px !important;
 }
+.aplayer.aplayer-withlrc .aplayer-body .aplayer-info .aplayer-music {
+  padding-left: 4px !important;
+}
 .aplayer.aplayer-withlrc .aplayer-body .aplayer-info .aplayer-lrc {
   height: 48px !important;
 }
