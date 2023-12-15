@@ -692,7 +692,7 @@ cloudpool.me CNAME StarunneR.gitlab.io. --&gt; CloudFlare: Type = CNAME; Name = 
 </li>
 <li><p>打开Gitlab网页用户设置中ssh密钥一栏，粘贴ssh-rsa开头的公共密钥，设置用户名，生效时间。</p>
 </li>
-<li><p>配置命令：<br> $ git config –global user.name “USERNAME”(–global代表应用到整个系统)<br> $ git config –global user.email EMAIL<br> $ cd blog<br> $ git remote add gitlab <a href="mailto:&#103;&#x69;&#116;&#64;&#x67;&#x69;&#116;&#108;&#97;&#98;&#46;&#99;&#x6f;&#109;">&#103;&#x69;&#116;&#64;&#x67;&#x69;&#116;&#108;&#97;&#98;&#46;&#99;&#x6f;&#109;</a>:cloudpool&#x2F;blog.git</p>
+<li><p>配置命令：<br> $ git config –global user.name “USERNAME”(–global代表应用到整个系统)<br> $ git config –global user.email EMAIL<br> $ cd blog<br> $ git remote add gitlab <a href="mailto:&#x67;&#x69;&#116;&#x40;&#103;&#x69;&#116;&#108;&#97;&#98;&#x2e;&#x63;&#111;&#109;">&#x67;&#x69;&#116;&#x40;&#103;&#x69;&#116;&#108;&#97;&#98;&#x2e;&#x63;&#111;&#109;</a>:cloudpool&#x2F;blog.git</p>
 </li>
 <li><p>推送<br> $ git add .<br> $ git commit -m “COMMENT” #暂存文件，暂存附加信息为COMMENT<br>$ git commit -m “auto” （）<br>$ git push gitlab master（推送到远端名gitlab的master分支）<br>$ read -n 1 （暂停运行）</p>
 <p> $ git push gitlab master<br> (即commit.sh内容)</p>
@@ -740,15 +740,12 @@ $ hexo s
       
 
 <div id="waline"></div>
-<script defer src="/js/waline-qqavatar.js"></script>
-
-<!--<link rel="stylesheet" href="https://unpkg.com/@waline/client@v2/dist/waline.css"/>-->
 
 <link href="https://cdn.bootcdn.net/ajax/libs/waline/2.15.8/waline.min.css" rel="stylesheet"/>
 <script src="https://cdn.bootcdn.net/ajax/libs/waline/2.15.8/waline.min.js"></script>
+<script defer src="/js/waline-qqavatar.js"></script>
 
 <script type="module">
-  //import { init } from 'https://unpkg.com/@waline/client@v2/dist/waline.mjs';
 
   const locale = {
     nick: '昵称',
@@ -802,7 +799,7 @@ $ hexo s
     reactionTitle: '你认为这篇文章怎么样？',
   };
 
-  init({
+  Waline.init({
     el: "#waline",
     serverURL: "" || "walinecf.zhuochi.org",
     appId: "" || "M2JD6yGQhefhH2O0aSjFfclc-MdYXbMMI",

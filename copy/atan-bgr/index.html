@@ -634,10 +634,10 @@
   <div class="nav-container">
     <!-- reverse left and right to put prev and next in a more logic postition -->
     
-      <a class="nav-left" href="/copy/atan-rgjnb/" target="_blank">
+      <a class="nav-left" href="/copy/atan-mmmddy/" target="_blank">
         <span class="nav-arrow">← </span>
         
-          《人工纪念碑》
+          《魅魔们的地狱》
         
       </a>
     
@@ -660,15 +660,12 @@
       
 
 <div id="waline"></div>
-<script defer src="/js/waline-qqavatar.js"></script>
-
-<!--<link rel="stylesheet" href="https://unpkg.com/@waline/client@v2/dist/waline.css"/>-->
 
 <link href="https://cdn.bootcdn.net/ajax/libs/waline/2.15.8/waline.min.css" rel="stylesheet"/>
 <script src="https://cdn.bootcdn.net/ajax/libs/waline/2.15.8/waline.min.js"></script>
+<script defer src="/js/waline-qqavatar.js"></script>
 
 <script type="module">
-  //import { init } from 'https://unpkg.com/@waline/client@v2/dist/waline.mjs';
 
   const locale = {
     nick: '昵称',
@@ -722,7 +719,7 @@
     reactionTitle: '你认为这篇文章怎么样？',
   };
 
-  init({
+  Waline.init({
     el: "#waline",
     serverURL: "" || "walinecf.zhuochi.org",
     appId: "" || "M2JD6yGQhefhH2O0aSjFfclc-MdYXbMMI",

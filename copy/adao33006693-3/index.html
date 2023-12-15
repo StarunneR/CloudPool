@@ -927,15 +927,12 @@ Dollar $：你看我是不是挺有自知之明的？
       
 
 <div id="waline"></div>
-<script defer src="/js/waline-qqavatar.js"></script>
-
-<!--<link rel="stylesheet" href="https://unpkg.com/@waline/client@v2/dist/waline.css"/>-->
 
 <link href="https://cdn.bootcdn.net/ajax/libs/waline/2.15.8/waline.min.css" rel="stylesheet"/>
 <script src="https://cdn.bootcdn.net/ajax/libs/waline/2.15.8/waline.min.js"></script>
+<script defer src="/js/waline-qqavatar.js"></script>
 
 <script type="module">
-  //import { init } from 'https://unpkg.com/@waline/client@v2/dist/waline.mjs';
 
   const locale = {
     nick: '昵称',
@@ -989,7 +986,7 @@ Dollar $：你看我是不是挺有自知之明的？
     reactionTitle: '你认为这篇文章怎么样？',
   };
 
-  init({
+  Waline.init({
     el: "#waline",
     serverURL: "" || "walinecf.zhuochi.org",
     appId: "" || "M2JD6yGQhefhH2O0aSjFfclc-MdYXbMMI",
