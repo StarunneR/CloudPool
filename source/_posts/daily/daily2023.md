@@ -1,6 +1,6 @@
 ---
 title: 每日一句2023
-date: 2023-11-01
+date: 2023-12-01
 author: m1
 tags:
     - BB
@@ -227,7 +227,7 @@ raise your bottom line
 —— 征婚启事 二手玫瑰
 
 **5.11**
-don’t look up
+Don't look up
 
 **5.13**
 不加油也是一种残忍
@@ -268,7 +268,7 @@ descending decent life
 **6.1**
 与我无关的事情
 不要当一回事，要不当一回事。
-used to be a dreeeeeeemer
+Used to be a dreeeeeeemer
 
 **6.2**
 放弃很重要，或者说选择很重要，所以现在我选择睡觉。
@@ -369,7 +369,7 @@ Everything has to get better if I could make small progress.
 东北口炸酱面香香 ( ´ρ`)
 
 **8.8**
-City walk with Rock ↙(`ヮ´ )↗
+City walk with Rock ↙(\`ヮ´ )↗
 
 **8.9**
 City walk day 2:
@@ -444,6 +444,7 @@ Twisting hurts!!!
 
 **9.6**
 就算狂风吹断了冰雪，念想也会恬留下来。
+
 City Walk Day 21:
 “麦地
 神秘的质问者啊
@@ -475,6 +476,7 @@ No City Walk Day 25:
 
 **9.17**
 “如果你不信仰某个比自我更大的事物，将来某一刻你会自毁。”
+
 City Walk Day 26:
 为什么要在意图问为什么的时候思考为什么会想问为什么呢？
 
@@ -500,14 +502,16 @@ Why are there always people rushing through me?
 
 **9.26**
 ‘他人与自己存在绝对的隔绝’ ，‘我们永远无法拥有或控制他人’
+
 City Walk Day 30:
 Nothing new but I did.
 
 **9.27**
 “你跋山涉水去见的人根本不会牢记你，他只会记得自己跋山涉水见过的人。”
+
 City Walk Day 31:
 想找的怎么也找不回来，因为地铁把回忆拦腰截断
-- - -
+
 “繁华之下是无数破碎的心”
 
 **9.28**
@@ -538,6 +542,7 @@ Keep going and going and going, till the sun goes back and the lights turn green
 **10.16**
 “放松，然后坠落，记住发力方式，在控制与不加控制之间，缓缓弹琴。”
 twi: @littlenovum
+
 City Walk Day 36:
 Deja Vu city walk with Japanese songs on streets in CS.
 However they’re Vsinger instead of Vocaloid.
@@ -551,7 +556,7 @@ City Walk Day 37:
 Obtained the card with 128 GB to contain all.
 Sooner or later it will reach full again.
 Though my old buddy only endures 128 for good.
-I’ll not leave u, I murmured, for good.
+I'll not leave u, I murmured, for good.
 
 **10.19**
 City Walk Day 38:
@@ -575,3 +580,98 @@ City Walk Day 42:
 比如今天散落一地的小纸片上面只有
 铅笔的7多希望还有张6就答案是一切
 42
+
+**11.1**
+与其自我审计，不如捏紧一点。
+
+**11.3**
+“情绪是人们对各种记忆的一种反映。”
+
+**11.4**
+“我朋友是公务员，我去她家里玩，我们住在烤肉店附近,
+我朋友是公务员，所以没上班的时候比较闲，我们吃烧烤比较晚喝点酒也没事。
+我朋友是公务员，周末也不上班，所以明天想去西山公园爬山”
+“穷山距海”
+
+**11.9**
+“啊啊啊啊啊啊啊啊啊啊啊啊
+我的妈
+妈妈妈妈妈妈妈妈吗
+太太太太太强了
+[苦涩]
+他们怎么完成的
+太太太太太太太太太太太太太太
+太太太太太太太太太太太太太强
+了
+[傻猫]
+我还是认真学吧
+人比人吓死人
+加油！”
+
+**11.10**
+“我会锻炼出大量肌肉然后殴打自己”
+
+**11.11**
+City Walk Day 45:
+挖挖挖挖挖挖挖什么啦
+一整条路隔板一封成小径了
+不过还是不堵车
+早晚有一天我们要把它挖穿！
+
+Winter comes around and warmth passed away in the year.
+
+**11.13**
+“轻舟已过牛腩粉”
+
+City Walk Day 46:
+, and it was cold as a witch's teat.
+
+**11.15**
+“真他娘的光芒万丈”
+
+**11.16**
+“她挥刀斩断，我光阴四溅”
+
+City Walk Day 47:
+我一般多久剪一次指甲来着？
+
+**11.17**
+City Walk Day 48:
+不骗人，Vivaldi的iOS版是真好用（
+
+**11.19**
+City Walk Day 49:
+把弦拉紧，伙计们。
+
+**11.20**
+虚拟艺术与虚拟的梦，与虚拟的想象的心情。要加油。
+
+**11.22**
+murimurimurimuri
+加油加油加油加油！
+
+City Walk Day 51:
+好久好久没有折纸垃圾盒了呢
+
+**11.23**
+“游戏诉求：费劲”
+
+**11.26**
+City Walk Day 53:
+不远，因为达到标准。
+
+**11.28**
+好的，我也撞上了奥卡姆剃刀
+来源：肯尼斯·A.萨万，杨定乔等译，有机化学反应机理书写，2022，60-61
+
+City Walk Day 54:
+"Yeah I can do so,
+I can do so,
+I can do so much better."
+Avicii - So much better (Avicii Remix)
+
+**11.29**
+好嘛，（Occam's razor）
+
+**11.30**
+冬季来到，多喝热水！
