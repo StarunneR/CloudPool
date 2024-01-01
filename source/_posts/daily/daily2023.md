@@ -675,3 +675,93 @@ Avicii - So much better (Avicii Remix)
 
 **11.30**
 冬季来到，多喝热水！
+
+**12.2**
+“湿手搭面粉，甩也甩不脱”
+
+City Walk Day 56:
+“我想这 就是他m—的世 界！”
+约瑟翰庞麦郎 - 打败他
+
+**12.3**
+今日迷思：
+Tall as three laying doors
+
+**12.7**
+City Walk Day 58:
+Completed in another way.
+
+**12.9**
+差生文具多
+
+**12.12**
+开心就别关心
+
+**12.14**
+你可曾知晓
+唐僧对悟空说
+在那遥远的西天
+有一本半厚的经书
+你要时常翻看
+参悟其内真经
+这本书牠被称为
+Strategic Applications o
+f Named Reactions i
+n Organic Synthesis
+By Kürti and Czakó
+
+**12.15**
+想念一些逮香蕉鱼的好天气
+
+“对”
+
+**12.16**
+It’s a long, long way to go ~
+
+是啊我也成为了一个连58%都觉得过甜只能溺于85%可可中的成熟的人了
+ps: 会不会是因为毛子的巧克力本来就太甜了
+
+**12.17**
+品牌问题（
+90%的确实苦dbq
+
+City Walk Day 59:
+Neither too much nor too little
+
+**12.18**
+City Walk Day 60:
+GLK, Yes!
+
+**12.19**
+Do not be feared of the fear itself,
+and spend your life.
+
+**12.21**
+Home Walk Yesterday 61:
+Back and refill.
+
+**12.26**
+Home Walk Day 64:
+多踩几个脚印吧，不要忘了过去的。
+
+**12.28**
+City Walk Day 65:
+独立江畔
+这么多过去了
+我想的还是一毛一样
+如果我的脚是路飞
+duang一下把
+钓鱼的人踹下去就好了
+
+**12.29**
+“抹去，粉刷与修复”
+
+**12.30**
+调速
+调协
+波峰
+简并
+等待下一个正弦波
+
+**12.31**
+Happy new year and f*ck my life!

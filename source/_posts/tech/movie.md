@@ -53,6 +53,14 @@ BluRay(蓝光原盘)＞Remux(蓝光无损提取)＞BluRay/BRRip/BD/BDRip(蓝光�
 -->
 ---
 
+### 下载工具
+
+* [Motrix](https://motrix.app/) 一款高颜值的下载工具
+* [FDM – Free Download Manager](https://www.freedownloadmanager.org/zh/)
+* [qbittorrent](https://www.qbittorrent.org/)
+* [uTottent](https://www.qbittorrent.org/)
+* [Bitcomet 比特彗星](https://www.bitcomet.com)
+
 ### 离线下载工具
 
 #### 国内
