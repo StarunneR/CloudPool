@@ -1,6 +1,6 @@
 ---
 title: 每日一句2023
-date: 2023-12-01
+date: 2023-12-31
 author: m1
 tags:
     - BB
