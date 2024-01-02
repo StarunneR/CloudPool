@@ -2,18 +2,18 @@ html {
   scrollbar-width: thin;
   scrollbar-color: #00bfff #fcf5e5;
 }
-::-webkit-scrollbar {
+html::-webkit-scrollbar {
   width: 10px;
   background-color: #fcf5e5;
 }
-::-webkit-scrollbar-thumb {
+html::-webkit-scrollbar-thumb {
   background-color: #00bfff;
   background-image: -webkit-linear-gradient(30deg, rgba(255,255,255,0.4) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0.4) 75%, transparent 75%, transparent);
   -webkit-border-radius: 5em;
   -moz-border-radius: 5em;
   border-radius: 5em;
 }
-::-webkit-scrollbar-track {
+html::-webkit-scrollbar-track {
   background-color: transparent;
 }
 ::selection {
@@ -980,11 +980,11 @@ header:hover .chn_mark {
   }
 }
 .catalog-container .toc-main {
-  padding: 1em 0.5em;
-  border-left: 1px solid #e5e4e2;
+  padding: 1em 1em 0 0.5em;
   white-space: nowrap;
-  overflow: auto;
-  scrollbar-width: none;
+  overflow-x: scroll;
+  overflow-y: hidden;
+  scrollbar-width: thin;
   box-sizing: border-box;
   position: absolute;
   max-height: 550px;
@@ -1007,7 +1007,12 @@ header:hover .chn_mark {
   }
 }
 .catalog-container .toc-main::-webkit-scrollbar {
-  display: none;
+  height: 10px;
+  background-color: #fcf5e5;
+}
+.catalog-container .toc-main::-webkit-scrollbar-thumb {
+  background-color: #7df9ff;
+  border-radius: 4px;
 }
 .catalog-container .toc-main .toc-title {
   font-size: 1.2em;
