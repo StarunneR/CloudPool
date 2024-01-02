@@ -13,12 +13,13 @@
     flex-basis: 25px
     -webkit-flex-basis: 25px
   .toc-main
-    padding: 1em 0.5em
-    border-left: 1px solid color-border
+    padding: 1em 1em 0 0.5em
+    //border-left: 1px solid color-border
     //width: 145px 
     white-space: nowrap
-    overflow: auto
-    scrollbar-width: none
+    overflow-x: scroll
+    overflow-y: hidden
+    scrollbar-width: thin
     box-sizing: border-box
     position: absolute
     max-height: 550px
@@ -34,7 +35,11 @@
       max-width: 80%
       position: static
   .toc-main::-webkit-scrollbar
-    display: none
+    height: 10px
+    background-color: color-white
+  .toc-main::-webkit-scrollbar-thumb
+    background-color: color-vary
+    border-radius: 4px
   .toc-main
     .toc-title
       font-size: 1.2em
