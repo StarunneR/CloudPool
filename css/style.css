@@ -985,6 +985,7 @@ header:hover .chn_mark {
   overflow-x: scroll;
   overflow-y: hidden;
   scrollbar-width: thin;
+  scrollbar-color: #7df9ff #fcf5e5;
   box-sizing: border-box;
   position: absolute;
   max-height: 550px;
