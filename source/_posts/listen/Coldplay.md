@@ -277,9 +277,9 @@ lrc: '2005_XY/Til Kingdom Come.lrc',
 {
 name: 'Life In Technicolor',
 artist: 'Coldplay',
-url: 'HOST/Coldplay/2008_VL/.mp3',
+url: 'HOST/Coldplay/2008_VL/Life In Technicolor.mp3',
 cover: '2008_VL/cover.webp',
-lrc: '2008_VL/.lrc',
+lrc: '',
 },
 {
 name: 'Cemeteries Of London',
@@ -548,7 +548,7 @@ lrc: '2014_GS/O (Part 2-Reprise).lrc',
 
 {% endaplayer %}
 
-### A Head Full of Dreams
+### A Head Full of Dreams 2015
 
 {% aplayer 7 %}
 {

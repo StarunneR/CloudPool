@@ -30,6 +30,9 @@ deploy:
 - type: git
   repo: git@github.com:StarunneR/CloudPool.git
   branch: gh-page
+- type: git
+  repo: git@gitlab.com:cloudpool/cloudpool-v3.git
+  branch: main
 
 # Directory
 source_dir: source
