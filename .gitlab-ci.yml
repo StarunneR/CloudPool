@@ -6,6 +6,7 @@ cache:
 before_script:
   - npm install hexo-cli -g --force
   - npm install
+  - hexo version
 
 pages:
   script:
