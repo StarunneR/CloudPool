@@ -4,7 +4,7 @@ cache:
     - node_modules/
 
 before_script:
-  - npm install hexo-cli -g
+  - npm install hexo-cli -g --force
   - npm install
 
 pages:
