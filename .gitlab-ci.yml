@@ -1,12 +1,11 @@
-image: node
+image: node:16
 cache:
   paths:
     - node_modules/
 
 before_script:
-  - npm install hexo-cli -g --force
+  - npm install hexo@6.3.0 -g
   - npm install
-  - hexo version
 
 pages:
   script:
