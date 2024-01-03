@@ -4,19 +4,19 @@ date: 202 -  -
 author: m1
 tags: 音乐
 categories: 浊音
-main: Full album, Songs
+main: Full Album, Songs
 ---
 
 ### 
 
-{% aplayer 1A %}
+{% aplayer  %}
 
 {
-name: 'Music',
+name: 'MUSIC',
 artist: '',
-url: 'HOST/Artist/Album/Music.m4a',
-cover: 'Album/cover.webp',
-lrc: 'Album/Music.lrc',
+url: 'HOST/ARTIST/ALBUM/MUSIC.mp3',
+cover: 'ALBUM/cover.webp',
+lrc: 'ALBUM/MUSIC.lrc',
 },
 
 {% endaplayer %}
