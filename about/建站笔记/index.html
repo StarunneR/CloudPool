@@ -659,7 +659,7 @@ cloudpool.me CNAME StarunneR.gitlab.io. --&gt; CloudFlare: Type = CNAME; Name = 
 <li>安装<a target="_blank" rel="noopener" href="https://git-scm.com/">git</a>，一直回车，在第三次回车确认前 将default editor设置为Visual Studio Code，打开git bash</li>
 <li>生成公共密钥：<br> $ ssh-keygen -t rsa + 三次回车<br> 查看公共密钥：<br> $ cat ~&#x2F;.ssh&#x2F;id_rsa.pub<br> 并复制以ssh-rsa开头的所有内容</li>
 <li>打开Gitlab网页用户设置中ssh密钥一栏，粘贴ssh-rsa开头的公共密钥，设置用户名，生效时间。</li>
-<li>配置命令：<br> $ git config –global user.name “USERNAME”	(–global代表应用到整个系统)<br> $ git config –global user.email EMAIL<br> $ cd blog<br> $ git remote add gitlab <a href="mailto:&#x67;&#x69;&#116;&#x40;&#x67;&#x69;&#116;&#x6c;&#97;&#98;&#x2e;&#x63;&#111;&#109;">&#x67;&#x69;&#116;&#x40;&#x67;&#x69;&#116;&#x6c;&#97;&#98;&#x2e;&#x63;&#111;&#109;</a>:cloudpool&#x2F;blog.git</li>
+<li>配置命令：<br> $ git config –global user.name “USERNAME”	(–global代表应用到整个系统)<br> $ git config –global user.email EMAIL<br> $ cd blog<br> $ git remote add gitlab <a href="mailto:&#x67;&#105;&#116;&#x40;&#x67;&#105;&#116;&#x6c;&#97;&#98;&#x2e;&#x63;&#111;&#x6d;">&#x67;&#105;&#116;&#x40;&#x67;&#105;&#116;&#x6c;&#97;&#98;&#x2e;&#x63;&#111;&#x6d;</a>:cloudpool&#x2F;blog.git</li>
 <li>提交<br> $ git add .<br> $ git commit -m “COMMENT”	#暂存文件，暂存附加信息为COMMENT</li>
 <li>推送<br>$ git push gitlab master （推送到远端名gitlab的master分支）<br>$ read -n 1 （暂停运行）</li>
 </ol>
