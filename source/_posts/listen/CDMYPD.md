@@ -1,14 +1,14 @@
 ---
-title: 草東沒有派對 
+title: 草東沒有派對
 date: 2023-06-21
 author: m1
 tags: 音乐
 categories: 浊音
-main: 2 Albums, 12 + 11 Songs & 1 EP
+main: 2 Albums & 1 EP, 24 Songs
 catalog: true
 ---
 
-### 醜奴兒(丑奴儿)  2016
+### 醜奴兒 The Servile 2016
 
 {% aplayer 1 %}
 {
@@ -99,9 +99,9 @@ lrc: 'CNE/情歌.lrc',
 
 草東沒有派對首張錄音室專輯，於2016年2月發行。
 
-### 如常  2020
+### 如常 Same Old, Same Old 2020
 
-{% aplayer 3 %}
+{% aplayer 2 %}
 {
 name: '如常 SAME OLD, SAME OLD',
 artist: '草東沒有派對',
@@ -115,7 +115,7 @@ lrc: 'EP/如常.lrc',
 
 ### 瓦合 THE CLOD  2023
 
-{% aplayer 2 %}
+{% aplayer 3 %}
 {
 name: '苦難精算師 Intro',
 artist: '草東沒有派對',
@@ -235,6 +235,8 @@ lrc: 'WH/但.lrc',
 
 ![Wiki](wiki.png)
 
-##### [官网](https://nopartyforcaodong.com/zh-hant)
+* [官网](https://nopartyforcaodong.com/zh-hant)
 
-[网易云音乐](https://music.163.com/#/artist?id=1161122)
+* [Apple Music - 草东没有派对](https://music.apple.com/cn/artist/%E8%8D%89%E4%B8%9C%E6%B2%A1%E6%9C%89%E6%B4%BE%E5%AF%B9/1110664089)
+
+* [网易云音乐 - 草东没有派对](https://music.163.com/#/artist?id=1161122)

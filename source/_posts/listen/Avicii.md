@@ -483,15 +483,4 @@ Avicii逝世之时，他的最新专辑仍在制作中。2019年，Avicii的家�
 
 ![Wiki](wiki.png)
 
-##### [官网](https://avicii.com/)
-
-<!--
-<button onclick='aplayerLoad()'>
-
-<script>
-  function aplayerLoad() {
-    var elem = document.getElementById('aplayer1');
-    elem.Aplayer.version();
-  }
-</script>
--->
+* [官网](https://avicii.com/)

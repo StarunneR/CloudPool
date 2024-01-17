@@ -75,7 +75,7 @@
 
   $('.arrow-down').on('click', function () {
     $('html, body').animate({
-      scrollTop: banner.offsetHeight - headerH + front.offsetHeight
+      scrollTop: (banner.offsetHeight - $('.header').height()) + front.offsetHeight + $('.article-author').get(0).offsetTop
       //scrollTop: banner.offsetHeight - header.height()
     }, 500)
   })

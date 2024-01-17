@@ -137,7 +137,7 @@ lrc: '前程萬里.lrc',
 {% endaplayer %}
 
 ---
-专辑介绍：1997 Digital Remaster Remastered by: Denon-Nippon Columbia Mixing Engineer: 保坂弘幸
+专辑介绍：1997 Digital Remaster Remastered by: Denon-Nippon Columbia, Mixing Engineer: 保坂弘幸
 
 [网易云音乐](https://music.163.com/#/album?id=32603)
 
