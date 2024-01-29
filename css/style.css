@@ -1031,7 +1031,7 @@ header:hover .chn_mark {
   background-size: contain;
 }
 .catalog-container .toc-main .toc-nav {
-  padding: 1em 0;
+  padding: 1em 0.5em;
 }
 @media screen and (max-width: 768px) {
   .catalog-container .toc-main .toc-nav {
