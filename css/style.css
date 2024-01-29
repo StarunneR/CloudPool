@@ -1043,6 +1043,9 @@ header:hover .chn_mark {
     max-height: 200px;
   }
 }
+.catalog-container .toc-main .toc-nav .toc-nav-child {
+  font-size: smaller;
+}
 .catalog-container .toc-main ol {
   padding-left: 8px;
 }
