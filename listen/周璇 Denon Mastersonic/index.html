@@ -607,7 +607,7 @@
   $("#fontsize-slider").on("input", rangeSwitch)
 </script>
       <section class="markdown-content" id="content">
-        <div id="aplayerundefined" class="aplayerJS"></div><script>const apundefined = new APlayer({container: document.getElementById("aplayerundefined"),lrcType:3,loop:"none",mutex:true,preload:"metadata",audio: [{
+        <div id="aplayerundefined" class="aplayerJS"></div><script>const apundefined = new APlayer({container: document.getElementById("aplayerundefined"),lrcType:3,loop:"none",mutex:true,preload:"auto",audio: [{
 name: '天涯歌女',
 artist: '周璇',
 url: 'https://cps3storage.s3-accelerate.amazonaws.com/Denon+Mastersonic+周璇/天涯歌女.m4a',
@@ -732,7 +732,7 @@ artist: '周璇',
 url: 'https://cps3storage.s3-accelerate.amazonaws.com/Denon+Mastersonic+周璇/前程萬里.m4a',
 cover: 'cover.jpg',
 lrc: '前程萬里.lrc',
-}]});apundefined.on("play", function(){document.title=document.getElementById("aplayerundefined").getElementsByClassName("aplayer-music")[0].innerText;}); </script>
+}]});apundefined.on("playing",function(){document.title=document.getElementById("aplayerundefined").getElementsByClassName("aplayer-music")[0].innerText;});</script>
 
 <hr>
 <p>专辑介绍：1997 Digital Remaster Remastered by: Denon-Nippon Columbia, Mixing Engineer: 保坂弘幸</p>

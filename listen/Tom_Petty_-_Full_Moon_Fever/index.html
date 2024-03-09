@@ -607,7 +607,7 @@
   $("#fontsize-slider").on("input", rangeSwitch)
 </script>
       <section class="markdown-content" id="content">
-        <div id="aplayer1" class="aplayerJS"></div><script>const ap1 = new APlayer({container: document.getElementById("aplayer1"),lrcType:3,loop:"none",mutex:true,preload:"metadata",audio: [
+        <div id="aplayer1" class="aplayerJS"></div><script>const ap1 = new APlayer({container: document.getElementById("aplayer1"),lrcType:3,loop:"none",mutex:true,preload:"auto",audio: [
 {
 name: 'Free Fallin\'',
 artist: 'Tom Petty',
@@ -692,7 +692,7 @@ url: 'https://cps3storage.s3-accelerate.amazonaws.com/Tom_Petty_-_Full_Moon_Feve
 cover: 'cover.webp',
 lrc: 'Zombie Zoo.lrc',
 },
-]});ap1.on("play", function(){document.title=document.getElementById("aplayer1").getElementsByClassName("aplayer-music")[0].innerText;}); </script>
+]});ap1.on("playing",function(){document.title=document.getElementById("aplayer1").getElementsByClassName("aplayer-music")[0].innerText;});</script>
       </section>
       
         <div class="post-tags">
